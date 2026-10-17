@@ -568,8 +568,10 @@ public class PreferenceConfiguration {
 
     private static int getJitterBufferValue(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return parseJitterBuffer(prefs.getString(JITTER_BUFFER_PREF_STRING, DEFAULT_JITTER_BUFFER));
+    }
 
-        String str = prefs.getString(JITTER_BUFFER_PREF_STRING, DEFAULT_JITTER_BUFFER);
+    static int parseJitterBuffer(String str) {
         if (str.equals("low-latency")) {
             return JITTER_BUFFER_LOW_LATENCY;
         }
@@ -644,6 +646,7 @@ public class PreferenceConfiguration {
             VIDEO_FORMAT_PREF_STRING, VSYNC_MODE_PREF_STRING, SYNC_LFR_PREF_STRING,
             ASYNC_DECODE_PREF_STRING, ASYNC_LFR_PREF_STRING, VIRTUAL_DISPLAY_MODE_PREF_STRING,
             TOUCHSCREEN_TRACKPAD_PREF_STRING, HIDE_CURSOR_MODE_PREF_STRING, AUDIO_HAPTICS_PREF_STRING,
+            JITTER_BUFFER_PREF_STRING,
     };
 
     /**
@@ -682,6 +685,10 @@ public class PreferenceConfiguration {
                 // AudioHaptics.OUTPUT_* bits
                 audioHapticsOutputs = "device".equals(value) ? 1 : "controller".equals(value) ? 2 :
                         "both".equals(value) ? 3 : 0;
+                break;
+            case JITTER_BUFFER_PREF_STRING:
+                // Only used when frame pacing follows the host's frame timing
+                jitterBuffer = parseJitterBuffer(value);
                 break;
         }
     }

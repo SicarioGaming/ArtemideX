@@ -68,8 +68,8 @@ public final class SettingsImpact {
         IMPACT.put("checkbox_full_range", R.string.impact_none);
         IMPACT.put("checkbox_enable_perf_overlay", R.string.impact_perf_overlay);
 
-        ALIASES.put("pref_app_resolution", "list_resolution");
-        ALIASES.put("text_app_fps", "list_fps");
+        ALIASES.put("list_app_resolution", "list_resolution");
+        ALIASES.put("list_app_fps", "list_fps");
         ALIASES.put("text_app_bitrate_kbps", "seekbar_bitrate_kbps");
         ALIASES.put("list_app_frame_pacing", "frame_pacing");
         ALIASES.put("text_app_actual_display_refresh_rate", "text_actual_display_refresh_rate");

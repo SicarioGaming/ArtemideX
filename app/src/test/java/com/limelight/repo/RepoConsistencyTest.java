@@ -200,7 +200,7 @@ public class RepoConsistencyTest {
         while (m.find()) {
             if (!keys.contains(m.group(1))) problems.add("game_" + m.group(1) + " isn't in GAME_OPTION_KEYS");
         }
-        assertEquals("per-game options", 9, keys.size());
+        assertEquals("per-game options", 10, keys.size());
         assertTrue(problems.toString(), problems.isEmpty());
     }
 

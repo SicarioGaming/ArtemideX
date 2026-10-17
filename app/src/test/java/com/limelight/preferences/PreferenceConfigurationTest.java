@@ -106,6 +106,13 @@ public class PreferenceConfigurationTest {
         c.applyGameOption("virtual_display_mode", "virtual");
         assertEquals("virtual", c.virtualDisplayMode);
 
+        String[][] jitter = {{"low-latency", "0"}, {"balanced", "1"}, {"smooth", "2"}, {"lowest-latency", "3"},
+                {"garbage", "1"}};
+        for (String[] j : jitter) {
+            c.applyGameOption("jitter_buffer", j[0]);
+            assertEquals(j[0], Integer.parseInt(j[1]), c.jitterBuffer);
+        }
+
         // The on/off options, stored as "true"/"false"
         c.applyGameOption("checkbox_sync_lfr", "true");
         c.applyGameOption("checkbox_async_decode", "true");
@@ -146,6 +153,7 @@ public class PreferenceConfigurationTest {
             case "virtual_display_mode": return "virtual";
             case "hide_cursor_mode": return "always";
             case "list_audio_haptics": return "both";
+            case "jitter_buffer": return "smooth";
             default: return "true";
         }
     }
@@ -155,6 +163,6 @@ public class PreferenceConfigurationTest {
                 && a.asyncDecode == b.asyncDecode && a.asyncLfr == b.asyncLfr
                 && java.util.Objects.equals(a.virtualDisplayMode, b.virtualDisplayMode)
                 && a.touchscreenTrackpad == b.touchscreenTrackpad && a.hideCursorMode == b.hideCursorMode
-                && a.audioHapticsOutputs == b.audioHapticsOutputs;
+                && a.audioHapticsOutputs == b.audioHapticsOutputs && a.jitterBuffer == b.jitterBuffer;
     }
 }

@@ -19,7 +19,7 @@ public class SettingsImpactKeysTest {
         // Per-game settings get the same lines as the main ones
         assertEquals(SettingsImpact.impactFor("frame_pacing"), SettingsImpact.impactFor("list_app_frame_pacing"));
         assertEquals(SettingsImpact.impactFor("vsync_mode"), SettingsImpact.impactFor("game_vsync_mode"));
-        assertEquals(SettingsImpact.impactFor("list_fps"), SettingsImpact.impactFor("text_app_fps"));
+        assertEquals(SettingsImpact.impactFor("list_fps"), SettingsImpact.impactFor("list_app_fps"));
         // Settings with nothing to say about speed get no line
         assertEquals(0, SettingsImpact.impactFor("list_languages"));
         assertEquals(0, SettingsImpact.impactFor(null));
