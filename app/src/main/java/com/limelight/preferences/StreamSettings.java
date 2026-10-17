@@ -49,7 +49,6 @@ import com.limelight.ui.CoverGlowSettings;
 import com.limelight.ui.overlay.ImportedShortcuts;
 import com.limelight.binding.video.CustomVulkanDriver;
 import com.limelight.binding.video.MediaCodecHelper;
-import com.limelight.utils.Dialog;
 import com.limelight.utils.HelpLauncher;
 import com.limelight.utils.UiHelper;
 
@@ -65,7 +64,6 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 public class StreamSettings extends Activity {
@@ -171,8 +169,6 @@ public class StreamSettings extends Activity {
         private static final int REQUEST_CUSTOM_VULKAN_DRIVER = 0x6472;  // "dr"
         private static final int REQUEST_IMPORT_SHORTCUTS = 0x7363;  // "sc"
         private static final int REQUEST_RECORD_AUDIO = 0x6d63;  // "mc"
-        // The values of the native resolutions added as their own entries
-        private final HashSet<String> nativeResolutionValues = new HashSet<>();
         private float maxSupportedFps;
 
         private void appendPreferenceEntry(ListPreference pref, String newEntryName, String newEntryValue) {
@@ -221,7 +217,6 @@ public class StreamSettings extends Activity {
             }
 
             appendPreferenceEntry(pref, newName, newValue);
-            nativeResolutionValues.add(newValue);
         }
 
         private void addNativeResolutionEntries(int nativeWidth, int nativeHeight, boolean insetsRemoved) {
@@ -638,14 +633,6 @@ public class StreamSettings extends Activity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
                     String valueStr = (String) newValue;
-
-                    // If this is native resolution, show the warning dialog
-                    if (nativeResolutionValues.contains(valueStr)) {
-                        Dialog.displayDialog(getActivity(),
-                                getResources().getString(R.string.title_native_res_dialog),
-                                getResources().getString(R.string.text_native_res_dialog),
-                                false);
-                    }
 
                     // Write the new bitrate value
                     resetBitrateToDefault(prefs, valueStr, null);
