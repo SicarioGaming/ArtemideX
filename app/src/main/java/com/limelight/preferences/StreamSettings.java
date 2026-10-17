@@ -16,7 +16,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
@@ -66,6 +65,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 public class StreamSettings extends Activity {
@@ -171,14 +171,9 @@ public class StreamSettings extends Activity {
         private static final int REQUEST_CUSTOM_VULKAN_DRIVER = 0x6472;  // "dr"
         private static final int REQUEST_IMPORT_SHORTCUTS = 0x7363;  // "sc"
         private static final int REQUEST_RECORD_AUDIO = 0x6d63;  // "mc"
-        private int nativeResolutionStartIndex = Integer.MAX_VALUE;
-        private boolean nativeFramerateShown = false;
-
-        private void setValue(String preferenceKey, String value) {
-            ListPreference pref = (ListPreference) findPreference(preferenceKey);
-
-            pref.setValue(value);
-        }
+        // The values of the native resolutions added as their own entries
+        private final HashSet<String> nativeResolutionValues = new HashSet<>();
+        private float maxSupportedFps;
 
         private void appendPreferenceEntry(ListPreference pref, String newEntryName, String newEntryValue) {
             CharSequence[] newEntries = Arrays.copyOf(pref.getEntries(), pref.getEntries().length + 1);
@@ -225,10 +220,8 @@ public class StreamSettings extends Activity {
                 }
             }
 
-            if (pref.getEntryValues().length < nativeResolutionStartIndex) {
-                nativeResolutionStartIndex = pref.getEntryValues().length;
-            }
             appendPreferenceEntry(pref, newName, newValue);
+            nativeResolutionValues.add(newValue);
         }
 
         private void addNativeResolutionEntries(int nativeWidth, int nativeHeight, boolean insetsRemoved) {
@@ -253,16 +246,14 @@ public class StreamSettings extends Activity {
             for (CharSequence value : pref.getEntryValues()) {
                 if (fpsValue.equals(value.toString())) {
                     // It is present in the default list, so don't add it again
-                    nativeFramerateShown = false;
                     return;
                 }
             }
 
             appendPreferenceEntry(pref, fpsName, fpsValue);
-            nativeFramerateShown = true;
         }
 
-        private void removeValue(String preferenceKey, String value, Runnable onMatched) {
+        private void removeValue(String preferenceKey, String value) {
             int matchingCount = 0;
 
             ListPreference pref = (ListPreference) findPreference(preferenceKey);
@@ -289,10 +280,6 @@ public class StreamSettings extends Activity {
                 outIndex++;
             }
 
-            if (pref.getValue().equalsIgnoreCase(value)) {
-                onMatched.run();
-            }
-
             // Update the preference with the new list
             pref.setEntries(entries);
             pref.setEntryValues(entryValues);
@@ -310,6 +297,25 @@ public class StreamSettings extends Activity {
                     .putInt(PreferenceConfiguration.BITRATE_PREF_STRING,
                             PreferenceConfiguration.getDefaultBitrate(res, fps))
                     .apply();
+        }
+
+        // Offers the frame rates the display supports. Others can still be entered
+        // as a custom rate, which is kept even if the display doesn't support it.
+        private void setUpFpsEntries() {
+            FpsListPreference fpsPref = (FpsListPreference) findPreference(PreferenceConfiguration.FPS_PREF_STRING);
+            fpsPref.resetEntries();
+
+            // We give some extra room in case the FPS is rounded down
+            if (maxSupportedFps < 118) {
+                removeValue(PreferenceConfiguration.FPS_PREF_STRING, "120");
+            }
+            if (maxSupportedFps < 88) {
+                removeValue(PreferenceConfiguration.FPS_PREF_STRING, "90");
+            }
+            // Never remove 30 FPS or 60 FPS
+
+            addNativeFrameRateEntry(maxSupportedFps);
+            fpsPref.addEntryForCustomValue();
         }
 
         @Override
@@ -411,8 +417,14 @@ public class StreamSettings extends Activity {
             }
 
 
+            // Start from the standard resolutions, since the saved value may have
+            // been added as a custom one before this display's entries are known
+            ResolutionListPreference resolutionPref =
+                    (ResolutionListPreference) findPreference(PreferenceConfiguration.RESOLUTION_PREF_STRING);
+            resolutionPref.resetEntries();
+
             Display display = getActivity().getWindowManager().getDefaultDisplay();
-            float maxSupportedFps = display.getRefreshRate();
+            maxSupportedFps = display.getRefreshRate();
 
             // Hide non-supported resolution/FPS combinations
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -537,36 +549,15 @@ public class StreamSettings extends Activity {
                 if (maxSupportedResW != 0) {
                     if (maxSupportedResW < 3840) {
                         // 4K is unsupported
-                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_4K, new Runnable() {
-                            @Override
-                            public void run() {
-                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                                setValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1440P);
-                                resetBitrateToDefault(prefs, null, null);
-                            }
-                        });
+                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_4K);
                     }
                     if (maxSupportedResW < 2560) {
                         // 1440p is unsupported
-                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1440P, new Runnable() {
-                            @Override
-                            public void run() {
-                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                                setValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1080P);
-                                resetBitrateToDefault(prefs, null, null);
-                            }
-                        });
+                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1440P);
                     }
                     if (maxSupportedResW < 1920) {
                         // 1080p is unsupported
-                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1080P, new Runnable() {
-                            @Override
-                            public void run() {
-                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                                setValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_720P);
-                                resetBitrateToDefault(prefs, null, null);
-                            }
-                        });
+                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1080P);
                     }
                     // Never remove 720p
                 }
@@ -581,56 +572,11 @@ public class StreamSettings extends Activity {
                 addNativeResolutionEntries(width, height, false);
             }
 
-            if (!PreferenceConfiguration.readPreferences(this.getActivity()).unlockFps) {
-                // We give some extra room in case the FPS is rounded down
-                if (maxSupportedFps < 118) {
-                    removeValue(PreferenceConfiguration.FPS_PREF_STRING, "120", new Runnable() {
-                        @Override
-                        public void run() {
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                            setValue(PreferenceConfiguration.FPS_PREF_STRING, "90");
-                            resetBitrateToDefault(prefs, null, null);
-                        }
-                    });
-                }
-                if (maxSupportedFps < 88) {
-                    // 1080p is unsupported
-                    removeValue(PreferenceConfiguration.FPS_PREF_STRING, "90", new Runnable() {
-                        @Override
-                        public void run() {
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                            setValue(PreferenceConfiguration.FPS_PREF_STRING, "60");
-                            resetBitrateToDefault(prefs, null, null);
-                        }
-                    });
-                }
-                // Never remove 30 FPS or 60 FPS
-            }
-            addNativeFrameRateEntry(maxSupportedFps);
+            // A saved resolution that isn't offered, like one the decoder doesn't list
+            // or one entered as a custom size, is kept and shown as a custom entry
+            resolutionPref.addEntryForCustomValue();
 
-            // Android L introduces the drop duplicate behavior of releaseOutputBuffer()
-            // that the unlock FPS option relies on to not massively increase latency.
-            findPreference(PreferenceConfiguration.UNLOCK_FPS_STRING).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    // HACK: We need to let the preference change succeed before reinitializing to ensure
-                    // it's reflected in the new layout.
-                    final Handler h = new Handler();
-                    h.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            // Ensure the activity is still open when this timeout expires
-                            StreamSettings settingsActivity = (StreamSettings) SettingsFragment.this.getActivity();
-                            if (settingsActivity != null) {
-                                settingsActivity.reloadSettings();
-                            }
-                        }
-                    }, 500);
-
-                    // Allow the original preference change to take place
-                    return true;
-                }
-            });
+            setUpFpsEntries();
 
             // The jitter buffer only applies to host frame timing pacing
             final Preference jitterBufferPref = findPreference("jitter_buffer");
@@ -693,19 +639,8 @@ public class StreamSettings extends Activity {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
                     String valueStr = (String) newValue;
 
-                    // Detect if this value is the native resolution option
-                    CharSequence[] values = ((ListPreference)preference).getEntryValues();
-                    boolean isNativeRes = true;
-                    for (int i = 0; i < values.length; i++) {
-                        // Look for a match prior to the start of the native resolution entries
-                        if (valueStr.equals(values[i].toString()) && i < nativeResolutionStartIndex) {
-                            isNativeRes = false;
-                            break;
-                        }
-                    }
-
                     // If this is native resolution, show the warning dialog
-                    if (isNativeRes) {
+                    if (nativeResolutionValues.contains(valueStr)) {
                         Dialog.displayDialog(getActivity(),
                                 getResources().getString(R.string.title_native_res_dialog),
                                 getResources().getString(R.string.text_native_res_dialog),
@@ -724,15 +659,6 @@ public class StreamSettings extends Activity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
                     String valueStr = (String) newValue;
-
-                    // If this is native frame rate, show the warning dialog
-                    CharSequence[] values = ((ListPreference)preference).getEntryValues();
-                    if (nativeFramerateShown && values[values.length - 1].toString().equals(newValue.toString())) {
-                        Dialog.displayDialog(getActivity(),
-                                getResources().getString(R.string.title_native_fps_dialog),
-                                getResources().getString(R.string.text_native_res_dialog),
-                                false);
-                    }
 
                     // Write the new bitrate value
                     resetBitrateToDefault(prefs, null, valueStr);

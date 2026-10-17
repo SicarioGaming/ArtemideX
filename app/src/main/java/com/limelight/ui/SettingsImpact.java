@@ -57,7 +57,6 @@ public final class SettingsImpact {
         IMPACT.put("list_audio_haptics", R.string.impact_audio_haptics);
         IMPACT.put("seekbar_deadzone", R.string.impact_deadzone);
         IMPACT.put("checkbox_prevent_packet_loss", R.string.impact_prevent_packet_loss);
-        IMPACT.put("checkbox_unlock_fps", R.string.impact_unlock_fps);
         IMPACT.put("checkbox_reduce_refresh_rate", R.string.impact_reduce_refresh_rate);
         IMPACT.put("text_actual_display_refresh_rate", R.string.impact_actual_refresh_rate);
         IMPACT.put("video_format", R.string.impact_video_format);
