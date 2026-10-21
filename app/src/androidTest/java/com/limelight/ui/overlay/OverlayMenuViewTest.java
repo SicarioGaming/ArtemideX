@@ -53,6 +53,7 @@ public class OverlayMenuViewTest {
         @Override public void onUploadClipboard() { events.add("uploadClipboard"); }
         @Override public void onFetchClipboard() { events.add("fetchClipboard"); }
         @Override public void onShowServerCommands() { events.add("serverCommands"); }
+        @Override public void onToggleFullKeyboard() { events.add("fullKeyboard"); }
     }
 
     @Before
@@ -135,7 +136,9 @@ public class OverlayMenuViewTest {
         click(str(com.limelight.R.string.overlay_menu_rotate_screen));
         click(str(com.limelight.R.string.overlay_menu_onscreen_controller));
         click(str(com.limelight.R.string.overlay_menu_floating_button));
+        click(str(com.limelight.R.string.overlay_menu_full_keyboard));
 
+        assertTrue(listener.events.contains("fullKeyboard"));
         assertTrue(listener.events.contains("panZoom"));
         assertTrue(listener.events.contains("sensitivity"));
         assertTrue(listener.events.contains("uploadClipboard"));

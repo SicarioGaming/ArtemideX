@@ -481,6 +481,22 @@
     <string name="title_checkbox_async_lfr">Async: LFR (Experimental)</string>
     <string name="summary_checkbox_async_lfr">With async decode, keep only the newest decoded frame waiting to be shown, for the lowest delay. May drop more frames under load.</string>
 
+    <!-- ArtemideX: on-screen full keyboard and automatic clipboard sync (from Artemide) -->
+    <string name="overlay_menu_full_keyboard">Full Keyboard</string>
+    <string name="virtual_keyboard_hide">Hide\nKBD</string>
+    <string name="title_checkbox_keyboard_vibrate">Keyboard key vibration</string>
+    <string name="summary_checkbox_keyboard_vibrate">Vibrate when keys on the on-screen full keyboard are pressed</string>
+    <string name="title_checkbox_sticky_modifier_keys">Sticky modifier keys</string>
+    <string name="summary_checkbox_sticky_modifier_keys">On the on-screen full keyboard, long-press Ctrl, Alt, Shift or Win to hold it down; tap it again to let go</string>
+    <string name="title_seekbar_keyboard_opacity">On-screen full keyboard opacity</string>
+    <string name="summary_seekbar_keyboard_opacity">How see-through the on-screen full keyboard is</string>
+    <string name="title_checkbox_smart_clipboard_sync">Automatic clipboard sync</string>
+    <string name="summary_checkbox_smart_clipboard_sync">Send this device\'s clipboard to the PC when the stream starts or you return to it, and copy the PC\'s clipboard here when you leave the stream. Needs clipboard permission for this device in Vibepollo.</string>
+    <string name="title_checkbox_smart_clipboard_sync_toast">Show clipboard sync messages</string>
+    <string name="summary_checkbox_smart_clipboard_sync_toast">Show a short message each time the clipboard is synced automatically</string>
+    <string name="title_checkbox_hide_clipboard_content">Hide clipboard content</string>
+    <string name="summary_checkbox_hide_clipboard_content">Mark text copied from the PC as sensitive, so Android doesn\'t preview it on screen</string>
+
     <!-- Custom Commands Activity -->
     <string name="title_custom_commands">Custom Commands</string>
     <string name="custom_commands_empty">No custom commands configured.\n\nTap the + button to add a command.</string>

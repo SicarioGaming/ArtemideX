@@ -41,6 +41,7 @@ public class OverlayMenuView extends LinearLayout {
         void onUploadClipboard();
         void onFetchClipboard();
         void onShowServerCommands();
+        void onToggleFullKeyboard();
     }
 
     // Windows virtual key codes for Artemide's built-in shortcuts
@@ -130,6 +131,7 @@ public class OverlayMenuView extends LinearLayout {
     private static final int ACTION_UPLOAD_CLIPBOARD = 16;
     private static final int ACTION_FETCH_CLIPBOARD = 17;
     private static final int ACTION_SERVER_COMMANDS = 18;
+    private static final int ACTION_FULL_KEYBOARD = 19;
     private static final int ACTION_CUSTOM_BASE = 100;
     private static final int ACTION_SHORTCUT_BASE = 200;
 
@@ -265,6 +267,8 @@ public class OverlayMenuView extends LinearLayout {
                 getContext().getString(R.string.overlay_menu_rotate_screen), ACTION_ROTATE_SCREEN, spacing);
             addHorizontalButton(R.drawable.ic_overlay_gamepad,
                 getContext().getString(R.string.overlay_menu_onscreen_controller), ACTION_ONSCREEN_CONTROLLER, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_keyboard,
+                getContext().getString(R.string.overlay_menu_full_keyboard), ACTION_FULL_KEYBOARD, spacing);
             addHorizontalButton(R.drawable.ic_overlay_window_menu,
                 getContext().getString(R.string.overlay_menu_floating_button), ACTION_FLOATING_BUTTON, spacing);
 
@@ -680,6 +684,9 @@ public class OverlayMenuView extends LinearLayout {
                 shouldCloseMenu = true;
             } else if (action == ACTION_FETCH_CLIPBOARD) {
                 actionListener.onFetchClipboard();
+                shouldCloseMenu = true;
+            } else if (action == ACTION_FULL_KEYBOARD) {
+                actionListener.onToggleFullKeyboard();
                 shouldCloseMenu = true;
             } else if (action == ACTION_SERVER_COMMANDS) {
                 closeMenu();

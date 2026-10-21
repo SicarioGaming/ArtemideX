@@ -38,8 +38,13 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
         (`/actions/clipboard`, packet 0x3000); each needs the client's permission in Vibepollo.
         Server commands needed a change to moonlight-common-c, committed on its local
         `artemidex` branch (not pushed anywhere yet)
-  - [ ] On-screen full keyboard and special-keys bar
-  - [ ] Automatic clipboard sync when the stream starts or loses focus
+  - [x] On-screen full keyboard (Full Keyboard in the menu): Artemide's 82-key layout, key
+        popups, vibration and sticky Ctrl/Alt/Shift/Win, with opacity and vibration settings.
+        Keys go straight to the host as keyboard input
+  - [x] Automatic clipboard sync (Host Settings): sends this device's clipboard when the stream
+        starts or you return to it, copies the PC's when you leave (also before Disconnect and
+        Quit Session, waiting up to 2 seconds); optional messages and "hide clipboard content"
+  - Not ported: Artemide's customisable on-screen key buttons (KeyBoardController, ~3,000 lines)
   - [ ] Custom shortcuts imported from a file (Moonlight X's custom commands already cover adding your own)
 - [x] Virtual Display: a "Display on the PC" setting (host default, virtual, primary) and
       "Start in Virtual/Primary Display" when long-pressing a game. Host default sends nothing,

@@ -205,6 +205,25 @@
             android:text="@string/suffix_seekbar_deadzone"
             android:title="@string/title_seekbar_touch_sensitivity"/>
         <CheckBoxPreference
+            android:key="checkbox_keyboard_vibrate"
+            android:title="@string/title_checkbox_keyboard_vibrate"
+            android:summary="@string/summary_checkbox_keyboard_vibrate"
+            android:defaultValue="true" />
+        <CheckBoxPreference
+            android:key="checkbox_sticky_modifier_keys"
+            android:title="@string/title_checkbox_sticky_modifier_keys"
+            android:summary="@string/summary_checkbox_sticky_modifier_keys"
+            android:defaultValue="true" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_keyboard_opacity"
+            android:defaultValue="90"
+            seekbar:min="20"
+            android:max="100"
+            seekbar:step="5"
+            android:summary="@string/summary_seekbar_keyboard_opacity"
+            android:text="@string/suffix_seekbar_deadzone"
+            android:title="@string/title_seekbar_keyboard_opacity"/>
+        <CheckBoxPreference
             android:key="checkbox_mouse_nav_buttons"
             android:title="@string/title_checkbox_mouse_nav_buttons"
             android:summary="@string/summary_checkbox_mouse_nav_buttons"
@@ -285,6 +304,22 @@
             android:key="checkbox_prevent_packet_loss"
             android:title="@string/title_checkbox_prevent_packet_loss"
             android:summary="@string/summary_checkbox_prevent_packet_loss"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_smart_clipboard_sync"
+            android:title="@string/title_checkbox_smart_clipboard_sync"
+            android:summary="@string/summary_checkbox_smart_clipboard_sync"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_smart_clipboard_sync_toast"
+            android:dependency="checkbox_smart_clipboard_sync"
+            android:title="@string/title_checkbox_smart_clipboard_sync_toast"
+            android:summary="@string/summary_checkbox_smart_clipboard_sync_toast"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_hide_clipboard_content"
+            android:title="@string/title_checkbox_hide_clipboard_content"
+            android:summary="@string/summary_checkbox_hide_clipboard_content"
             android:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_ui_settings"

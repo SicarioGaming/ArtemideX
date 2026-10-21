@@ -94,6 +94,12 @@ public class PreferenceConfiguration {
     private static final String SYNC_LFR_PREF_STRING = "checkbox_sync_lfr";
     private static final String ASYNC_DECODE_PREF_STRING = "checkbox_async_decode";
     private static final String ASYNC_LFR_PREF_STRING = "checkbox_async_lfr";
+    private static final String KEYBOARD_VIBRATE_PREF_STRING = "checkbox_keyboard_vibrate";
+    private static final String STICKY_MODIFIER_KEYS_PREF_STRING = "checkbox_sticky_modifier_keys";
+    private static final String KEYBOARD_OPACITY_PREF_STRING = "seekbar_keyboard_opacity";
+    private static final String SMART_CLIPBOARD_SYNC_PREF_STRING = "checkbox_smart_clipboard_sync";
+    private static final String SMART_CLIPBOARD_SYNC_TOAST_PREF_STRING = "checkbox_smart_clipboard_sync_toast";
+    private static final String HIDE_CLIPBOARD_CONTENT_PREF_STRING = "checkbox_hide_clipboard_content";
 
     // Artemide's V-Sync options for the direct renderer (one at a time, as in Artemide)
     public static final int VSYNC_OFF = 0;
@@ -236,6 +242,14 @@ public class PreferenceConfiguration {
     public boolean syncLfr;
     public boolean asyncDecode;
     public boolean asyncLfr; // only with asyncDecode
+    // On-screen full keyboard (from Artemide)
+    public boolean keyboardVibrate;
+    public boolean stickyModifierKeys;
+    public int keyboardOpacity; // percent
+    // Automatic clipboard sync with Apollo/Vibepollo (from Artemide)
+    public boolean smartClipboardSync;
+    public boolean smartClipboardSyncToast;
+    public boolean hideClipboardContent;
     public boolean autoResumeStream;
 
     public static boolean isNativeResolution(int width, int height) {
@@ -785,6 +799,12 @@ public class PreferenceConfiguration {
         config.syncLfr = prefs.getBoolean(SYNC_LFR_PREF_STRING, false);
         config.asyncDecode = prefs.getBoolean(ASYNC_DECODE_PREF_STRING, false);
         config.asyncLfr = config.asyncDecode && prefs.getBoolean(ASYNC_LFR_PREF_STRING, false);
+        config.keyboardVibrate = prefs.getBoolean(KEYBOARD_VIBRATE_PREF_STRING, true);
+        config.stickyModifierKeys = prefs.getBoolean(STICKY_MODIFIER_KEYS_PREF_STRING, true);
+        config.keyboardOpacity = prefs.getInt(KEYBOARD_OPACITY_PREF_STRING, 90);
+        config.smartClipboardSync = prefs.getBoolean(SMART_CLIPBOARD_SYNC_PREF_STRING, false);
+        config.smartClipboardSyncToast = prefs.getBoolean(SMART_CLIPBOARD_SYNC_TOAST_PREF_STRING, false);
+        config.hideClipboardContent = prefs.getBoolean(HIDE_CLIPBOARD_CONTENT_PREF_STRING, false);
         config.autoResumeStream = prefs.getBoolean(AUTO_RESUME_STREAM_PREF_STRING, DEFAULT_AUTO_RESUME_STREAM);
 
         return config;

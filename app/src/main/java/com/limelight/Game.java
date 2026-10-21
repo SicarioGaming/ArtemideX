@@ -10,6 +10,7 @@ import com.limelight.binding.input.capture.InputCaptureProvider;
 import com.limelight.binding.input.touch.AbsoluteTouchContext;
 import com.limelight.binding.input.touch.RelativeTouchContext;
 import com.limelight.binding.input.touch.TrackpadContext;
+import com.limelight.binding.input.virtual_controller.keyboard.KeyBoardLayoutController;
 import com.limelight.binding.input.driver.UsbDriverService;
 import com.limelight.binding.input.evdev.EvdevListener;
 import com.limelight.binding.input.touch.TouchContext;
@@ -203,6 +204,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     // Whether the trackpad modes use the custom sensitivity from settings
     private boolean touchSensitivityEnabled;
+
+    // On-screen full keyboard (from Artemide) and the modifiers held down on it
+    private KeyBoardLayoutController fullKeyboard;
+    private int fullKeyboardModifiers;
+
+    // Text last sent to or copied from the host, so automatic clipboard sync doesn't send it back
+    private volatile String lastSyncedClipboard;
 
     // Prevent Packet Loss (from Artemide): a tiny packet every 20 ms keeps Wi-Fi out of power
     // saving between frames. It stops by itself once the stream is no longer connected.
@@ -794,6 +802,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         // Keep the zoomed-in part of the stream in view after a resize or rotation
         streamView.post(() -> panZoomHandler.handleSurfaceChange());
 
+        // Refit the on-screen full keyboard to the new screen size (it stays shown or hidden)
+        if (fullKeyboard != null) {
+            fullKeyboard.refreshLayout();
+        }
+
         // Hide on-screen overlays in PiP mode
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if (isInPictureInPictureMode()) {
@@ -807,6 +820,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 notificationOverlayView.setVisibility(View.GONE);
                 brightnessSliderView.hide();
                 floatingMenuButton.setVisibility(View.GONE);
+                if (fullKeyboard != null && fullKeyboard.isKeyboardVisible()) {
+                    fullKeyboard.hide();
+                }
 
                 // Disable sensors while in PiP mode
                 controllerHandler.disableSensors();
@@ -960,6 +976,22 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         // With Android native pointer capture, capture is lost when focus is lost,
         // so it must be requested again when focus is regained.
         inputCaptureProvider.onWindowFocusChanged(hasFocus);
+
+        // Automatic clipboard sync (from Artemide): coming back sends this device's clipboard to
+        // the PC; leaving copies the PC's clipboard here so it can be pasted in other apps
+        if (connected && prefConfig.smartClipboardSync) {
+            if (hasFocus) {
+                // Android only lets the focused app read the clipboard, so let focus settle first
+                streamView.postDelayed(() -> {
+                    if (connected && hasWindowFocus()) {
+                        syncClipboardToHost(true);
+                    }
+                }, 300);
+            }
+            else if (overlayMenuView.getVisibility() != View.VISIBLE) {
+                syncClipboardFromHost(true);
+            }
+        }
     }
 
     private boolean isRefreshRateEqualMatch(float refreshRate) {
@@ -2817,6 +2849,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 if (prefConfig.preventPacketLoss) {
                     keepAliveHandler.postDelayed(keepAlivePing, 1000);
                 }
+
+                if (prefConfig.smartClipboardSync) {
+                    syncClipboardToHost(true);
+                }
             }
         });
 
@@ -3167,17 +3203,21 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         overlayMenuView.setMenuActionListener(new OverlayMenuView.MenuActionListener() {
             @Override
             public void onDisconnect() {
-                userInitiatedDisconnect = true;
-                stopConnection();
-                finish();
+                leaveStream(() -> {
+                    userInitiatedDisconnect = true;
+                    stopConnection();
+                    finish();
+                });
             }
 
             @Override
             public void onQuitSession() {
-                userInitiatedDisconnect = true;
-                controllerHandler.pendingApplicationQuit = true;
-                stopConnection();
-                finish();
+                leaveStream(() -> {
+                    userInitiatedDisconnect = true;
+                    controllerHandler.pendingApplicationQuit = true;
+                    stopConnection();
+                    finish();
+                });
             }
 
             @Override
@@ -3273,6 +3313,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             @Override
             public void onShowServerCommands() {
                 showServerCommands();
+            }
+
+            @Override
+            public void onToggleFullKeyboard() {
+                toggleFullKeyboard();
             }
         });
     }
@@ -3416,41 +3461,170 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         runOnUiThread(() -> Toast.makeText(Game.this, message, Toast.LENGTH_SHORT).show());
     }
 
-    // Send this device's clipboard text to the host (Apollo/Vibepollo; from Artemide)
     private void uploadClipboard() {
+        syncClipboardToHost(false);
+    }
+
+    private void fetchClipboard() {
+        syncClipboardFromHost(false);
+    }
+
+    // Automatic syncs only show messages when the "Show clipboard sync messages" setting asks
+    private void clipboardToast(boolean automatic, String message) {
+        if (!automatic || prefConfig.smartClipboardSyncToast) {
+            showToastOnUiThread(message);
+        }
+    }
+
+    /**
+     * Send this device's clipboard text to the host (Apollo/Vibepollo; from Artemide). Automatic
+     * sync skips text that was just synced, so the two clipboards don't bounce it back and forth.
+     */
+    private void syncClipboardToHost(boolean automatic) {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = clipboard.getPrimaryClip();
         CharSequence text = clip != null && clip.getItemCount() > 0 ? clip.getItemAt(0).coerceToText(this) : null;
         if (text == null || text.length() == 0) {
-            Toast.makeText(this, R.string.clipboard_empty, Toast.LENGTH_SHORT).show();
+            if (!automatic) {
+                Toast.makeText(this, R.string.clipboard_empty, Toast.LENGTH_SHORT).show();
+            }
             return;
         }
 
         String content = text.toString();
+        if (automatic && content.equals(lastSyncedClipboard)) {
+            return;
+        }
+
         new Thread(() -> {
             try {
                 createHostHttp().sendClipboard(content);
-                showToastOnUiThread(getString(R.string.clipboard_sent));
+                lastSyncedClipboard = content;
+                clipboardToast(automatic, getString(R.string.clipboard_sent));
             } catch (Exception e) {
-                showToastOnUiThread(getString(R.string.clipboard_failed, e.getMessage()));
+                clipboardToast(automatic, getString(R.string.clipboard_failed, e.getMessage()));
             }
         }).start();
     }
 
-    // Copy the host's clipboard text to this device (Apollo/Vibepollo; from Artemide)
-    private void fetchClipboard() {
+    private void syncClipboardFromHost(boolean automatic) {
+        syncClipboardFromHost(automatic, null);
+    }
+
+    /**
+     * Copy the host's clipboard text to this device (Apollo/Vibepollo; from Artemide), then run
+     * {@code then} on the UI thread whether or not that worked.
+     */
+    private void syncClipboardFromHost(boolean automatic, Runnable then) {
         new Thread(() -> {
             try {
                 String content = createHostHttp().getClipboard();
+                if (automatic && (content == null || content.isEmpty() || content.equals(lastSyncedClipboard))) {
+                    return;
+                }
+                lastSyncedClipboard = content;
+
                 runOnUiThread(() -> {
+                    ClipData clip = ClipData.newPlainText(getString(R.string.app_label), content);
+                    if (prefConfig.hideClipboardContent && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        // ClipDescription.EXTRA_IS_SENSITIVE: Android hides the preview of the copied text
+                        android.os.PersistableBundle extras = new android.os.PersistableBundle();
+                        extras.putBoolean("android.content.extra.IS_SENSITIVE", true);
+                        clip.getDescription().setExtras(extras);
+                    }
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                    clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.app_label), content));
-                    Toast.makeText(Game.this, R.string.clipboard_received, Toast.LENGTH_SHORT).show();
+                    clipboard.setPrimaryClip(clip);
+                    clipboardToast(automatic, getString(R.string.clipboard_received));
                 });
             } catch (Exception e) {
-                showToastOnUiThread(getString(R.string.clipboard_failed, e.getMessage()));
+                clipboardToast(automatic, getString(R.string.clipboard_failed, e.getMessage()));
+            } finally {
+                if (then != null) {
+                    runOnUiThread(then);
+                }
             }
         }).start();
+    }
+
+    /**
+     * Leaving from the menu ends the stream at once, and the host only answers clipboard requests
+     * during a stream, so with automatic sync on, copy the PC's clipboard first.
+     */
+    private void leaveStream(Runnable stop) {
+        if (connected && prefConfig.smartClipboardSync) {
+            // Leave after the copy, or after 2 seconds if the host is slow to answer, but only once
+            java.util.concurrent.atomic.AtomicBoolean stopped = new java.util.concurrent.atomic.AtomicBoolean();
+            Runnable stopOnce = () -> {
+                if (stopped.compareAndSet(false, true)) {
+                    stop.run();
+                }
+            };
+            streamView.postDelayed(stopOnce, 2000);
+            syncClipboardFromHost(true, stopOnce);
+        }
+        else {
+            stop.run();
+        }
+    }
+
+    // On-screen full keyboard (from Artemide), created the first time it's shown
+    private void toggleFullKeyboard() {
+        if (fullKeyboard == null) {
+            fullKeyboard = new KeyBoardLayoutController((FrameLayout) streamView.getParent(), this, prefConfig,
+                    this::sendFullKeyboardKey);
+            fullKeyboard.refreshLayout();
+            fullKeyboard.show();
+        }
+        else {
+            fullKeyboard.toggleVisibility();
+        }
+    }
+
+    /**
+     * Send a key from the on-screen full keyboard straight to the host as keyboard input. Unlike
+     * handleKeyDown(), it never treats the key as a gamepad button or a Moonlight shortcut.
+     */
+    private void sendFullKeyboardKey(KeyEvent event) {
+        if (!connected || conn == null) {
+            return;
+        }
+
+        boolean down = event.getAction() == KeyEvent.ACTION_DOWN;
+        int modifier;
+        switch (event.getKeyCode()) {
+            case KeyEvent.KEYCODE_SHIFT_LEFT:
+            case KeyEvent.KEYCODE_SHIFT_RIGHT:
+                modifier = KeyboardPacket.MODIFIER_SHIFT;
+                break;
+            case KeyEvent.KEYCODE_CTRL_LEFT:
+            case KeyEvent.KEYCODE_CTRL_RIGHT:
+                modifier = KeyboardPacket.MODIFIER_CTRL;
+                break;
+            case KeyEvent.KEYCODE_ALT_LEFT:
+            case KeyEvent.KEYCODE_ALT_RIGHT:
+                modifier = KeyboardPacket.MODIFIER_ALT;
+                break;
+            case KeyEvent.KEYCODE_META_LEFT:
+            case KeyEvent.KEYCODE_META_RIGHT:
+                modifier = KeyboardPacket.MODIFIER_META;
+                break;
+            default:
+                modifier = 0;
+                break;
+        }
+
+        if (down) {
+            fullKeyboardModifiers |= modifier;
+        }
+        else {
+            fullKeyboardModifiers &= ~modifier;
+        }
+
+        short translated = keyboardTranslator.translate(event.getKeyCode(), -1);
+        if (translated != 0) {
+            conn.sendKeyboardInput(translated, down ? KeyboardPacket.KEY_DOWN : KeyboardPacket.KEY_UP,
+                    (byte) fullKeyboardModifiers, (byte) 0);
+        }
     }
 
     // List the host's server commands and run the one picked (Apollo/Vibepollo; from Artemide)
