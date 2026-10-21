@@ -636,6 +636,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
         }
 
+        // Warp Drive / Warp 2 (from Artemide): ask the PC for 2x / 4x the frame rate and always
+        // show the newest frame, so each shown frame is fresher
+        if (prefConfig.warpFactor > 1) {
+            chosenFrameRate *= prefConfig.warpFactor;
+            LimeLog.info("Warp: asking the host for " + chosenFrameRate + " FPS");
+        }
+
         // Use the "actual display refresh rate" preference for the X100 refresh rate. Without
         // one, it's measured once the display mode is set (see startConnection()).
         int refreshRateX100 = 0;
@@ -649,7 +656,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         var configBuilder = new StreamConfiguration.Builder()
                 .setResolution(prefConfig.width, prefConfig.height)
-                .setLaunchRefreshRate(prefConfig.fps)
+                .setLaunchRefreshRate(prefConfig.fps * prefConfig.warpFactor)
                 .setRefreshRate(chosenFrameRate)
                 .setApp(app)
                 .setEnableUltraLowLatency(prefConfig.enableUltraLowLatency)
@@ -666,7 +673,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setColorRange(decoderRenderer.getPreferredColorRange())
                 .setPersistGamepadsAfterDisconnect(!prefConfig.multiController);
 
-        if (refreshRateX100 > 0) {
+        // Warp runs the host faster than the display on purpose, so it doesn't ask for the
+        // display's exact rate
+        if (refreshRateX100 > 0 && prefConfig.warpFactor == 1) {
             configBuilder.setClientRefreshRateX100(refreshRateX100);
         }
 
@@ -2377,6 +2386,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     return true;
                 }
 
+                updateHostCursorForTouch(event);
+
                 if (mouseMode == MOUSE_MODE_MULTI_TOUCH && view == streamView && trySendTouchEvent(view, event)) {
                     // Multi-touch mode sends touches straight to the host when it supports them
                     // (Sunshine and Vibepollo do); otherwise fall through to direct touch
@@ -2626,6 +2637,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     }
 
     private void stopConnection() {
+        // Give the PC its cursor back before the connection goes away
+        restoreHostCursor();
+
         if (connecting || connected) {
             connecting = connected = false;
             updatePipAutoEnter();
@@ -2853,6 +2867,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 if (prefConfig.smartClipboardSync) {
                     syncClipboardToHost(true);
                 }
+
+                if (prefConfig.hideCursorMode == PreferenceConfiguration.HIDE_CURSOR_ALWAYS) {
+                    setHostCursorHidden(true);
+                }
             }
         });
 
@@ -2968,7 +2986,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             return;
         }
 
-        if (!manualRefreshRateX100) {
+        if (!manualRefreshRateX100 && prefConfig.warpFactor == 1) {
             double hostRate = DisplayRefreshMeter.streamMatchedRate(measuredRefreshHz, streamConfig.getRefreshRate());
             if (hostRate > 0) {
                 streamConfig.setClientRefreshRateX100((int) Math.round(hostRate * 100));
@@ -2985,8 +3003,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             "Streaming %dx%d @ %d FPS%s, %d Mbps, %s%s",
             prefConfig.width,
             prefConfig.height,
-            prefConfig.fps,
-            hostRateText,
+            streamConfig.getRefreshRate(),
+            hostRateText + (prefConfig.warpFactor > 1 ? " (Warp x" + prefConfig.warpFactor + ")" : ""),
             prefConfig.bitrate / 1000,
             decoderRenderer.getRendererName(),
             prefConfig.enableHdr ? " HDR" : "");
@@ -3344,6 +3362,64 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         performanceOverlayView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
         performanceOverlayView.setGravity(Gravity.CENTER);
         performanceOverlayView.setSingleLine(true);
+    }
+
+    // Vibepollo (like Sunshine) toggles drawing the cursor into the video on Ctrl+Alt+Shift+N
+    private static final short[] TOGGLE_HOST_CURSOR_KEYS = {
+            OverlayMenuView.VK_LCONTROL, OverlayMenuView.VK_LMENU, OverlayMenuView.VK_LSHIFT, 0x4E /* N */
+    };
+
+    // Whether ArtemideX has toggled the PC's cursor off, so it can be turned back on
+    private boolean hostCursorHidden;
+    private final Runnable showHostCursor = () -> setHostCursorHidden(false);
+
+    private void setHostCursorHidden(boolean hidden) {
+        if (hidden == hostCursorHidden || !connected) {
+            return;
+        }
+        hostCursorHidden = hidden;
+        sendKeys(TOGGLE_HOST_CURSOR_KEYS);
+    }
+
+    /**
+     * Hide the PC cursor while a finger is down ("Hide PC cursor: While touching"). Showing it
+     * again waits a moment, so quick taps don't make it flicker or send the toggle twice in a row.
+     */
+    private void updateHostCursorForTouch(MotionEvent event) {
+        if (prefConfig.hideCursorMode != PreferenceConfiguration.HIDE_CURSOR_WHILE_TOUCHING) {
+            return;
+        }
+
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                streamView.removeCallbacks(showHostCursor);
+                setHostCursorHidden(true);
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                streamView.removeCallbacks(showHostCursor);
+                streamView.postDelayed(showHostCursor, 300);
+                break;
+        }
+    }
+
+    // Shows the PC cursor again right away; the connection may be about to close
+    private void restoreHostCursor() {
+        streamView.removeCallbacks(showHostCursor);
+        if (!hostCursorHidden || !connected || conn == null) {
+            return;
+        }
+        hostCursorHidden = false;
+
+        byte modifiers = 0;
+        for (short key : TOGGLE_HOST_CURSOR_KEYS) {
+            conn.sendKeyboardInput(key, KeyboardPacket.KEY_DOWN, modifiers, (byte) 0);
+            modifiers |= getModifierForKey(key);
+        }
+        for (int i = TOGGLE_HOST_CURSOR_KEYS.length - 1; i >= 0; i--) {
+            modifiers &= (byte) ~getModifierForKey(TOGGLE_HOST_CURSOR_KEYS[i]);
+            conn.sendKeyboardInput(TOGGLE_HOST_CURSOR_KEYS[i], KeyboardPacket.KEY_UP, modifiers, (byte) 0);
+        }
     }
 
     private static int virtualDisplayFromSetting(String mode) {

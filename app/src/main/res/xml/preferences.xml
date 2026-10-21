@@ -195,6 +195,18 @@
             android:title="@string/title_checkbox_touchscreen_trackpad"
             android:summary="@string/summary_checkbox_touchscreen_trackpad"
             android:defaultValue="true" />
+        <CheckBoxPreference
+            android:key="checkbox_long_press_right_click"
+            android:title="@string/title_checkbox_long_press_right_click"
+            android:summary="@string/summary_checkbox_long_press_right_click"
+            android:defaultValue="true" />
+        <ListPreference
+            android:key="hide_cursor_mode"
+            android:title="@string/title_hide_cursor_mode"
+            android:entries="@array/hide_cursor_mode_names"
+            android:entryValues="@array/hide_cursor_mode_values"
+            android:summary="@string/summary_hide_cursor_mode"
+            android:defaultValue="never" />
         <com.limelight.preferences.SeekBarPreference
             android:key="seekbar_touch_sensitivity"
             android:defaultValue="100"

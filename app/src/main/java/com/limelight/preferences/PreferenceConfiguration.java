@@ -239,6 +239,13 @@ public class PreferenceConfiguration {
     // "host" (send nothing), "virtual" or "primary": the virtualDisplay launch argument
     public String virtualDisplayMode;
     public int vsyncMode; // VSYNC_*
+    public int warpFactor = 1; // Warp Drive 2, Warp 2 4, otherwise 1 (see warpFactorFor())
+    public boolean longPressRightClick; // gaming trackpad: long press holds the right button
+    // PC cursor in the video: HIDE_CURSOR_* (Vibepollo's Ctrl+Alt+Shift+N toggle)
+    public int hideCursorMode;
+    public static final int HIDE_CURSOR_NEVER = 0;
+    public static final int HIDE_CURSOR_WHILE_TOUCHING = 1;
+    public static final int HIDE_CURSOR_ALWAYS = 2;
     public boolean syncLfr;
     public boolean asyncDecode;
     public boolean asyncLfr; // only with asyncDecode
@@ -564,10 +571,29 @@ public class PreferenceConfiguration {
         else if (str.equals("host-timed")) {
             return FRAME_PACING_HOST_TIMED;
         }
+        else if (str.equals("warp") || str.equals("warp2")) {
+            // Warp Drive and Warp 2 present like Prefer lowest latency; see warpFactorFor()
+            return FRAME_PACING_MIN_LATENCY;
+        }
         else {
             // Should never get here
             return FRAME_PACING_MIN_LATENCY;
         }
+    }
+
+    /**
+     * Artemide's Warp Drive (2x) and Warp 2 (4x): how many times the chosen frame rate to ask the
+     * host for. The newest frame is always shown, so frames are fresher and the decoder runs
+     * faster. 1 for every other frame pacing setting.
+     */
+    public static int warpFactorFor(String framePacing) {
+        if ("warp".equals(framePacing)) {
+            return 2;
+        }
+        else if ("warp2".equals(framePacing)) {
+            return 4;
+        }
+        return 1;
     }
 
     private static AnalogStickForScrolling getAnalogStickForScrollingValue(Context context) {
@@ -734,6 +760,7 @@ public class PreferenceConfiguration {
         config.videoRenderer = getVideoRendererValue(context);
         config.spatialDithering = getSpatialDitheringValue(context);
         config.framePacing = getFramePacingValue(context);
+        config.warpFactor = warpFactorFor(prefs.getString(FRAME_PACING_PREF_STRING, DEFAULT_FRAME_PACING));
         config.jitterBuffer = getJitterBufferValue(context);
         config.pyrowaveLateFrames = getPyrowaveLateFramesValue(context);
 
@@ -797,6 +824,18 @@ public class PreferenceConfiguration {
                 break;
         }
         config.syncLfr = prefs.getBoolean(SYNC_LFR_PREF_STRING, false);
+        config.longPressRightClick = prefs.getBoolean("checkbox_long_press_right_click", true);
+        switch (prefs.getString("hide_cursor_mode", "never")) {
+            case "touching":
+                config.hideCursorMode = HIDE_CURSOR_WHILE_TOUCHING;
+                break;
+            case "always":
+                config.hideCursorMode = HIDE_CURSOR_ALWAYS;
+                break;
+            default:
+                config.hideCursorMode = HIDE_CURSOR_NEVER;
+                break;
+        }
         config.asyncDecode = prefs.getBoolean(ASYNC_DECODE_PREF_STRING, false);
         config.asyncLfr = config.asyncDecode && prefs.getBoolean(ASYNC_LFR_PREF_STRING, false);
         config.keyboardVibrate = prefs.getBoolean(KEYBOARD_VIBRATE_PREF_STRING, true);

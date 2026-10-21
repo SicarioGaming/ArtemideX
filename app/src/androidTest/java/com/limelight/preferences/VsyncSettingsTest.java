@@ -77,6 +77,39 @@ public class VsyncSettingsTest {
     }
 
     @Test
+    public void warpModesAskForMoreFramesAndShowTheNewest() {
+        prefs.edit().putString("frame_pacing", "warp").commit();
+        PreferenceConfiguration config = PreferenceConfiguration.readPreferences(context);
+        assertEquals(PreferenceConfiguration.FRAME_PACING_MIN_LATENCY, config.framePacing);
+        assertEquals(2, config.warpFactor);
+
+        prefs.edit().putString("frame_pacing", "warp2").commit();
+        config = PreferenceConfiguration.readPreferences(context);
+        assertEquals(PreferenceConfiguration.FRAME_PACING_MIN_LATENCY, config.framePacing);
+        assertEquals(4, config.warpFactor);
+
+        for (String other : new String[]{"latency", "balanced", "cap-fps", "smoothness", "host-timed"}) {
+            prefs.edit().putString("frame_pacing", other).commit();
+            assertEquals(other, 1, PreferenceConfiguration.readPreferences(context).warpFactor);
+        }
+    }
+
+    @Test
+    public void touchDefaults() {
+        prefs.edit().remove("checkbox_long_press_right_click").remove("hide_cursor_mode").commit();
+        PreferenceConfiguration config = PreferenceConfiguration.readPreferences(context);
+        assertTrue(config.longPressRightClick);
+        assertEquals(PreferenceConfiguration.HIDE_CURSOR_NEVER, config.hideCursorMode);
+
+        prefs.edit().putString("hide_cursor_mode", "touching").commit();
+        assertEquals(PreferenceConfiguration.HIDE_CURSOR_WHILE_TOUCHING,
+                PreferenceConfiguration.readPreferences(context).hideCursorMode);
+        prefs.edit().putString("hide_cursor_mode", "always").commit();
+        assertEquals(PreferenceConfiguration.HIDE_CURSOR_ALWAYS,
+                PreferenceConfiguration.readPreferences(context).hideCursorMode);
+    }
+
+    @Test
     public void asyncDecodeIsOffByDefaultAndLfrNeedsIt() {
         prefs.edit().remove("checkbox_async_decode").remove("checkbox_async_lfr").commit();
         PreferenceConfiguration config = PreferenceConfiguration.readPreferences(context);

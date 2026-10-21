@@ -107,6 +107,10 @@ public class AppPreferences {
                 return PreferenceConfiguration.FRAME_PACING_MAX_SMOOTHNESS;
             case "host-timed":
                 return PreferenceConfiguration.FRAME_PACING_HOST_TIMED;
+            case "warp":
+            case "warp2":
+                // Shown like Prefer lowest latency; warpFactorFor() sets the frame rate multiple
+                return PreferenceConfiguration.FRAME_PACING_MIN_LATENCY;
             default:
                 return PreferenceConfiguration.FRAME_PACING_MIN_LATENCY;
         }
@@ -179,6 +183,7 @@ public class AppPreferences {
         }
         if (framePacing != null) {
             config.framePacing = getFramePacingValue(framePacing);
+            config.warpFactor = PreferenceConfiguration.warpFactorFor(framePacing);
         }
 
         // Bitrate

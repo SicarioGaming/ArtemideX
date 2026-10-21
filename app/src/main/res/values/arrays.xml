@@ -172,6 +172,8 @@
         <item>@string/pacing_balanced_alt</item>
         <item>@string/pacing_smoothness</item>
         <item>@string/pacing_host_timed</item>
+        <item>@string/pacing_warp</item>
+        <item>@string/pacing_warp2</item>
     </string-array>
     <string-array name="video_frame_pacing_values" translatable="false">
         <item>latency</item>
@@ -179,6 +181,20 @@
         <item>cap-fps</item>
         <item>smoothness</item>
         <item>host-timed</item>
+        <item>warp</item>
+        <item>warp2</item>
+    </string-array>
+
+    <!-- ArtemideX: hiding the PC's cursor in the video -->
+    <string-array name="hide_cursor_mode_names">
+        <item>@string/hide_cursor_never</item>
+        <item>@string/hide_cursor_touching</item>
+        <item>@string/hide_cursor_always</item>
+    </string-array>
+    <string-array name="hide_cursor_mode_values" translatable="false">
+        <item>never</item>
+        <item>touching</item>
+        <item>always</item>
     </string-array>
 
     <string-array name="analog_scrolling_names">

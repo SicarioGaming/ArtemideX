@@ -497,6 +497,17 @@
     <string name="title_checkbox_hide_clipboard_content">Hide clipboard content</string>
     <string name="summary_checkbox_hide_clipboard_content">Mark text copied from the PC as sensitive, so Android doesn\'t preview it on screen</string>
 
+    <!-- ArtemideX: Warp Drive / Warp 2 pacing (from Artemide), cursor hiding, long-press right click -->
+    <string name="pacing_warp">Warp Drive: 2x FPS from the PC, newest frame shown (Experimental)</string>
+    <string name="pacing_warp2">Warp 2: 4x FPS from the PC, newest frame shown (Experimental)</string>
+    <string name="title_hide_cursor_mode">Hide PC cursor</string>
+    <string name="summary_hide_cursor_mode">Hide the PC\'s mouse cursor in the video, using Vibepollo\'s Ctrl+Alt+Shift+N toggle. It\'s shown again when the stream ends.</string>
+    <string name="hide_cursor_never">Never</string>
+    <string name="hide_cursor_touching">While touching the screen</string>
+    <string name="hide_cursor_always">Always</string>
+    <string name="title_checkbox_long_press_right_click">Long-press to right-click</string>
+    <string name="summary_checkbox_long_press_right_click">In the trackpad (gaming) touch mode, a long press holds the right mouse button instead of starting a left-button drag</string>
+
     <!-- Custom Commands Activity -->
     <string name="title_custom_commands">Custom Commands</string>
     <string name="custom_commands_empty">No custom commands configured.\n\nTap the + button to add a command.</string>

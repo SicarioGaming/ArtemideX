@@ -47,11 +47,17 @@ public class RelativeTouchContext implements TouchContext {
                 return;
             }
 
-            // We haven't been cancelled before the timer expired so begin dragging
+            // We haven't been cancelled before the timer expired so begin dragging. With
+            // ArtemideX's "Long-press to right-click", one finger holds the right button instead.
             confirmedDrag = true;
-            conn.sendMouseButtonDown(getMouseButtonIndex());
+            dragButton = prefConfig.longPressRightClick && actionIndex == 0 ?
+                    MouseButtonPacket.BUTTON_RIGHT : getMouseButtonIndex();
+            conn.sendMouseButtonDown(dragButton);
         }
     };
+
+    // The button a long press is holding down, released when the finger lifts
+    private byte dragButton = MouseButtonPacket.BUTTON_LEFT;
 
     // Indexed by MouseButtonPacket.BUTTON_XXX - 1
     private final Runnable[] buttonUpRunnables = new Runnable[] {
@@ -196,7 +202,7 @@ public class RelativeTouchContext implements TouchContext {
 
         if (confirmedDrag) {
             // Raise the button after a drag
-            conn.sendMouseButtonUp(buttonIndex);
+            conn.sendMouseButtonUp(dragButton);
         }
         else if (isTap(eventTime))
         {
@@ -323,7 +329,7 @@ public class RelativeTouchContext implements TouchContext {
 
         // If it was a confirmed drag, we'll need to raise the button now
         if (confirmedDrag) {
-            conn.sendMouseButtonUp(getMouseButtonIndex());
+            conn.sendMouseButtonUp(dragButton);
         }
     }
 
