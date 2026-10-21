@@ -555,6 +555,38 @@
     <string name="cg_settings_for">%1$s settings</string>
     <color name="cg_settings_background">#FF0C1A1D</color>
 
+    <!-- Cover Glow settings: plain-language section names (English only; other languages keep
+         their translated headings) -->
+    <string name="cg_section_stream">Stream</string>
+    <string name="cg_section_sound">Sound &amp; vibration</string>
+    <string name="cg_section_controllers">Controllers</string>
+    <string name="cg_section_menu">In-stream menu</string>
+    <string name="cg_section_touch">Touch &amp; mouse</string>
+    <string name="cg_section_onscreen">On-screen controls</string>
+    <string name="cg_section_pc">PC</string>
+    <string name="cg_section_app">App</string>
+    <string name="cg_section_advanced">Advanced</string>
+
+    <!-- Cover Glow settings: the "What you'll feel" panel -->
+    <string name="feel_title">What you\'ll feel</string>
+    <string name="feel_fastest">Fastest response</string>
+    <string name="feel_smoothest">Smoothest motion</string>
+    <string name="feel_delay">Expected delay</string>
+    <string name="feel_battery">Battery use</string>
+    <string name="feel_level_lower">Lower</string>
+    <string name="feel_level_medium">Medium</string>
+    <string name="feel_level_higher">Higher</string>
+    <string name="feel_latency">Each frame is shown as soon as it arrives. Taps feel quick, but motion can look uneven when Wi-Fi wobbles.</string>
+    <string name="feel_balanced">Frames are lined up with the screen and late ones are skipped. A good middle for most games.</string>
+    <string name="feel_cap_fps">Like Balanced, with the PC sending no more frames than this screen shows.</string>
+    <string name="feel_smoothness">Every frame is shown in order, so motion is the smoothest, but the delay can grow a lot.</string>
+    <string name="feel_host_timed">Frames are shown on the PC\'s own timing. Smooth and steady; best with the Vulkan renderer.</string>
+    <string name="feel_warp">The PC sends twice the frames and the newest one is always shown. Taps feel quicker; the tablet, PC and Wi-Fi work harder.</string>
+    <string name="feel_warp2">The PC sends four times the frames and the newest one is always shown. The quickest response; the tablet, PC and Wi-Fi work much harder.</string>
+    <string name="feel_vsync">V-Sync stops tearing but can add up to one frame of delay.</string>
+    <string name="feel_fast_vsync">Fast V-Sync spaces frames evenly when the stream matches the screen.</string>
+    <string name="feel_async_lfr">Async LFR keeps only the newest decoded frame waiting.</string>
+
     <!-- ArtemideX: per-game settings -->
     <string name="title_game_touch_mode">Touch mode</string>
     <string name="game_touch_mode_trackpad">Trackpad</string>

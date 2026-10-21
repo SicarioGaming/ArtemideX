@@ -132,7 +132,10 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 - [x] Cover Glow settings: back button and title, a pill per section that jumps to it and
       follows the scroll, teal headings, white rows; per-game settings share the look. The PC
       list's overrides bar uses frosted pills (`docs/cover_glow_settings.png`)
-- [ ] Settings: the "What you'll feel" panel and plain-language names from the mockup
+- [x] Settings: plain-language section names (English only; other languages keep their
+      translated headings), and a "What you'll feel" panel on wide screens that places the frame
+      pacing and V-Sync choices between fastest response and smoothest motion, with rough
+      delay and battery comparisons (not measurements)
 - [x] Cover Glow in-stream menu: a side sheet on the right in the game's cover colour, with
       the game and stream on top, a grid of tools, and Close, Quit and Disconnect at the bottom;
       controllers move by rows and columns (`docs/cover_glow_menu.png`)

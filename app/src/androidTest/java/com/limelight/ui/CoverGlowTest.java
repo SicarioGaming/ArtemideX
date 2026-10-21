@@ -125,7 +125,13 @@ public class CoverGlowTest {
             scenario.onActivity(activity -> {
                 LinearLayout pills = activity.findViewById(R.id.settingsSections);
                 assertTrue("only " + pills.getChildCount() + " sections", pills.getChildCount() >= 5);
-                assertEquals("Basic", ((TextView) pills.getChildAt(0)).getText().toString());
+                // Plain-language names (the tablet runs in English)
+                assertEquals("Stream", ((TextView) pills.getChildAt(0)).getText().toString());
+                assertEquals("Sound & vibration", ((TextView) pills.getChildAt(1)).getText().toString());
+
+                // The "What you'll feel" panel fits on the tablet's wide screen
+                assertEquals(View.VISIBLE, activity.findViewById(R.id.feelPanel).getVisibility());
+                assertTrue(((TextView) activity.findViewById(R.id.feelText)).getText().length() > 0);
                 assertTrue(pills.getChildAt(0).isSelected());
 
                 // Tapping a section moves the highlight to it
@@ -167,6 +173,31 @@ public class CoverGlowTest {
             save(root, target, "cover_glow_menu.png");
             assertTrue("sheet " + menu.getWidth() + " px wide", menu.getWidth() <= 440 * d + 1);
         });
+    }
+
+    @Test
+    public void feelPanelPlacesTheChoicesInOrder() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        SettingsFeel warp2 = SettingsFeel.describe(context, "warp2", "off", false);
+        SettingsFeel latency = SettingsFeel.describe(context, "latency", "off", false);
+        SettingsFeel balanced = SettingsFeel.describe(context, "balanced", "off", false);
+        SettingsFeel smooth = SettingsFeel.describe(context, "smoothness", "off", false);
+        assertTrue(warp2.position < latency.position);
+        assertTrue(latency.position < balanced.position);
+        assertTrue(balanced.position < smooth.position);
+        assertEquals(SettingsFeel.LEVEL_HIGHER, warp2.battery);
+        assertEquals(SettingsFeel.LEVEL_HIGHER, smooth.delay);
+
+        // V-Sync moves towards smooth and adds delay; host frame timing ignores it
+        SettingsFeel vsync = SettingsFeel.describe(context, "latency", "vsync", false);
+        assertTrue(vsync.position > latency.position);
+        assertEquals(SettingsFeel.LEVEL_MEDIUM, vsync.delay);
+        assertTrue(vsync.text.contains("V-Sync"));
+        SettingsFeel host = SettingsFeel.describe(context, "host-timed", "vsync", true);
+        assertEquals(SettingsFeel.describe(context, "host-timed", "off", false).text, host.text);
+
+        // Unknown values fall back to Balanced
+        assertEquals(balanced.text, SettingsFeel.describe(context, "something-new", "off", false).text);
     }
 
     @Test

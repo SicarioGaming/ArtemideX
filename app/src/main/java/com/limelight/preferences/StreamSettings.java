@@ -51,6 +51,8 @@ import java.util.Arrays;
 public class StreamSettings extends Activity {
     private PreferenceConfiguration previousPrefs;
     private int previousDisplayPixelCount;
+    // Keeps the "What you'll feel" panel's listener alive (preferences only hold it weakly)
+    private SharedPreferences.OnSharedPreferenceChangeListener feelListener;
 
     // HACK for Android 9
     static DisplayCutout displayCutoutP;
@@ -75,6 +77,7 @@ public class StreamSettings extends Activity {
 
         setContentView(R.layout.activity_stream_settings);
         CoverGlowSettings.setUpHeader(this, null);
+        feelListener = CoverGlowSettings.attachFeel(this);
 
         UiHelper.notifyNewRootView(this);
     }
@@ -101,6 +104,10 @@ public class StreamSettings extends Activity {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
+        // The panel only fits on wide screens, so check again after rotating
+        CoverGlowSettings.detachFeel(this, feelListener);
+        feelListener = CoverGlowSettings.attachFeel(this);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Display.Mode mode = getWindowManager().getDefaultDisplay().getMode();
 
@@ -113,6 +120,13 @@ public class StreamSettings extends Activity {
                 reloadSettings();
             }
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        CoverGlowSettings.detachFeel(this, feelListener);
+        feelListener = null;
+        super.onDestroy();
     }
 
     @Override

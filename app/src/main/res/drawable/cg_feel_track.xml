@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow settings: the track from fastest response to smoothest motion -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="99dp" />
+    <gradient
+        android:angle="0"
+        android:startColor="#FFF97316"
+        android:centerColor="#FF14B8A6"
+        android:endColor="#FF6366F1" />
+</shape>
