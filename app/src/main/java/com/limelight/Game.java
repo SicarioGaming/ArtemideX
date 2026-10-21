@@ -2358,6 +2358,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     return true;
                 }
 
+                // First, so it sees every finger down and up, whatever handles the touch below
+                updateHostCursorForTouch(event);
+
                 if ((isPanZoomMode || mouseMode == MOUSE_MODE_DISABLED) &&
                         event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN &&
                         event.getPointerCount() == 3) {
@@ -2369,24 +2372,20 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 }
 
                 if (isPanZoomMode) {
-                    // Pan/zoom the stream instead of sending touches. Gestures are tracked in the
-                    // parent's coordinates, since the stream view itself moves and scales.
-                    MotionEvent parentEvent = MotionEvent.obtain(event);
-                    if (view == streamView) {
-                        Matrix toParent = new Matrix(streamView.getMatrix());
-                        toParent.postTranslate(streamView.getLeft(), streamView.getTop());
-                        parentEvent.transform(toParent);
-                    }
+                    // Pan/zoom the stream instead of sending touches
+                    MotionEvent parentEvent = toParentCoordinates(view, event);
                     panZoomHandler.handleTouchEvent(parentEvent);
                     parentEvent.recycle();
+                    return true;
+                }
+
+                if (handlePinchAnytime(view, event)) {
                     return true;
                 }
 
                 if (mouseMode == MOUSE_MODE_DISABLED) {
                     return true;
                 }
-
-                updateHostCursorForTouch(event);
 
                 if (mouseMode == MOUSE_MODE_MULTI_TOUCH && view == streamView && trySendTouchEvent(view, event)) {
                     // Multi-touch mode sends touches straight to the host when it supports them
@@ -3337,7 +3336,54 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             public void onToggleFullKeyboard() {
                 toggleFullKeyboard();
             }
+
+            @Override
+            public void onChangeBitrate() {
+                showBitratePicker();
+            }
         });
+    }
+
+    // Bitrate picker choices, in Mbps
+    private static final int[] BITRATE_CHOICES_MBPS = {5, 10, 20, 30, 50, 80, 100, 150, 200, 300, 500};
+
+    // The stream's bitrate now, in kbps; changed mid-stream through the menu
+    private int currentBitrateKbps;
+
+    /**
+     * Change the bitrate without reconnecting (Moonlight V+ feature, Vibepollo's /bitrate). The
+     * host may clamp the choice to its own maximum, so the applied value is shown.
+     */
+    private void showBitratePicker() {
+        if (currentBitrateKbps == 0) {
+            currentBitrateKbps = prefConfig.bitrate;
+        }
+
+        String[] labels = new String[BITRATE_CHOICES_MBPS.length];
+        int checked = -1;
+        for (int i = 0; i < BITRATE_CHOICES_MBPS.length; i++) {
+            labels[i] = getString(R.string.bitrate_mbps, BITRATE_CHOICES_MBPS[i]);
+            if (BITRATE_CHOICES_MBPS[i] * 1000 == currentBitrateKbps) {
+                checked = i;
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.bitrate_dialog_title, currentBitrateKbps / 1000))
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    int requestedKbps = BITRATE_CHOICES_MBPS[which] * 1000;
+                    new Thread(() -> {
+                        try {
+                            int applied = createHostHttp().setStreamBitrate(requestedKbps);
+                            currentBitrateKbps = applied;
+                            showToastOnUiThread(getString(R.string.bitrate_changed, applied / 1000));
+                        } catch (Exception e) {
+                            showToastOnUiThread(getString(R.string.bitrate_failed, e.getMessage()));
+                        }
+                    }).start();
+                })
+                .show();
     }
 
     /**
@@ -3430,6 +3476,79 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 return StreamConfiguration.VIRTUAL_DISPLAY_OFF;
             default:
                 return StreamConfiguration.VIRTUAL_DISPLAY_HOST_DEFAULT;
+        }
+    }
+
+    /**
+     * A copy of the event in the stream view's parent's coordinates. Zoom gestures are tracked
+     * there, since the stream view itself moves and scales. The caller recycles the copy.
+     */
+    private MotionEvent toParentCoordinates(View view, MotionEvent event) {
+        MotionEvent parentEvent = MotionEvent.obtain(event);
+        if (view == streamView) {
+            Matrix toParent = new Matrix(streamView.getMatrix());
+            toParent.postTranslate(streamView.getLeft(), streamView.getTop());
+            parentEvent.transform(toParent);
+        }
+        return parentEvent;
+    }
+
+    private static float pinchSpan(MotionEvent event) {
+        float dx = event.getX(0) - event.getX(1);
+        float dy = event.getY(0) - event.getY(1);
+        return (float) Math.hypot(dx, dy);
+    }
+
+    // Pinch-to-zoom anytime (from Moonlit Artemis)
+    private static final float PINCH_START_FRACTION = 0.15f;
+    private float pinchStartSpan;
+    private boolean pinchActive;
+
+    /**
+     * Pinch-to-zoom without turning on Pan/Zoom mode (from Moonlit Artemis). Once two fingers
+     * move apart or together by more than PINCH_START_FRACTION, the rest of that gesture zooms
+     * and pans the stream instead of reaching the PC. Two-finger scrolls and taps keep the same
+     * finger spacing, so they're unaffected. Returns true while a pinch has the gesture.
+     */
+    private boolean handlePinchAnytime(View view, MotionEvent event) {
+        if (!prefConfig.pinchToZoom || mouseMode == MOUSE_MODE_MULTI_TOUCH) {
+            return false;
+        }
+
+        int action = event.getActionMasked();
+        MotionEvent parentEvent = toParentCoordinates(view, event);
+        try {
+            if (pinchActive) {
+                panZoomHandler.handleTouchEvent(parentEvent);
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    pinchActive = false;
+                    pinchStartSpan = 0;
+                }
+                return true;
+            }
+
+            if (action == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() == 2) {
+                pinchStartSpan = pinchSpan(parentEvent);
+            }
+            else if (action == MotionEvent.ACTION_MOVE && event.getPointerCount() == 2 && pinchStartSpan > 0) {
+                float change = Math.abs(pinchSpan(parentEvent) - pinchStartSpan);
+                if (change > pinchStartSpan * PINCH_START_FRACTION) {
+                    // It's a pinch: let go of anything the fingers were doing on the PC
+                    pinchActive = true;
+                    for (TouchContext touchContext : touchContextMap) {
+                        touchContext.cancelTouch();
+                    }
+                    panZoomHandler.handleTouchEvent(parentEvent);
+                    return true;
+                }
+            }
+            else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL ||
+                    (action == MotionEvent.ACTION_POINTER_UP && event.getPointerCount() <= 2)) {
+                pinchStartSpan = 0;
+            }
+            return false;
+        } finally {
+            parentEvent.recycle();
         }
     }
 

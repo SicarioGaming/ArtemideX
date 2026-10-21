@@ -200,6 +200,11 @@
             android:title="@string/title_checkbox_long_press_right_click"
             android:summary="@string/summary_checkbox_long_press_right_click"
             android:defaultValue="true" />
+        <CheckBoxPreference
+            android:key="checkbox_pinch_to_zoom"
+            android:title="@string/title_checkbox_pinch_to_zoom"
+            android:summary="@string/summary_checkbox_pinch_to_zoom"
+            android:defaultValue="true" />
         <ListPreference
             android:key="hide_cursor_mode"
             android:title="@string/title_hide_cursor_mode"

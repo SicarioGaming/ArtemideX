@@ -42,6 +42,7 @@ public class OverlayMenuView extends LinearLayout {
         void onFetchClipboard();
         void onShowServerCommands();
         void onToggleFullKeyboard();
+        void onChangeBitrate();
     }
 
     // Windows virtual key codes for Artemide's built-in shortcuts
@@ -93,7 +94,13 @@ public class OverlayMenuView extends LinearLayout {
     private static final short[] TASK_MANAGER_KEYS = {VK_LCONTROL, VK_LSHIFT, VK_ESCAPE};
 
     // True while the horizontal row shows the Shortcuts page instead of the main actions
-    private boolean showingShortcuts = false;
+    private static final int PAGE_MAIN = 0;
+    private static final int PAGE_SHORTCUTS = 1;
+    private static final int PAGE_MONITORS = 2;
+    private int page = PAGE_MAIN;
+
+    // Vibepollo (like Sunshine) switches the streamed display on Ctrl+Alt+Shift+F1..F13
+    private static final int MONITOR_COUNT = 6;
 
     private LinearLayout verticalContainer;
     private HorizontalScrollView horizontalScrollView;
@@ -132,6 +139,9 @@ public class OverlayMenuView extends LinearLayout {
     private static final int ACTION_FETCH_CLIPBOARD = 17;
     private static final int ACTION_SERVER_COMMANDS = 18;
     private static final int ACTION_FULL_KEYBOARD = 19;
+    private static final int ACTION_MONITORS = 20;
+    private static final int ACTION_BITRATE = 21;
+    private static final int ACTION_MONITOR_BASE = 300;
     private static final int ACTION_CUSTOM_BASE = 100;
     private static final int ACTION_SHORTCUT_BASE = 200;
 
@@ -237,7 +247,7 @@ public class OverlayMenuView extends LinearLayout {
         // Add spacing between vertical column and horizontal row
         ((LinearLayout.LayoutParams) horizontalScrollView.getLayoutParams()).leftMargin = spacing;
 
-        if (showingShortcuts) {
+        if (page == PAGE_SHORTCUTS) {
             // Horizontal row: Artemide's built-in key shortcuts then Back
             for (int i = 0; i < SHORTCUTS.length; i++) {
                 addHorizontalButton(0, getContext().getString(SHORTCUTS[i].labelResId),
@@ -245,10 +255,22 @@ public class OverlayMenuView extends LinearLayout {
             }
             addHorizontalButton(0,
                 getContext().getString(R.string.overlay_menu_back), ACTION_BACK, 0);
+        } else if (page == PAGE_MONITORS) {
+            // Horizontal row: one button per PC display, then Back
+            for (int i = 0; i < MONITOR_COUNT; i++) {
+                addHorizontalButton(R.drawable.ic_overlay_monitor,
+                    getContext().getString(R.string.overlay_menu_monitor_n, i + 1), ACTION_MONITOR_BASE + i, spacing);
+            }
+            addHorizontalButton(0,
+                getContext().getString(R.string.overlay_menu_back), ACTION_BACK, 0);
         } else {
             // Horizontal row: Artemide actions, custom commands, then Close
             addHorizontalButton(R.drawable.ic_overlay_key_press,
                 getContext().getString(R.string.overlay_menu_shortcuts), ACTION_SHORTCUTS, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_monitor,
+                getContext().getString(R.string.overlay_menu_monitors), ACTION_MONITORS, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_lightning,
+                getContext().getString(R.string.overlay_menu_bitrate), ACTION_BITRATE, spacing);
             addHorizontalButton(R.drawable.ic_overlay_mouse,
                 getContext().getString(R.string.overlay_menu_mouse_mode), ACTION_MOUSE_MODE, spacing);
             addHorizontalButton(R.drawable.ic_overlay_maximize,
@@ -651,11 +673,23 @@ public class OverlayMenuView extends LinearLayout {
                 closeMenu();
                 return;
             } else if (action == ACTION_SHORTCUTS) {
-                switchPage(true);
+                switchPage(PAGE_SHORTCUTS);
+                return;
+            } else if (action == ACTION_MONITORS) {
+                switchPage(PAGE_MONITORS);
                 return;
             } else if (action == ACTION_BACK) {
-                switchPage(false);
+                switchPage(PAGE_MAIN);
                 return;
+            } else if (action == ACTION_BITRATE) {
+                // The bitrate picker is a dialog; close the menu behind it
+                closeMenu();
+                actionListener.onChangeBitrate();
+                return;
+            } else if (action >= ACTION_MONITOR_BASE) {
+                int monitor = action - ACTION_MONITOR_BASE;
+                actionListener.onSendKeys(new short[]{VK_LCONTROL, VK_LMENU, VK_LSHIFT, (short) (VK_F1 + monitor)});
+                shouldCloseMenu = true;
             } else if (action == ACTION_TASK_MANAGER) {
                 actionListener.onSendKeys(TASK_MANAGER_KEYS);
                 shouldCloseMenu = true;
@@ -714,8 +748,8 @@ public class OverlayMenuView extends LinearLayout {
     }
 
     private void closeOrGoBack() {
-        if (showingShortcuts) {
-            switchPage(false);
+        if (page != PAGE_MAIN) {
+            switchPage(PAGE_MAIN);
         } else {
             closeMenu();
         }
@@ -771,11 +805,11 @@ public class OverlayMenuView extends LinearLayout {
     }
 
     /**
-     * Swap the horizontal row between the main actions and the Shortcuts page,
+     * Swap the horizontal row between the main actions and a sub-page (Shortcuts, Monitors),
      * keeping the menu open and the selection on the first button of the new row.
      */
-    private void switchPage(boolean shortcuts) {
-        showingShortcuts = shortcuts;
+    private void switchPage(int newPage) {
+        page = newPage;
         buildMenu();
         post(() -> {
             if (!horizontalButtons.isEmpty()) {
@@ -787,7 +821,7 @@ public class OverlayMenuView extends LinearLayout {
     }
 
     public void show() {
-        showingShortcuts = false;
+        page = PAGE_MAIN;
         buildMenu();
         setVisibility(VISIBLE);
 

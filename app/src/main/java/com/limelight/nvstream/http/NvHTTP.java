@@ -526,6 +526,16 @@ public class NvHTTP {
         return getXmlArray(getServerInfo(true), "ServerCommand");
     }
 
+    /**
+     * Change the running stream's bitrate (Vibepollo "/bitrate"). The host clamps the value to its
+     * own maximum; returns the bitrate it applied, in kbps.
+     */
+    public int setStreamBitrate(int bitrateKbps) throws IOException, XmlPullParserException {
+        String resp = openHttpConnectionToString(httpClientLongConnectTimeout, getHttpsUrl(true),
+                "bitrate", "bitrate=" + bitrateKbps);
+        return Integer.parseInt(getXmlString(resp, "bitrate", true));
+    }
+
     // Host clipboard, plain text only (Apollo/Vibepollo "actions/clipboard"; from Artemide)
     public String getClipboard() throws IOException {
         try (ResponseBody resp = openHttpConnection(httpClientLongConnectTimeout, getHttpsUrl(true),

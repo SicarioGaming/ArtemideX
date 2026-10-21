@@ -146,6 +146,44 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
         }
     };
 
+    // 1% low FPS (as in Moonlight V+): gaps between frames arriving from the host, last
+    // FRAME_INTERVAL_SAMPLES frames (about 6 s at 165 FPS). Only touched on the submit thread.
+    private static final int FRAME_INTERVAL_SAMPLES = 1000;
+    private final long[] frameIntervalsNs = new long[FRAME_INTERVAL_SAMPLES];
+    private int frameIntervalCount;
+    private int frameIntervalNext;
+    private long lastFrameArrivalNs;
+
+    private void recordFrameArrival(long nowNs) {
+        if (lastFrameArrivalNs != 0) {
+            long intervalNs = nowNs - lastFrameArrivalNs;
+            // A gap over a second is a pause (stream start, a menu), not a slow frame
+            if (intervalNs > 0 && intervalNs < 1_000_000_000L) {
+                frameIntervalsNs[frameIntervalNext] = intervalNs;
+                frameIntervalNext = (frameIntervalNext + 1) % FRAME_INTERVAL_SAMPLES;
+                frameIntervalCount = Math.min(frameIntervalCount + 1, FRAME_INTERVAL_SAMPLES);
+            }
+        }
+        lastFrameArrivalNs = nowNs;
+    }
+
+    // The frame rate over the slowest 1% of frame gaps (their average, as benchmarks report
+    // "1% lows"); 0 until there are enough frames
+    static float onePercentLowFps(long[] intervalsNs, int count) {
+        if (count < 20) {
+            return 0;
+        }
+        long[] sorted = Arrays.copyOf(intervalsNs, count);
+        Arrays.sort(sorted);
+
+        int slowest = Math.max(1, count / 100);
+        long totalNs = 0;
+        for (int i = count - slowest; i < count; i++) {
+            totalNs += sorted[i];
+        }
+        return 1_000_000_000f * slowest / totalNs;
+    }
+
     // Async decode (from Artemide, opt-in): MediaCodec reports ready input and output buffers
     // through callbacks instead of being polled. Only used by the direct renderer without host
     // frame timing, decided each time the decoder is configured.
@@ -1715,6 +1753,10 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
             ppsBuffers.clear();
         }
 
+        if (frameNumber != lastFrameNumber) {
+            recordFrameArrival(System.nanoTime());
+        }
+
         lastFrameNumber = frameNumber;
 
         // Flip stats windows roughly every second
@@ -1774,6 +1816,10 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                     lite.append(context.getString(R.string.perf_overlay_lite_delay, (int)(rttInfo >> 32), decodeTimeMs)).append("  ");
                     lite.append(context.getString(R.string.perf_overlay_lite_loss, droppedPercent)).append("  ");
                     lite.append(context.getString(R.string.perf_overlay_lite_fps, fps.totalFps));
+                    float low = onePercentLowFps(frameIntervalsNs, frameIntervalCount);
+                    if (low > 0) {
+                        lite.append(context.getString(R.string.perf_overlay_lite_one_percent_low, low));
+                    }
                     perfListener.onPerfUpdate(lite.toString());
                 }
                 else {
@@ -1790,7 +1836,12 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                     }
                     sb.append('\n');
                     sb.append(context.getString(R.string.perf_overlay_streamdetails, initialWidth + "x" + initialHeight, fps.totalFps)).append('\n');
-                    sb.append(context.getString(R.string.perf_overlay_fps, fps.receivedFps, fps.renderedFps, smoothedFpsVariance)).append('\n');
+                    sb.append(context.getString(R.string.perf_overlay_fps, fps.receivedFps, fps.renderedFps, smoothedFpsVariance));
+                    float low = onePercentLowFps(frameIntervalsNs, frameIntervalCount);
+                    if (low > 0) {
+                        sb.append(context.getString(R.string.perf_overlay_one_percent_low, low));
+                    }
+                    sb.append('\n');
                     if (pyrowave) {
                         // Only PyroWave delivers frames with gaps in them
                         sb.append(context.getString(R.string.perf_overlay_netdrops_partial,

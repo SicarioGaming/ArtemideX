@@ -82,6 +82,19 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
 | Pinch-to-zoom anytime, accurate taps while zoomed | Moonlit Artemis (`4had45/moonlit-artemis`) |
 | Monitor switcher | Moonlit Artemis |
 
+Done so far (2026-10-21):
+
+- [x] Monitor switcher: Monitors page in the menu, Monitor 1-6 send Ctrl+Alt+Shift+F1-F6
+- [x] Bitrate mid-stream: Bitrate in the menu, 5-500 Mbps, via Vibepollo `/bitrate`
+- [x] Better stats: 1% low FPS (average of the slowest 1% of frame gaps) in both overlays
+- [x] Pinch to zoom anytime (Input settings, on by default; not in Multi-touch mode)
+- [ ] Per-game settings: add ArtemideX's options to Moonlight X's App Settings
+- [ ] Audio haptics
+- [ ] Custom PyroWave driver
+
+Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC cursor
+(never / while touching / always), and Long-press to right-click in the gaming trackpad mode.
+
 ### Phase 3 research notes (2026-10-21)
 
 - Per-game settings already exist in Moonlight X (long-press a game, App Settings: resolution,

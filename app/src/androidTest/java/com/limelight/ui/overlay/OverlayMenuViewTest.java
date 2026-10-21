@@ -54,6 +54,7 @@ public class OverlayMenuViewTest {
         @Override public void onFetchClipboard() { events.add("fetchClipboard"); }
         @Override public void onShowServerCommands() { events.add("serverCommands"); }
         @Override public void onToggleFullKeyboard() { events.add("fullKeyboard"); }
+        @Override public void onChangeBitrate() { events.add("bitrate"); }
     }
 
     @Before
@@ -186,6 +187,32 @@ public class OverlayMenuViewTest {
         click(str(com.limelight.R.string.overlay_menu_shortcuts));
         onMain(() -> menu.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BACK)));
         assertNotNull(findButton(menu, str(com.limelight.R.string.overlay_menu_pan_zoom)));
+    }
+
+    @Test
+    public void monitorsPageSwitchesWithVibepolloShortcuts() {
+        click(str(com.limelight.R.string.overlay_menu_monitors));
+        click(context.getString(com.limelight.R.string.overlay_menu_monitor_n, 1));
+        assertArrayEquals(new short[]{OverlayMenuView.VK_LCONTROL, OverlayMenuView.VK_LMENU,
+                OverlayMenuView.VK_LSHIFT, OverlayMenuView.VK_F1}, listener.lastKeys);
+
+        onMain(() -> menu.show());
+        click(str(com.limelight.R.string.overlay_menu_monitors));
+        click(context.getString(com.limelight.R.string.overlay_menu_monitor_n, 3));
+        assertArrayEquals(new short[]{OverlayMenuView.VK_LCONTROL, OverlayMenuView.VK_LMENU,
+                OverlayMenuView.VK_LSHIFT, (short) (OverlayMenuView.VK_F1 + 2)}, listener.lastKeys);
+
+        // Back from the Monitors page returns to the main row
+        onMain(() -> menu.show());
+        click(str(com.limelight.R.string.overlay_menu_monitors));
+        click(str(com.limelight.R.string.overlay_menu_back));
+        assertNotNull(findButton(menu, str(com.limelight.R.string.overlay_menu_pan_zoom)));
+    }
+
+    @Test
+    public void bitrateOpensItsPickerAfterClosingTheMenu() {
+        click(str(com.limelight.R.string.overlay_menu_bitrate));
+        assertEquals(List.of("closed", "bitrate"), listener.events);
     }
 
     @Test

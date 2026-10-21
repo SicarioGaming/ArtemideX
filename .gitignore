@@ -44,3 +44,7 @@ app/.externalNativeBuild/
 .cxx/
 # Frame pacing traces pulled from devices (tools/pacer-trace.sh)
 pacer-traces/
+
+# agentic-substrate:start
+.agentic-substrate/local/
+# agentic-substrate:end

@@ -241,6 +241,7 @@ public class PreferenceConfiguration {
     public int vsyncMode; // VSYNC_*
     public int warpFactor = 1; // Warp Drive 2, Warp 2 4, otherwise 1 (see warpFactorFor())
     public boolean longPressRightClick; // gaming trackpad: long press holds the right button
+    public boolean pinchToZoom; // pinch-to-zoom anytime (Moonlit Artemis)
     // PC cursor in the video: HIDE_CURSOR_* (Vibepollo's Ctrl+Alt+Shift+N toggle)
     public int hideCursorMode;
     public static final int HIDE_CURSOR_NEVER = 0;
@@ -825,6 +826,7 @@ public class PreferenceConfiguration {
         }
         config.syncLfr = prefs.getBoolean(SYNC_LFR_PREF_STRING, false);
         config.longPressRightClick = prefs.getBoolean("checkbox_long_press_right_click", true);
+        config.pinchToZoom = prefs.getBoolean("checkbox_pinch_to_zoom", true);
         switch (prefs.getString("hide_cursor_mode", "never")) {
             case "touching":
                 config.hideCursorMode = HIDE_CURSOR_WHILE_TOUCHING;
