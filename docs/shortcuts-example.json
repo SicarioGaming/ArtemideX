@@ -1,0 +1,9 @@
+{
+  "data": [
+    { "name": "Snipping tool", "keys": ["VK_LWIN", "VK_LSHIFT", "VK_S"] },
+    { "name": "Ctrl+Alt+Del", "keys": ["VK_LCONTROL", "VK_LMENU", "VK_DELETE"] },
+    { "name": "Steam overlay", "keys": ["VK_LSHIFT", "VK_TAB"] },
+    { "name": "Game Bar record", "keys": ["VK_LWIN", "VK_LMENU", "VK_R"] },
+    { "name": "Mute", "keys": ["0xAD"] }
+  ]
+}

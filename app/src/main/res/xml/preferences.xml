@@ -203,6 +203,14 @@
             android:key="overlay_custom_commands"
             android:title="@string/title_overlay_custom_commands"
             android:summary="@string/summary_overlay_custom_commands" />
+        <Preference
+            android:key="import_shortcuts_file"
+            android:title="@string/title_import_shortcuts"
+            android:summary="@string/summary_import_shortcuts" />
+        <Preference
+            android:key="clear_imported_shortcuts"
+            android:title="@string/title_clear_imported_shortcuts"
+            android:summary="@string/summary_clear_imported_shortcuts" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_input_settings"
         android:key="category_input_settings">

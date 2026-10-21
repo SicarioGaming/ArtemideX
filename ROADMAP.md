@@ -45,7 +45,11 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
         starts or you return to it, copies the PC's when you leave (also before Disconnect and
         Quit Session, waiting up to 2 seconds); optional messages and "hide clipboard content"
   - Not ported: Artemide's customisable on-screen key buttons (KeyBoardController, ~3,000 lines)
-  - [ ] Custom shortcuts imported from a file (Moonlight X's custom commands already cover adding your own)
+  - [x] Custom shortcuts imported from a file, in Artemide's format (`{"data": [{"name": ...,
+        "keys": ["VK_LWIN", "0x53"]}]}`), from Settings > In-stream menu. They appear on the
+        Shortcuts page after the built-in ones; importing again replaces them, and a bad file
+        says what's wrong and keeps the earlier import. Example: `docs/shortcuts-example.json`.
+        (Moonlight X's custom commands still cover adding your own by hand)
 - [x] Virtual Display: a "Display on the PC" setting (host default, virtual, primary) and
       "Start in Virtual/Primary Display" when long-pressing a game. Host default sends nothing,
       because Vibepollo treats `virtualDisplay=0` as turning its virtual display off

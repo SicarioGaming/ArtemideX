@@ -144,6 +144,7 @@ public class OverlayMenuView extends LinearLayout {
 
     private MenuActionListener actionListener;
     private CustomCommandsManager commandsManager;
+    private List<ImportedShortcuts.Shortcut> importedShortcuts = new ArrayList<>();
 
     private static final int ACTION_DISCONNECT = 0;
     private static final int ACTION_QUIT = 1;
@@ -167,6 +168,7 @@ public class OverlayMenuView extends LinearLayout {
     private static final int ACTION_FULL_KEYBOARD = 19;
     private static final int ACTION_MONITORS = 20;
     private static final int ACTION_BITRATE = 21;
+    private static final int ACTION_IMPORTED_BASE = 400;
     private static final int ACTION_MONITOR_BASE = 300;
     private static final int ACTION_CUSTOM_BASE = 100;
     private static final int ACTION_SHORTCUT_BASE = 200;
@@ -316,6 +318,11 @@ public class OverlayMenuView extends LinearLayout {
             columns = PAGE_COLUMNS;
             for (int i = 0; i < SHORTCUTS.length; i++) {
                 addTile(0, getContext().getString(SHORTCUTS[i].labelResId), ACTION_SHORTCUT_BASE + i);
+            }
+            // Then any shortcuts imported from a file (Settings > In-stream menu)
+            importedShortcuts = ImportedShortcuts.load(getContext());
+            for (int i = 0; i < importedShortcuts.size(); i++) {
+                addTile(0, importedShortcuts.get(i).name, ACTION_IMPORTED_BASE + i);
             }
             addTile(0, getContext().getString(R.string.overlay_menu_back), ACTION_BACK);
         } else if (page == PAGE_MONITORS) {
@@ -773,6 +780,12 @@ public class OverlayMenuView extends LinearLayout {
                 closeMenu();
                 actionListener.onChangeBitrate();
                 return;
+            } else if (action >= ACTION_IMPORTED_BASE) {
+                int index = action - ACTION_IMPORTED_BASE;
+                if (index < importedShortcuts.size()) {
+                    actionListener.onSendKeys(importedShortcuts.get(index).keys);
+                }
+                shouldCloseMenu = true;
             } else if (action >= ACTION_MONITOR_BASE) {
                 int monitor = action - ACTION_MONITOR_BASE;
                 actionListener.onSendKeys(new short[]{VK_LCONTROL, VK_LMENU, VK_LSHIFT, (short) (VK_F1 + monitor)});

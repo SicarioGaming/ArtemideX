@@ -411,6 +411,17 @@
     <string name="overlay_menu_shortcuts">Shortcuts</string>
     <string name="overlay_menu_back">Back</string>
     <string name="overlay_menu_title">Stream menu</string>
+
+    <!-- Shortcuts imported from a file (Artemide's format) -->
+    <string name="title_import_shortcuts">Import shortcuts from a file</string>
+    <string name="summary_import_shortcuts">A JSON file in Artemide\'s format, such as {\"data\": [{\"name\": \"Snip\", \"keys\": [\"VK_LWIN\", \"VK_LSHIFT\", \"VK_S\"]}]}. They appear on the in-stream menu\'s Shortcuts page. Importing again replaces them.</string>
+    <string name="summary_imported_shortcuts">%1$d imported: %2$s. Tap to import a different file.</string>
+    <string name="title_clear_imported_shortcuts">Remove imported shortcuts</string>
+    <string name="summary_clear_imported_shortcuts">Takes the imported shortcuts off the Shortcuts page</string>
+    <string name="imported_shortcuts_done">Imported %1$d shortcuts</string>
+    <string name="imported_shortcuts_failed">Couldn\'t import the shortcuts: %1$s</string>
+    <string name="imported_shortcuts_too_big">the file is too big to be a shortcuts file</string>
+    <string name="imported_shortcuts_cleared">Imported shortcuts removed</string>
     <string name="overlay_menu_task_manager">Task Manager</string>
     <string name="overlay_menu_rotate_screen">Rotate</string>
     <string name="overlay_menu_onscreen_controller">On-screen Controls</string>

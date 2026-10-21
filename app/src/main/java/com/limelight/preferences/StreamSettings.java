@@ -36,17 +36,20 @@ import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
 import com.limelight.ui.CoverGlowSettings;
+import com.limelight.ui.overlay.ImportedShortcuts;
 import com.limelight.binding.video.MediaCodecHelper;
 import com.limelight.utils.Dialog;
 import com.limelight.utils.UiHelper;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 
 public class StreamSettings extends Activity {
     private PreferenceConfiguration previousPrefs;
@@ -149,6 +152,7 @@ public class StreamSettings extends Activity {
 
     public static class SettingsFragment extends PreferenceFragment {
         private static final int REQUEST_CUSTOM_VULKAN_DRIVER = 0x6472;  // "dr"
+        private static final int REQUEST_IMPORT_SHORTCUTS = 0x7363;  // "sc"
         private int nativeResolutionStartIndex = Integer.MAX_VALUE;
         private boolean nativeFramerateShown = false;
 
@@ -746,6 +750,93 @@ public class StreamSettings extends Activity {
                 });
                 updateCustomDriverSummary();
             }
+
+            // Shortcuts imported from a file in Artemide's format, for the Shortcuts page
+            Preference importShortcuts = findPreference("import_shortcuts_file");
+            if (importShortcuts != null) {
+                importShortcuts.setOnPreferenceClickListener(preference -> {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    // Shortcut files are often saved as .txt, so don't limit it to JSON
+                    intent.setType("*/*");
+                    try {
+                        startActivityForResult(intent, REQUEST_IMPORT_SHORTCUTS);
+                    }
+                    catch (ActivityNotFoundException e) {
+                        Toast.makeText(getActivity(), R.string.custom_vulkan_driver_no_picker,
+                                Toast.LENGTH_LONG).show();
+                    }
+                    return true;
+                });
+            }
+            Preference clearShortcuts = findPreference("clear_imported_shortcuts");
+            if (clearShortcuts != null) {
+                clearShortcuts.setOnPreferenceClickListener(preference -> {
+                    ImportedShortcuts.clear(getActivity());
+                    updateImportedShortcutsSummary();
+                    Toast.makeText(getActivity(), R.string.imported_shortcuts_cleared, Toast.LENGTH_SHORT).show();
+                    return true;
+                });
+            }
+            updateImportedShortcutsSummary();
+        }
+
+        private void updateImportedShortcutsSummary() {
+            Preference importPref = findPreference("import_shortcuts_file");
+            Preference clearPref = findPreference("clear_imported_shortcuts");
+            if (importPref == null || getActivity() == null) {
+                return;
+            }
+            List<ImportedShortcuts.Shortcut> shortcuts = ImportedShortcuts.load(getActivity());
+            if (shortcuts.isEmpty()) {
+                importPref.setSummary(R.string.summary_import_shortcuts);
+            }
+            else {
+                StringBuilder names = new StringBuilder();
+                for (int i = 0; i < shortcuts.size() && i < 4; i++) {
+                    if (i > 0) {
+                        names.append(", ");
+                    }
+                    names.append(shortcuts.get(i).name);
+                }
+                if (shortcuts.size() > 4) {
+                    names.append(", …");
+                }
+                importPref.setSummary(getString(R.string.summary_imported_shortcuts, shortcuts.size(), names));
+            }
+            if (clearPref != null) {
+                clearPref.setEnabled(!shortcuts.isEmpty());
+            }
+        }
+
+        private void importShortcuts(Uri uri) {
+            Context context = getActivity();
+            if (context == null) {
+                return;
+            }
+            String reason;
+            try (InputStream in = context.getContentResolver().openInputStream(uri)) {
+                if (in == null) {
+                    throw new IOException("could not open the file");
+                }
+                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    bytes.write(buffer, 0, read);
+                    if (bytes.size() > ImportedShortcuts.MAX_FILE_BYTES) {
+                        throw new IllegalArgumentException(getString(R.string.imported_shortcuts_too_big));
+                    }
+                }
+                int count = ImportedShortcuts.save(context, bytes.toString("UTF-8"));
+                updateImportedShortcutsSummary();
+                Toast.makeText(context, getString(R.string.imported_shortcuts_done, count), Toast.LENGTH_SHORT).show();
+                return;
+            }
+            catch (IllegalArgumentException | IOException e) {
+                reason = e.getMessage();
+            }
+            Toast.makeText(context, getString(R.string.imported_shortcuts_failed, reason), Toast.LENGTH_LONG).show();
         }
 
         private void updateCustomDriverSummary() {
@@ -767,11 +858,15 @@ public class StreamSettings extends Activity {
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
             super.onActivityResult(requestCode, resultCode, data);
 
-            if (requestCode != REQUEST_CUSTOM_VULKAN_DRIVER || resultCode != Activity.RESULT_OK ||
-                    data == null || data.getData() == null) {
+            if (resultCode != Activity.RESULT_OK || data == null || data.getData() == null) {
                 return;
             }
-            importCustomDriver(data.getData());
+            if (requestCode == REQUEST_CUSTOM_VULKAN_DRIVER) {
+                importCustomDriver(data.getData());
+            }
+            else if (requestCode == REQUEST_IMPORT_SHORTCUTS) {
+                importShortcuts(data.getData());
+            }
         }
 
         private void importCustomDriver(Uri uri) {
