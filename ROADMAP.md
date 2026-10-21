@@ -13,19 +13,28 @@ Each step ends with a build installed on the tablet and tested before the next s
 
 ## Phase 1: Identity
 
-- [ ] Rename the app to "ArtemideX" with its own application ID, so it installs
-      beside Moonlight X and Artemide instead of replacing them.
+- [x] Rename the app to "ArtemideX" (`com.artemidex`, debug builds `com.artemidex.debug`),
+      so it installs beside Moonlight X and Artemide instead of replacing them.
 
 ## Phase 2: Artemide features
 
 Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
 `Artemide_Experimental_Async_0.5.1`), the version installed on the tablet.
 
-- [ ] In-stream menu button and all of its actions: soft keyboard, performance
-      overlay toggle, mouse and stream modes, pan/zoom, rotate screen, on-screen
-      controller and keyboard, touch sensitivity, task manager, key shortcuts
-      (Esc, Win, Win+D, Alt+Enter, Ctrl+Alt+Tab, and more), server commands,
-      clipboard fetch/upload, disconnect, quit session
+- In-stream menu. Artemide's actions are added to Moonlight X's overlay menu
+  (icon buttons, controller navigation) rather than Artemide's plain list dialog.
+  - [x] Floating menu button: tap to open, drag to move; on by default, with a
+        setting under Overlay Menu and a show/hide button in the menu
+  - [x] Shortcuts page with Artemide's 14 key combos (Esc, F11, Alt+F4, Alt+Enter,
+        Ctrl+V, Win, Win+D, Win+G, Ctrl+Alt+Tab, Shift+Tab, Win+Shift+Left,
+        Ctrl+Alt+Shift+F1, Ctrl+Alt+Shift+F12, Win+Alt+B)
+  - [x] Task Manager, Rotate screen, On-screen controller toggle
+  - [x] Disconnect, Quit session, Stats, Soft keyboard, Mouse emulation (already in Moonlight X)
+  - [ ] Pan/zoom mode
+  - [ ] Mouse mode picker and touch sensitivity
+  - [ ] On-screen full keyboard and special-keys bar
+  - [ ] Clipboard fetch/upload and server commands (need host support; check with Vibepollo)
+  - [ ] Custom shortcuts imported from a file (Moonlight X's custom commands already cover adding your own)
 - [ ] Virtual Display (start in virtual or primary display)
 - [ ] Prevent Packet Loss
 - [ ] V-Sync, Fast V-Sync, Sync: LFR and Async: LFR, without disturbing Moonlight X's
@@ -38,7 +47,7 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
 
 | Feature | Source fork |
 | --- | --- |
-| More ways to open the menu (long-press, LB+RB, three-finger tap) | Moonlight X Turnip (`NoCrypt/moonlight-x-turnip`) |
+| More ways to open the menu (long-press). Three-finger tap and holding Select, Start, Guide or LB+RB already work in Moonlight X | Moonlight X Turnip (`NoCrypt/moonlight-x-turnip`) |
 | Per-game settings (resolution, FPS, bitrate, frame pacing) | Moonlight X Turnip |
 | Custom PyroWave Vulkan driver (Turnip via libadrenotools) | Moonlight X Turnip |
 | Better performance stats (1% lows, received vs displayed FPS warning) | Moonlight V+ (`qiin2333/moonlight-vplus`), Moonlight X Turnip |

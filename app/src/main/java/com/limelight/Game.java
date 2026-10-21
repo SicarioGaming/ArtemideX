@@ -85,6 +85,7 @@ import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -165,6 +166,18 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private TextView performanceOverlayView;
     private BrightnessSliderView brightnessSliderView;
     private OverlayMenuView overlayMenuView;
+
+    // Floating menu button (from Artemide): tap opens the overlay menu, drag moves it
+    private ImageButton floatingMenuButton;
+    private boolean floatingButtonShown;
+    private boolean floatingButtonMoving;
+    private float floatingButtonDX, floatingButtonDY;
+    private float floatingButtonStartX, floatingButtonStartY;
+    private static final int FLOATING_BUTTON_DRAG_THRESHOLD = 10;
+
+    // Tracks the on-screen controller's visibility for the overlay menu toggle
+    private boolean onscreenControllerShown;
+
     private boolean isImeVisible = false;
     private boolean isAndroidTV = false;
 
@@ -360,6 +373,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         // Initialize overlay menu view (setup will be done after controllerHandler is initialized)
         overlayMenuView = findViewById(R.id.overlayMenuView);
         overlayMenuView.setFlipFaceButtons(prefConfig.flipFaceButtons);
+
+        floatingMenuButton = findViewById(R.id.floatingMenuButton);
+        initFloatingButton();
+        setFloatingButtonShown(prefConfig.enableFloatingButton);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
 
@@ -633,6 +650,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     this);
             virtualController.refreshLayout();
             virtualController.show();
+            onscreenControllerShown = true;
 
             // Register virtual controller to receive physical gamepad input events
             controllerHandler.setControllerInputListener(virtualController);
@@ -744,6 +762,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 performanceOverlayView.setVisibility(View.GONE);
                 notificationOverlayView.setVisibility(View.GONE);
                 brightnessSliderView.hide();
+                floatingMenuButton.setVisibility(View.GONE);
 
                 // Disable sensors while in PiP mode
                 controllerHandler.disableSensors();
@@ -756,7 +775,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                 // Restore overlays to previous state when leaving PiP
 
-                if (virtualController != null) {
+                if (virtualController != null && onscreenControllerShown) {
                     virtualController.show();
                 }
 
@@ -765,6 +784,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 }
 
                 notificationOverlayView.setVisibility(requestedNotificationOverlayVisibility);
+                setFloatingButtonShown(floatingButtonShown);
 
                 // Enable sensors again after exiting PiP
                 controllerHandler.enableSensors();
@@ -3122,7 +3142,130 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             public void onMenuClosed() {
                 // Menu closed, no additional action needed
             }
+
+            @Override
+            public void onSendKeys(short[] keys) {
+                sendKeys(keys);
+            }
+
+            @Override
+            public void onRotateScreen() {
+                rotateScreen();
+            }
+
+            @Override
+            public void onToggleOnscreenController() {
+                toggleOnscreenController();
+            }
+
+            @Override
+            public void onToggleFloatingButton() {
+                setFloatingButtonShown(!floatingButtonShown);
+            }
         });
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void initFloatingButton() {
+        // Tap opens the overlay menu; drag moves the button, kept within the screen (from Artemide)
+        floatingMenuButton.setOnTouchListener((view, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    floatingButtonStartX = event.getRawX();
+                    floatingButtonStartY = event.getRawY();
+                    floatingButtonDX = view.getX() - event.getRawX();
+                    floatingButtonDY = view.getY() - event.getRawY();
+                    floatingButtonMoving = false;
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    if (Math.abs(event.getRawX() - floatingButtonStartX) > FLOATING_BUTTON_DRAG_THRESHOLD ||
+                            Math.abs(event.getRawY() - floatingButtonStartY) > FLOATING_BUTTON_DRAG_THRESHOLD) {
+                        floatingButtonMoving = true;
+                    }
+
+                    float maxX = getWindow().getDecorView().getWidth() - view.getWidth();
+                    float maxY = getWindow().getDecorView().getHeight() - view.getHeight();
+                    view.setX(Math.max(0, Math.min(event.getRawX() + floatingButtonDX, maxX)));
+                    view.setY(Math.max(0, Math.min(event.getRawY() + floatingButtonDY, maxY)));
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    if (!floatingButtonMoving) {
+                        overlayMenuView.show();
+                    }
+                    floatingButtonMoving = false;
+                    return true;
+                default:
+                    return false;
+            }
+        });
+    }
+
+    private void setFloatingButtonShown(boolean shown) {
+        floatingButtonShown = shown;
+        floatingMenuButton.setVisibility(shown && !isHidingOverlays ? View.VISIBLE : View.GONE);
+    }
+
+    private void toggleOnscreenController() {
+        if (virtualController == null) {
+            virtualController = new VirtualController(controllerHandler,
+                    (FrameLayout)streamView.getParent(),
+                    this);
+            virtualController.refreshLayout();
+            controllerHandler.setControllerInputListener(virtualController);
+            onscreenControllerShown = false;
+        }
+
+        onscreenControllerShown = !onscreenControllerShown;
+        if (onscreenControllerShown) {
+            virtualController.show();
+        }
+        else {
+            virtualController.hide();
+        }
+    }
+
+    private void rotateScreen() {
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
+        }
+        else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+        }
+    }
+
+    private static byte getModifierForKey(short key) {
+        switch (key) {
+            case OverlayMenuView.VK_LSHIFT:
+                return KeyboardPacket.MODIFIER_SHIFT;
+            case OverlayMenuView.VK_LCONTROL:
+                return KeyboardPacket.MODIFIER_CTRL;
+            case OverlayMenuView.VK_LMENU:
+                return KeyboardPacket.MODIFIER_ALT;
+            case OverlayMenuView.VK_LWIN:
+                return KeyboardPacket.MODIFIER_META;
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Press a key combination in order, then release it in reverse order (from Artemide).
+     * Each key after a modifier is sent with that modifier's flag set.
+     */
+    private void sendKeys(short[] keys) {
+        final byte[] modifiers = {0};
+
+        for (short key : keys) {
+            conn.sendKeyboardInput(key, KeyboardPacket.KEY_DOWN, modifiers[0], (byte) 0);
+            modifiers[0] |= getModifierForKey(key);
+        }
+
+        new Handler().postDelayed(() -> {
+            for (int i = keys.length - 1; i >= 0; i--) {
+                modifiers[0] &= (byte) ~getModifierForKey(keys[i]);
+                conn.sendKeyboardInput(keys[i], KeyboardPacket.KEY_UP, modifiers[0], (byte) 0);
+            }
+        }, 25);
     }
 
     /**

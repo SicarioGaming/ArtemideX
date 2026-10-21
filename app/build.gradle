@@ -49,7 +49,8 @@ android {
                 }
             }
 
-            applicationId "com.limelight"
+            // ArtemideX uses its own ID so it installs beside Moonlight X and Artemide
+            applicationId "com.artemidex"
             dimension "root"
             buildConfigField "boolean", "ROOT_BUILD", "false"
         }
@@ -83,9 +84,9 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix ".mlsoft.debug"
-            resValue "string", "app_label", "Moonlight X (Debug)"
-            resValue "string", "app_label_root", "Moonlight X (Root Debug)"
+            applicationIdSuffix ".debug"
+            resValue "string", "app_label", "ArtemideX (Debug)"
+            resValue "string", "app_label_root", "ArtemideX (Root Debug)"
         }
         release {
             // To whomever is releasing/using an APK in release mode with
@@ -118,9 +119,11 @@ android {
             // is to please change the applicationId before you publish.
             //
             // TL;DR: Leave the following line alone!
-            applicationIdSuffix ".mlsoft"
-            resValue "string", "app_label", "Moonlight X"
-            resValue "string", "app_label_root", "Moonlight X (Root)"
+            //
+            // ArtemideX: honoured by giving the nonRoot flavor its own
+            // applicationId (com.artemidex), so no suffix is needed here.
+            resValue "string", "app_label", "ArtemideX"
+            resValue "string", "app_label_root", "ArtemideX (Root)"
 
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

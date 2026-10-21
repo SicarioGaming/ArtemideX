@@ -396,6 +396,31 @@
     <string name="overlay_menu_close">Close (B)</string>
     <string name="overlay_menu_hint">Hold &lt;b&gt;%s&lt;/b&gt; to open menu</string>
 
+    <!-- ArtemideX: actions ported from Artemide's in-stream menu -->
+    <string name="overlay_menu_shortcuts">Shortcuts</string>
+    <string name="overlay_menu_back">Back</string>
+    <string name="overlay_menu_task_manager">Task Manager</string>
+    <string name="overlay_menu_rotate_screen">Rotate</string>
+    <string name="overlay_menu_onscreen_controller">On-screen Controls</string>
+    <string name="overlay_menu_floating_button">Menu Button</string>
+    <string name="overlay_menu_send_esc">Esc</string>
+    <string name="overlay_menu_send_f11">F11</string>
+    <string name="overlay_menu_send_alt_f4">Alt+F4</string>
+    <string name="overlay_menu_send_alt_enter">Alt+Enter</string>
+    <string name="overlay_menu_send_ctrl_v">Ctrl+V</string>
+    <string name="overlay_menu_send_win">Win</string>
+    <string name="overlay_menu_send_win_d">Win+D</string>
+    <string name="overlay_menu_send_win_g">Win+G</string>
+    <string name="overlay_menu_send_ctrl_alt_tab">Ctrl+Alt+Tab</string>
+    <string name="overlay_menu_send_shift_tab">Shift+Tab</string>
+    <string name="overlay_menu_send_win_shift_left">Win+Shift+Left</string>
+    <string name="overlay_menu_send_ctrl_alt_shift_f1">Ctrl+Alt+Shift+F1</string>
+    <string name="overlay_menu_send_ctrl_alt_shift_f12">Ctrl+Alt+Shift+F12</string>
+    <string name="overlay_menu_send_win_alt_b">Win+Alt+B</string>
+    <string name="menu_button">Menu</string>
+    <string name="title_floating_button">Floating menu button</string>
+    <string name="summary_floating_button">Show a draggable button over the stream that opens the menu</string>
+
     <!-- Custom Commands Activity -->
     <string name="title_custom_commands">Custom Commands</string>
     <string name="custom_commands_empty">No custom commands configured.\n\nTap the + button to add a command.</string>

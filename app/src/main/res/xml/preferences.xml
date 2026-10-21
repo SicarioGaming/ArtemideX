@@ -155,6 +155,11 @@
             android:entries="@array/overlay_hold_duration_names"
             android:entryValues="@array/overlay_hold_duration_values"
             android:defaultValue="1500" />
+        <CheckBoxPreference
+            android:key="checkbox_enable_floating_button"
+            android:title="@string/title_floating_button"
+            android:summary="@string/summary_floating_button"
+            android:defaultValue="true" />
         <Preference
             android:key="overlay_custom_commands"
             android:title="@string/title_overlay_custom_commands"

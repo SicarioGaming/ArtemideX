@@ -29,7 +29,64 @@ public class OverlayMenuView extends LinearLayout {
         void onSendGuideButton();
         void onCustomCommand(CustomCommand command);
         void onMenuClosed();
+
+        // Actions ported from Artemide's in-stream menu
+        void onSendKeys(short[] keys);
+        void onRotateScreen();
+        void onToggleOnscreenController();
+        void onToggleFloatingButton();
     }
+
+    // Windows virtual key codes for Artemide's built-in shortcuts
+    public static final short VK_TAB = 0x09;
+    public static final short VK_RETURN = 0x0D;
+    public static final short VK_ESCAPE = 0x1B;
+    public static final short VK_LEFT = 0x25;
+    public static final short VK_B = 0x42;
+    public static final short VK_D = 0x44;
+    public static final short VK_G = 0x47;
+    public static final short VK_V = 0x56;
+    public static final short VK_LWIN = 0x5B;
+    public static final short VK_F1 = 0x70;
+    public static final short VK_F4 = 0x73;
+    public static final short VK_F11 = 0x7A;
+    public static final short VK_F12 = 0x7B;
+    public static final short VK_LSHIFT = 0xA0;
+    public static final short VK_LCONTROL = 0xA2;
+    public static final short VK_LMENU = 0xA4; // Left Alt
+
+    private static class Shortcut {
+        final int labelResId;
+        final short[] keys;
+
+        Shortcut(int labelResId, short... keys) {
+            this.labelResId = labelResId;
+            this.keys = keys;
+        }
+    }
+
+    // Same set and order as Artemide's "Send keys" menu
+    private static final Shortcut[] SHORTCUTS = {
+        new Shortcut(R.string.overlay_menu_send_esc, VK_ESCAPE),
+        new Shortcut(R.string.overlay_menu_send_f11, VK_F11),
+        new Shortcut(R.string.overlay_menu_send_alt_f4, VK_LMENU, VK_F4),
+        new Shortcut(R.string.overlay_menu_send_alt_enter, VK_LMENU, VK_RETURN),
+        new Shortcut(R.string.overlay_menu_send_ctrl_v, VK_LCONTROL, VK_V),
+        new Shortcut(R.string.overlay_menu_send_win, VK_LWIN),
+        new Shortcut(R.string.overlay_menu_send_win_d, VK_LWIN, VK_D),
+        new Shortcut(R.string.overlay_menu_send_win_g, VK_LWIN, VK_G),
+        new Shortcut(R.string.overlay_menu_send_ctrl_alt_tab, VK_LCONTROL, VK_LMENU, VK_TAB),
+        new Shortcut(R.string.overlay_menu_send_shift_tab, VK_LSHIFT, VK_TAB),
+        new Shortcut(R.string.overlay_menu_send_win_shift_left, VK_LWIN, VK_LSHIFT, VK_LEFT),
+        new Shortcut(R.string.overlay_menu_send_ctrl_alt_shift_f1, VK_LCONTROL, VK_LMENU, VK_LSHIFT, VK_F1),
+        new Shortcut(R.string.overlay_menu_send_ctrl_alt_shift_f12, VK_LCONTROL, VK_LMENU, VK_LSHIFT, VK_F12),
+        new Shortcut(R.string.overlay_menu_send_win_alt_b, VK_LWIN, VK_LMENU, VK_B),
+    };
+
+    private static final short[] TASK_MANAGER_KEYS = {VK_LCONTROL, VK_LSHIFT, VK_ESCAPE};
+
+    // True while the horizontal row shows the Shortcuts page instead of the main actions
+    private boolean showingShortcuts = false;
 
     private LinearLayout verticalContainer;
     private HorizontalScrollView horizontalScrollView;
@@ -55,7 +112,14 @@ public class OverlayMenuView extends LinearLayout {
     private static final int ACTION_SHOW_KEYBOARD = 4;
     private static final int ACTION_TOGGLE_MOUSE_EMULATION = 5;
     private static final int ACTION_SEND_GUIDE = 6;
+    private static final int ACTION_SHORTCUTS = 7;
+    private static final int ACTION_BACK = 8;
+    private static final int ACTION_TASK_MANAGER = 9;
+    private static final int ACTION_ROTATE_SCREEN = 10;
+    private static final int ACTION_ONSCREEN_CONTROLLER = 11;
+    private static final int ACTION_FLOATING_BUTTON = 12;
     private static final int ACTION_CUSTOM_BASE = 100;
+    private static final int ACTION_SHORTCUT_BASE = 200;
 
     private long lastAnalogNavTime = 0;
     private boolean flipFaceButtons = false;
@@ -159,14 +223,36 @@ public class OverlayMenuView extends LinearLayout {
         // Add spacing between vertical column and horizontal row
         ((LinearLayout.LayoutParams) horizontalScrollView.getLayoutParams()).leftMargin = spacing;
 
-        // Horizontal row: custom commands then Close
-        List<CustomCommand> customCommands = commandsManager.getCommands();
-        for (CustomCommand command : customCommands) {
-            addHorizontalButton(command.getIconResId(), command.getName(),
-                ACTION_CUSTOM_BASE + horizontalButtons.size(), spacing);
+        if (showingShortcuts) {
+            // Horizontal row: Artemide's built-in key shortcuts then Back
+            for (int i = 0; i < SHORTCUTS.length; i++) {
+                addHorizontalButton(0, getContext().getString(SHORTCUTS[i].labelResId),
+                    ACTION_SHORTCUT_BASE + i, spacing);
+            }
+            addHorizontalButton(0,
+                getContext().getString(R.string.overlay_menu_back), ACTION_BACK, 0);
+        } else {
+            // Horizontal row: Artemide actions, custom commands, then Close
+            addHorizontalButton(R.drawable.ic_overlay_key_press,
+                getContext().getString(R.string.overlay_menu_shortcuts), ACTION_SHORTCUTS, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_task_manager,
+                getContext().getString(R.string.overlay_menu_task_manager), ACTION_TASK_MANAGER, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_restart,
+                getContext().getString(R.string.overlay_menu_rotate_screen), ACTION_ROTATE_SCREEN, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_gamepad,
+                getContext().getString(R.string.overlay_menu_onscreen_controller), ACTION_ONSCREEN_CONTROLLER, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_window_menu,
+                getContext().getString(R.string.overlay_menu_floating_button), ACTION_FLOATING_BUTTON, spacing);
+
+            List<CustomCommand> customCommands = commandsManager.getCommands();
+            for (int i = 0; i < customCommands.size(); i++) {
+                CustomCommand command = customCommands.get(i);
+                addHorizontalButton(command.getIconResId(), command.getName(),
+                    ACTION_CUSTOM_BASE + i, spacing);
+            }
+            addHorizontalButton(0,
+                getContext().getString(R.string.overlay_menu_close), ACTION_CLOSE, 0);
         }
-        addHorizontalButton(0,
-            getContext().getString(R.string.overlay_menu_close), ACTION_CLOSE, 0);
 
         verticalContainer.invalidate();
         verticalContainer.requestLayout();
@@ -238,7 +324,7 @@ public class OverlayMenuView extends LinearLayout {
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && event.getAction() == KeyEvent.ACTION_DOWN) {
             if (!isFullGamepadEvent(event) && event.getRepeatCount() == 0) {
-                closeMenu();
+                closeOrGoBack();
             }
             return true;
         }
@@ -272,7 +358,7 @@ public class OverlayMenuView extends LinearLayout {
                     return true;
 
                 case KeyEvent.KEYCODE_BUTTON_B:
-                    closeMenu();
+                    closeOrGoBack();
                     return true;
 
                 case KeyEvent.KEYCODE_BUTTON_X:
@@ -312,7 +398,7 @@ public class OverlayMenuView extends LinearLayout {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
             if (!isFullGamepadEvent(event) && event.getRepeatCount() == 0) {
-                closeMenu();
+                closeOrGoBack();
             }
             return true;
         }
@@ -536,6 +622,30 @@ public class OverlayMenuView extends LinearLayout {
             } else if (action == ACTION_CLOSE) {
                 closeMenu();
                 return;
+            } else if (action == ACTION_SHORTCUTS) {
+                switchPage(true);
+                return;
+            } else if (action == ACTION_BACK) {
+                switchPage(false);
+                return;
+            } else if (action == ACTION_TASK_MANAGER) {
+                actionListener.onSendKeys(TASK_MANAGER_KEYS);
+                shouldCloseMenu = true;
+            } else if (action == ACTION_ROTATE_SCREEN) {
+                actionListener.onRotateScreen();
+                shouldCloseMenu = true;
+            } else if (action == ACTION_ONSCREEN_CONTROLLER) {
+                actionListener.onToggleOnscreenController();
+                shouldCloseMenu = true;
+            } else if (action == ACTION_FLOATING_BUTTON) {
+                actionListener.onToggleFloatingButton();
+                // Keep menu open so the change is visible
+            } else if (action >= ACTION_SHORTCUT_BASE) {
+                int shortcutIndex = action - ACTION_SHORTCUT_BASE;
+                if (shortcutIndex >= 0 && shortcutIndex < SHORTCUTS.length) {
+                    actionListener.onSendKeys(SHORTCUTS[shortcutIndex].keys);
+                }
+                shouldCloseMenu = true;
             } else if (action >= ACTION_CUSTOM_BASE) {
                 int commandIndex = action - ACTION_CUSTOM_BASE;
                 List<CustomCommand> commands = commandsManager.getCommands();
@@ -547,6 +657,14 @@ public class OverlayMenuView extends LinearLayout {
         }
 
         if (shouldCloseMenu) {
+            closeMenu();
+        }
+    }
+
+    private void closeOrGoBack() {
+        if (showingShortcuts) {
+            switchPage(false);
+        } else {
             closeMenu();
         }
     }
@@ -600,7 +718,24 @@ public class OverlayMenuView extends LinearLayout {
         closeMenu();
     }
 
+    /**
+     * Swap the horizontal row between the main actions and the Shortcuts page,
+     * keeping the menu open and the selection on the first button of the new row.
+     */
+    private void switchPage(boolean shortcuts) {
+        showingShortcuts = shortcuts;
+        buildMenu();
+        post(() -> {
+            if (!horizontalButtons.isEmpty()) {
+                activeRegion = Region.HORIZONTAL;
+                setHorizontalIndex(0);
+                horizontalScrollView.scrollTo(0, 0);
+            }
+        });
+    }
+
     public void show() {
+        showingShortcuts = false;
         buildMenu();
         setVisibility(VISIBLE);
 
