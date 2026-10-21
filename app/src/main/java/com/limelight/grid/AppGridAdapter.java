@@ -2,6 +2,7 @@ package com.limelight.grid;
 
 import android.content.Context;
 import android.graphics.BitmapFactory;
+import android.os.Build;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -36,6 +37,7 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
     private final boolean showHiddenApps;
 
     private CachedAppAssetLoader loader;
+    private int selectedAppId = -1;
     private Set<Integer> hiddenAppIds = new HashSet<>();
     private ArrayList<AppView.AppObject> allApps = new ArrayList<>();
 
@@ -116,6 +118,19 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
         setLayoutId(getLayoutIdForPreferences(prefs));
     }
 
+    // Cover Glow: the game shown in the home screen's hero gets a ring in the cover row
+    public void setSelectedAppId(int appId) {
+        if (appId != selectedAppId) {
+            selectedAppId = appId;
+            notifyDataSetChanged();
+        }
+    }
+
+    // Loads a game's cover into another view (the hero), through the same cache as the grid
+    public void loadCover(AppView.AppObject obj, ImageView imgView, TextView txtView) {
+        loader.populateImageView(obj.app, imgView, txtView);
+    }
+
     public void cancelQueuedOperations() {
         loader.cancelForegroundLoads();
         loader.cancelBackgroundLoads();
@@ -186,11 +201,18 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
             }
         }
 
+        boolean selected = obj.app.getAppId() == selectedAppId;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            parentView.setForeground(selected ?
+                    context.getDrawable(R.drawable.cg_cover_ring) : null);
+        }
+
         if (obj.isHidden) {
             parentView.setAlpha(0.40f);
         }
         else {
-            parentView.setAlpha(1.0f);
+            // Cover Glow: the other covers sit back a little behind the selected one
+            parentView.setAlpha(selected || selectedAppId == -1 ? 1.0f : 0.82f);
         }
     }
 }

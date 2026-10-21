@@ -528,6 +528,28 @@
     <string name="hide_cursor_touching">While touching the screen</string>
     <string name="hide_cursor_always">Always</string>
 
+    <!-- ArtemideX: Cover Glow home screen -->
+    <string name="cg_wordmark" translatable="false">ArtemideX</string>
+    <string name="cg_play">Play</string>
+    <string name="cg_resume">Resume</string>
+    <string name="cg_game_settings">This game\'s settings</string>
+    <string name="cg_last_played">Last played</string>
+    <string name="cg_running">Running now</string>
+    <string name="cg_pick_a_game">Pick a game</string>
+    <string name="cg_on_pc">On %1$s</string>
+    <string name="cg_chip_resolution">%1$dp · %2$d FPS</string>
+    <string name="cg_chip_custom">Custom settings</string>
+    <string name="cg_chip_haptics">Audio haptics</string>
+    <string name="cg_chip_vsync">V-Sync</string>
+    <string name="cg_chip_fast_vsync">Fast V-Sync</string>
+    <string name="cg_chip_warp">Warp Drive</string>
+    <string name="cg_chip_warp2">Warp 2</string>
+    <string name="cg_chip_hevc">HEVC</string>
+    <string name="cg_chip_av1">AV1</string>
+    <string name="cg_chip_h264">H.264</string>
+    <string name="cg_chip_pyrowave">PyroWave</string>
+    <string name="cg_chip_hdr">HDR</string>
+
     <!-- ArtemideX: per-game settings -->
     <string name="title_game_touch_mode">Touch mode</string>
     <string name="game_touch_mode_trackpad">Trackpad</string>

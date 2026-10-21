@@ -1,31 +1,175 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Cover Glow home: the selected game's cover, title, settings and Play button up top, the PC's
+     other games below. AppView tints the background and glow with the selected cover's colour. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/appRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FF0C1A1D"
+    android:clipChildren="false"
     tools:context=".AppView" >
 
-    <FrameLayout
-        android:id="@+id/appFragmentContainer"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentBottom="true"
-        android:layout_below="@+id/appListText"/>
-    
-    <TextView
-        android:id="@+id/appListText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentTop="true"
-        android:gravity="center"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:preferKeepClear="true"
-        android:textSize="28sp"/>
+    <View
+        android:id="@+id/coverGlow"
+        android:layout_width="720dp"
+        android:layout_height="720dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="-300dp"
+        android:layout_marginEnd="-200dp"
+        android:alpha="0.45"
+        android:background="@drawable/cg_glow"
+        android:importantForAccessibility="no" />
 
-</RelativeLayout>
+    <LinearLayout
+        android:id="@+id/appContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="36dp"
+        android:paddingEnd="36dp"
+        android:paddingTop="20dp">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/appListText"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@drawable/cg_chip"
+                android:gravity="center"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp"
+                android:preferKeepClear="true"
+                android:textColor="#FFFFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:fontFamily="sans-serif-black"
+                android:text="@string/cg_wordmark"
+                android:textColor="#FFFFFFFF"
+                android:textSize="20sp" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/heroSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="bottom"
+            android:orientation="horizontal">
+
+            <com.limelight.ui.CoverImageView
+                android:id="@+id/heroCover"
+                android:layout_width="180dp"
+                android:layout_height="240dp"
+                android:background="@drawable/cg_cover"
+                android:clipToOutline="true"
+                android:elevation="16dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY" />
+
+            <TextView
+                android:id="@+id/heroLoaderText"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:importantForAccessibility="no" />
+
+            <LinearLayout
+                android:id="@+id/heroDetails"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/heroLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:letterSpacing="0.15"
+                    android:textAllCaps="true"
+                    android:textColor="#FFE2E8F0"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/heroTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-black"
+                    android:maxLines="2"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="44sp" />
+
+                <LinearLayout
+                    android:id="@+id/heroChips"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/heroPlay"
+                        android:layout_width="wrap_content"
+                        android:layout_height="56dp"
+                        android:background="@drawable/cg_pill_white"
+                        android:drawableStart="@drawable/cg_ic_play"
+                        android:drawablePadding="10dp"
+                        android:paddingStart="26dp"
+                        android:paddingEnd="30dp"
+                        android:stateListAnimator="@null"
+                        android:text="@string/cg_play"
+                        android:textAllCaps="false"
+                        android:textColor="#FF0B0F14"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/heroSettings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="56dp"
+                        android:layout_marginStart="12dp"
+                        android:background="@drawable/cg_pill_frosted"
+                        android:paddingStart="24dp"
+                        android:paddingEnd="24dp"
+                        android:stateListAnimator="@null"
+                        android:text="@string/cg_game_settings"
+                        android:textAllCaps="false"
+                        android:textColor="#FFFFFFFF"
+                        android:textSize="16sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/coverRowLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="22dp"
+            android:layout_marginBottom="4dp"
+            android:textColor="#FFE2E8F0"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:id="@+id/appFragmentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+</FrameLayout>

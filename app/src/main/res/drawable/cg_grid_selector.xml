@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow: the cover row's focus ring for controllers and keyboards (nothing on touch) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:state_window_focused="true">
+        <inset android:inset="2dp" android:drawable="@drawable/cg_cover_ring" />
+    </item>
+    <item android:state_selected="true" android:state_window_focused="true">
+        <inset android:inset="2dp" android:drawable="@drawable/cg_cover_ring" />
+    </item>
+    <item android:drawable="@android:color/transparent" />
+</selector>
