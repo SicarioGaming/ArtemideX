@@ -282,7 +282,7 @@ bool VulkanRenderer::probe() {
     }
 
     VkApi vk;
-    if (!vk.loadGlobal()) {
+    if (!vk.loadGlobal(false)) {
         return false;
     }
 
@@ -312,8 +312,23 @@ bool VulkanRenderer::probe() {
 }
 
 bool VulkanRenderer::probePyrowave() {
+    if (probePyrowaveOn(true)) {
+        return true;
+    }
+    if (!VkApi::customDriverInUse()) {
+        return false;
+    }
+
+    // libadrenotools only loads the driver itself once Vulkan starts, so a broken or unsuitable
+    // driver shows up here. Drop it for this process and try the system driver.
+    ALOGE("The custom Vulkan driver can't run PyroWave; trying the system driver");
+    VkApi::markCustomDriverFailed();
+    return probePyrowaveOn(false);
+}
+
+bool VulkanRenderer::probePyrowaveOn(bool customDriver) {
     VkApi vk;
-    if (!loadNdkApi() || !PyrowaveDecoder::loadLibrary() || !vk.loadGlobal()) {
+    if (!loadNdkApi() || !PyrowaveDecoder::loadLibrary() || !vk.loadGlobal(customDriver)) {
         return false;
     }
 
@@ -468,7 +483,7 @@ bool VulkanRenderer::init(ANativeWindow* output) {
     ANativeWindow_acquire(output);
     outputWindow_ = output;
 
-    if (!vk_.loadGlobal() || !createInstance() || !pickDevice() || !createDevice() ||
+    if (!vk_.loadGlobal(config_.pyrowave) || !createInstance() || !pickDevice() || !createDevice() ||
             !createFrameResources() || !createShaderModules()) {
         return false;
     }
@@ -621,6 +636,17 @@ bool VulkanRenderer::createDevice() {
     if (!vk_.vkGetPastPresentationTimingGOOGLE) {
         hasDisplayTimingExt_ = false;
     }
+
+    // What's actually driving this device: Turnip reports "Turnip"/Mesa here and Vulkan 1.3,
+    // where the stock Qualcomm driver reports 1.1
+    VkPhysicalDeviceDriverProperties driverProps {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES};
+    VkPhysicalDeviceProperties2 props2 {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
+    props2.pNext = &driverProps;
+    vk_.vkGetPhysicalDeviceProperties2(physicalDevice_, &props2);
+    ALOGI("Vulkan driver: %s, %s %s, API %u.%u.%u, driver version 0x%08" PRIx32,
+          props2.properties.deviceName, driverProps.driverName, driverProps.driverInfo,
+          VK_API_VERSION_MAJOR(props2.properties.apiVersion), VK_API_VERSION_MINOR(props2.properties.apiVersion),
+          VK_API_VERSION_PATCH(props2.properties.apiVersion), props2.properties.driverVersion);
 
     if (deviceSetup_.queue.queueCount >= 2) {
         vk_.vkGetDeviceQueue(device_, queueFamily_, 0, &decodeQueue_);

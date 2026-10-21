@@ -118,8 +118,24 @@ struct VkApi {
     VK_DEVICE_FUNCTIONS(VK_DECLARE_FUNCTION)
     VK_OPTIONAL_DEVICE_FUNCTIONS(VK_DECLARE_FUNCTION)
 
-    // Loads libvulkan.so and the global functions
-    bool loadGlobal();
+    // Points the loader at a custom Vulkan driver (Turnip) loaded through libadrenotools, or
+    // back at the system libvulkan.so if driverPath is null or empty. hookLibDir is the app's
+    // nativeLibraryDir, where libadrenotools.so and its hooks are packaged, and cacheDir a
+    // writable directory. Process-wide, and read on the first loadGlobal().
+    static void setCustomDriver(const char* driverPath, const char* hookLibDir, const char* cacheDir);
+
+    // Loads libvulkan.so and the global functions. customDriver picks the driver for this user:
+    // the custom one where the Vulkan renderer can use it (PyroWave, which decodes into its own
+    // images), the system one elsewhere (the MediaCodec path imports the decoder's
+    // AHardwareBuffer, which the stock driver handles and Turnip doesn't).
+    bool loadGlobal(bool customDriver = false);
     bool loadInstance(VkInstance instance);
     bool loadDevice(VkDevice device);
+
+    // Whether loadGlobal() actually opened a custom driver rather than falling back to the
+    // system libvulkan.so
+    static bool customDriverInUse();
+
+    // The custom driver loaded but doesn't work; use the system driver from now on
+    static void markCustomDriverFailed();
 };

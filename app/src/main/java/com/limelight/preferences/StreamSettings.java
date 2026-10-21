@@ -1,11 +1,14 @@
 package com.limelight.preferences;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.media.MediaCodecInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
@@ -18,6 +21,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.provider.OpenableColumns;
 import android.util.DisplayMetrics;
 import android.util.Range;
 import android.view.Display;
@@ -26,6 +30,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.widget.Toast;
 
 import com.limelight.LimeLog;
 import com.limelight.PcView;
@@ -34,6 +39,11 @@ import com.limelight.binding.video.MediaCodecHelper;
 import com.limelight.utils.Dialog;
 import com.limelight.utils.UiHelper;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
@@ -122,6 +132,7 @@ public class StreamSettings extends Activity {
     }
 
     public static class SettingsFragment extends PreferenceFragment {
+        private static final int REQUEST_CUSTOM_VULKAN_DRIVER = 0x6472;  // "dr"
         private int nativeResolutionStartIndex = Integer.MAX_VALUE;
         private boolean nativeFramerateShown = false;
 
@@ -690,6 +701,117 @@ public class StreamSettings extends Activity {
                     }
                 });
             }
+
+            // The custom Vulkan driver is a file chosen with the system document picker, then
+            // copied into app-private storage where libadrenotools can load it from
+            Preference driverPref = findPreference(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING);
+            if (driverPref != null) {
+                driverPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                        intent.addCategory(Intent.CATEGORY_OPENABLE);
+                        intent.setType("*/*");
+                        try {
+                            startActivityForResult(intent, REQUEST_CUSTOM_VULKAN_DRIVER);
+                        }
+                        catch (ActivityNotFoundException e) {
+                            Toast.makeText(getActivity(), R.string.custom_vulkan_driver_no_picker,
+                                    Toast.LENGTH_LONG).show();
+                        }
+                        return true;
+                    }
+                });
+                updateCustomDriverSummary();
+            }
+        }
+
+        private void updateCustomDriverSummary() {
+            Preference pref = findPreference(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING);
+            if (pref == null || getActivity() == null) {
+                return;
+            }
+            String path = PreferenceManager.getDefaultSharedPreferences(getActivity())
+                    .getString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, "");
+            if (path == null || path.isEmpty()) {
+                pref.setSummary(R.string.summary_custom_vulkan_driver_path);
+            }
+            else {
+                pref.setSummary(new File(path).getName());
+            }
+        }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+
+            if (requestCode != REQUEST_CUSTOM_VULKAN_DRIVER || resultCode != Activity.RESULT_OK ||
+                    data == null || data.getData() == null) {
+                return;
+            }
+            importCustomDriver(data.getData());
+        }
+
+        private void importCustomDriver(Uri uri) {
+            Context context = getActivity();
+            if (context == null) {
+                return;
+            }
+
+            String name = queryDisplayName(context, uri);
+            if (name == null || name.isEmpty()) {
+                name = "custom_driver.so";
+            }
+            name = new File(name).getName();
+
+            File dir = new File(context.getFilesDir(), "custom_vulkan_driver");
+            if (!dir.exists() && !dir.mkdirs()) {
+                Toast.makeText(context, R.string.custom_vulkan_driver_import_failed, Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            File out = new File(dir, name);
+            try (InputStream in = context.getContentResolver().openInputStream(uri);
+                    OutputStream os = new FileOutputStream(out)) {
+                if (in == null) {
+                    throw new IOException("could not open the file");
+                }
+                byte[] buffer = new byte[65536];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    os.write(buffer, 0, read);
+                }
+            }
+            catch (Exception e) {
+                out.delete();
+                Toast.makeText(context, context.getString(R.string.custom_vulkan_driver_import_failed) + ": " + e.getMessage(),
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+            out.setReadable(true, true);
+            out.setExecutable(true, true);
+
+            PreferenceManager.getDefaultSharedPreferences(context).edit()
+                    .putString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, out.getAbsolutePath())
+                    .apply();
+            updateCustomDriverSummary();
+            Toast.makeText(context, context.getString(R.string.custom_vulkan_driver_imported, name),
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        private String queryDisplayName(Context context, Uri uri) {
+            try (Cursor cursor = context.getContentResolver().query(uri,
+                    new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (index >= 0) {
+                        return cursor.getString(index);
+                    }
+                }
+            }
+            catch (Exception ignored) {
+            }
+            return null;
         }
     }
 }

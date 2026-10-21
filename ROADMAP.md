@@ -89,8 +89,15 @@ Done so far (2026-10-21):
 - [x] Better stats: 1% low FPS (average of the slowest 1% of frame gaps) in both overlays
 - [x] Pinch to zoom anytime (Input settings, on by default; not in Multi-touch mode)
 - [ ] Per-game settings: add ArtemideX's options to Moonlight X's App Settings
-- [ ] Audio haptics
-- [ ] Custom PyroWave driver
+- [x] Audio haptics (Audio settings, off by default): bass below ~120 Hz drives this device's
+      vibration and/or the first controller's heavy motor, with a strength setting. The tablet's
+      motor is on/off only, so strength becomes pulse length there. Game rumble and audio
+      haptics share the controller (the stronger wins)
+- [x] Custom PyroWave driver (Advanced settings, off by default): ported from Moonlight X Turnip
+      (`0703b360`). Pick a Turnip .so/.zip/.adpkg; only PyroWave uses it. libadrenotools and its
+      hooks are rebuilt here from the pinned upstream source rather than using the fork's
+      prebuilts. Added: files that aren't 64-bit ARM libraries are refused, and a driver that
+      can't run PyroWave falls back to the system driver. Not yet tried with a real Turnip driver
 
 Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC cursor
 (never / while touching / always), and Long-press to right-click in the gaming trackpad mode.

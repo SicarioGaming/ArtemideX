@@ -110,6 +110,9 @@ public class PreferenceConfiguration {
     private static final String SPATIAL_DITHERING_PREF_STRING = "spatial_dithering";
     private static final String JITTER_BUFFER_PREF_STRING = "jitter_buffer";
     private static final String PYROWAVE_LATE_FRAMES_PREF_STRING = "pyrowave_late_frames";
+    private static final String CUSTOM_VULKAN_DRIVER_PREF_STRING = "checkbox_custom_vulkan_driver";
+    static final String CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING = "text_custom_vulkan_driver_path";
+    private static final String CUSTOM_VULKAN_DRIVER_TOAST_PREF_STRING = "checkbox_custom_vulkan_driver_toast";
 
     static final String DEFAULT_RESOLUTION = "1280x720";
     static final String DEFAULT_FPS = "60";
@@ -128,6 +131,9 @@ public class PreferenceConfiguration {
     private static final String DEFAULT_SPATIAL_DITHERING = "off";
     private static final String DEFAULT_JITTER_BUFFER = "balanced";
     private static final String DEFAULT_PYROWAVE_LATE_FRAMES = "balanced";
+    private static final boolean DEFAULT_CUSTOM_VULKAN_DRIVER = false;
+    private static final String DEFAULT_CUSTOM_VULKAN_DRIVER_PATH = "";
+    private static final boolean DEFAULT_CUSTOM_VULKAN_DRIVER_TOAST = true;
 
     private static final boolean ONSCREEN_CONTROLLER_DEFAULT = false;
     private static final boolean ONLY_L3_R3_DEFAULT = false;
@@ -222,6 +228,9 @@ public class PreferenceConfiguration {
     public int framePacing;
     public int jitterBuffer;
     public int pyrowaveLateFrames;
+    public boolean customVulkanDriver;
+    public String customVulkanDriverPath;
+    public boolean customVulkanDriverToast;
     public boolean absoluteMouseMode;
     public boolean enableAudioFx;
     public boolean reduceRefreshRate;
@@ -767,6 +776,9 @@ public class PreferenceConfiguration {
         config.warpFactor = warpFactorFor(prefs.getString(FRAME_PACING_PREF_STRING, DEFAULT_FRAME_PACING));
         config.jitterBuffer = getJitterBufferValue(context);
         config.pyrowaveLateFrames = getPyrowaveLateFramesValue(context);
+        config.customVulkanDriver = prefs.getBoolean(CUSTOM_VULKAN_DRIVER_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER);
+        config.customVulkanDriverPath = prefs.getString(CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER_PATH);
+        config.customVulkanDriverToast = prefs.getBoolean(CUSTOM_VULKAN_DRIVER_TOAST_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER_TOAST);
 
         config.analogStickForScrolling = getAnalogStickForScrollingValue(context);
 

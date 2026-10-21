@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <android/native_window_jni.h>
+#include <string>
 #include <vector>
 
 #include "vulkan_renderer.h"
@@ -11,6 +12,32 @@ namespace {
     VulkanRenderer* fromHandle(jlong handle) {
         return reinterpret_cast<VulkanRenderer*>(handle);
     }
+
+    std::string jstringOrEmpty(JNIEnv* env, jstring string) {
+        if (!string) {
+            return {};
+        }
+        const char* chars = env->GetStringUTFChars(string, nullptr);
+        std::string result = chars ? chars : "";
+        if (chars) {
+            env->ReleaseStringUTFChars(string, chars);
+        }
+        return result;
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_limelight_binding_video_VulkanRendererBridge_nativeConfigureCustomDriver(
+        JNIEnv* env, jclass, jstring driverPath, jstring hookLibDir, jstring cacheDir) {
+    const std::string path = jstringOrEmpty(env, driverPath);
+    const std::string hooks = jstringOrEmpty(env, hookLibDir);
+    const std::string cache = jstringOrEmpty(env, cacheDir);
+    VkApi::setCustomDriver(path.empty() ? nullptr : path.c_str(), hooks.c_str(), cache.c_str());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_limelight_binding_video_VulkanRendererBridge_nativeIsCustomDriverActive(JNIEnv*, jclass) {
+    return VkApi::customDriverInUse() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

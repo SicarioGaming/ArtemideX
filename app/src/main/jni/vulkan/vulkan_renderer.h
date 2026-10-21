@@ -84,7 +84,8 @@ public:
     // Whether this device can run the renderer at all
     static bool probe();
 
-    // Whether the renderer can decode PyroWave here: the library loads, and the GPU can run it
+    // Whether the renderer can decode PyroWave here: the library loads, and the GPU can run it.
+    // If a custom driver is set but can't run it, the system driver is tried and used instead.
     static bool probePyrowave();
 
     // Returns null if the renderer can't run on this device or surface
@@ -175,6 +176,7 @@ private:
         VkDeviceCreateInfo info {VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
     };
 
+    static bool probePyrowaveOn(bool customDriver);
     static VkInstance createVkInstance(VkApi& vk, bool pyrowave, bool* hasColorspaceExt, InstanceSetup& setup);
     static bool prepareDevice(VkApi& vk, VkPhysicalDevice device, uint32_t queueFamily, bool pyrowave,
                               bool hdrMetadata, bool displayTiming, DeviceSetup& setup);

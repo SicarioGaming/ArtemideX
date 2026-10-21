@@ -1,6 +1,9 @@
 package com.limelight.binding.video;
 
+import android.content.Context;
 import android.view.Surface;
+
+import java.io.File;
 
 import com.limelight.LimeLog;
 
@@ -18,12 +21,78 @@ public class VulkanRendererBridge {
     private static Boolean supported;
     private static Boolean pyrowaveSupported;
 
+    private static boolean driverConfigured;
+    private static String configuredDriverPath;
+    private static String resolvedDriverPath;
+
     private long handle;
     private Surface decoderSurface;
     private boolean tracing;
 
     private VulkanRendererBridge(long handle) {
         this.handle = handle;
+    }
+
+    /**
+     * Tells the native renderer to load a custom Vulkan driver (Turnip) through libadrenotools,
+     * or the system driver when {@code driverPath} is null. Must be called before the first
+     * {@link #isSupported()} or {@link #isPyrowaveSupported()} call, since the loader is opened
+     * once per process.
+     *
+     * @param driverPath absolute path to the custom driver .so in app-private storage, or null
+     *                   to use the system driver
+     */
+    public static synchronized void configureCustomDriver(Context context, String setting) {
+        if (setting != null && setting.trim().isEmpty()) {
+            setting = null;
+        }
+        if (driverConfigured && (configuredDriverPath == null ? setting == null
+                : configuredDriverPath.equals(setting))) {
+            return;
+        }
+        driverConfigured = true;
+        configuredDriverPath = setting;
+
+        // A .so is used as-is; a .zip/.adpkg is unpacked into app-private storage first
+        String driverPath = CustomVulkanDriver.resolve(context, setting);
+        resolvedDriverPath = driverPath;
+        String hookLibDir = null;
+        String cacheDir = null;
+        if (driverPath != null) {
+            hookLibDir = context.getApplicationInfo().nativeLibraryDir;
+            File cache = context.getCodeCacheDir();
+            cacheDir = (cache != null ? cache : context.getCacheDir()).getAbsolutePath();
+        }
+        try {
+            System.loadLibrary("vulkan_renderer");
+            nativeConfigureCustomDriver(driverPath, hookLibDir, cacheDir);
+        }
+        catch (UnsatisfiedLinkError e) {
+            LimeLog.warning("Vulkan renderer library unavailable: " + e.getMessage());
+        }
+
+        // Which driver is loaded decides the probe, so the cached answers no longer apply
+        supported = null;
+        pyrowaveSupported = null;
+        LimeLog.info("Custom Vulkan driver: " + (driverPath != null ? driverPath : "none"));
+    }
+
+    /**
+     * Whether the custom Vulkan driver was actually loaded, rather than the system driver. Only
+     * meaningful after something has probed Vulkan.
+     */
+    public static boolean isCustomDriverActive() {
+        try {
+            return nativeIsCustomDriverActive();
+        }
+        catch (UnsatisfiedLinkError e) {
+            return false;
+        }
+    }
+
+    /** File name of the resolved custom driver, for a status message, or null. */
+    public static String getCustomDriverName() {
+        return resolvedDriverPath != null ? new File(resolvedDriverPath).getName() : null;
     }
 
     /**
@@ -194,6 +263,8 @@ public class VulkanRendererBridge {
 
     private static native boolean nativeProbe();
     private static native boolean nativeProbePyrowave();
+    private static native void nativeConfigureCustomDriver(String driverPath, String hookLibDir, String cacheDir);
+    private static native boolean nativeIsCustomDriverActive();
     private static native long nativeCreate(Surface output, int streamWidth, int streamHeight, int streamFps,
                                             int framePacing, int jitterBuffer, int ditherMode, int colorspace,
                                             boolean fullRange, boolean tenBit, boolean pyrowave,

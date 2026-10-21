@@ -39,6 +39,7 @@ import android.util.Range;
 import android.view.Choreographer;
 import android.view.Surface;
 import android.view.SurfaceHolder;
+import android.widget.Toast;
 
 public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements Choreographer.FrameCallback {
 
@@ -404,6 +405,10 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
         this.glRenderer = glRenderer;
         this.perfListener = perfListener;
 
+        // Decide on the driver before anything probes Vulkan, since the loader is opened once
+        VulkanRendererBridge.configureCustomDriver(context,
+                prefs.customVulkanDriver ? prefs.customVulkanDriverPath : null);
+
         // The Vulkan renderer is experimental, so Automatic keeps the direct renderer for now.
         // It needs Android 10 for the NDK image reader and Choreographer APIs it uses.
         wantVulkan = prefs.videoRenderer == PreferenceConfiguration.VideoRendererOption.VULKAN &&
@@ -678,6 +683,14 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
             LimeLog.info("Using Vulkan renderer");
             if (currentHdrMetadata != null) {
                 renderer.setHdrMode(true, currentHdrMetadata);
+            }
+            // Only PyroWave runs on the custom driver; the MediaCodec path uses the system one
+            if (pyrowave && prefs.customVulkanDriver && prefs.customVulkanDriverToast &&
+                    VulkanRendererBridge.isCustomDriverActive()) {
+                final String name = VulkanRendererBridge.getCustomDriverName();
+                final String message = activity.getString(R.string.custom_vulkan_driver_loaded,
+                        name != null ? name : "custom driver");
+                activity.runOnUiThread(() -> Toast.makeText(activity, message, Toast.LENGTH_LONG).show());
             }
         }
         return renderer;

@@ -321,6 +321,17 @@
     <string name="title_video_renderer">Video renderer</string>
     <string name="summary_video_renderer">Vulkan adds dithering and native frame pacing. Automatic uses the direct renderer.</string>
 
+    <string name="title_custom_vulkan_driver">Custom Vulkan driver</string>
+    <string name="summary_custom_vulkan_driver">Load a custom Vulkan driver (for example Turnip) through libadrenotools, for arm64 devices on Android 10+. Used by PyroWave; other codecs keep the system Vulkan driver. If the driver doesn\'t work, the system one is used instead. Restart ArtemideX after changing it.</string>
+    <string name="title_custom_vulkan_driver_path">Custom driver file</string>
+    <string name="summary_custom_vulkan_driver_path">Tap to choose the driver (.so, .zip, or .adpkg). It is copied into the app\'s private storage.</string>
+    <string name="custom_vulkan_driver_imported">Custom driver imported: %1$s</string>
+    <string name="custom_vulkan_driver_import_failed">Could not import the custom driver</string>
+    <string name="custom_vulkan_driver_no_picker">No file picker available</string>
+    <string name="title_custom_vulkan_driver_toast">Driver loaded toast</string>
+    <string name="summary_custom_vulkan_driver_toast">Show a message when the custom Vulkan driver is loaded.</string>
+    <string name="custom_vulkan_driver_loaded">Custom Vulkan driver loaded: %1$s</string>
+
     <string name="dithering_off">Off</string>
     <string name="dithering_low">Low</string>
     <string name="dithering_high">High</string>

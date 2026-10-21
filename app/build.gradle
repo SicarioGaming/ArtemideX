@@ -84,6 +84,15 @@ android {
         }
     }
 
+    packaging {
+        // libadrenotools loads its hook libraries from nativeLibraryDir, so the .so files must
+        // be real files on disk rather than loaded straight from the APK. PyroWave's prebuilt
+        // is packaged the same way and still loads by soname.
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix ".debug"
@@ -146,9 +155,11 @@ android {
     }
 
     // Prebuilt PyroWave decoder library (see src/main/jni/pyrowave/build_libpyrowave.sh)
+    // and libadrenotools custom driver loader (see src/main/jni/adrenotools/build_libadrenotools.sh)
     sourceSets {
         main {
             jniLibs.srcDirs += 'src/main/jni/pyrowave/lib'
+            jniLibs.srcDirs += 'src/main/jni/adrenotools/lib'
         }
     }
 }

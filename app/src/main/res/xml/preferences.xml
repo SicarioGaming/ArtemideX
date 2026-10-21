@@ -418,6 +418,22 @@
             android:entryValues="@array/video_renderer_values"
             android:summary="@string/summary_video_renderer"
             android:defaultValue="auto" />
+        <CheckBoxPreference
+            android:key="checkbox_custom_vulkan_driver"
+            android:title="@string/title_custom_vulkan_driver"
+            android:summary="@string/summary_custom_vulkan_driver"
+            android:defaultValue="false" />
+        <Preference
+            android:key="text_custom_vulkan_driver_path"
+            android:dependency="checkbox_custom_vulkan_driver"
+            android:title="@string/title_custom_vulkan_driver_path"
+            android:summary="@string/summary_custom_vulkan_driver_path" />
+        <CheckBoxPreference
+            android:key="checkbox_custom_vulkan_driver_toast"
+            android:dependency="checkbox_custom_vulkan_driver"
+            android:title="@string/title_custom_vulkan_driver_toast"
+            android:summary="@string/summary_custom_vulkan_driver_toast"
+            android:defaultValue="true" />
         <ListPreference
             android:key="spatial_dithering"
             android:title="@string/title_spatial_dithering"
