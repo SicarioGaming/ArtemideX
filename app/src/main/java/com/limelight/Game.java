@@ -64,6 +64,7 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Matrix;
 import android.graphics.Point;
+import android.graphics.drawable.GradientDrawable;
 import android.graphics.Rect;
 import android.hardware.input.InputManager;
 import android.media.AudioManager;
@@ -76,7 +77,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.text.Html;
 import android.util.Rational;
+import android.util.TypedValue;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
@@ -201,6 +204,20 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     // Whether the trackpad modes use the custom sensitivity from settings
     private boolean touchSensitivityEnabled;
 
+    // Prevent Packet Loss (from Artemide): a tiny packet every 20 ms keeps Wi-Fi out of power
+    // saving between frames. It stops by itself once the stream is no longer connected.
+    private static final int KEEP_ALIVE_INTERVAL_MS = 20;
+    private final Handler keepAliveHandler = new Handler(android.os.Looper.getMainLooper());
+    private final Runnable keepAlivePing = new Runnable() {
+        @Override
+        public void run() {
+            if (connected) {
+                MoonBridge.sendKeepAlivePayload();
+                keepAliveHandler.postDelayed(this, KEEP_ALIVE_INTERVAL_MS);
+            }
+        }
+    };
+
     private boolean isImeVisible = false;
     private boolean isAndroidTV = false;
 
@@ -257,6 +274,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public static final String EXTRA_SERVER_CERT = "ServerCert";
     public static final String EXTRA_QUICK_LAUNCH_APP_KEY = "QuickLaunchAppKey";
     public static final String EXTRA_APPLY_PREFERENCE_OVERRIDES = "ApplyPreferenceOverrides";
+    // StreamConfiguration.VIRTUAL_DISPLAY_*; when absent the "Display on the PC" setting decides
+    public static final String EXTRA_VIRTUAL_DISPLAY = "VirtualDisplay";
     public static final String ACTION_QUIT_APP = "com.limelight.QUIT_STREAMING_APP";
 
     @Override
@@ -391,6 +410,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         notificationOverlayView = findViewById(R.id.notificationOverlay);
 
         performanceOverlayView = findViewById(R.id.performanceOverlay);
+        if (prefConfig.enablePerfOverlayLite) {
+            styleLitePerformanceOverlay();
+        }
 
         // Initialize brightness slider
         brightnessSliderView = new BrightnessSliderView(this);
@@ -623,6 +645,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setRefreshRate(chosenFrameRate)
                 .setApp(app)
                 .setEnableUltraLowLatency(prefConfig.enableUltraLowLatency)
+                .setVirtualDisplay(getIntent().getIntExtra(EXTRA_VIRTUAL_DISPLAY, virtualDisplayFromSetting(prefConfig.virtualDisplayMode)))
                 .setBitrate(prefConfig.bitrate)
                 .setEnableSops(prefConfig.enableSops)
                 .enableLocalAudioPlayback(prefConfig.playHostAudio)
@@ -2790,6 +2813,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
                 // Show overlay menu hint toast
                 showOverlayMenuHint();
+
+                if (prefConfig.preventPacketLoss) {
+                    keepAliveHandler.postDelayed(keepAlivePing, 1000);
+                }
             }
         });
 
@@ -3248,6 +3275,41 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 showServerCommands();
             }
         });
+    }
+
+    /**
+     * Artemide's Lite overlay look: one line, centered at the top, in a rounded pill.
+     */
+    private void styleLitePerformanceOverlay() {
+        float density = getResources().getDisplayMetrics().density;
+
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) performanceOverlayView.getLayoutParams();
+        params.gravity = Gravity.TOP | Gravity.CENTER_HORIZONTAL;
+        params.setMargins(0, (int) (4 * density), 0, 0);
+        performanceOverlayView.setLayoutParams(params);
+
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(0x99000000);
+        background.setCornerRadius(10 * density);
+        performanceOverlayView.setBackground(background);
+
+        int padH = (int) (8 * density);
+        int padV = (int) (2 * density);
+        performanceOverlayView.setPadding(padH, padV, padH, padV);
+        performanceOverlayView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 11);
+        performanceOverlayView.setGravity(Gravity.CENTER);
+        performanceOverlayView.setSingleLine(true);
+    }
+
+    private static int virtualDisplayFromSetting(String mode) {
+        switch (mode) {
+            case "virtual":
+                return StreamConfiguration.VIRTUAL_DISPLAY_ON;
+            case "primary":
+                return StreamConfiguration.VIRTUAL_DISPLAY_OFF;
+            default:
+                return StreamConfiguration.VIRTUAL_DISPLAY_HOST_DEFAULT;
+        }
     }
 
     private void togglePanZoomMode() {

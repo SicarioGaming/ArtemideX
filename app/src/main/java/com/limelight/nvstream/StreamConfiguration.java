@@ -30,6 +30,12 @@ public class StreamConfiguration {
     private boolean persistGamepadsAfterDisconnect;
     private boolean enableUltraLowLatency;
 
+    // Which host display to stream from (Apollo/Vibepollo virtualDisplay launch argument)
+    public static final int VIRTUAL_DISPLAY_HOST_DEFAULT = -1;
+    public static final int VIRTUAL_DISPLAY_OFF = 0;
+    public static final int VIRTUAL_DISPLAY_ON = 1;
+    private int virtualDisplay;
+
     public static class Builder {
         private StreamConfiguration config = new StreamConfiguration();
         
@@ -134,6 +140,11 @@ public class StreamConfiguration {
             return this;
         }
 
+        public StreamConfiguration.Builder setVirtualDisplay(int virtualDisplay) {
+            config.virtualDisplay = virtualDisplay;
+            return this;
+        }
+
         public StreamConfiguration build() {
             return config;
         }
@@ -155,6 +166,7 @@ public class StreamConfiguration {
         this.supportedVideoFormats = MoonBridge.VIDEO_FORMAT_H264;
         this.attachedGamepadMask = 0;
         this.enableUltraLowLatency = false;
+        this.virtualDisplay = VIRTUAL_DISPLAY_HOST_DEFAULT;
     }
     
     public int getWidth() {
@@ -236,5 +248,9 @@ public class StreamConfiguration {
 
     public boolean getEnableUltraLowLatency() {
         return enableUltraLowLatency;
+    }
+
+    public int getVirtualDisplay() {
+        return virtualDisplay;
     }
 }

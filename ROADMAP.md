@@ -41,11 +41,15 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
   - [ ] On-screen full keyboard and special-keys bar
   - [ ] Automatic clipboard sync when the stream starts or loses focus
   - [ ] Custom shortcuts imported from a file (Moonlight X's custom commands already cover adding your own)
-- [ ] Virtual Display (start in virtual or primary display)
-- [ ] Prevent Packet Loss
+- [x] Virtual Display: a "Display on the PC" setting (host default, virtual, primary) and
+      "Start in Virtual/Primary Display" when long-pressing a game. Host default sends nothing,
+      because Vibepollo treats `virtualDisplay=0` as turning its virtual display off
+- [x] Prevent Packet Loss: a tiny ignored control packet every 20 ms keeps Wi-Fi awake
+      (new `LiSendKeepAlivePayload` in common-c)
 - [ ] V-Sync, Fast V-Sync, Sync: LFR and Async: LFR, without disturbing Moonlight X's
       Direct Frame Pacing
-- [ ] Lite mode performance overlay
+- [x] Lite mode performance overlay: one centered line with bandwidth, network/decode delay,
+      loss and FPS (Advanced settings, under "Show performance stats")
 - [ ] Check Moonlight X's existing Ultra Low Latency and Force Full Range Video
       against Artemide's behaviour
 

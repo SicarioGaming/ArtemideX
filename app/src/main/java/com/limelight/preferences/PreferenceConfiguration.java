@@ -87,6 +87,9 @@ public class PreferenceConfiguration {
     private static final String OVERLAY_HOLD_DURATION_PREF_STRING = "overlay_hold_duration";
     private static final String ENABLE_FLOATING_BUTTON_PREF_STRING = "checkbox_enable_floating_button";
     private static final String TOUCH_SENSITIVITY_PREF_STRING = "seekbar_touch_sensitivity";
+    private static final String PERF_OVERLAY_LITE_PREF_STRING = "checkbox_enable_perf_overlay_lite";
+    private static final String PREVENT_PACKET_LOSS_PREF_STRING = "checkbox_prevent_packet_loss";
+    private static final String VIRTUAL_DISPLAY_MODE_PREF_STRING = "virtual_display_mode";
     private static final String AUTO_RESUME_STREAM_PREF_STRING = "checkbox_auto_resume_stream";
     private static final String VIDEO_RENDERER_PREF_STRING = "video_renderer";
     private static final String SPATIAL_DITHERING_PREF_STRING = "spatial_dithering";
@@ -216,6 +219,10 @@ public class PreferenceConfiguration {
     public int overlayHoldDurationMs;
     public boolean enableFloatingButton;
     public int touchSensitivity; // percent, applies to the trackpad touch modes
+    public boolean enablePerfOverlayLite;
+    public boolean preventPacketLoss;
+    // "host" (send nothing), "virtual" or "primary": the virtualDisplay launch argument
+    public String virtualDisplayMode;
     public boolean autoResumeStream;
 
     public static boolean isNativeResolution(int width, int height) {
@@ -748,6 +755,9 @@ public class PreferenceConfiguration {
         config.overlayHoldDurationMs = Integer.parseInt(prefs.getString(OVERLAY_HOLD_DURATION_PREF_STRING, DEFAULT_OVERLAY_HOLD_DURATION));
         config.enableFloatingButton = prefs.getBoolean(ENABLE_FLOATING_BUTTON_PREF_STRING, DEFAULT_ENABLE_FLOATING_BUTTON);
         config.touchSensitivity = prefs.getInt(TOUCH_SENSITIVITY_PREF_STRING, DEFAULT_TOUCH_SENSITIVITY);
+        config.enablePerfOverlayLite = prefs.getBoolean(PERF_OVERLAY_LITE_PREF_STRING, false);
+        config.preventPacketLoss = prefs.getBoolean(PREVENT_PACKET_LOSS_PREF_STRING, false);
+        config.virtualDisplayMode = prefs.getString(VIRTUAL_DISPLAY_MODE_PREF_STRING, "host");
         config.autoResumeStream = prefs.getBoolean(AUTO_RESUME_STREAM_PREF_STRING, DEFAULT_AUTO_RESUME_STREAM);
 
         return config;

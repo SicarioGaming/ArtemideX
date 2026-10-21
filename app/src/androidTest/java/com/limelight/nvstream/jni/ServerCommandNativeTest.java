@@ -17,4 +17,10 @@ public class ServerCommandNativeTest {
         // With no connection there is no Sunshine-family host, so the packet must not be sent
         assertEquals(-2, MoonBridge.sendExecServerCmd(0));
     }
+
+    @Test
+    public void keepAliveIsSafeWithoutAStream() {
+        // Prevent Packet Loss may fire just as a stream ends; it must not crash then
+        MoonBridge.sendKeepAlivePayload();
+    }
 }

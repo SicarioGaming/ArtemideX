@@ -251,6 +251,18 @@
             android:title="@string/title_checkbox_host_audio"
             android:summary="@string/summary_checkbox_host_audio"
             android:defaultValue="false" />
+        <ListPreference
+            android:key="virtual_display_mode"
+            android:title="@string/title_virtual_display_mode"
+            android:entries="@array/virtual_display_mode_names"
+            android:entryValues="@array/virtual_display_mode_values"
+            android:summary="@string/summary_virtual_display_mode"
+            android:defaultValue="host" />
+        <CheckBoxPreference
+            android:key="checkbox_prevent_packet_loss"
+            android:title="@string/title_checkbox_prevent_packet_loss"
+            android:summary="@string/summary_checkbox_prevent_packet_loss"
+            android:defaultValue="false" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_ui_settings"
         android:key="category_ui_settings">
@@ -336,6 +348,12 @@
             android:key="checkbox_enable_perf_overlay"
             android:title="@string/title_enable_perf_overlay"
             android:summary="@string/summary_enable_perf_overlay"
+            android:defaultValue="false"/>
+        <CheckBoxPreference
+            android:key="checkbox_enable_perf_overlay_lite"
+            android:dependency="checkbox_enable_perf_overlay"
+            android:title="@string/title_checkbox_enable_perf_overlay_lite"
+            android:summary="@string/summary_checkbox_enable_perf_overlay_lite"
             android:defaultValue="false"/>
         <CheckBoxPreference
             android:key="checkbox_enable_post_stream_toast"

@@ -393,6 +393,9 @@ public class MoonBridge {
     // Returns 0 on success, -2 if the host doesn't support server commands
     public static native int sendExecServerCmd(int cmdId);
 
+    // Sends a small packet the host ignores, to keep the network link busy (Prevent Packet Loss)
+    public static native void sendKeepAlivePayload();
+
     public static native void sendMouseMove(short deltaX, short deltaY);
 
     public static native void sendMousePosition(short x, short y, short referenceWidth, short referenceHeight);

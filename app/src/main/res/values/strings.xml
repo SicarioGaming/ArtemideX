@@ -451,6 +451,23 @@
     <string name="server_command_unsupported">This host doesn\'t support PC commands</string>
     <string name="server_command_sent">Ran \"%1$s\" on the PC</string>
 
+    <!-- ArtemideX: Lite performance overlay, Prevent Packet Loss and Virtual Display (from Artemide) -->
+    <string name="perf_overlay_lite_bandwidth">Bw %1$.1f Mbps</string>
+    <string name="perf_overlay_lite_delay">Net/Dec %1$d/%2$.1f ms</string>
+    <string name="perf_overlay_lite_loss">Loss %1$.1f%%</string>
+    <string name="perf_overlay_lite_fps">%1$.0f FPS</string>
+    <string name="title_checkbox_enable_perf_overlay_lite">Lite mode</string>
+    <string name="summary_checkbox_enable_perf_overlay_lite">Show one compact line at the top: bandwidth, network/decode delay, packet loss and FPS</string>
+    <string name="title_checkbox_prevent_packet_loss">Prevent packet loss</string>
+    <string name="summary_checkbox_prevent_packet_loss">Keeps the Wi-Fi connection busy with a tiny packet every 20 ms, so devices that drop packets in Wi-Fi power saving stay awake. Uses slightly more battery.</string>
+    <string name="title_virtual_display_mode">Display on the PC</string>
+    <string name="summary_virtual_display_mode">Where the host streams from. Host default leaves it to Vibepollo\'s own setting.</string>
+    <string name="virtual_display_mode_host">Host default</string>
+    <string name="virtual_display_mode_virtual">Virtual display</string>
+    <string name="virtual_display_mode_primary">Primary display</string>
+    <string name="applist_menu_start_vdisplay">Start in Virtual Display</string>
+    <string name="applist_menu_start_primarydisplay">Start in Primary Display</string>
+
     <!-- Custom Commands Activity -->
     <string name="title_custom_commands">Custom Commands</string>
     <string name="custom_commands_empty">No custom commands configured.\n\nTap the + button to add a command.</string>

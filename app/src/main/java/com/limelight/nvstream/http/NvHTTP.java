@@ -51,6 +51,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import com.limelight.BuildConfig;
 import com.limelight.LimeLog;
 import com.limelight.nvstream.ConnectionContext;
+import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.http.PairingManager.PairState;
 import com.limelight.nvstream.jni.MoonBridge;
 
@@ -819,6 +820,15 @@ public class NvHTTP {
         return new String(hexChars);
     }
     
+    // Virtual or primary display on Apollo/Vibepollo. Left out for "host default", since
+    // Vibepollo treats virtualDisplay=0 as turning its own virtual display mode off.
+    static String virtualDisplayLaunchArgument(boolean isNvidiaServerSoftware, int virtualDisplay) {
+        if (isNvidiaServerSoftware || virtualDisplay == StreamConfiguration.VIRTUAL_DISPLAY_HOST_DEFAULT) {
+            return "";
+        }
+        return "&virtualDisplay=" + virtualDisplay;
+    }
+
     public boolean launchApp(ConnectionContext context, String verb, int appId, boolean enableHdr) throws IOException, XmlPullParserException {
         // Using an FPS value over 60 causes SOPS to default to 720p60,
         // so force it to 0 to ensure the correct resolution is set. We
@@ -857,6 +867,7 @@ public class NvHTTP {
             // The exact frame rate for the host to run at, to line up with our display
             (context.isNvidiaServerSoftware || context.streamConfig.getClientRefreshRateX100() <= 0 ? "" :
                     "&clientRefreshRateX100=" + context.streamConfig.getClientRefreshRateX100()) +
+            virtualDisplayLaunchArgument(context.isNvidiaServerSoftware, context.streamConfig.getVirtualDisplay()) +
             MoonBridge.getLaunchUrlQueryParameters());
         if ((verb.equals("launch") && !getXmlString(xmlStr, "gamesession", true).equals("0") ||
                 (verb.equals("resume") && !getXmlString(xmlStr, "resume", true).equals("0")))) {

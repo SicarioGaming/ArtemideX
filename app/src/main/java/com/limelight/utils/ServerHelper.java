@@ -108,6 +108,20 @@ public class ServerHelper {
         parent.startActivity(createStartIntent(parent, app, computer, managerBinder, quickLaunchAppKey));
     }
 
+    // Start on a chosen host display: StreamConfiguration.VIRTUAL_DISPLAY_ON or _OFF
+    public static void doStart(Activity parent, NvApp app, ComputerDetails computer,
+                               ComputerManagerService.ComputerManagerBinder managerBinder,
+                               int virtualDisplay) {
+        if (computer.state == ComputerDetails.State.OFFLINE || computer.activeAddress == null) {
+            Toast.makeText(parent, parent.getResources().getString(R.string.pair_pc_offline), Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = createStartIntent(parent, app, computer, managerBinder);
+        intent.putExtra(Game.EXTRA_VIRTUAL_DISPLAY, virtualDisplay);
+        parent.startActivity(intent);
+    }
+
     public static void doNetworkTest(final Activity parent) {
         new Thread(new Runnable() {
             @Override

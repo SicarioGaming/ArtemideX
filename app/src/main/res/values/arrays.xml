@@ -222,6 +222,18 @@
         <item>3000</item>
     </string-array>
 
+    <!-- ArtemideX: which display the host streams from (virtualDisplay launch argument) -->
+    <string-array name="virtual_display_mode_names">
+        <item>@string/virtual_display_mode_host</item>
+        <item>@string/virtual_display_mode_virtual</item>
+        <item>@string/virtual_display_mode_primary</item>
+    </string-array>
+    <string-array name="virtual_display_mode_values" translatable="false">
+        <item>host</item>
+        <item>virtual</item>
+        <item>primary</item>
+    </string-array>
+
     <string-array name="hdr_setting_names">
         <item>On</item>
         <item>Off</item>

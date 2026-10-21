@@ -8,6 +8,7 @@ import java.util.List;
 import com.limelight.computers.ComputerManagerListener;
 import com.limelight.computers.ComputerManagerService;
 import com.limelight.grid.AppGridAdapter;
+import com.limelight.nvstream.StreamConfiguration;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.nvstream.http.NvApp;
 import com.limelight.nvstream.http.NvHTTP;
@@ -74,6 +75,8 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     private final static int HIDE_APP_ID = 7;
     private final static int APP_SETTINGS_ID = 8;
     private final static int ADD_QUICK_LAUNCH_ID = 9;
+    private final static int START_VIRTUAL_DISPLAY_ID = 10;
+    private final static int START_PRIMARY_DISPLAY_ID = 11;
     
     private final static int REQUEST_APP_SETTINGS = 1001;
 
@@ -425,6 +428,11 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 menu.add(Menu.NONE, START_WITH_QUIT, 1, getResources().getString(R.string.applist_menu_quit_and_start));
             }
         }
+        else {
+            // Pick the host display for this launch (Apollo/Vibepollo; from Artemide)
+            menu.add(Menu.NONE, START_VIRTUAL_DISPLAY_ID, 1, getResources().getString(R.string.applist_menu_start_vdisplay));
+            menu.add(Menu.NONE, START_PRIMARY_DISPLAY_ID, 1, getResources().getString(R.string.applist_menu_start_primarydisplay));
+        }
 
         // Only show the hide checkbox if this is not the currently running app or it's already hidden
         if (lastRunningAppId != selectedApp.app.getAppId() || selectedApp.isHidden) {
@@ -474,6 +482,16 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             case START_OR_RESUME_ID:
                 // Resume is the same as start for us
                 ServerHelper.doStart(AppView.this, app.app, computer, managerBinder);
+                return true;
+
+            case START_VIRTUAL_DISPLAY_ID:
+                ServerHelper.doStart(AppView.this, app.app, computer, managerBinder,
+                        StreamConfiguration.VIRTUAL_DISPLAY_ON);
+                return true;
+
+            case START_PRIMARY_DISPLAY_ID:
+                ServerHelper.doStart(AppView.this, app.app, computer, managerBinder,
+                        StreamConfiguration.VIRTUAL_DISPLAY_OFF);
                 return true;
 
             case QUIT_ID:
