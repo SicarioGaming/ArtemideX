@@ -410,6 +410,7 @@
     <!-- ArtemideX: actions ported from Artemide's in-stream menu -->
     <string name="overlay_menu_shortcuts">Shortcuts</string>
     <string name="overlay_menu_back">Back</string>
+    <string name="overlay_menu_title">Stream menu</string>
     <string name="overlay_menu_task_manager">Task Manager</string>
     <string name="overlay_menu_rotate_screen">Rotate</string>
     <string name="overlay_menu_onscreen_controller">On-screen Controls</string>

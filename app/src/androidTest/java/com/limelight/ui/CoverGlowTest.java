@@ -140,6 +140,36 @@ public class CoverGlowTest {
     }
 
     @Test
+    public void streamMenuRendersAtTabletSize() {
+        Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Context context = new ContextThemeWrapper(target, R.style.AppTheme);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            // A stand-in for the game video behind the sheet
+            FrameLayout root = new FrameLayout(context);
+            root.setBackgroundColor(0xFF2A3340);
+
+            com.limelight.ui.overlay.OverlayMenuView menu = new com.limelight.ui.overlay.OverlayMenuView(context);
+            float d = context.getResources().getDisplayMetrics().density;
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.Gravity.END);
+            params.setMargins((int) (16 * d), (int) (16 * d), (int) (16 * d), (int) (16 * d));
+            root.addView(menu, params);
+            menu.setGameInfo("Desktop", "1440p · 120 FPS", 0xFFE11D48);
+            menu.buildMenu();
+            menu.setVisibility(View.VISIBLE);
+            // Close selected, as when the menu opens
+            menu.dispatchKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN,
+                    android.view.KeyEvent.KEYCODE_DPAD_UP));
+            menu.dispatchKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN,
+                    android.view.KeyEvent.KEYCODE_DPAD_DOWN));
+
+            save(root, target, "cover_glow_menu.png");
+            assertTrue("sheet " + menu.getWidth() + " px wide", menu.getWidth() <= 440 * d + 1);
+        });
+    }
+
+    @Test
     public void sectionNamesDropTheWordSettings() {
         assertEquals("Audio", CoverGlowSettings.shortName("Audio Settings"));
         assertEquals("Overlay Menu", CoverGlowSettings.shortName("Overlay Menu"));

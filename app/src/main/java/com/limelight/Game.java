@@ -39,6 +39,7 @@ import com.limelight.ui.GameGestures;
 import com.limelight.ui.PanZoomHandler;
 import com.limelight.ui.StreamView;
 import com.limelight.ui.overlay.CustomCommand;
+import com.limelight.ui.CoverGlow;
 import com.limelight.ui.overlay.OverlayMenuView;
 import com.limelight.utils.Dialog;
 import com.limelight.utils.ServerHelper;
@@ -480,6 +481,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         byte[] derCertData = Game.this.getIntent().getByteArrayExtra(EXTRA_SERVER_CERT);
 
         app = new NvApp(appName != null ? appName : "app", appId, appSupportsHdr);
+
+        // The menu sheet shows the game and takes its cover colour from the game screen
+        overlayMenuView.setGameInfo(appName,
+                getString(R.string.cg_chip_resolution, prefConfig.height, prefConfig.fps),
+                CoverGlow.rememberedTint(this, getIntent().getStringExtra(EXTRA_PC_UUID), appId));
 
         X509Certificate serverCert = null;
         try {

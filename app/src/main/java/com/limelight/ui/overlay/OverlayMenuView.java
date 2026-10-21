@@ -1,22 +1,42 @@
 package com.limelight.ui.overlay;
 
 import android.content.Context;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
+import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.widget.HorizontalScrollView;
+import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.Space;
+import android.widget.TextView;
 
 import com.limelight.R;
+import com.limelight.ui.CoverGlow;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The in-stream menu, as a Cover Glow side sheet: the game's name and stream on top, a grid of
+ * tools, then Close, Quit and Disconnect at the bottom. The sheet takes the game's cover colour.
+ *
+ * Controllers and keyboards move the selection with the d-pad or stick, A activates and B goes
+ * back; X, Y, Start and RB stay as shortcuts.
+ */
 public class OverlayMenuView extends LinearLayout {
     private static final int BUTTON_SPACING_DP = 8;
+    private static final int SHEET_WIDTH_DP = 440;
+    private static final int MAIN_COLUMNS = 4;
+    // Shortcut and monitor names are longer, so their pages use wider tiles
+    private static final int PAGE_COLUMNS = 2;
     private static final float ANALOG_STICK_THRESHOLD = 0.5f;
     private static final long ANALOG_NAV_THROTTLE_MS = 200;
 
@@ -93,7 +113,7 @@ public class OverlayMenuView extends LinearLayout {
 
     private static final short[] TASK_MANAGER_KEYS = {VK_LCONTROL, VK_LSHIFT, VK_ESCAPE};
 
-    // True while the horizontal row shows the Shortcuts page instead of the main actions
+    // Which tools the grid shows: the main actions, or a sub-page (Shortcuts, Monitors)
     private static final int PAGE_MAIN = 0;
     private static final int PAGE_SHORTCUTS = 1;
     private static final int PAGE_MONITORS = 2;
@@ -102,19 +122,25 @@ public class OverlayMenuView extends LinearLayout {
     // Vibepollo (like Sunshine) switches the streamed display on Ctrl+Alt+Shift+F1..F13
     private static final int MONITOR_COUNT = 6;
 
-    private LinearLayout verticalContainer;
-    private HorizontalScrollView horizontalScrollView;
-    private LinearLayout horizontalContainer;
+    private GradientDrawable sheetBackground;
+    private View coverSwatch;
+    private TextView titleView;
+    private TextView detailView;
+    private ScrollView gridScroll;
+    private LinearLayout gridContainer;
+    private LinearLayout barContainer;
+    private int columns = MAIN_COLUMNS;
 
-    private List<OverlayMenuButton> verticalButtons;
-    private List<Integer> verticalActions;
-    private List<OverlayMenuButton> horizontalButtons;
-    private List<Integer> horizontalActions;
+    // The bar: Close (index 0) on its own row, then Quit and Disconnect side by side
+    private List<OverlayMenuButton> barButtons;
+    private List<Integer> barActions;
+    private List<OverlayMenuButton> gridButtons;
+    private List<Integer> gridActions;
 
-    private enum Region { VERTICAL, HORIZONTAL }
-    private Region activeRegion = Region.VERTICAL;
-    private int verticalIndex = 0;
-    private int horizontalIndex = 0;
+    private enum Region { BAR, GRID }
+    private Region activeRegion = Region.BAR;
+    private int barIndex = 0;
+    private int gridIndex = 0;
 
     private MenuActionListener actionListener;
     private CustomCommandsManager commandsManager;
@@ -163,202 +189,278 @@ public class OverlayMenuView extends LinearLayout {
         init(context);
     }
 
+    private int dp(float value) {
+        return (int) (value * getResources().getDisplayMetrics().density);
+    }
+
     private void init(Context context) {
-        setOrientation(LinearLayout.HORIZONTAL);
-        setGravity(Gravity.BOTTOM);
+        setOrientation(LinearLayout.VERTICAL);
         setFocusable(true);
         setFocusableInTouchMode(true);
-        setBackgroundDrawable(null);
+        // Taps on the sheet itself shouldn't reach the game behind it
+        setClickable(true);
+        int padding = dp(20);
+        setPadding(padding, padding, padding, padding);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             setDefaultFocusHighlightEnabled(false);
         }
 
-        verticalContainer = new LinearLayout(context);
-        verticalContainer.setOrientation(LinearLayout.VERTICAL);
-        verticalContainer.setBackgroundDrawable(null);
-        addView(verticalContainer, new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
+        sheetBackground = new GradientDrawable();
+        sheetBackground.setCornerRadius(dp(28));
+        setBackground(sheetBackground);
+        setElevation(dp(12));
 
-        horizontalScrollView = new HorizontalScrollView(context);
-        horizontalScrollView.setHorizontalScrollBarEnabled(false);
-        horizontalScrollView.setFocusable(false);
-        horizontalScrollView.setFocusableInTouchMode(false);
-        horizontalScrollView.setBackgroundDrawable(null);
+        // Header: a swatch of the cover's colour, the game's name and the stream
+        LinearLayout header = new LinearLayout(context);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        coverSwatch = new View(context);
+        header.addView(coverSwatch, new LinearLayout.LayoutParams(dp(42), dp(56)));
+
+        LinearLayout texts = new LinearLayout(context);
+        texts.setOrientation(LinearLayout.VERTICAL);
+        titleView = new TextView(context);
+        titleView.setTextColor(0xFFFFFFFF);
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        titleView.setTypeface(Typeface.create("sans-serif-black", Typeface.NORMAL));
+        titleView.setSingleLine(true);
+        titleView.setEllipsize(TextUtils.TruncateAt.END);
+        titleView.setText(R.string.overlay_menu_title);
+        texts.addView(titleView);
+        detailView = new TextView(context);
+        detailView.setTextColor(0xFFE2E8F0);
+        detailView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        detailView.setVisibility(GONE);
+        texts.addView(detailView);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1);
+        textParams.setMarginStart(dp(14));
+        header.addView(texts, textParams);
+        addView(header, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+
+        // The tools grid scrolls when it doesn't fit
+        gridScroll = new ScrollView(context);
+        gridScroll.setVerticalScrollBarEnabled(false);
+        gridScroll.setFocusable(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            horizontalScrollView.setDefaultFocusHighlightEnabled(false);
+            gridScroll.setDefaultFocusHighlightEnabled(false);
         }
+        gridContainer = new LinearLayout(context);
+        gridContainer.setOrientation(LinearLayout.VERTICAL);
+        gridScroll.addView(gridContainer);
+        LinearLayout.LayoutParams gridParams = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1);
+        gridParams.topMargin = dp(18);
+        gridParams.bottomMargin = dp(16);
+        addView(gridScroll, gridParams);
 
-        horizontalContainer = new LinearLayout(context);
-        horizontalContainer.setOrientation(LinearLayout.HORIZONTAL);
-        horizontalContainer.setBackgroundDrawable(null);
-        horizontalScrollView.addView(horizontalContainer);
-        addView(horizontalScrollView, new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ));
+        barContainer = new LinearLayout(context);
+        barContainer.setOrientation(LinearLayout.VERTICAL);
+        addView(barContainer, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        verticalButtons = new ArrayList<>();
-        verticalActions = new ArrayList<>();
-        horizontalButtons = new ArrayList<>();
-        horizontalActions = new ArrayList<>();
+        barButtons = new ArrayList<>();
+        barActions = new ArrayList<>();
+        gridButtons = new ArrayList<>();
+        gridActions = new ArrayList<>();
 
-        activeRegion = Region.VERTICAL;
-        verticalIndex = 0;
-        horizontalIndex = 0;
+        activeRegion = Region.BAR;
+        barIndex = 0;
+        gridIndex = 0;
 
         commandsManager = new CustomCommandsManager(context);
 
+        setGameInfo(null, null, CoverGlow.DEFAULT_TINT);
         setVisibility(GONE);
     }
 
+    /** The game's name, a line about the stream, and its cover colour for the sheet. */
+    public void setGameInfo(String title, String detail, int tint) {
+        if (title != null) {
+            titleView.setText(title);
+        }
+        detailView.setText(detail);
+        detailView.setVisibility(detail != null && !detail.isEmpty() ? VISIBLE : GONE);
+
+        sheetBackground.setColor(CoverGlow.panel(tint));
+        GradientDrawable swatch = new GradientDrawable();
+        swatch.setCornerRadius(dp(10));
+        swatch.setColor(tint);
+        coverSwatch.setBackground(swatch);
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        // A sheet, not the whole screen: at most SHEET_WIDTH_DP wide
+        int max = dp(SHEET_WIDTH_DP);
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED
+                || MeasureSpec.getSize(widthMeasureSpec) > max) {
+            widthMeasureSpec = MeasureSpec.makeMeasureSpec(max, MeasureSpec.EXACTLY);
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    }
+
     public void buildMenu() {
-        activeRegion = Region.VERTICAL;
-        verticalIndex = 0;
-        horizontalIndex = 0;
+        activeRegion = Region.BAR;
+        barIndex = 0;
+        gridIndex = 0;
         clearFocus();
 
-        verticalContainer.removeAllViews();
-        horizontalContainer.removeAllViews();
-        verticalButtons.clear();
-        verticalActions.clear();
-        horizontalButtons.clear();
-        horizontalActions.clear();
-
-        float density = getContext().getResources().getDisplayMetrics().density;
-        int spacing = (int) (BUTTON_SPACING_DP * density);
-
-        // Vertical column: top → bottom
-        addVerticalButton(R.drawable.ic_overlay_guide,
-            getContext().getString(R.string.overlay_menu_guide), ACTION_SEND_GUIDE, spacing);
-        addVerticalButton(R.drawable.ic_overlay_mouse,
-                getContext().getString(R.string.overlay_menu_mouse_emulation), ACTION_TOGGLE_MOUSE_EMULATION, spacing);
-        addVerticalButton(R.drawable.ic_overlay_keyboard_toggle,
-            getContext().getString(R.string.overlay_menu_keyboard), ACTION_SHOW_KEYBOARD, spacing);
-        addVerticalButton(R.drawable.ic_overlay_perf,
-                getContext().getString(R.string.overlay_menu_toggle_stats), ACTION_TOGGLE_STATS, spacing);
-        addVerticalButton(R.drawable.ic_overlay_power,
-            getContext().getString(R.string.overlay_menu_quit_session), ACTION_QUIT, spacing);
-        addVerticalButton(R.drawable.ic_overlay_monitor,
-            getContext().getString(R.string.overlay_menu_disconnect), ACTION_DISCONNECT, 0);
-
-        // Add spacing between vertical column and horizontal row
-        ((LinearLayout.LayoutParams) horizontalScrollView.getLayoutParams()).leftMargin = spacing;
+        gridContainer.removeAllViews();
+        barContainer.removeAllViews();
+        barButtons.clear();
+        barActions.clear();
+        gridButtons.clear();
+        gridActions.clear();
 
         if (page == PAGE_SHORTCUTS) {
-            // Horizontal row: Artemide's built-in key shortcuts then Back
+            // Artemide's built-in key shortcuts then Back
+            columns = PAGE_COLUMNS;
             for (int i = 0; i < SHORTCUTS.length; i++) {
-                addHorizontalButton(0, getContext().getString(SHORTCUTS[i].labelResId),
-                    ACTION_SHORTCUT_BASE + i, spacing);
+                addTile(0, getContext().getString(SHORTCUTS[i].labelResId), ACTION_SHORTCUT_BASE + i);
             }
-            addHorizontalButton(0,
-                getContext().getString(R.string.overlay_menu_back), ACTION_BACK, 0);
+            addTile(0, getContext().getString(R.string.overlay_menu_back), ACTION_BACK);
         } else if (page == PAGE_MONITORS) {
-            // Horizontal row: one button per PC display, then Back
+            // One tile per PC display, then Back
+            columns = PAGE_COLUMNS;
             for (int i = 0; i < MONITOR_COUNT; i++) {
-                addHorizontalButton(R.drawable.ic_overlay_monitor,
-                    getContext().getString(R.string.overlay_menu_monitor_n, i + 1), ACTION_MONITOR_BASE + i, spacing);
+                addTile(R.drawable.ic_overlay_monitor,
+                    getContext().getString(R.string.overlay_menu_monitor_n, i + 1), ACTION_MONITOR_BASE + i);
             }
-            addHorizontalButton(0,
-                getContext().getString(R.string.overlay_menu_back), ACTION_BACK, 0);
+            addTile(0, getContext().getString(R.string.overlay_menu_back), ACTION_BACK);
         } else {
-            // Horizontal row: Artemide actions, custom commands, then Close
-            addHorizontalButton(R.drawable.ic_overlay_key_press,
-                getContext().getString(R.string.overlay_menu_shortcuts), ACTION_SHORTCUTS, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_monitor,
-                getContext().getString(R.string.overlay_menu_monitors), ACTION_MONITORS, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_lightning,
-                getContext().getString(R.string.overlay_menu_bitrate), ACTION_BITRATE, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_mouse,
-                getContext().getString(R.string.overlay_menu_mouse_mode), ACTION_MOUSE_MODE, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_maximize,
-                getContext().getString(R.string.overlay_menu_pan_zoom), ACTION_PAN_ZOOM, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_settings,
-                getContext().getString(R.string.overlay_menu_touch_sensitivity), ACTION_TOUCH_SENSITIVITY, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_save,
-                getContext().getString(R.string.overlay_menu_upload_clipboard), ACTION_UPLOAD_CLIPBOARD, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_folder,
-                getContext().getString(R.string.overlay_menu_fetch_clipboard), ACTION_FETCH_CLIPBOARD, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_desktop,
-                getContext().getString(R.string.overlay_menu_server_commands), ACTION_SERVER_COMMANDS, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_task_manager,
-                getContext().getString(R.string.overlay_menu_task_manager), ACTION_TASK_MANAGER, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_restart,
-                getContext().getString(R.string.overlay_menu_rotate_screen), ACTION_ROTATE_SCREEN, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_gamepad,
-                getContext().getString(R.string.overlay_menu_onscreen_controller), ACTION_ONSCREEN_CONTROLLER, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_keyboard,
-                getContext().getString(R.string.overlay_menu_full_keyboard), ACTION_FULL_KEYBOARD, spacing);
-            addHorizontalButton(R.drawable.ic_overlay_window_menu,
-                getContext().getString(R.string.overlay_menu_floating_button), ACTION_FLOATING_BUTTON, spacing);
+            // The most used first: keyboard, mouse, stats and the Guide button, then Artemide's
+            // actions and custom commands
+            columns = MAIN_COLUMNS;
+            addTile(R.drawable.ic_overlay_keyboard_toggle,
+                getContext().getString(R.string.overlay_menu_keyboard), ACTION_SHOW_KEYBOARD);
+            addTile(R.drawable.ic_overlay_mouse,
+                getContext().getString(R.string.overlay_menu_mouse_emulation), ACTION_TOGGLE_MOUSE_EMULATION);
+            addTile(R.drawable.ic_overlay_perf,
+                getContext().getString(R.string.overlay_menu_toggle_stats), ACTION_TOGGLE_STATS);
+            addTile(R.drawable.ic_overlay_guide,
+                getContext().getString(R.string.overlay_menu_guide), ACTION_SEND_GUIDE);
+            addTile(R.drawable.ic_overlay_key_press,
+                getContext().getString(R.string.overlay_menu_shortcuts), ACTION_SHORTCUTS);
+            addTile(R.drawable.ic_overlay_monitor,
+                getContext().getString(R.string.overlay_menu_monitors), ACTION_MONITORS);
+            addTile(R.drawable.ic_overlay_lightning,
+                getContext().getString(R.string.overlay_menu_bitrate), ACTION_BITRATE);
+            addTile(R.drawable.ic_overlay_mouse,
+                getContext().getString(R.string.overlay_menu_mouse_mode), ACTION_MOUSE_MODE);
+            addTile(R.drawable.ic_overlay_maximize,
+                getContext().getString(R.string.overlay_menu_pan_zoom), ACTION_PAN_ZOOM);
+            addTile(R.drawable.ic_overlay_settings,
+                getContext().getString(R.string.overlay_menu_touch_sensitivity), ACTION_TOUCH_SENSITIVITY);
+            addTile(R.drawable.ic_overlay_save,
+                getContext().getString(R.string.overlay_menu_upload_clipboard), ACTION_UPLOAD_CLIPBOARD);
+            addTile(R.drawable.ic_overlay_folder,
+                getContext().getString(R.string.overlay_menu_fetch_clipboard), ACTION_FETCH_CLIPBOARD);
+            addTile(R.drawable.ic_overlay_desktop,
+                getContext().getString(R.string.overlay_menu_server_commands), ACTION_SERVER_COMMANDS);
+            addTile(R.drawable.ic_overlay_task_manager,
+                getContext().getString(R.string.overlay_menu_task_manager), ACTION_TASK_MANAGER);
+            addTile(R.drawable.ic_overlay_restart,
+                getContext().getString(R.string.overlay_menu_rotate_screen), ACTION_ROTATE_SCREEN);
+            addTile(R.drawable.ic_overlay_gamepad,
+                getContext().getString(R.string.overlay_menu_onscreen_controller), ACTION_ONSCREEN_CONTROLLER);
+            addTile(R.drawable.ic_overlay_keyboard,
+                getContext().getString(R.string.overlay_menu_full_keyboard), ACTION_FULL_KEYBOARD);
+            addTile(R.drawable.ic_overlay_window_menu,
+                getContext().getString(R.string.overlay_menu_floating_button), ACTION_FLOATING_BUTTON);
 
             List<CustomCommand> customCommands = commandsManager.getCommands();
             for (int i = 0; i < customCommands.size(); i++) {
                 CustomCommand command = customCommands.get(i);
-                addHorizontalButton(command.getIconResId(), command.getName(),
-                    ACTION_CUSTOM_BASE + i, spacing);
+                addTile(command.getIconResId(), command.getName(), ACTION_CUSTOM_BASE + i);
             }
-            addHorizontalButton(0,
-                getContext().getString(R.string.overlay_menu_close), ACTION_CLOSE, 0);
         }
+        finishGridRow();
 
-        verticalContainer.invalidate();
-        verticalContainer.requestLayout();
-        horizontalContainer.invalidate();
-        horizontalContainer.requestLayout();
+        // The bar: back to the game, then the two ways out
+        addBarButton(OverlayMenuButton.STYLE_PRIMARY, 0,
+            getContext().getString(R.string.overlay_menu_close), ACTION_CLOSE, barContainer, 0);
+        LinearLayout exits = new LinearLayout(getContext());
+        exits.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams exitsParams = new LinearLayout.LayoutParams(
+            LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+        exitsParams.topMargin = dp(BUTTON_SPACING_DP);
+        barContainer.addView(exits, exitsParams);
+        addBarButton(OverlayMenuButton.STYLE_PILL, R.drawable.ic_overlay_power,
+            getContext().getString(R.string.overlay_menu_quit_session), ACTION_QUIT, exits, dp(BUTTON_SPACING_DP));
+        addBarButton(OverlayMenuButton.STYLE_PILL, R.drawable.ic_overlay_monitor,
+            getContext().getString(R.string.overlay_menu_disconnect), ACTION_DISCONNECT, exits, 0);
+
+        gridContainer.requestLayout();
+        barContainer.requestLayout();
     }
 
-    private void addVerticalButton(int iconResId, String label, int action, int bottomMarginPx) {
-        OverlayMenuButton button = OverlayMenuButton.create(getContext(), iconResId, label);
+    private LinearLayout currentRow;
 
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        params.bottomMargin = bottomMarginPx;
-        verticalContainer.addView(button, params);
+    private void addTile(int iconResId, String label, int action) {
+        if (currentRow == null || currentRow.getChildCount() >= columns) {
+            currentRow = new LinearLayout(getContext());
+            currentRow.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+            if (gridContainer.getChildCount() > 0) {
+                rowParams.topMargin = dp(BUTTON_SPACING_DP);
+            }
+            gridContainer.addView(currentRow, rowParams);
+        }
 
-        verticalButtons.add(button);
-        verticalActions.add(action);
+        OverlayMenuButton button = OverlayMenuButton.create(getContext(), iconResId, label,
+            OverlayMenuButton.STYLE_TILE);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1);
+        if (currentRow.getChildCount() > 0) {
+            params.setMarginStart(dp(BUTTON_SPACING_DP));
+        }
+        currentRow.addView(button, params);
 
-        final int index = verticalButtons.size() - 1;
-        button.setOnClickListener(v -> selectAndActivate(Region.VERTICAL, index));
+        gridButtons.add(button);
+        gridActions.add(action);
+
+        final int index = gridButtons.size() - 1;
+        button.setOnClickListener(v -> selectAndActivate(Region.GRID, index));
         button.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                activeRegion = Region.VERTICAL;
-                verticalIndex = index;
-                button.setSelected(true);
-            } else {
-                button.setSelected(false);
+                activeRegion = Region.GRID;
+                gridIndex = index;
             }
+            button.setSelected(hasFocus);
         });
     }
 
-    private void addHorizontalButton(int iconResId, String label, int action, int rightMarginPx) {
-        OverlayMenuButton button = OverlayMenuButton.create(getContext(), iconResId, label);
+    // Keeps the last row's tiles the same width as the others
+    private void finishGridRow() {
+        if (currentRow != null) {
+            while (currentRow.getChildCount() < columns) {
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, 0, 1);
+                params.setMarginStart(dp(BUTTON_SPACING_DP));
+                currentRow.addView(new Space(getContext()), params);
+            }
+        }
+        currentRow = null;
+    }
 
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        params.rightMargin = rightMarginPx;
-        horizontalContainer.addView(button, params);
+    private void addBarButton(int style, int iconResId, String label, int action,
+                              LinearLayout parent, int endMarginPx) {
+        OverlayMenuButton button = OverlayMenuButton.create(getContext(), iconResId, label, style);
+        LinearLayout.LayoutParams params = parent == barContainer
+            ? new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            : new LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1);
+        params.setMarginEnd(endMarginPx);
+        parent.addView(button, params);
 
-        horizontalButtons.add(button);
-        horizontalActions.add(action);
+        barButtons.add(button);
+        barActions.add(action);
 
-        final int index = horizontalButtons.size() - 1;
-        button.setOnClickListener(v -> selectAndActivate(Region.HORIZONTAL, index));
+        final int index = barButtons.size() - 1;
+        button.setOnClickListener(v -> selectAndActivate(Region.BAR, index));
         button.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
-                activeRegion = Region.HORIZONTAL;
-                horizontalIndex = index;
-                button.setSelected(true);
-            } else {
-                button.setSelected(false);
+                activeRegion = Region.BAR;
+                barIndex = index;
             }
+            button.setSelected(hasFocus);
         });
     }
 
@@ -525,127 +627,112 @@ public class OverlayMenuView extends LinearLayout {
         int source = event.getSource();
         return (source & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK;
     }
-
+    // The grid moves by rows and columns; the bar is Close above Quit and Disconnect
     private void navigateUp() {
-        if (activeRegion == Region.VERTICAL) {
-            if (!verticalButtons.isEmpty()) {
-                setVerticalIndex((verticalIndex - 1 + verticalButtons.size()) % verticalButtons.size());
+        if (activeRegion == Region.GRID) {
+            if (gridIndex >= columns) {
+                setGridIndex(gridIndex - columns);
             }
-        } else {
-            // From horizontal → Up: jump to button above Disconnect (second-to-last in vertical)
-            clearHorizontalSelection();
-            activeRegion = Region.VERTICAL;
-            int target = verticalButtons.size() >= 2 ? verticalButtons.size() - 2 : 0;
-            setVerticalIndex(target);
+        } else if (barIndex > 0) {
+            setBarIndex(0);
+        } else if (!gridButtons.isEmpty()) {
+            // From Close up into the last tile
+            clearBarSelection();
+            activeRegion = Region.GRID;
+            setGridIndex(gridButtons.size() - 1);
         }
     }
 
     private void navigateDown() {
-        if (activeRegion == Region.VERTICAL) {
-            if (!verticalButtons.isEmpty()) {
-                setVerticalIndex((verticalIndex + 1) % verticalButtons.size());
+        if (activeRegion == Region.GRID) {
+            int lastRow = (gridButtons.size() - 1) / columns;
+            if (gridIndex / columns < lastRow) {
+                setGridIndex(Math.min(gridIndex + columns, gridButtons.size() - 1));
+            } else {
+                clearGridSelection();
+                activeRegion = Region.BAR;
+                setBarIndex(0);
             }
-        } else {
-            // From horizontal → Down: jump to topmost vertical button
-            clearHorizontalSelection();
-            activeRegion = Region.VERTICAL;
-            setVerticalIndex(0);
+        } else if (barIndex == 0 && barButtons.size() > 1) {
+            setBarIndex(1);
         }
     }
 
     private void navigateLeft() {
-        if (activeRegion == Region.HORIZONTAL) {
-            if (horizontalIndex > 0) {
-                setHorizontalIndex(horizontalIndex - 1);
-            } else {
-                // At leftmost horizontal button — cross to Disconnect (last vertical button)
-                clearHorizontalSelection();
-                activeRegion = Region.VERTICAL;
-                setVerticalIndex(verticalButtons.size() - 1);
+        if (activeRegion == Region.GRID) {
+            if (gridIndex % columns > 0) {
+                setGridIndex(gridIndex - 1);
             }
-        } else {
-            // In vertical region — wrap around to rightmost horizontal button
-            if (!horizontalButtons.isEmpty()) {
-                clearVerticalSelection();
-                activeRegion = Region.HORIZONTAL;
-                setHorizontalIndex(horizontalButtons.size() - 1);
-            }
+        } else if (barIndex == 2) {
+            setBarIndex(1);
         }
     }
 
     private void navigateRight() {
-        if (activeRegion == Region.VERTICAL) {
-            if (!horizontalButtons.isEmpty()) {
-                clearVerticalSelection();
-                activeRegion = Region.HORIZONTAL;
-                setHorizontalIndex(0);
+        if (activeRegion == Region.GRID) {
+            if (gridIndex % columns < columns - 1 && gridIndex + 1 < gridButtons.size()) {
+                setGridIndex(gridIndex + 1);
             }
-        } else {
-            if (horizontalIndex < horizontalButtons.size() - 1) {
-                setHorizontalIndex(horizontalIndex + 1);
-            } else {
-                // At rightmost horizontal button — cross to Disconnect (last vertical button)
-                clearHorizontalSelection();
-                activeRegion = Region.VERTICAL;
-                setVerticalIndex(verticalButtons.size() - 1);
-            }
+        } else if (barIndex == 1 && barButtons.size() > 2) {
+            setBarIndex(2);
         }
     }
 
-    private void setVerticalIndex(int index) {
-        if (index < 0 || index >= verticalButtons.size()) return;
+    private void setBarIndex(int index) {
+        if (index < 0 || index >= barButtons.size()) return;
 
-        for (OverlayMenuButton b : verticalButtons) {
+        for (OverlayMenuButton b : barButtons) {
             b.setSelected(false);
         }
 
-        verticalIndex = index;
-        verticalButtons.get(index).setSelected(true);
-        verticalButtons.get(index).requestFocus();
+        barIndex = index;
+        barButtons.get(index).setSelected(true);
+        barButtons.get(index).requestFocus();
     }
 
-    private void setHorizontalIndex(int index) {
-        if (index < 0 || index >= horizontalButtons.size()) return;
+    private void setGridIndex(int index) {
+        if (index < 0 || index >= gridButtons.size()) return;
 
-        for (OverlayMenuButton b : horizontalButtons) {
+        for (OverlayMenuButton b : gridButtons) {
             b.setSelected(false);
         }
 
-        horizontalIndex = index;
-        horizontalButtons.get(index).setSelected(true);
-        horizontalButtons.get(index).requestFocus();
+        gridIndex = index;
+        gridButtons.get(index).setSelected(true);
+        // Focusing a tile also scrolls the grid to it
+        gridButtons.get(index).requestFocus();
     }
 
-    private void clearVerticalSelection() {
-        for (OverlayMenuButton b : verticalButtons) {
+    private void clearBarSelection() {
+        for (OverlayMenuButton b : barButtons) {
             b.setSelected(false);
         }
     }
 
-    private void clearHorizontalSelection() {
-        for (OverlayMenuButton b : horizontalButtons) {
+    private void clearGridSelection() {
+        for (OverlayMenuButton b : gridButtons) {
             b.setSelected(false);
         }
     }
 
     private void selectAndActivate(Region region, int index) {
         activeRegion = region;
-        if (region == Region.VERTICAL) {
-            setVerticalIndex(index);
+        if (region == Region.BAR) {
+            setBarIndex(index);
         } else {
-            setHorizontalIndex(index);
+            setGridIndex(index);
         }
         activateSelected();
     }
 
     private void activateSelected() {
         int action;
-        if (activeRegion == Region.VERTICAL) {
-            if (verticalIndex < 0 || verticalIndex >= verticalActions.size()) return;
-            action = verticalActions.get(verticalIndex);
+        if (activeRegion == Region.BAR) {
+            if (barIndex < 0 || barIndex >= barActions.size()) return;
+            action = barActions.get(barIndex);
         } else {
-            if (horizontalIndex < 0 || horizontalIndex >= horizontalActions.size()) return;
-            action = horizontalActions.get(horizontalIndex);
+            if (gridIndex < 0 || gridIndex >= gridActions.size()) return;
+            action = gridActions.get(gridIndex);
         }
 
         boolean shouldCloseMenu = false;
@@ -805,17 +892,17 @@ public class OverlayMenuView extends LinearLayout {
     }
 
     /**
-     * Swap the horizontal row between the main actions and a sub-page (Shortcuts, Monitors),
-     * keeping the menu open and the selection on the first button of the new row.
+     * Swap the grid between the main actions and a sub-page (Shortcuts, Monitors),
+     * keeping the menu open and the selection on the first tile of the new page.
      */
     private void switchPage(int newPage) {
         page = newPage;
         buildMenu();
         post(() -> {
-            if (!horizontalButtons.isEmpty()) {
-                activeRegion = Region.HORIZONTAL;
-                setHorizontalIndex(0);
-                horizontalScrollView.scrollTo(0, 0);
+            if (!gridButtons.isEmpty()) {
+                activeRegion = Region.GRID;
+                setGridIndex(0);
+                gridScroll.scrollTo(0, 0);
             }
         });
     }
@@ -823,33 +910,29 @@ public class OverlayMenuView extends LinearLayout {
     public void show() {
         page = PAGE_MAIN;
         buildMenu();
+        gridScroll.scrollTo(0, 0);
         setVisibility(VISIBLE);
 
-        invalidate();
-        requestLayout();
+        // Slides in from the right edge (system animation settings still apply)
+        animate().cancel();
+        setAlpha(0f);
+        setTranslationX(dp(SHEET_WIDTH_DP) * 0.4f);
+        animate().alpha(1f).translationX(0)
+            .setDuration(320).setInterpolator(new DecelerateInterpolator(2f)).start();
 
         requestFocus();
 
+        // Close (back to the game) is selected first, so A just resumes
         post(() -> {
-            // Equalize all vertical button widths to the widest one
-            int maxWidth = 0;
-            for (OverlayMenuButton b : verticalButtons) {
-                maxWidth = Math.max(maxWidth, b.getWidth());
-            }
-            if (maxWidth > 0) {
-                for (OverlayMenuButton b : verticalButtons) {
-                    b.setMinimumWidth(maxWidth);
-                }
-                verticalContainer.requestLayout();
-            }
-
-            if (!verticalButtons.isEmpty()) {
-                setVerticalIndex(verticalButtons.size() - 1);
-            }
+            activeRegion = Region.BAR;
+            setBarIndex(0);
         });
     }
 
     public void hide(Runnable onComplete) {
+        animate().cancel();
+        setAlpha(1f);
+        setTranslationX(0);
         setVisibility(GONE);
         if (onComplete != null) {
             onComplete.run();

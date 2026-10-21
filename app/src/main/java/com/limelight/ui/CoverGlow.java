@@ -1,5 +1,6 @@
 package com.limelight.ui;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 
@@ -67,6 +68,20 @@ public final class CoverGlow {
         return Color.argb(0xE0, darken(Color.red(tint), 0.22f, 10),
                 darken(Color.green(tint), 0.22f, 10),
                 darken(Color.blue(tint), 0.22f, 10));
+    }
+
+    // Each game's colour is kept once its cover has been seen, so the stream's menu can use it
+    private static final String PREF_FILENAME = "CoverGlow";
+
+    public static void rememberTint(Context context, String pcUuid, int appId, int tint) {
+        context.getSharedPreferences(PREF_FILENAME, Context.MODE_PRIVATE).edit()
+                .putInt("tint_" + pcUuid + "_" + appId, tint)
+                .apply();
+    }
+
+    public static int rememberedTint(Context context, String pcUuid, int appId) {
+        return context.getSharedPreferences(PREF_FILENAME, Context.MODE_PRIVATE)
+                .getInt("tint_" + pcUuid + "_" + appId, DEFAULT_TINT);
     }
 
     private static int darken(int channel, float keep, int floor) {

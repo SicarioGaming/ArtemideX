@@ -765,7 +765,11 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         heroCover.setOnCoverLoadedListener(new CoverImageView.OnCoverLoadedListener() {
             @Override
             public void onCoverLoaded(Bitmap cover) {
-                animateTint(CoverGlow.tintFromBitmap(cover));
+                int tint = CoverGlow.tintFromBitmap(cover);
+                animateTint(tint);
+                if (selectedApp != null) {
+                    CoverGlow.rememberTint(AppView.this, uuidString, selectedApp.app.getAppId(), tint);
+                }
             }
         });
         heroPlay.setOnClickListener(new View.OnClickListener() {

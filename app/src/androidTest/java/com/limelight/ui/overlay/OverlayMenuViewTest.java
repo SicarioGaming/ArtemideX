@@ -215,6 +215,45 @@ public class OverlayMenuViewTest {
         assertEquals(List.of("closed", "bitrate"), listener.events);
     }
 
+    private void press(int keyCode) {
+        onMain(() -> menu.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, keyCode)));
+    }
+
+    private boolean selected(int labelResId) {
+        return findButton(menu, str(labelResId)).isSelected();
+    }
+
+    @Test
+    public void controllerMovesThroughTheGridAndTheBar() {
+        // Saved custom commands would add tiles after the built-in ones
+        org.junit.Assume.assumeTrue(new CustomCommandsManager(context).getCommands().isEmpty());
+
+        // Up from Close goes into the grid's last tile, and back down returns to Close
+        press(KeyEvent.KEYCODE_DPAD_UP);
+        assertTrue(selected(com.limelight.R.string.overlay_menu_floating_button));
+        press(KeyEvent.KEYCODE_DPAD_DOWN);
+        assertTrue(selected(com.limelight.R.string.overlay_menu_close));
+
+        // The grid has four columns: up from the last tile lands one row higher
+        press(KeyEvent.KEYCODE_DPAD_UP);
+        press(KeyEvent.KEYCODE_DPAD_UP);
+        assertTrue(selected(com.limelight.R.string.overlay_menu_task_manager));
+        press(KeyEvent.KEYCODE_DPAD_LEFT);
+        assertTrue(selected(com.limelight.R.string.overlay_menu_server_commands));
+
+        // Down twice: the bottom row, then Close, which sits above Quit and Disconnect
+        press(KeyEvent.KEYCODE_DPAD_DOWN);
+        assertTrue(selected(com.limelight.R.string.overlay_menu_full_keyboard));
+        press(KeyEvent.KEYCODE_DPAD_DOWN);
+        assertTrue(selected(com.limelight.R.string.overlay_menu_close));
+        press(KeyEvent.KEYCODE_DPAD_DOWN);
+        assertTrue(selected(com.limelight.R.string.overlay_menu_quit_session));
+        press(KeyEvent.KEYCODE_DPAD_RIGHT);
+        assertTrue(selected(com.limelight.R.string.overlay_menu_disconnect));
+        press(KeyEvent.KEYCODE_DPAD_CENTER);
+        assertEquals(List.of("disconnect", "closed"), listener.events);
+    }
+
     @Test
     public void everyShortcutSendsKeys() {
         String[] shortcuts = {

@@ -133,7 +133,9 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       follows the scroll, teal headings, white rows; per-game settings share the look. The PC
       list's overrides bar uses frosted pills (`docs/cover_glow_settings.png`)
 - [ ] Settings: the "What you'll feel" panel and plain-language names from the mockup
-- [ ] Cover Glow in-stream menu: a frosted side sheet tinted by the game, with more shortcuts
+- [x] Cover Glow in-stream menu: a side sheet on the right in the game's cover colour, with
+      the game and stream on top, a grid of tools, and Close, Quit and Disconnect at the bottom;
+      controllers move by rows and columns (`docs/cover_glow_menu.png`)
 - [ ] Try it all with a paired PC and real covers
 
 ## Open questions
