@@ -95,6 +95,22 @@
             android:title="@string/title_checkbox_enable_audiofx"
             android:summary="@string/summary_checkbox_enable_audiofx"
             android:defaultValue="false" />
+        <ListPreference
+            android:key="list_audio_haptics"
+            android:title="@string/title_audio_haptics"
+            android:summary="@string/summary_audio_haptics"
+            android:entries="@array/audio_haptics_names"
+            android:entryValues="@array/audio_haptics_values"
+            android:defaultValue="off" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_audio_haptics_intensity"
+            android:defaultValue="100"
+            seekbar:min="25"
+            android:max="200"
+            seekbar:step="5"
+            android:summary="@string/summary_audio_haptics_intensity"
+            android:text="@string/suffix_seekbar_deadzone"
+            android:title="@string/title_audio_haptics_intensity"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_gamepad_settings"
         android:key="category_gamepad_settings">

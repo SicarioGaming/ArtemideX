@@ -247,6 +247,9 @@ public class PreferenceConfiguration {
     public static final int HIDE_CURSOR_NEVER = 0;
     public static final int HIDE_CURSOR_WHILE_TOUCHING = 1;
     public static final int HIDE_CURSOR_ALWAYS = 2;
+    // Audio haptics: 0 = off, else AudioHaptics.OUTPUT_* bits
+    public int audioHapticsOutputs;
+    public int audioHapticsIntensity; // percent
     public boolean syncLfr;
     public boolean asyncDecode;
     public boolean asyncLfr; // only with asyncDecode
@@ -838,6 +841,21 @@ public class PreferenceConfiguration {
                 config.hideCursorMode = HIDE_CURSOR_NEVER;
                 break;
         }
+        switch (prefs.getString("list_audio_haptics", "off")) {
+            case "device":
+                config.audioHapticsOutputs = 1;
+                break;
+            case "controller":
+                config.audioHapticsOutputs = 2;
+                break;
+            case "both":
+                config.audioHapticsOutputs = 3;
+                break;
+            default:
+                config.audioHapticsOutputs = 0;
+                break;
+        }
+        config.audioHapticsIntensity = prefs.getInt("seekbar_audio_haptics_intensity", 100);
         config.asyncDecode = prefs.getBoolean(ASYNC_DECODE_PREF_STRING, false);
         config.asyncLfr = config.asyncDecode && prefs.getBoolean(ASYNC_LFR_PREF_STRING, false);
         config.keyboardVibrate = prefs.getBoolean(KEYBOARD_VIBRATE_PREF_STRING, true);

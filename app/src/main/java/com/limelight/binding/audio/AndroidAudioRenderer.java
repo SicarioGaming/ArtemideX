@@ -20,9 +20,17 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     private AudioTrack track;
 
+    // Optional: turns the bass in the audio into vibration
+    private final AudioHaptics haptics;
+
     public AndroidAudioRenderer(Context context, boolean enableAudioFx) {
+        this(context, enableAudioFx, null);
+    }
+
+    public AndroidAudioRenderer(Context context, boolean enableAudioFx, AudioHaptics haptics) {
         this.context = context;
         this.enableAudioFx = enableAudioFx;
+        this.haptics = haptics;
     }
 
     private AudioTrack createAudioTrack(int channelConfig, int sampleRate, int bufferSize, boolean lowLatency) {
@@ -182,11 +190,19 @@ public class AndroidAudioRenderer implements AudioRenderer {
             return -2;
         }
 
+        if (haptics != null) {
+            haptics.setup(sampleRate, audioConfiguration.channelCount);
+        }
+
         return 0;
     }
 
     @Override
     public void playDecodedAudio(short[] audioData) {
+        if (haptics != null) {
+            haptics.process(audioData);
+        }
+
         // Only queue up to 40 ms of pending audio data in addition to what AudioTrack is buffering for us.
         if (MoonBridge.getPendingAudioDuration() < 40) {
             // This will block until the write is completed. That can cause a backlog
@@ -201,6 +217,10 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     @Override
     public void start() {
+        if (haptics != null) {
+            haptics.start();
+        }
+
         if (enableAudioFx) {
             // Open an audio effect control session to allow equalizers to apply audio effects
             Intent i = new Intent(AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION);
@@ -213,6 +233,10 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     @Override
     public void stop() {
+        if (haptics != null) {
+            haptics.stop();
+        }
+
         if (enableAudioFx) {
             // Close our audio effect control session when we're stopping
             Intent i = new Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION);
@@ -224,6 +248,10 @@ public class AndroidAudioRenderer implements AudioRenderer {
 
     @Override
     public void cleanup() {
+        if (haptics != null) {
+            haptics.stop();
+        }
+
         // Immediately drop all pending data
         track.pause();
         track.flush();

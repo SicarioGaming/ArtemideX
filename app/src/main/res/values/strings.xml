@@ -516,6 +516,16 @@
     <string name="hide_cursor_never">Never</string>
     <string name="hide_cursor_touching">While touching the screen</string>
     <string name="hide_cursor_always">Always</string>
+
+    <!-- ArtemideX: audio haptics (from Moonlight V+) -->
+    <string name="title_audio_haptics">Audio haptics</string>
+    <string name="summary_audio_haptics">Feel the game\'s bass (explosions, engines) as vibration on this device or your controller</string>
+    <string name="audio_haptics_off">Off</string>
+    <string name="audio_haptics_device">This device</string>
+    <string name="audio_haptics_controller">Controller</string>
+    <string name="audio_haptics_both">This device and controller</string>
+    <string name="title_audio_haptics_intensity">Audio haptics strength</string>
+    <string name="summary_audio_haptics_intensity">How strongly the bass vibrates</string>
     <string name="title_checkbox_pinch_to_zoom">Pinch to zoom anytime</string>
     <string name="summary_checkbox_pinch_to_zoom">Pinch with two fingers to zoom and move around the stream, without turning on Pan/Zoom. Two-finger scrolls and taps still go to the PC. Not in Multi-touch mode.</string>
     <string name="title_checkbox_long_press_right_click">Long-press to right-click</string>

@@ -3,6 +3,7 @@ package com.limelight;
 
 import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.AndroidAudioRenderer;
+import com.limelight.binding.audio.AudioHaptics;
 import com.limelight.binding.input.ControllerHandler;
 import com.limelight.binding.input.KeyboardTranslator;
 import com.limelight.binding.input.capture.InputCaptureManager;
@@ -2932,7 +2933,31 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public void rumble(short controllerNumber, short lowFreqMotor, short highFreqMotor) {
         LimeLog.info(String.format((Locale)null, "Rumble on gamepad %d: %04x %04x", controllerNumber, lowFreqMotor, highFreqMotor));
 
+        if (controllerNumber == 0) {
+            gameRumbleLow = lowFreqMotor;
+            gameRumbleHigh = highFreqMotor;
+            if (audioHapticsLow != 0) {
+                // Audio haptics is also rumbling this controller; keep the stronger of the two
+                lowFreqMotor = maxRumble(lowFreqMotor, audioHapticsLow);
+            }
+        }
+
         controllerHandler.handleRumble(controllerNumber, lowFreqMotor, highFreqMotor);
+    }
+
+    // Latest rumble for the first controller, from the game and from audio haptics
+    private volatile short gameRumbleLow, gameRumbleHigh;
+    private volatile short audioHapticsLow;
+
+    // Audio haptics rumble for the first controller, combined with the game's own rumble
+    private void audioHapticsRumble(short lowFreqMotor, short highFreqMotor) {
+        audioHapticsLow = lowFreqMotor;
+        controllerHandler.handleRumble((short) 0, maxRumble(lowFreqMotor, gameRumbleLow),
+                maxRumble(highFreqMotor, gameRumbleHigh));
+    }
+
+    private static short maxRumble(short a, short b) {
+        return (a & 0xFFFF) >= (b & 0xFFFF) ? a : b;
     }
 
     @Override
@@ -3010,7 +3035,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         Toast.makeText(Game.this, configMessage, Toast.LENGTH_LONG).show();
 
         decoderRenderer.setRenderTarget(streamView.getHolder());
-        conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx),
+        AudioHaptics audioHaptics = prefConfig.audioHapticsOutputs != 0 ?
+                new AudioHaptics(Game.this, prefConfig.audioHapticsOutputs,
+                        prefConfig.audioHapticsIntensity, this::audioHapticsRumble) : null;
+        conn.start(new AndroidAudioRenderer(Game.this, prefConfig.enableAudioFx, audioHaptics),
                 decoderRenderer, Game.this);
     }
 

@@ -197,6 +197,20 @@
         <item>always</item>
     </string-array>
 
+    <!-- ArtemideX: audio haptics -->
+    <string-array name="audio_haptics_names">
+        <item>@string/audio_haptics_off</item>
+        <item>@string/audio_haptics_device</item>
+        <item>@string/audio_haptics_controller</item>
+        <item>@string/audio_haptics_both</item>
+    </string-array>
+    <string-array name="audio_haptics_values" translatable="false">
+        <item>off</item>
+        <item>device</item>
+        <item>controller</item>
+        <item>both</item>
+    </string-array>
+
     <string-array name="analog_scrolling_names">
         <item>@string/analogscroll_none</item>
         <item>@string/analogscroll_right</item>
