@@ -165,8 +165,9 @@ If I've credited something wrongly or missed you, please open an issue and I'll 
    ("Install unknown apps"); allow it for that app only.
 3. ArtemideX installs as its own app, beside any Moonlight you already have.
 
-Android 5.0 or newer. Some features need a recent device (Async decode, the Vulkan renderer,
-PyroWave). Updates install over the top with your settings kept, as long as they come from these
+Android 5.0 or newer, on any CPU type. Some features need a recent device (Async decode, the
+Vulkan renderer), and PyroWave and the custom Turnip driver need a 64-bit ARM device
+(`arm64-v8a`), since their libraries are only built for that. Updates install over the top with your settings kept, as long as they come from these
 releases. Tools such as [Obtainium](https://github.com/ImranR98/Obtainium) can update it straight
 from the Releases page.
 
