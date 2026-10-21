@@ -11,8 +11,10 @@ android {
         minSdk 21
         targetSdk 36
 
-        versionName "12.2"
-        versionCode = 315
+        // ArtemideX's own version. The code carries on from Moonlight X's 315 so that builds
+        // installed during development can be upgraded in place.
+        versionName "0.1.0"
+        versionCode = 316
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
@@ -39,7 +41,8 @@ android {
                 }
             }
 
-            applicationId "com.limelight.root"
+            // Its own ID too, so it can never replace a Moonlight root install
+            applicationId "com.artemidex.root"
             dimension "root"
             buildConfigField "boolean", "ROOT_BUILD", "true"
         }
@@ -93,6 +96,28 @@ android {
         }
     }
 
+    // Release signing (ArtemideX): the key's details come from keystore.properties in the
+    // project folder (never committed) or from environment variables. Without either, release
+    // builds come out unsigned, and Android won't install them.
+    def keystoreProps = new Properties()
+    def keystorePropsFile = rootProject.file('keystore.properties')
+    if (keystorePropsFile.exists()) {
+        keystorePropsFile.withInputStream { keystoreProps.load(it) }
+    }
+    def signingValue = { String key, String env -> keystoreProps.getProperty(key) ?: System.getenv(env) }
+
+    signingConfigs {
+        release {
+            def store = signingValue('storeFile', 'ARTEMIDEX_KEYSTORE')
+            if (store) {
+                storeFile rootProject.file(store)
+                storePassword signingValue('storePassword', 'ARTEMIDEX_KEYSTORE_PASSWORD')
+                keyAlias signingValue('keyAlias', 'ARTEMIDEX_KEY_ALIAS')
+                keyPassword signingValue('keyPassword', 'ARTEMIDEX_KEY_PASSWORD')
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix ".debug"
@@ -135,6 +160,10 @@ android {
             // applicationId (com.artemidex), so no suffix is needed here.
             resValue "string", "app_label", "ArtemideX"
             resValue "string", "app_label_root", "ArtemideX (Root)"
+
+            if (signingConfigs.release.storeFile != null) {
+                signingConfig signingConfigs.release
+            }
 
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
