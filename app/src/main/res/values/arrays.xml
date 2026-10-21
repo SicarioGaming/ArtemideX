@@ -197,6 +197,16 @@
         <item>always</item>
     </string-array>
 
+    <!-- ArtemideX: touch mode in per-game settings (the global "Use the touchscreen as a trackpad") -->
+    <string-array name="game_touch_mode_names">
+        <item>@string/game_touch_mode_trackpad</item>
+        <item>@string/game_touch_mode_direct</item>
+    </string-array>
+    <string-array name="game_touch_mode_values" translatable="false">
+        <item>true</item>
+        <item>false</item>
+    </string-array>
+
     <!-- ArtemideX: audio haptics -->
     <string-array name="audio_haptics_names">
         <item>@string/audio_haptics_off</item>

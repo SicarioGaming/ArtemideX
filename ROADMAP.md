@@ -88,7 +88,9 @@ Done so far (2026-10-21):
 - [x] Bitrate mid-stream: Bitrate in the menu, 5-500 Mbps, via Vibepollo `/bitrate`
 - [x] Better stats: 1% low FPS (average of the slowest 1% of frame gaps) in both overlays
 - [x] Pinch to zoom anytime (Input settings, on by default; not in Multi-touch mode)
-- [ ] Per-game settings: add ArtemideX's options to Moonlight X's App Settings
+- [x] Per-game settings: App Settings (long-press a game) can also set the video codec, V-Sync,
+      Sync: LFR, Async decode, Async: LFR, Display on the PC, touch mode, Hide PC cursor and
+      Audio haptics for that game or Quick Launch item; each defaults to the global setting
 - [x] Audio haptics (Audio settings, off by default): bass below ~120 Hz drives this device's
       vibration and/or the first controller's heavy motor, with a strength setting. The tablet's
       motor is on/off only, so strength becomes pulse length there. Game rumble and audio

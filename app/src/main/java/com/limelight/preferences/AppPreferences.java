@@ -7,6 +7,10 @@ import android.preference.PreferenceManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
 public class AppPreferences {
     private static final String APP_PREFERENCES_FILE = "AppPreferences";
     private static final String PREF_BITRATE_OVERRIDE = "bitrate_override"; // Global bitrate override
@@ -23,6 +27,9 @@ public class AppPreferences {
         public String enableHdr;
         public String enablePerfOverlay;
         public boolean useGlobalSettings;
+        // ArtemideX options set for this game, by their global setting's key
+        // (PreferenceConfiguration.GAME_OPTION_KEYS); options left out use the default
+        public final Map<String, String> gameOptions = new HashMap<>();
 
         public AppSettings() {
             this.useGlobalSettings = true;
@@ -49,11 +56,12 @@ public class AppPreferences {
             json.put("enableHdr", enableHdr);
             json.put("enablePerfOverlay", enablePerfOverlay);
             json.put("useGlobalSettings", useGlobalSettings);
+            json.put("gameOptions", new JSONObject(gameOptions));
             return json;
         }
 
         public static AppSettings fromJson(JSONObject json) throws JSONException {
-            return new AppSettings(
+            AppSettings settings = new AppSettings(
                 json.optString("resolution", null),
                 json.optInt("fps", 0),
                 json.optString("framePacing", null),
@@ -63,6 +71,15 @@ public class AppPreferences {
                 json.optString("enablePerfOverlay", null),
                 json.optBoolean("useGlobalSettings", true)
             );
+            JSONObject options = json.optJSONObject("gameOptions");
+            if (options != null) {
+                Iterator<String> keys = options.keys();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    settings.gameOptions.put(key, options.getString(key));
+                }
+            }
+            return settings;
         }
     }
 
@@ -229,6 +246,20 @@ public class AppPreferences {
         if (enablePerfOverlayValue != null) {
             config.enablePerfOverlay = Boolean.parseBoolean(enablePerfOverlayValue);
         }
+
+        // ArtemideX options
+        for (String key : PreferenceConfiguration.GAME_OPTION_KEYS) {
+            String value = null;
+            if (quickLaunchSettings != null && quickLaunchSettings.gameOptions.containsKey(key)) {
+                value = quickLaunchSettings.gameOptions.get(key);
+            } else if (!appSettings.useGlobalSettings) {
+                value = appSettings.gameOptions.get(key);
+            }
+            if (value != null) {
+                config.applyGameOption(key, value);
+            }
+        }
+        config.asyncLfr = config.asyncLfr && config.asyncDecode;
 
         return applyOverrides ? applyPreferenceOverrides(context, config) : config;
     }

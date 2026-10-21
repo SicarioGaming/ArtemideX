@@ -528,6 +528,11 @@
     <string name="hide_cursor_touching">While touching the screen</string>
     <string name="hide_cursor_always">Always</string>
 
+    <!-- ArtemideX: per-game settings -->
+    <string name="title_game_touch_mode">Touch mode</string>
+    <string name="game_touch_mode_trackpad">Trackpad</string>
+    <string name="game_touch_mode_direct">Direct touch (mouse goes where you tap)</string>
+
     <!-- ArtemideX: audio haptics (from Moonlight V+) -->
     <string name="title_audio_haptics">Audio haptics</string>
     <string name="summary_audio_haptics">Feel the game\'s bass (explosions, engines) as vibration on this device or your controller</string>

@@ -465,7 +465,10 @@ public class PreferenceConfiguration {
     private static FormatOption getVideoFormatValue(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-        String str = prefs.getString(VIDEO_FORMAT_PREF_STRING, DEFAULT_VIDEO_FORMAT);
+        return formatOptionFor(prefs.getString(VIDEO_FORMAT_PREF_STRING, DEFAULT_VIDEO_FORMAT));
+    }
+
+    private static FormatOption formatOptionFor(String str) {
         if (str.equals("auto")) {
             return FormatOption.AUTO;
         }
@@ -607,6 +610,55 @@ public class PreferenceConfiguration {
             return 4;
         }
         return 1;
+    }
+
+    // ArtemideX options that App Settings can also set per game, by their global setting's key
+    static final String HIDE_CURSOR_MODE_PREF_STRING = "hide_cursor_mode";
+    static final String AUDIO_HAPTICS_PREF_STRING = "list_audio_haptics";
+    static final String[] GAME_OPTION_KEYS = {
+            VIDEO_FORMAT_PREF_STRING, VSYNC_MODE_PREF_STRING, SYNC_LFR_PREF_STRING,
+            ASYNC_DECODE_PREF_STRING, ASYNC_LFR_PREF_STRING, VIRTUAL_DISPLAY_MODE_PREF_STRING,
+            TOUCHSCREEN_TRACKPAD_PREF_STRING, HIDE_CURSOR_MODE_PREF_STRING, AUDIO_HAPTICS_PREF_STRING,
+    };
+
+    /**
+     * Sets one of the GAME_OPTION_KEYS options from its stored value: the global setting's value,
+     * or a game's own from App Settings ("true"/"false" for the on/off ones).
+     */
+    void applyGameOption(String key, String value) {
+        switch (key) {
+            case VIDEO_FORMAT_PREF_STRING:
+                videoFormat = formatOptionFor(value);
+                break;
+            case VSYNC_MODE_PREF_STRING:
+                vsyncMode = "vsync".equals(value) ? VSYNC_ON : "fast".equals(value) ? VSYNC_FAST : VSYNC_OFF;
+                break;
+            case SYNC_LFR_PREF_STRING:
+                syncLfr = Boolean.parseBoolean(value);
+                break;
+            case ASYNC_DECODE_PREF_STRING:
+                asyncDecode = Boolean.parseBoolean(value);
+                break;
+            case ASYNC_LFR_PREF_STRING:
+                // Only takes effect with async decode, which the caller checks after all options
+                asyncLfr = Boolean.parseBoolean(value);
+                break;
+            case VIRTUAL_DISPLAY_MODE_PREF_STRING:
+                virtualDisplayMode = value;
+                break;
+            case TOUCHSCREEN_TRACKPAD_PREF_STRING:
+                touchscreenTrackpad = Boolean.parseBoolean(value);
+                break;
+            case HIDE_CURSOR_MODE_PREF_STRING:
+                hideCursorMode = "touching".equals(value) ? HIDE_CURSOR_WHILE_TOUCHING :
+                        "always".equals(value) ? HIDE_CURSOR_ALWAYS : HIDE_CURSOR_NEVER;
+                break;
+            case AUDIO_HAPTICS_PREF_STRING:
+                // AudioHaptics.OUTPUT_* bits
+                audioHapticsOutputs = "device".equals(value) ? 1 : "controller".equals(value) ? 2 :
+                        "both".equals(value) ? 3 : 0;
+                break;
+        }
     }
 
     private static AnalogStickForScrolling getAnalogStickForScrollingValue(Context context) {
@@ -828,45 +880,12 @@ public class PreferenceConfiguration {
         config.enablePerfOverlayLite = prefs.getBoolean(PERF_OVERLAY_LITE_PREF_STRING, false);
         config.preventPacketLoss = prefs.getBoolean(PREVENT_PACKET_LOSS_PREF_STRING, false);
         config.virtualDisplayMode = prefs.getString(VIRTUAL_DISPLAY_MODE_PREF_STRING, "host");
-        switch (prefs.getString(VSYNC_MODE_PREF_STRING, "off")) {
-            case "vsync":
-                config.vsyncMode = VSYNC_ON;
-                break;
-            case "fast":
-                config.vsyncMode = VSYNC_FAST;
-                break;
-            default:
-                config.vsyncMode = VSYNC_OFF;
-                break;
-        }
+        config.applyGameOption(VSYNC_MODE_PREF_STRING, prefs.getString(VSYNC_MODE_PREF_STRING, "off"));
         config.syncLfr = prefs.getBoolean(SYNC_LFR_PREF_STRING, false);
         config.longPressRightClick = prefs.getBoolean("checkbox_long_press_right_click", true);
         config.pinchToZoom = prefs.getBoolean("checkbox_pinch_to_zoom", true);
-        switch (prefs.getString("hide_cursor_mode", "never")) {
-            case "touching":
-                config.hideCursorMode = HIDE_CURSOR_WHILE_TOUCHING;
-                break;
-            case "always":
-                config.hideCursorMode = HIDE_CURSOR_ALWAYS;
-                break;
-            default:
-                config.hideCursorMode = HIDE_CURSOR_NEVER;
-                break;
-        }
-        switch (prefs.getString("list_audio_haptics", "off")) {
-            case "device":
-                config.audioHapticsOutputs = 1;
-                break;
-            case "controller":
-                config.audioHapticsOutputs = 2;
-                break;
-            case "both":
-                config.audioHapticsOutputs = 3;
-                break;
-            default:
-                config.audioHapticsOutputs = 0;
-                break;
-        }
+        config.applyGameOption(HIDE_CURSOR_MODE_PREF_STRING, prefs.getString(HIDE_CURSOR_MODE_PREF_STRING, "never"));
+        config.applyGameOption(AUDIO_HAPTICS_PREF_STRING, prefs.getString(AUDIO_HAPTICS_PREF_STRING, "off"));
         config.audioHapticsIntensity = prefs.getInt("seekbar_audio_haptics_intensity", 100);
         config.asyncDecode = prefs.getBoolean(ASYNC_DECODE_PREF_STRING, false);
         config.asyncLfr = config.asyncDecode && prefs.getBoolean(ASYNC_LFR_PREF_STRING, false);

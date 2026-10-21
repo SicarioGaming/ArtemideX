@@ -50,6 +50,20 @@ public class AppStreamSettings extends Activity {
         UiHelper.notifyNewRootView(this);
     }
 
+    // ArtemideX options: the global setting's key (stored in AppSettings.gameOptions, and the
+    // preference here is "game_" plus it), and the choices' names and values
+    private static final Object[][] GAME_OPTIONS = {
+            {"video_format", R.array.video_format_names, R.array.video_format_values},
+            {"vsync_mode", R.array.vsync_mode_names, R.array.vsync_mode_values},
+            {"checkbox_sync_lfr", R.array.hdr_setting_names, R.array.hdr_setting_values},
+            {"checkbox_async_decode", R.array.hdr_setting_names, R.array.hdr_setting_values},
+            {"checkbox_async_lfr", R.array.hdr_setting_names, R.array.hdr_setting_values},
+            {"virtual_display_mode", R.array.virtual_display_mode_names, R.array.virtual_display_mode_values},
+            {"checkbox_touchscreen_trackpad", R.array.game_touch_mode_names, R.array.game_touch_mode_values},
+            {"hide_cursor_mode", R.array.hide_cursor_mode_names, R.array.hide_cursor_mode_values},
+            {"list_audio_haptics", R.array.audio_haptics_names, R.array.audio_haptics_values},
+    };
+
     public static class AppSettingsFragment extends PreferenceFragment {
         private String currentResolution;
         private boolean isQuickLaunch;
@@ -224,6 +238,24 @@ public class AppStreamSettings extends Activity {
             setupFramePacingPreference(framePacingPref, currentSettings.framePacing, isQuickLaunch);
             setupBooleanPreference(enableHdrPref, R.array.hdr_setting_names, R.array.hdr_setting_values, currentSettings.enableHdr, isQuickLaunch);
             setupBooleanPreference(enablePerfOverlayPref, R.array.perf_overlay_setting_names, R.array.perf_overlay_setting_values, currentSettings.enablePerfOverlay, isQuickLaunch);
+            for (Object[] option : GAME_OPTIONS) {
+                ListPreference pref = (ListPreference) findPreference("game_" + option[0]);
+                setupBooleanPreference(pref, (Integer) option[1], (Integer) option[2],
+                        currentSettings.gameOptions.get((String) option[0]), isQuickLaunch);
+                pref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        new Handler().post(new Runnable() {
+                            @Override
+                            public void run() {
+                                updatePreferenceSummaries();
+                                saveSettings();
+                            }
+                        });
+                        return true;
+                    }
+                });
+            }
 
             updatePreferenceSummaries();
             updatePreferenceStates(useGlobalPref.isChecked());
@@ -353,6 +385,9 @@ public class AppStreamSettings extends Activity {
             findPreference("text_app_actual_display_refresh_rate").setEnabled(!useGlobal);
             findPreference("list_app_enable_hdr").setEnabled(!useGlobal);
             findPreference("list_app_enable_perf_overlay").setEnabled(!useGlobal);
+            for (Object[] option : GAME_OPTIONS) {
+                findPreference("game_" + option[0]).setEnabled(!useGlobal);
+            }
         }
         
         private void updatePreferenceSummaries() {
@@ -432,6 +467,13 @@ public class AppStreamSettings extends Activity {
                     break;
                 }
             }
+
+            // ArtemideX options: the chosen entry's name, or the default label
+            for (Object[] option : GAME_OPTIONS) {
+                ListPreference pref = (ListPreference) findPreference("game_" + option[0]);
+                int index = pref.findIndexOfValue(pref.getValue() == null ? "" : pref.getValue());
+                pref.setSummary(pref.getEntries()[Math.max(index, 0)]);
+            }
         }
 
         public void saveSettings() {
@@ -504,6 +546,12 @@ public class AppStreamSettings extends Activity {
                 enablePerfOverlayValue,
                 useGlobalPref.isChecked()
             );
+            for (Object[] option : GAME_OPTIONS) {
+                String value = ((ListPreference) findPreference("game_" + option[0])).getValue();
+                if (value != null && !value.isEmpty()) {
+                    settings.gameOptions.put((String) option[0], value);
+                }
+            }
 
             AppPreferences.saveAppSettings(getActivity(), activity.appKey, settings);
         }
