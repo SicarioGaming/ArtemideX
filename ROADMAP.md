@@ -123,7 +123,10 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 
 ## Phase 4: Redesign
 
-- [ ] Mockups of the new look to choose from before building
+- [x] Mockups of the new look to choose from before building (2026-10-21). Chosen: **B · Cover
+      Glow**: the screens take their colour from the selected game's cover art, frosted panels,
+      a big "last played" hero with that game's settings as chips, plain-language settings with a
+      "What you'll feel" panel, and the in-stream menu as a frosted side sheet tinted by the game
 - [ ] More colour, clearer settings layout, smoother animations, and more
       shortcuts in the in-stream menu
 
