@@ -129,7 +129,7 @@ public class CoverGlowTest {
                 assertEquals("Stream", ((TextView) pills.getChildAt(0)).getText().toString());
                 assertEquals("Sound & vibration", ((TextView) pills.getChildAt(1)).getText().toString());
 
-                // The "What you'll feel" panel fits on the tablet's wide screen
+                // The "Predicted impact" panel fits on the tablet's wide screen
                 assertEquals(View.VISIBLE, activity.findViewById(R.id.feelPanel).getVisibility());
                 assertTrue(((TextView) activity.findViewById(R.id.feelText)).getText().length() > 0);
                 assertTrue(pills.getChildAt(0).isSelected());
@@ -251,6 +251,30 @@ public class CoverGlowTest {
     }
 
     @Test
+    public void launcherIconRenders() {
+        Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        android.graphics.drawable.Drawable icon = target.getDrawable(R.mipmap.ic_launcher);
+        int size = 512;
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        icon.setBounds(0, 0, size, size);
+        icon.draw(new Canvas(bitmap));
+        // Not blank: the void in the middle is dark and the ring around it is bright
+        int middle = bitmap.getPixel(size / 2, size / 2);
+        assertTrue("middle " + Integer.toHexString(middle), Color.alpha(middle) > 200 && luminanceOf(middle) < 0.05);
+        File out = new File(target.getExternalFilesDir(null), "voidlink_icon.png");
+        try (FileOutputStream stream = new FileOutputStream(out)) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static double luminanceOf(int color) {
+        return luminance(color);
+    }
+
+    @Test
     public void sectionNamesDropTheWordSettings() {
         assertEquals("Audio", CoverGlowSettings.shortName("Audio Settings"));
         assertEquals("Overlay Menu", CoverGlowSettings.shortName("Overlay Menu"));
@@ -308,7 +332,7 @@ public class CoverGlowTest {
                 chips.addView(view, params);
             }
 
-            // The cover row, with the icon tiles ArtemideX draws for these kinds of app
+            // The cover row, with the icon tiles Voidlink draws for these kinds of app
             FrameLayout container = root.findViewById(R.id.appFragmentContainer);
             LinearLayout row = new LinearLayout(context);
             String[] names = {"Desktop", "Steam Big Picture", "Playnite", "RetroArch", "Netflix", "PowerShell"};

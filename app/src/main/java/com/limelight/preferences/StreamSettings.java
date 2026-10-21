@@ -54,7 +54,7 @@ import java.util.List;
 public class StreamSettings extends Activity {
     private PreferenceConfiguration previousPrefs;
     private int previousDisplayPixelCount;
-    // Keeps the "What you'll feel" panel's listener alive (preferences only hold it weakly)
+    // Keeps the "Predicted impact" panel's listener alive (preferences only hold it weakly)
     private SharedPreferences.OnSharedPreferenceChangeListener feelListener;
 
     // HACK for Android 9

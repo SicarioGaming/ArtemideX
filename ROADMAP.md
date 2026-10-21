@@ -1,19 +1,19 @@
-# ArtemideX roadmap
+# Voidlink roadmap
 
-ArtemideX is a Moonlight Android client for streaming from a Vibepollo host to a
+Voidlink is a Moonlight Android client for streaming from a Vibepollo host to a
 nubia NP05J tablet (Snapdragon 8 Elite, Android 16). It keeps Moonlight X's video
 pipeline (Direct Frame Pacing, PyroWave, Vulkan renderer) and adds Artemide's
 options and in-stream menu, selected features from other forks, and a new UI.
 
 Base: Moonlight X (`MoreOrLessSoftware/moonlight-android`, branch `mlsoft-x`).
 Work happens on the `artemidex` branch. Every source below is GPL-3.0, so
-ArtemideX is GPL-3.0 too.
+Voidlink is GPL-3.0 too.
 
 Each step ends with a build installed on the tablet and tested before the next starts.
 
 ## Phase 1: Identity
 
-- [x] Rename the app to "ArtemideX" (`com.artemidex`, debug builds `com.artemidex.debug`),
+- [x] Rename the app to "Voidlink" (`com.voidlink`, debug builds `com.voidlink.debug`),
       so it installs beside Moonlight X and Artemide instead of replacing them.
 
 ## Phase 2: Artemide features
@@ -58,7 +58,7 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
 - [x] V-Sync and Fast V-Sync: one "V-Sync" setting (Off, V-Sync, Fast V-Sync), off by
       default and used only by the direct renderer. Fast V-Sync is Artemide's nano pacer
       (NanoPacer.java) in "Prefer lowest latency" pacing. Artemide's own V-Sync only drives
-      its GL upscaler, which ArtemideX doesn't have, so V-Sync here holds each frame for the
+      its GL upscaler, which Voidlink doesn't have, so V-Sync here holds each frame for the
       next display refresh instead
 - [x] Sync: LFR: off by default; in Balanced pacing keeps only the newest decoded frame
       (the other pacing modes already drain to the newest frame)
@@ -74,7 +74,7 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
       against Artemide's behaviour (2026-10-21, against Artemide's `MediaCodecHelper` and
       `MediaCodecDecoderRenderer` at the 0.5.1 tag)
   - Force Full Range: the same in both (asks the PC for full range, and tells the decoder
-    with `KEY_COLOR_RANGE`); ArtemideX also passes it to the Vulkan renderer. No change
+    with `KEY_COLOR_RANGE`); Voidlink also passes it to the Vulkan renderer. No change
   - Ultra Low Latency: the same for Snapdragon (like the tablet's 8 Elite), Exynos and
     decoders with Android's own low-latency support. Ported the two differences:
     MediaTek's `vendor.mtk.vdec.ultra-low-latency` now follows the setting (Moonlight X
@@ -121,7 +121,7 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 ### Phase 3 research notes (2026-10-21)
 
 - Per-game settings already exist in Moonlight X (long-press a game, App Settings: resolution,
-  FPS, bitrate, frame pacing, HDR, stats; plus Quick Launch). Remaining: add ArtemideX's new
+  FPS, bitrate, frame pacing, HDR, stats; plus Quick Launch). Remaining: add Voidlink's new
   options (V-Sync, LFR, async decode, touch mode) to it.
 - Bitrate mid-stream: Vibepollo `GET /bitrate?bitrate=<kbps>` (HTTPS, any streaming client),
   clamps to the host maximum and returns the applied value in `root.bitrate`.

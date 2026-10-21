@@ -6,7 +6,7 @@ import android.content.SharedPreferences;
 import com.limelight.R;
 
 /**
- * The settings screen's "What you'll feel" panel: where the frame pacing and V-Sync choices sit
+ * The settings screen's "Predicted impact" panel: where the frame pacing and V-Sync choices sit
  * between fastest response and smoothest motion, in plain words. These are rough comparisons
  * between the choices, not measurements.
  */

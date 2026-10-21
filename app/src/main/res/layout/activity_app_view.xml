@@ -5,7 +5,7 @@
     android:id="@+id/appRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF0C1A1D"
+    android:background="#FF0A0918"
     android:clipChildren="false"
     tools:context=".AppView" >
 
@@ -20,8 +20,8 @@
         android:background="@drawable/cg_glow"
         android:importantForAccessibility="no" />
 
-    <!-- A faint dot grid over the glow -->
-    <com.limelight.ui.DotGridView
+    <!-- Stars and nebula over the glow -->
+    <com.limelight.ui.StarfieldView
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
@@ -99,10 +99,8 @@
                     android:id="@+id/heroLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.15"
-                    android:textAllCaps="true"
                     android:textColor="#FFE2E8F0"
-                    android:textSize="13sp"
+                    android:textSize="16sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -168,10 +166,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
             android:layout_marginBottom="4dp"
-            android:letterSpacing="0.14"
-            android:textAllCaps="true"
             android:textColor="#FFE2E8F0"
-            android:textSize="13sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <FrameLayout

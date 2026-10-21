@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Checks that the ArtemideX overlay menu buttons reach the right actions, without a stream.
+ * Checks that the Voidlink overlay menu buttons reach the right actions, without a stream.
  */
 @RunWith(AndroidJUnit4.class)
 public class OverlayMenuViewTest {

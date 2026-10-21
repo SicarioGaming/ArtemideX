@@ -21,7 +21,7 @@ import java.util.List;
 
 /**
  * Async decode (from Artemide) against this device's real H.264 decoder: the adapter delivers
- * every frame, Async LFR keeps only the newest, and the codec recovery sequences ArtemideX uses
+ * every frame, Async LFR keeps only the newest, and the codec recovery sequences Voidlink uses
  * (flush then start, detach/stop/attach/configure) resume decoding.
  */
 @RunWith(AndroidJUnit4.class)

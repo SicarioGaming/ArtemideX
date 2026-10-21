@@ -185,7 +185,7 @@
         <item>warp2</item>
     </string-array>
 
-    <!-- ArtemideX: hiding the PC's cursor in the video -->
+    <!-- Voidlink: hiding the PC's cursor in the video -->
     <string-array name="hide_cursor_mode_names">
         <item>@string/hide_cursor_never</item>
         <item>@string/hide_cursor_touching</item>
@@ -197,7 +197,7 @@
         <item>always</item>
     </string-array>
 
-    <!-- ArtemideX: touch mode in per-game settings (the global "Use the touchscreen as a trackpad") -->
+    <!-- Voidlink: touch mode in per-game settings (the global "Use the touchscreen as a trackpad") -->
     <string-array name="game_touch_mode_names">
         <item>@string/game_touch_mode_trackpad</item>
         <item>@string/game_touch_mode_direct</item>
@@ -207,7 +207,7 @@
         <item>false</item>
     </string-array>
 
-    <!-- ArtemideX: audio haptics -->
+    <!-- Voidlink: audio haptics -->
     <string-array name="audio_haptics_names">
         <item>@string/audio_haptics_off</item>
         <item>@string/audio_haptics_device</item>
@@ -262,7 +262,7 @@
         <item>3000</item>
     </string-array>
 
-    <!-- ArtemideX: Artemide's V-Sync options (direct renderer only) -->
+    <!-- Voidlink: Artemide's V-Sync options (direct renderer only) -->
     <string-array name="vsync_mode_names">
         <item>@string/vsync_mode_off</item>
         <item>@string/vsync_mode_vsync</item>
@@ -286,7 +286,7 @@
         <item>never</item>
     </string-array>
 
-    <!-- ArtemideX: which display the host streams from (virtualDisplay launch argument) -->
+    <!-- Voidlink: which display the host streams from (virtualDisplay launch argument) -->
     <string-array name="virtual_display_mode_names">
         <item>@string/virtual_display_mode_host</item>
         <item>@string/virtual_display_mode_virtual</item>

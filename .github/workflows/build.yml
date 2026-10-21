@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install the NDK
+        run: |
+          NDK=$(grep -oP 'ndkVersion "\K[^"]+' app/build.gradle)
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK" > /dev/null
+
+      - name: Build the debug APK and the tests
+        run: ./gradlew --no-daemon assembleNonRootDebug assembleNonRootDebugAndroidTest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voidlink-debug
+          path: app/build/outputs/apk/nonRoot/debug/*.apk

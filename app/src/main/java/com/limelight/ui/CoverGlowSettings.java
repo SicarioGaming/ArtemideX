@@ -141,12 +141,12 @@ public final class CoverGlowSettings {
         return null;
     }
 
-    // The settings the "What you'll feel" panel describes
+    // The settings the "Predicted impact" panel describes
     private static final List<String> FEEL_KEYS = Arrays.asList(
             "frame_pacing", "vsync_mode", "checkbox_async_decode", "checkbox_async_lfr");
 
     /**
-     * Shows the "What you'll feel" panel on wide screens and keeps it up to date. Keep the
+     * Shows the "Predicted impact" panel on wide screens and keeps it up to date. Keep the
      * returned listener (preferences only hold it weakly) and pass it back to detachFeel().
      */
     public static SharedPreferences.OnSharedPreferenceChangeListener attachFeel(Activity activity) {

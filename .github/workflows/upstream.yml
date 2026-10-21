@@ -1,0 +1,34 @@
+name: Upstream changes
+
+# Every Monday, list what's new in the Moonlight versions Voidlink follows, in one issue.
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the sources
+        run: bash tools/upstream/check.sh > report.md
+
+      - name: Open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if grep -q "Nothing new since the last review" report.md; then
+            echo "Nothing new."
+            exit 0
+          fi
+          NUMBER=$(gh issue list --state open --search 'in:title "Upstream changes"' --json number --jq '.[0].number')
+          if [ -n "$NUMBER" ]; then
+            gh issue edit "$NUMBER" --body-file report.md
+          else
+            gh issue create --title "Upstream changes" --body-file report.md
+          fi

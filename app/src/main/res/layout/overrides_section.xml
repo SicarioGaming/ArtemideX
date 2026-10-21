@@ -130,7 +130,7 @@
                 android:layout_weight="1"
                 android:max="50"
                 android:progress="0"
-                android:progressTint="#FF14B8A6"
+                android:progressTint="#FF8B5CF6"
                 android:thumbTint="#FFFFFFFF" />
 
         </LinearLayout>

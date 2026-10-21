@@ -19,7 +19,7 @@ import android.widget.TextView;
 
 /**
  * Cover Glow's one flourish: a slowly flowing rainbow (blue, purple, pink, orange), used only on
- * the ArtemideX wordmark and the ring around the selected game. Android's animation settings
+ * the Voidlink wordmark and the ring around the selected game. Android's animation settings
  * still apply; with animations off the colours simply stay put.
  */
 public final class Rainbow {

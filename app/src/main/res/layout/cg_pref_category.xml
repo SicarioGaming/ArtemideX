@@ -9,5 +9,5 @@
     android:paddingStart="4dp"
     android:paddingEnd="4dp"
     android:fontFamily="sans-serif-black"
-    android:textColor="#FF5EEAD4"
+    android:textColor="#FFC4B5FD"
     android:textSize="20sp" />

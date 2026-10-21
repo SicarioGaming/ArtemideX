@@ -21,7 +21,7 @@ public class RelativeTouchContext implements TouchContext {
     private double distanceMoved;
     private double xFactor, yFactor;
 
-    // Extra pointer speed multiplier (ArtemideX touch sensitivity), 1.0 = unchanged
+    // Extra pointer speed multiplier (Voidlink touch sensitivity), 1.0 = unchanged
     private double sensitivity = 1.0;
     private int pointerCount;
     private int maxPointerCountInGesture;
@@ -48,7 +48,7 @@ public class RelativeTouchContext implements TouchContext {
             }
 
             // We haven't been cancelled before the timer expired so begin dragging. With
-            // ArtemideX's "Long-press to right-click", one finger holds the right button instead.
+            // Voidlink's "Long-press to right-click", one finger holds the right button instead.
             confirmedDrag = true;
             dragButton = prefConfig.longPressRightClick && actionIndex == 0 ?
                     MouseButtonPacket.BUTTON_RIGHT : getMouseButtonIndex();

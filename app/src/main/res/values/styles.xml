@@ -22,12 +22,12 @@
         <item name="android:windowNoTitle">true</item>
     </style>
 
-    <!-- Cover Glow: the settings pages (dark teal, white rows, teal switches and headings) -->
+    <!-- Cover Glow: the settings pages (deep space, white rows, violet switches and lavender headings) -->
     <style name="CoverGlowSettingsTheme" parent="AppTheme">
         <item name="android:windowBackground">@color/cg_settings_background</item>
         <item name="android:statusBarColor">@color/cg_settings_background</item>
         <item name="android:navigationBarColor">@color/cg_settings_background</item>
-        <item name="android:colorAccent">#FF14B8A6</item>
+        <item name="android:colorAccent">#FF8B5CF6</item>
         <item name="android:textColorPrimary">#FFFFFFFF</item>
         <item name="android:textColorSecondary">#FFCBD5E1</item>
         <item name="android:textAppearanceListItem">@style/CgPrefTitle</item>

@@ -1,0 +1,66 @@
+name: Release
+
+# Pushing a tag like v0.2.0 builds the signed APK and publishes the GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install the NDK
+        run: |
+          NDK=$(grep -oP 'ndkVersion "\K[^"]+' app/build.gradle)
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK" > /dev/null
+
+      - name: Build the signed release APK
+        env:
+          VOIDLINK_KEYSTORE_BASE64: ${{ secrets.VOIDLINK_KEYSTORE_BASE64 }}
+          VOIDLINK_KEYSTORE_PASSWORD: ${{ secrets.VOIDLINK_KEYSTORE_PASSWORD }}
+          VOIDLINK_KEY_ALIAS: ${{ secrets.VOIDLINK_KEY_ALIAS }}
+          VOIDLINK_KEY_PASSWORD: ${{ secrets.VOIDLINK_KEY_PASSWORD }}
+        run: |
+          if [ -z "$VOIDLINK_KEYSTORE_BASE64" ]; then
+            echo "::error::Set the VOIDLINK_* repository secrets first (see docs/UPDATING.md)"
+            exit 1
+          fi
+          echo "$VOIDLINK_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          export VOIDLINK_KEYSTORE="$RUNNER_TEMP/release.jks"
+          ./gradlew --no-daemon assembleNonRootRelease
+          rm -f "$RUNNER_TEMP/release.jks"
+
+      - name: Check the signature and prepare the files
+        id: files
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          APK="Voidlink-$VERSION.apk"
+          cp app/build/outputs/apk/nonRoot/release/app-nonRoot-release.apk "$APK"
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify "$APK"
+          CERT=$("$APKSIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}' | sed 's/../&:/g; s/:$//' | tr a-f A-F)
+          NOTES="docs/release/$GITHUB_REF_NAME-notes.md"
+          [ -f "$NOTES" ] || { echo "::error::Write $NOTES first"; exit 1; }
+          sed -e "s/APK_SHA256/$(sha256sum "$APK" | cut -d' ' -f1)/" -e "s/CERT_SHA256/$CERT/" "$NOTES" > notes.md
+          echo "apk=$APK" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRERELEASE=""
+          case "$GITHUB_REF_NAME" in *-*) PRERELEASE="--prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" "${{ steps.files.outputs.apk }}" \
+            --title "Voidlink ${GITHUB_REF_NAME#v}" --notes-file notes.md $PRERELEASE

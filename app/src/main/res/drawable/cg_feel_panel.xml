@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cover Glow settings: the frosted "What you'll feel" panel -->
+<!-- Cover Glow settings: the frosted "Predicted impact" panel -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <corners android:radius="24dp" />

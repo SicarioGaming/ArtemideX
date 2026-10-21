@@ -11,7 +11,7 @@ android {
         minSdk 21
         targetSdk 36
 
-        // ArtemideX's own version. The code carries on from Moonlight X's 315 so that builds
+        // Voidlink's own version. The code carries on from Moonlight X's 315 so that builds
         // installed during development can be upgraded in place.
         versionName "0.1.0"
         versionCode = 316
@@ -42,7 +42,7 @@ android {
             }
 
             // Its own ID too, so it can never replace a Moonlight root install
-            applicationId "com.artemidex.root"
+            applicationId "com.voidlink.root"
             dimension "root"
             buildConfigField "boolean", "ROOT_BUILD", "true"
         }
@@ -54,8 +54,8 @@ android {
                 }
             }
 
-            // ArtemideX uses its own ID so it installs beside Moonlight X and Artemide
-            applicationId "com.artemidex"
+            // Voidlink uses its own ID so it installs beside Moonlight X and Artemide
+            applicationId "com.voidlink"
             dimension "root"
             buildConfigField "boolean", "ROOT_BUILD", "false"
         }
@@ -96,7 +96,7 @@ android {
         }
     }
 
-    // Release signing (ArtemideX): the key's details come from keystore.properties in the
+    // Release signing (Voidlink): the key's details come from keystore.properties in the
     // project folder (never committed) or from environment variables. Without either, release
     // builds come out unsigned, and Android won't install them.
     def keystoreProps = new Properties()
@@ -108,12 +108,12 @@ android {
 
     signingConfigs {
         release {
-            def store = signingValue('storeFile', 'ARTEMIDEX_KEYSTORE')
+            def store = signingValue('storeFile', 'VOIDLINK_KEYSTORE')
             if (store) {
                 storeFile rootProject.file(store)
-                storePassword signingValue('storePassword', 'ARTEMIDEX_KEYSTORE_PASSWORD')
-                keyAlias signingValue('keyAlias', 'ARTEMIDEX_KEY_ALIAS')
-                keyPassword signingValue('keyPassword', 'ARTEMIDEX_KEY_PASSWORD')
+                storePassword signingValue('storePassword', 'VOIDLINK_KEYSTORE_PASSWORD')
+                keyAlias signingValue('keyAlias', 'VOIDLINK_KEY_ALIAS')
+                keyPassword signingValue('keyPassword', 'VOIDLINK_KEY_PASSWORD')
             }
         }
     }
@@ -121,8 +121,8 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix ".debug"
-            resValue "string", "app_label", "ArtemideX (Debug)"
-            resValue "string", "app_label_root", "ArtemideX (Root Debug)"
+            resValue "string", "app_label", "Voidlink (Debug)"
+            resValue "string", "app_label_root", "Voidlink (Root Debug)"
         }
         release {
             // To whomever is releasing/using an APK in release mode with
@@ -156,10 +156,10 @@ android {
             //
             // TL;DR: Leave the following line alone!
             //
-            // ArtemideX: honoured by giving the nonRoot flavor its own
-            // applicationId (com.artemidex), so no suffix is needed here.
-            resValue "string", "app_label", "ArtemideX"
-            resValue "string", "app_label_root", "ArtemideX (Root)"
+            // Voidlink: honoured by giving the nonRoot flavor its own
+            // applicationId (com.voidlink), so no suffix is needed here.
+            resValue "string", "app_label", "Voidlink"
+            resValue "string", "app_label_root", "Voidlink (Root)"
 
             if (signingConfigs.release.storeFile != null) {
                 signingConfig signingConfigs.release
@@ -203,7 +203,7 @@ dependencies {
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
-    // On-device tests (ArtemideX): gradlew connectedNonRootDebugAndroidTest
+    // On-device tests (Voidlink): gradlew connectedNonRootDebugAndroidTest
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }

@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FF0C1A1D"
+    android:background="#FF0A0918"
     android:clipChildren="false"
     tools:context=".PcView" >
 
@@ -17,11 +17,11 @@
         android:layout_marginEnd="-240dp"
         android:alpha="0.4"
         android:background="@drawable/cg_glow"
-        android:backgroundTint="#FF14B8A6"
+        android:backgroundTint="#FF7C3AED"
         android:importantForAccessibility="no" />
 
-    <!-- A faint dot grid over the glow -->
-    <com.limelight.ui.DotGridView
+    <!-- Stars and nebula over the glow -->
+    <com.limelight.ui.StarfieldView
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

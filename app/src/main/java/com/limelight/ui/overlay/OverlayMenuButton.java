@@ -34,7 +34,7 @@ public class OverlayMenuButton extends LinearLayout {
     private static final int DARK = 0xFF0B0F14;
     private static final int FROSTED = 0x1AFFFFFF;
     private static final int FROSTED_PILL = 0x24FFFFFF;
-    private static final int RING = 0xFF5EEAD4;
+    private static final int RING = 0xFFC4B5FD;
 
     private ImageView iconView;
     private TextView labelView;

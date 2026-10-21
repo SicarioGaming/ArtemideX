@@ -322,7 +322,7 @@
     <string name="summary_video_renderer">Vulkan adds dithering and native frame pacing. Automatic uses the direct renderer.</string>
 
     <string name="title_custom_vulkan_driver">Custom Vulkan driver</string>
-    <string name="summary_custom_vulkan_driver">Load a custom Vulkan driver (for example Turnip) through libadrenotools, for arm64 devices on Android 10+. Used by PyroWave; other codecs keep the system Vulkan driver. If the driver doesn\'t work, the system one is used instead. Restart ArtemideX after changing it.</string>
+    <string name="summary_custom_vulkan_driver">Load a custom Vulkan driver (for example Turnip) through libadrenotools, for arm64 devices on Android 10+. Used by PyroWave; other codecs keep the system Vulkan driver. If the driver doesn\'t work, the system one is used instead. Restart Voidlink after changing it.</string>
     <string name="title_custom_vulkan_driver_path">Custom driver file</string>
     <string name="summary_custom_vulkan_driver_path">Tap to choose the driver (.so, .zip, or .adpkg). It is copied into the app\'s private storage.</string>
     <string name="custom_vulkan_driver_imported">Custom driver imported: %1$s</string>
@@ -407,7 +407,7 @@
     <string name="overlay_menu_close">Close (B)</string>
     <string name="overlay_menu_hint">Hold &lt;b&gt;%s&lt;/b&gt; to open menu</string>
 
-    <!-- ArtemideX: actions ported from Artemide's in-stream menu -->
+    <!-- Voidlink: actions ported from Artemide's in-stream menu -->
     <string name="overlay_menu_shortcuts">Shortcuts</string>
     <string name="overlay_menu_back">Back</string>
     <string name="overlay_menu_title">Stream menu</string>
@@ -448,7 +448,7 @@
     <string name="title_floating_button">Floating menu button</string>
     <string name="summary_floating_button">Show a draggable button over the stream that opens the menu</string>
 
-    <!-- ArtemideX: pan/zoom, mouse modes, touch sensitivity, clipboard and server commands (from Artemide) -->
+    <!-- Voidlink: pan/zoom, mouse modes, touch sensitivity, clipboard and server commands (from Artemide) -->
     <string name="overlay_menu_pan_zoom">Pan/Zoom</string>
     <string name="overlay_menu_mouse_mode">Touch Mode</string>
     <string name="overlay_menu_touch_sensitivity">Sensitivity</string>
@@ -478,7 +478,7 @@
     <string name="server_command_unsupported">This host doesn\'t support PC commands</string>
     <string name="server_command_sent">Ran \"%1$s\" on the PC</string>
 
-    <!-- ArtemideX: Lite performance overlay, Prevent Packet Loss and Virtual Display (from Artemide) -->
+    <!-- Voidlink: Lite performance overlay, Prevent Packet Loss and Virtual Display (from Artemide) -->
     <string name="perf_overlay_lite_bandwidth">Bw %1$.1f Mbps</string>
     <string name="perf_overlay_lite_delay">Net/Dec %1$d/%2$.1f ms</string>
     <string name="perf_overlay_lite_loss">Loss %1$.1f%%</string>
@@ -497,7 +497,7 @@
     <string name="applist_menu_start_vdisplay">Start in Virtual Display</string>
     <string name="applist_menu_start_primarydisplay">Start in Primary Display</string>
 
-    <!-- ArtemideX: V-Sync, Fast V-Sync and Sync LFR (from Artemide) -->
+    <!-- Voidlink: V-Sync, Fast V-Sync and Sync LFR (from Artemide) -->
     <string name="title_vsync_mode">V-Sync (Experimental)</string>
     <string name="summary_vsync_mode">Direct renderer only. V-Sync holds each frame for the next screen refresh (adds up to one frame of latency). Fast V-Sync spaces frames evenly when the stream FPS matches the screen (Prefer lowest latency pacing only). Ignored with the Vulkan renderer and host frame timing pacing.</string>
     <string name="vsync_mode_off">Off</string>
@@ -510,7 +510,7 @@
     <string name="title_checkbox_async_lfr">Async: LFR (Experimental)</string>
     <string name="summary_checkbox_async_lfr">With async decode, keep only the newest decoded frame waiting to be shown, for the lowest delay. May drop more frames under load.</string>
 
-    <!-- ArtemideX: on-screen full keyboard and automatic clipboard sync (from Artemide) -->
+    <!-- Voidlink: on-screen full keyboard and automatic clipboard sync (from Artemide) -->
     <string name="overlay_menu_full_keyboard">Full Keyboard</string>
     <string name="virtual_keyboard_hide">Hide\nKBD</string>
     <string name="title_checkbox_keyboard_vibrate">Keyboard key vibration</string>
@@ -526,7 +526,7 @@
     <string name="title_checkbox_hide_clipboard_content">Hide clipboard content</string>
     <string name="summary_checkbox_hide_clipboard_content">Mark text copied from the PC as sensitive, so Android doesn\'t preview it on screen</string>
 
-    <!-- ArtemideX: monitor switcher (Moonlit Artemis) and bitrate mid-stream (Moonlight V+) -->
+    <!-- Voidlink: monitor switcher (Moonlit Artemis) and bitrate mid-stream (Moonlight V+) -->
     <string name="overlay_menu_monitors">Monitors</string>
     <string name="overlay_menu_monitor_n">Monitor %1$d</string>
     <string name="overlay_menu_bitrate">Bitrate</string>
@@ -535,7 +535,7 @@
     <string name="bitrate_changed">Bitrate set to %1$d Mbps</string>
     <string name="bitrate_failed">Couldn\'t change bitrate: %1$s</string>
 
-    <!-- ArtemideX: Warp Drive / Warp 2 pacing (from Artemide), cursor hiding, long-press right click -->
+    <!-- Voidlink: Warp Drive / Warp 2 pacing (from Artemide), cursor hiding, long-press right click -->
     <string name="pacing_warp">Warp Drive: 2x FPS from the PC, newest frame shown (Experimental)</string>
     <string name="pacing_warp2">Warp 2: 4x FPS from the PC, newest frame shown (Experimental)</string>
     <string name="title_hide_cursor_mode">Hide PC cursor</string>
@@ -544,8 +544,8 @@
     <string name="hide_cursor_touching">While touching the screen</string>
     <string name="hide_cursor_always">Always</string>
 
-    <!-- ArtemideX: Cover Glow home screen -->
-    <string name="cg_wordmark" translatable="false">ArtemideX</string>
+    <!-- Voidlink: Cover Glow home screen -->
+    <string name="cg_wordmark" translatable="false">Voidlink</string>
     <string name="cg_play">Play</string>
     <string name="cg_resume">Resume</string>
     <string name="cg_game_settings">This game\'s settings</string>
@@ -568,7 +568,7 @@
     <string name="cg_back">Back</string>
     <string name="cg_settings">Settings</string>
     <string name="cg_settings_for">%1$s settings</string>
-    <color name="cg_settings_background">#FF0C1A1D</color>
+    <color name="cg_settings_background">#FF0A0918</color>
 
     <!-- Cover Glow settings: plain-language section names (English only; other languages keep
          their translated headings) -->
@@ -582,32 +582,32 @@
     <string name="cg_section_app">App</string>
     <string name="cg_section_advanced">Advanced</string>
 
-    <!-- Cover Glow settings: the "What you'll feel" panel -->
-    <string name="feel_title">What you\'ll feel</string>
+    <!-- Cover Glow settings: the "Predicted impact" panel -->
+    <string name="feel_title">Predicted impact</string>
     <string name="feel_fastest">Fastest response</string>
     <string name="feel_smoothest">Smoothest motion</string>
-    <string name="feel_delay">Expected delay</string>
+    <string name="feel_delay">Input delay</string>
     <string name="feel_battery">Battery use</string>
     <string name="feel_level_lower">Lower</string>
     <string name="feel_level_medium">Medium</string>
     <string name="feel_level_higher">Higher</string>
-    <string name="feel_latency">Each frame is shown as soon as it arrives. Taps feel quick, but motion can look uneven when Wi-Fi wobbles.</string>
-    <string name="feel_balanced">Frames are lined up with the screen and late ones are skipped. A good middle for most games.</string>
+    <string name="feel_latency">Each frame is shown as soon as it arrives. Inputs feel quick, but motion can stutter on a busy network.</string>
+    <string name="feel_balanced">Frames are lined up with the screen and late ones are skipped. A good default for most games.</string>
     <string name="feel_cap_fps">Like Balanced, with the PC sending no more frames than this screen shows.</string>
     <string name="feel_smoothness">Every frame is shown in order, so motion is the smoothest, but the delay can grow a lot.</string>
-    <string name="feel_host_timed">Frames are shown on the PC\'s own timing. Smooth and steady; best with the Vulkan renderer.</string>
-    <string name="feel_warp">The PC sends twice the frames and the newest one is always shown. Taps feel quicker; the tablet, PC and Wi-Fi work harder.</string>
-    <string name="feel_warp2">The PC sends four times the frames and the newest one is always shown. The quickest response; the tablet, PC and Wi-Fi work much harder.</string>
+    <string name="feel_host_timed">Frames are shown on the PC\'s own timing. Steady motion, best with the Vulkan renderer.</string>
+    <string name="feel_warp">The PC sends twice the frames and the newest one is always shown. Lower delay, but the tablet, PC and network work harder.</string>
+    <string name="feel_warp2">The PC sends four times the frames and the newest one is always shown. The lowest delay, with the most work for the tablet, PC and network.</string>
     <string name="feel_vsync">V-Sync stops tearing but can add up to one frame of delay.</string>
     <string name="feel_fast_vsync">Fast V-Sync spaces frames evenly when the stream matches the screen.</string>
     <string name="feel_async_lfr">Async LFR keeps only the newest decoded frame waiting.</string>
 
-    <!-- ArtemideX: per-game settings -->
+    <!-- Voidlink: per-game settings -->
     <string name="title_game_touch_mode">Touch mode</string>
     <string name="game_touch_mode_trackpad">Trackpad</string>
     <string name="game_touch_mode_direct">Direct touch (mouse goes where you tap)</string>
 
-    <!-- ArtemideX: audio haptics (from Moonlight V+) -->
+    <!-- Voidlink: audio haptics (from Moonlight V+) -->
     <string name="title_audio_haptics">Audio haptics</string>
     <string name="summary_audio_haptics">Feel the game\'s bass (explosions, engines) as vibration on this device or your controller</string>
     <string name="audio_haptics_off">Off</string>

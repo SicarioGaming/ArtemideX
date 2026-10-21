@@ -1,0 +1,9 @@
+# The Moonlight versions Voidlink follows, and the last commit of each that was reviewed.
+# name  repository  branch  last-reviewed-commit  kind (port = code is ported, ideas = features reimplemented)
+moonlight-x       MoreOrLessSoftware/moonlight-android  mlsoft-x                     7c8209cf705ad1bf7d491b4835274bfb7c101626  port
+artemide          derflacco/moonlight-android           Artemide_Experimental_Async  6648fe1b7c9289ee6c978962438c1071e10da1df  port
+moonlight-x-turnip NoCrypt/moonlight-x-turnip           turnip-custom-driver         5f221ee51fadce7d5823061ebb529c32373cd74a  port
+moonlight-v-plus  qiin2333/moonlight-vplus              HEAD                         472665592d68e39fc7f98ea4965bb1f3bee7675c  ideas
+moonlit-artemis   4had45/moonlit-artemis                HEAD                         9b23b8c3295f0681d5e16db78572df10837bee21  ideas
+moonlight         moonlight-stream/moonlight-android    HEAD                         b48494cb96bff23d8886c4775cc4f39a1075495d  ideas
+common-c          MoreOrLessSoftware/moonlight-common-c mlsoft-custom2               25c7050c44980c54730dfbbafa7899250df7ed11  port
