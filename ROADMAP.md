@@ -153,6 +153,9 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 - [x] Cover Glow in-stream menu: a side sheet on the right in the game's cover colour, with
       the game and stream on top, a grid of tools, and Close, Quit and Disconnect at the bottom;
       controllers move by rows and columns (`docs/cover_glow_menu.png`)
+- [x] Icon tiles for apps without cover art (Desktop, Steam Big Picture, Playnite and so on),
+      chosen under Settings → App → App covers; a flowing rainbow on the wordmark and the selected
+      game's ring; a faint dot grid and HUD-style tags for a gamer feel
 - [ ] Try it all with a paired PC and real covers
 
 ## Open questions

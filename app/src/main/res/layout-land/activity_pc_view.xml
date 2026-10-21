@@ -23,6 +23,11 @@
         android:backgroundTint="#FF14B8A6"
         android:importantForAccessibility="no" />
 
+    <!-- A faint dot grid over the glow -->
+    <com.limelight.ui.DotGridView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <!-- Quick Launch Section -->
     <include layout="@layout/quick_launch_section"
         android:layout_width="match_parent"

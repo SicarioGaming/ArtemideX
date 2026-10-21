@@ -161,7 +161,7 @@ public class CoverGlowTest {
                     android.view.Gravity.END);
             params.setMargins((int) (16 * d), (int) (16 * d), (int) (16 * d), (int) (16 * d));
             root.addView(menu, params);
-            menu.setGameInfo("Desktop", "1440p · 120 FPS", 0xFFE11D48);
+            menu.setGameInfo("Desktop", "1440p · 120 FPS", AppIcons.accentFor("Desktop"));
             menu.buildMenu();
             menu.setVisibility(View.VISIBLE);
             // Close selected, as when the menu opens
@@ -201,6 +201,56 @@ public class CoverGlowTest {
     }
 
     @Test
+    public void appsWithoutCoverArtGetIconsAndGamesKeepTheirCovers() {
+        // Only the apps hosts add themselves, by their exact names
+        assertTrue(AppIcons.hasNoCoverArt("Desktop"));
+        assertTrue(AppIcons.hasNoCoverArt("Steam Big Picture"));
+        assertTrue(AppIcons.hasNoCoverArt(" playnite "));
+        assertFalse(AppIcons.hasNoCoverArt("Epic Mickey"));
+        assertFalse(AppIcons.hasNoCoverArt("Remote Desktop Game Night"));
+
+        // Game titles with app-like words aren't mistaken for apps
+        assertEquals(AppIcons.Kind.GAME, AppIcons.kindFor("Mirror's Edge"));
+        assertEquals(AppIcons.Kind.GAME, AppIcons.kindFor("Command & Conquer"));
+        assertEquals(AppIcons.Kind.RETRO, AppIcons.kindFor("RetroArch"));
+        assertEquals(AppIcons.Kind.MEDIA, AppIcons.kindFor("Netflix"));
+
+        // A game shown as an icon keeps the same colour every time
+        assertEquals(AppIcons.accentFor("Hades"), AppIcons.accentFor("HADES"));
+    }
+
+    @Test
+    public void theCoverSettingChoosesIconsOrCovers() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        try {
+            prefs.edit().remove(AppIcons.PREF_COVER_STYLE).commit();
+            assertTrue(AppIcons.useIcon(context, "Desktop"));
+            assertFalse(AppIcons.useIcon(context, "Hades"));
+
+            prefs.edit().putString(AppIcons.PREF_COVER_STYLE, AppIcons.STYLE_ALWAYS).commit();
+            assertTrue(AppIcons.useIcon(context, "Hades"));
+
+            prefs.edit().putString(AppIcons.PREF_COVER_STYLE, AppIcons.STYLE_NEVER).commit();
+            assertFalse(AppIcons.useIcon(context, "Desktop"));
+        }
+        finally {
+            prefs.edit().remove(AppIcons.PREF_COVER_STYLE).commit();
+        }
+    }
+
+    @Test
+    public void theRainbowRingOnlyTurnsWhileShowing() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            Rainbow.Ring ring = new Rainbow.Ring(18, 3);
+            ring.setVisible(true, false);
+            assertTrue(ring.isRunning());
+            ring.setVisible(false, false);
+            assertFalse(ring.isRunning());
+        });
+    }
+
+    @Test
     public void sectionNamesDropTheWordSettings() {
         assertEquals("Audio", CoverGlowSettings.shortName("Audio Settings"));
         assertEquals("Overlay Menu", CoverGlowSettings.shortName("Overlay Menu"));
@@ -227,11 +277,12 @@ public class CoverGlowTest {
     public void homeScreenRendersAtTabletSize() {
         Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Context context = new ContextThemeWrapper(target, R.style.AppTheme);
-        final int tint = 0xFFE11D48;
+        final int tint = AppIcons.accentFor("Desktop");
 
         InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
             LayoutInflater inflater = LayoutInflater.from(context);
             View root = inflater.inflate(R.layout.activity_app_view, null);
+            android.animation.ValueAnimator rainbow = Rainbow.applyTo((TextView) root.findViewById(R.id.cgWordmark));
             root.setBackgroundColor(CoverGlow.deep(tint));
             root.findViewById(R.id.coverGlow).setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(tint));
@@ -239,8 +290,7 @@ public class CoverGlowTest {
             ((TextView) root.findViewById(R.id.coverRowLabel)).setText("On GAMING-PC");
             ((TextView) root.findViewById(R.id.heroLabel)).setText(R.string.cg_last_played);
             ((TextView) root.findViewById(R.id.heroTitle)).setText("Desktop");
-            ((ImageView) root.findViewById(R.id.heroCover)).setImageDrawable(
-                    new android.graphics.drawable.ColorDrawable(tint));
+            ((ImageView) root.findViewById(R.id.heroCover)).setImageDrawable(AppIcons.tile(context, "Desktop"));
 
             float d = context.getResources().getDisplayMetrics().density;
             LinearLayout chips = root.findViewById(R.id.heroChips);
@@ -258,18 +308,18 @@ public class CoverGlowTest {
                 chips.addView(view, params);
             }
 
-            // Stand-in covers for the cover row
+            // The cover row, with the icon tiles ArtemideX draws for these kinds of app
             FrameLayout container = root.findViewById(R.id.appFragmentContainer);
             LinearLayout row = new LinearLayout(context);
-            int[] colours = {tint, 0xFFF97316, 0xFF3B82F6, 0xFF14B8A6, 0xFFA3E635, 0xFFEAB308};
-            String[] names = {"Desktop", "Steam Big Picture", "Game", "Game", "Game", "Game"};
-            for (int i = 0; i < colours.length; i++) {
+            String[] names = {"Desktop", "Steam Big Picture", "Playnite", "RetroArch", "Netflix", "PowerShell"};
+            for (int i = 0; i < names.length; i++) {
                 View item = inflater.inflate(R.layout.app_grid_item, row, false);
-                ((ImageView) item.findViewById(R.id.grid_image)).setImageDrawable(
-                        new android.graphics.drawable.ColorDrawable(colours[i]));
-                ((TextView) item.findViewById(R.id.grid_text)).setText(names[i]);
+                ((ImageView) item.findViewById(R.id.grid_image)).setImageDrawable(AppIcons.tile(context, names[i]));
+                TextView label = item.findViewById(R.id.grid_text);
+                label.setText(names[i]);
+                label.setGravity(android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
                 if (i == 0) {
-                    item.setForeground(context.getDrawable(R.drawable.cg_cover_ring));
+                    item.setForeground(new Rainbow.Ring(18 * d, 3 * d));
                 }
                 else {
                     item.setAlpha(0.82f);
@@ -288,6 +338,7 @@ public class CoverGlowTest {
             assertTrue("cover row only " + coverRow.getHeight() + " px",
                     coverRow.getHeight() >= 176 * d);
 
+            rainbow.cancel();
             Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
             root.draw(new Canvas(bitmap));
             File out = new File(target.getExternalFilesDir(null), "cover_glow_home.png");

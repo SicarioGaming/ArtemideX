@@ -1,6 +1,6 @@
 <div align="center">
 
-# ArtemideX
+<h1><img src="docs/title.svg" width="460" alt="ArtemideX"></h1>
 
 **Stream your PC games to your Android phone or tablet, with every option in one colourful app.**
 
@@ -10,30 +10,30 @@
 
 ### [⬇ Download ArtemideX](https://github.com/SicarioGaming/ArtemideX/releases)
 
-<img src="docs/cover_glow_home.png" width="820" alt="ArtemideX's game screen: the selected game shown large with its stream settings and a Play button, and the PC's other games in a row below, all tinted by the game's colour">
+<img src="docs/cover_glow_home.png" width="820" alt="ArtemideX's game screen: Desktop selected and shown large with its stream settings and a Play button, and the PC's apps below as icon tiles, each in its own colour">
 
-<sub>The game screen takes its colour from whichever game you pick (shown here with sample covers).</sub>
+<sub>The whole screen picks up the colour of whatever you select. Games show their own cover art; apps like Desktop or Steam Big Picture get their own icons.</sub>
 
 </div>
 
 ---
 
-## Why ArtemideX?
+## Why I made ArtemideX
 
-Moonlight lets you play the games on your PC from anywhere in your home, on your phone or
-tablet. Over the years the community has made some brilliant versions of it, each great at
+I stream games from my PC to my tablet all the time with Moonlight. There are some brilliant
+community versions of it, and I kept switching between two of them because each was great at
 something different:
 
 - [**Moonlight X**](https://github.com/MoreOrLessSoftware/moonlight-android) is built for smooth,
   low-latency video, with a Vulkan renderer and the PyroWave codec.
 - [**Artemide**](https://github.com/derflacco/moonlight-android), building on
-  [**Artemis**](https://github.com/ClassicOldSong/moonlight-android), is packed with tools for
-  actually using a PC from a touchscreen: a handy in-stream menu, trackpad modes, a full keyboard,
+  [**Artemis**](https://github.com/ClassicOldSong/moonlight-android), has the tools for actually
+  using a PC from a touchscreen: a handy in-stream menu, trackpad modes, a full keyboard,
   clipboard sharing and more.
 
-Picking one meant giving up the other. ArtemideX brings them together in a single app, adds the
-best ideas from a few more community versions, and wraps it all in a fresh, friendly design.
-It installs beside any Moonlight you already have, so trying it costs nothing.
+I didn't want to choose, so I put them together in one app, added my favourite ideas from a few
+other versions, and gave it a look I actually enjoy opening. It installs next to any Moonlight
+you already have, so you can try it without giving anything up.
 
 ## What you get
 
@@ -42,8 +42,9 @@ It installs beside any Moonlight you already have, so trying it costs nothing.
 <td width="50%" valign="top">
 
 ### 🎨 A look that follows your game
-The screens take their colour from the game you've picked. Your last game is ready to go with
-one tap, and its stream settings are shown right under its name.
+The screens take their colour from the game you've picked, and apps without cover art get their
+own icons. Your last game is ready to go with one tap, with its stream settings right under its
+name.
 
 ### 🎮 Everything during a stream, one tap away
 Open the menu with the floating button, a three-finger tap or by holding Select on a
@@ -90,8 +91,8 @@ Audio haptics turns a game's bass into vibration on your device or controller.
 You'll need a Windows PC to stream from, and your Android device on the same Wi-Fi network.
 
 ### 1. Set up your PC
-Install a streaming host on the PC. We recommend
-[**Vibepollo**](https://github.com/Nonary/Vibepollo), which ArtemideX is developed with and which
+Install a streaming host on the PC. I use and recommend
+[**Vibepollo**](https://github.com/Nonary/Vibepollo): it's what I build ArtemideX with, and it
 unlocks every feature. [Apollo](https://github.com/ClassicOldSong/Apollo) works too, and
 [Sunshine](https://github.com/LizardByte/Sunshine) works for everything except a few extras
 (clipboard sharing, PC commands, Virtual Display and changing the bitrate mid-stream).
@@ -121,17 +122,17 @@ Tap your PC, then tap a game to bring it up, and tap **Play**. That's it.
 
 ## Status
 
-0.1.0 is the first release. Every feature runs through tests on a real device (a Snapdragon 8
-Elite tablet on Android 16) before it's added. Found something that doesn't work? Please
-[open an issue](https://github.com/SicarioGaming/ArtemideX/issues).
+0.1.0 is the first release. Every feature has to pass tests on my own tablet (a Snapdragon 8
+Elite on Android 16) before it goes in. If something doesn't work for you, please
+[open an issue](https://github.com/SicarioGaming/ArtemideX/issues) and I'll take a look.
 
-## How it was made
+## How I made it
 
-ArtemideX was built by SicarioGaming together with AI: [Claude Code](https://claude.com/claude-code)
-(Anthropic) wrote the code, with [REA](https://github.com/morluto/rea) (by morluto) for
-reverse-engineering and analysis. The ideas, direction and design choices are SicarioGaming's. The
-features that came from other Moonlight versions are their authors' work, and every one of them
-is credited below.
+I made ArtemideX with AI. I decided what the app should do and how it should look, and
+[Claude Code](https://claude.com/claude-code) (Anthropic's coding tool) wrote the code. I also
+used [REA](https://github.com/morluto/rea) by morluto to look inside the other apps and see how
+their features work. Anything that came from another Moonlight version is that author's work, and
+I've credited every one of them below.
 
 ---
 
@@ -156,6 +157,11 @@ Artemide), both are named. Features marked **(Apollo / Vibepollo)** need an Apol
   played last.
 - **Colours from the cover:** the background and glow take the game's cover colour and fade
   between games. White text stays readable on every colour.
+- **Icons for apps without cover art:** Desktop, Steam Big Picture, Playnite and similar apps get
+  an icon tile in their own colour instead of the host's plain default image. **Settings → App →
+  App covers** can also use icons for every app, or only ever the PC's covers.
+- **A little flair:** the ArtemideX wordmark and the ring around the selected game slowly flow
+  through a rainbow, and a faint dot grid sits behind the screens.
 - **PC list:** frosted cards and a frosted quick-settings bar.
 - **Settings:** section buttons that jump to each section and follow you as you scroll, plain
   section names (in English), and the "What you'll feel" panel on wide screens. It compares the
@@ -257,7 +263,7 @@ ArtemideX wouldn't exist without these projects and the people behind them:
 | [Claude Code](https://claude.com/claude-code) | Anthropic | Writing the ArtemideX code, ports, redesign and tests |
 | [REA](https://github.com/morluto/rea) | morluto | Reverse-engineering and analysis (MIT) |
 
-Credited something wrongly, or missed you? Please open an issue and it'll be fixed.
+If I've credited something wrongly or missed you, please open an issue and I'll fix it.
 
 ## More details
 

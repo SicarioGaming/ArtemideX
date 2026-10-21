@@ -365,6 +365,13 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/category_ui_settings"
         android:key="category_ui_settings">
+        <ListPreference
+            android:key="cover_style"
+            android:title="@string/title_cover_style"
+            android:summary="%s"
+            android:entries="@array/cover_style_names"
+            android:entryValues="@array/cover_style_values"
+            android:defaultValue="missing" />
         <CheckBoxPreference
             android:key="checkbox_enable_pip"
             android:title="@string/title_checkbox_enable_pip"

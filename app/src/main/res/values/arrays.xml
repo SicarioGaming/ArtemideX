@@ -274,6 +274,18 @@
         <item>fast</item>
     </string-array>
 
+    <!-- Cover Glow: icon tiles in place of the PC's covers (AppIcons) -->
+    <string-array name="cover_style_names">
+        <item>@string/cover_style_missing</item>
+        <item>@string/cover_style_always</item>
+        <item>@string/cover_style_never</item>
+    </string-array>
+    <string-array name="cover_style_values" translatable="false">
+        <item>missing</item>
+        <item>always</item>
+        <item>never</item>
+    </string-array>
+
     <!-- ArtemideX: which display the host streams from (virtualDisplay launch argument) -->
     <string-array name="virtual_display_mode_names">
         <item>@string/virtual_display_mode_host</item>

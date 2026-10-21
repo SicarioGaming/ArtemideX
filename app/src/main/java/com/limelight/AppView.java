@@ -17,7 +17,9 @@ import com.limelight.preferences.AppPreferences;
 import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.AdapterFragment;
 import com.limelight.ui.AdapterFragmentCallbacks;
+import com.limelight.ui.AppIcons;
 import com.limelight.ui.CoverGlow;
+import com.limelight.ui.Rainbow;
 import com.limelight.ui.CoverImageView;
 import com.limelight.utils.QuickLaunchManager;
 import com.limelight.utils.CacheHelper;
@@ -89,6 +91,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     private int currentTint = CoverGlow.DEFAULT_TINT;
     private ValueAnimator tintAnimator;
     private AnimatorSet glowAnimator;
+    private ValueAnimator wordmarkRainbow;
 
     private final static int START_OR_RESUME_ID = 1;
     private final static int QUIT_ID = 2;
@@ -403,6 +406,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         }
         if (glowAnimator != null) {
             glowAnimator.cancel();
+        }
+        if (wordmarkRainbow != null) {
+            wordmarkRainbow.cancel();
         }
 
         if (managerBinder != null) {
@@ -803,6 +809,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         glowAnimator.playTogether(driftX, driftY, grow, growY);
         glowAnimator.setDuration(4500);
         glowAnimator.start();
+
+        // The wordmark slowly flows through the rainbow
+        wordmarkRainbow = Rainbow.applyTo((TextView) findViewById(R.id.cgWordmark));
     }
 
     private float dp(float value) {
@@ -845,6 +854,12 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         appGridAdapter.loadCover(app, heroCover, heroLoaderText);
         // The loader hides the cover while it loads; the hero keeps its frame and colour
         heroCover.setVisibility(View.VISIBLE);
+        if (AppIcons.useIcon(this, app.app.getAppName())) {
+            // Icon tiles never load a cover, so the screen takes the tile's colour
+            int tint = AppIcons.accentFor(app.app.getAppName());
+            animateTint(tint);
+            CoverGlow.rememberTint(this, uuidString, app.app.getAppId(), tint);
+        }
         refreshHero(animate);
     }
 

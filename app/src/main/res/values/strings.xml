@@ -411,6 +411,10 @@
     <string name="overlay_menu_shortcuts">Shortcuts</string>
     <string name="overlay_menu_back">Back</string>
     <string name="overlay_menu_title">Stream menu</string>
+    <string name="title_cover_style">App covers</string>
+    <string name="cover_style_missing">Icons for apps without cover art</string>
+    <string name="cover_style_always">Icons for every app</string>
+    <string name="cover_style_never">Covers from your PC only</string>
 
     <!-- Shortcuts imported from a file (Artemide's format) -->
     <string name="title_import_shortcuts">Import shortcuts from a file</string>

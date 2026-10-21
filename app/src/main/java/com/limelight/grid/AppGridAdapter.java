@@ -3,6 +3,7 @@ package com.limelight.grid;
 import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.os.Build;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -11,6 +12,8 @@ import android.widget.TextView;
 import com.limelight.AppView;
 import com.limelight.LimeLog;
 import com.limelight.R;
+import com.limelight.ui.AppIcons;
+import com.limelight.ui.Rainbow;
 import com.limelight.grid.assets.CachedAppAssetLoader;
 import com.limelight.grid.assets.DiskAssetLoader;
 import com.limelight.grid.assets.MemoryAssetLoader;
@@ -128,7 +131,24 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
 
     // Loads a game's cover into another view (the hero), through the same cache as the grid
     public void loadCover(AppView.AppObject obj, ImageView imgView, TextView txtView) {
+        if (AppIcons.useIcon(context, obj.app.getAppName())) {
+            // The hero shows the name beside the cover, so the tile has no text
+            showIconTile(obj, imgView, txtView);
+            txtView.setVisibility(View.GONE);
+            return;
+        }
         loader.populateImageView(obj.app, imgView, txtView);
+    }
+
+    // Cover Glow: a designed icon tile in place of the PC's cover (see AppIcons). Replacing the
+    // loader's placeholder also stops any load still running for this view from drawing over it.
+    private void showIconTile(AppView.AppObject obj, ImageView imgView, TextView txtView) {
+        imgView.clearAnimation();
+        imgView.setImageDrawable(AppIcons.tile(context, obj.app.getAppName()));
+        imgView.setVisibility(View.VISIBLE);
+        txtView.setText(obj.app.getAppName());
+        txtView.setVisibility(View.VISIBLE);
+        txtView.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
     }
 
     public void cancelQueuedOperations() {
@@ -178,8 +198,15 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
 
     @Override
     public void populateView(View parentView, ImageView imgView, ProgressBar prgView, TextView txtView, ImageView overlayView, ImageView settingsIndicator, AppView.AppObject obj) {
-        // Let the cached asset loader handle it
-        loader.populateImageView(obj.app, imgView, txtView);
+        if (AppIcons.useIcon(context, obj.app.getAppName())) {
+            showIconTile(obj, imgView, txtView);
+        }
+        else {
+            // Let the cached asset loader handle it (tiles are reused, so the name goes back to
+            // the middle, where it shows over a missing cover)
+            txtView.setGravity(Gravity.CENTER);
+            loader.populateImageView(obj.app, imgView, txtView);
+        }
 
         if (obj.isRunning) {
             // Show the play button overlay
@@ -203,8 +230,9 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
 
         boolean selected = obj.app.getAppId() == selectedAppId;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            parentView.setForeground(selected ?
-                    context.getDrawable(R.drawable.cg_cover_ring) : null);
+            // The selected game's ring slowly turns through the rainbow
+            float density = context.getResources().getDisplayMetrics().density;
+            parentView.setForeground(selected ? new Rainbow.Ring(18 * density, 3 * density) : null);
         }
 
         if (obj.isHidden) {

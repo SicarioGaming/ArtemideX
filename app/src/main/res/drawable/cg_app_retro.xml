@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow: a retro arcade joystick, for emulators -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Ball -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2.5a3,3 0,1 1,0 6a3,3 0,1 1,0 -6z" />
+    <!-- Stick -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M11,8h2v7h-2z" />
+    <!-- Base, with two buttons -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M5,14.5h14a2,2 0,0 1,2 2v3a2,2 0,0 1,-2 2h-14a2,2 0,0 1,-2 -2v-3a2,2 0,0 1,2 -2zM6.5,17.25a1.25,1.25 0,1 0,2.5 0a1.25,1.25 0,1 0,-2.5 0zM15,17.25a1.25,1.25 0,1 0,2.5 0a1.25,1.25 0,1 0,-2.5 0z" />
+</vector>

@@ -20,6 +20,11 @@
         android:background="@drawable/cg_glow"
         android:importantForAccessibility="no" />
 
+    <!-- A faint dot grid over the glow -->
+    <com.limelight.ui.DotGridView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <LinearLayout
         android:id="@+id/appContent"
         android:layout_width="match_parent"
@@ -48,6 +53,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/cgWordmark"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -162,8 +168,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="22dp"
             android:layout_marginBottom="4dp"
+            android:letterSpacing="0.14"
+            android:textAllCaps="true"
             android:textColor="#FFE2E8F0"
-            android:textSize="15sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <FrameLayout
