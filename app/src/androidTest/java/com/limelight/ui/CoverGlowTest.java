@@ -86,6 +86,51 @@ public class CoverGlowTest {
     }
 
     @Test
+    public void pcListRendersAtTabletSize() {
+        Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        android.content.res.Configuration landscape = new android.content.res.Configuration(
+                target.getResources().getConfiguration());
+        landscape.orientation = android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        Context context = new ContextThemeWrapper(target.createConfigurationContext(landscape), R.style.AppTheme);
+
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            LayoutInflater inflater = LayoutInflater.from(context);
+            View root = inflater.inflate(R.layout.activity_pc_view, null);
+            root.findViewById(R.id.no_pc_found_layout).setVisibility(View.GONE);
+
+            ViewGroup container = root.findViewById(R.id.pcFragmentContainer);
+            LinearLayout row = new LinearLayout(context);
+            String[] names = {"GAMING-PC", "LAPTOP"};
+            for (String name : names) {
+                View item = inflater.inflate(R.layout.pc_grid_item, row, false);
+                ((ImageView) item.findViewById(R.id.grid_image)).setImageResource(R.drawable.ic_computer);
+                ((TextView) item.findViewById(R.id.grid_text)).setText(name);
+                item.findViewById(R.id.grid_spinner).setVisibility(View.GONE);
+                row.addView(item);
+            }
+            container.addView(row);
+
+            save(root, target, "cover_glow_pcs.png");
+        });
+    }
+
+    private static void save(View root, Context target, String name) {
+        int width = 2400, height = 1504;
+        root.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
+        root.layout(0, 0, width, height);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        root.draw(new Canvas(bitmap));
+        File out = new File(target.getExternalFilesDir(null), name);
+        try (FileOutputStream stream = new FileOutputStream(out)) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     public void homeScreenRendersAtTabletSize() {
         Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Context context = new ContextThemeWrapper(target, R.style.AppTheme);

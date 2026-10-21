@@ -5,7 +5,23 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="#FF0C1A1D"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     tools:context=".PcView" >
+
+    <!-- Cover Glow: the soft teal light behind the PC list -->
+    <View
+        android:layout_width="720dp"
+        android:layout_height="720dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="-320dp"
+        android:layout_marginEnd="-220dp"
+        android:alpha="0.4"
+        android:background="@drawable/cg_glow"
+        android:backgroundTint="#FF14B8A6"
+        android:importantForAccessibility="no" />
 
     <!-- Quick Launch Section -->
     <include layout="@layout/quick_launch_section"
