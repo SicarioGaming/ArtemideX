@@ -24,7 +24,10 @@
             android:minHeight="44dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:padding="6dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:clickable="true"
             android:focusable="true"
             android:background="@drawable/button_border_rounded"
@@ -42,7 +45,9 @@
                 android:layout_width="160dp"
                 android:layout_height="wrap_content"
                 android:text="Stats overlay: Default"
-                android:textSize="13sp"
+                android:textSize="14sp"
+                android:textColor="#FFFFFFFF"
+                android:textStyle="bold"
                 android:singleLine="true"
                 android:ellipsize="end"
                 android:layout_marginStart="8dp" />
@@ -57,7 +62,10 @@
             android:minHeight="44dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:padding="6dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:clickable="true"
             android:focusable="true"
             android:background="@drawable/button_border_rounded"
@@ -69,7 +77,9 @@
                 android:layout_height="wrap_content"
                 android:minWidth="120dp"
                 android:text="Codec: Default"
-                android:textSize="13sp"
+                android:textSize="14sp"
+                android:textColor="#FFFFFFFF"
+                android:textStyle="bold"
                 android:singleLine="true"
                 android:ellipsize="end"
                 android:layout_marginStart="4dp" />
@@ -84,8 +94,10 @@
             android:minHeight="44dp"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:padding="6dp"
-            android:paddingEnd="20dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
             android:background="@drawable/button_border_rounded">
 
             <TextView
@@ -93,7 +105,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/bitrate_use_default"
-                android:textSize="13sp"
+                android:textSize="14sp"
+                android:textColor="#FFFFFFFF"
+                android:textStyle="bold"
                 android:minWidth="130dp"
                 android:focusable="true"
                 android:clickable="true"
@@ -107,7 +121,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:max="50"
-                android:progress="0" />
+                android:progress="0"
+                android:progressTint="#FF14B8A6"
+                android:thumbTint="#FFFFFFFF" />
 
         </LinearLayout>
 

@@ -35,6 +35,7 @@ import android.widget.Toast;
 import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
+import com.limelight.ui.CoverGlowSettings;
 import com.limelight.binding.video.MediaCodecHelper;
 import com.limelight.utils.Dialog;
 import com.limelight.utils.UiHelper;
@@ -73,6 +74,7 @@ public class StreamSettings extends Activity {
         UiHelper.setLocale(this);
 
         setContentView(R.layout.activity_stream_settings);
+        CoverGlowSettings.setUpHeader(this, null);
 
         UiHelper.notifyNewRootView(this);
     }
@@ -279,6 +281,12 @@ public class StreamSettings extends Activity {
             View view = super.onCreateView(inflater, container, savedInstanceState);
             UiHelper.applyStatusBarPadding(view);
             return view;
+        }
+
+        @Override
+        public void onViewCreated(View view, Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+            CoverGlowSettings.attach(this, view);
         }
 
         @Override

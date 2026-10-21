@@ -549,6 +549,10 @@
     <string name="cg_chip_h264">H.264</string>
     <string name="cg_chip_pyrowave">PyroWave</string>
     <string name="cg_chip_hdr">HDR</string>
+    <string name="cg_back">Back</string>
+    <string name="cg_settings">Settings</string>
+    <string name="cg_settings_for">%1$s settings</string>
+    <color name="cg_settings_background">#FF0C1A1D</color>
 
     <!-- ArtemideX: per-game settings -->
     <string name="title_game_touch_mode">Touch mode</string>

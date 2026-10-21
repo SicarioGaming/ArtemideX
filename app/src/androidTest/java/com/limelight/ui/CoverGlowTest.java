@@ -1,6 +1,7 @@
 package com.limelight.ui;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -16,10 +17,12 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.limelight.R;
+import com.limelight.preferences.StreamSettings;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,6 +115,35 @@ public class CoverGlowTest {
 
             save(root, target, "cover_glow_pcs.png");
         });
+    }
+
+    @Test
+    public void settingsScreenHasSectionPills() {
+        Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        try (ActivityScenario<StreamSettings> scenario = ActivityScenario.launch(StreamSettings.class)) {
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            scenario.onActivity(activity -> {
+                LinearLayout pills = activity.findViewById(R.id.settingsSections);
+                assertTrue("only " + pills.getChildCount() + " sections", pills.getChildCount() >= 5);
+                assertEquals("Basic", ((TextView) pills.getChildAt(0)).getText().toString());
+                assertTrue(pills.getChildAt(0).isSelected());
+
+                // Tapping a section moves the highlight to it
+                pills.getChildAt(2).performClick();
+                assertTrue(pills.getChildAt(2).isSelected());
+                assertFalse(pills.getChildAt(0).isSelected());
+                pills.getChildAt(0).performClick();
+
+                save(activity.getWindow().getDecorView(), target, "cover_glow_settings.png");
+            });
+        }
+    }
+
+    @Test
+    public void sectionNamesDropTheWordSettings() {
+        assertEquals("Audio", CoverGlowSettings.shortName("Audio Settings"));
+        assertEquals("Overlay Menu", CoverGlowSettings.shortName("Overlay Menu"));
+        assertEquals("Settings", CoverGlowSettings.shortName("Settings"));
     }
 
     private static void save(View root, Context target, String name) {

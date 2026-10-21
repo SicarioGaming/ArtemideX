@@ -18,6 +18,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import com.limelight.R;
+import com.limelight.ui.CoverGlowSettings;
 import com.limelight.utils.UiHelper;
 
 public class AppStreamSettings extends Activity {
@@ -42,6 +43,7 @@ public class AppStreamSettings extends Activity {
         UiHelper.setLocale(this);
         setContentView(R.layout.activity_stream_settings);
         setTitle("Settings - " + appName);
+        CoverGlowSettings.setUpHeader(this, getString(R.string.cg_settings_for, appName));
 
         getFragmentManager().beginTransaction().replace(
                 R.id.stream_settings, new AppSettingsFragment()
@@ -199,6 +201,12 @@ public class AppStreamSettings extends Activity {
             View view = super.onCreateView(inflater, container, savedInstanceState);
             UiHelper.applyStatusBarPadding(view);
             return view;
+        }
+
+        @Override
+        public void onViewCreated(View view, Bundle savedInstanceState) {
+            super.onViewCreated(view, savedInstanceState);
+            CoverGlowSettings.attach(this, view);
         }
 
         @Override
