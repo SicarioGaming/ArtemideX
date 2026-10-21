@@ -1,7 +1,7 @@
 # Voidlink roadmap
 
 Voidlink is a Moonlight Android client for streaming from a Vibepollo host to a
-nubia NP05J tablet (Snapdragon 8 Elite, Android 16). It keeps Moonlight X's video
+RedMagic Astra tablet (Snapdragon 8 Elite, Android 16) with a GameSir G8+. It keeps Moonlight X's video
 pipeline (Direct Frame Pacing, PyroWave, Vulkan renderer) and adds Artemide's
 options and in-stream menu, selected features from other forks, and a new UI.
 
