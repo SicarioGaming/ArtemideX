@@ -16,6 +16,8 @@ android {
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     flavorDimensions.add("root")
@@ -160,4 +162,8 @@ dependencies {
     implementation 'com.github.cgutman:ShieldControllerExtensions:1.0.1'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+
+    // On-device tests (ArtemideX): gradlew connectedNonRootDebugAndroidTest
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
 }

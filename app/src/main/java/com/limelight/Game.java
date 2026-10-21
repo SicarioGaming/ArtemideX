@@ -2294,6 +2294,16 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     return true;
                 }
 
+                if ((isPanZoomMode || mouseMode == MOUSE_MODE_DISABLED) &&
+                        event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN &&
+                        event.getPointerCount() == 3) {
+                    // These modes skip the normal touch handling, so open the overlay menu on a
+                    // three-finger touch here; otherwise there could be no way back to the menu
+                    // when the floating button is hidden and no controller is connected
+                    overlayMenuView.show();
+                    return true;
+                }
+
                 if (isPanZoomMode) {
                     // Pan/zoom the stream instead of sending touches. Gestures are tracked in the
                     // parent's coordinates, since the stream view itself moves and scales.
