@@ -20,6 +20,9 @@ public class RelativeTouchContext implements TouchContext {
     private boolean confirmedScroll;
     private double distanceMoved;
     private double xFactor, yFactor;
+
+    // Extra pointer speed multiplier (ArtemideX touch sensitivity), 1.0 = unchanged
+    private double sensitivity = 1.0;
     private int pointerCount;
     private int maxPointerCountInGesture;
 
@@ -102,6 +105,15 @@ public class RelativeTouchContext implements TouchContext {
         this.targetView = view;
         this.prefConfig = prefConfig;
         this.handler = new Handler(Looper.getMainLooper());
+    }
+
+    public RelativeTouchContext(NvConnection conn, int actionIndex,
+                                int referenceWidth, int referenceHeight,
+                                View view, PreferenceConfiguration prefConfig,
+                                int sensitivityPercent)
+    {
+        this(conn, actionIndex, referenceWidth, referenceHeight, view, prefConfig);
+        this.sensitivity = sensitivityPercent / 100.0;
     }
 
     @Override
@@ -255,8 +267,8 @@ public class RelativeTouchContext implements TouchContext {
                 int deltaY = eventY - lastTouchY;
 
                 // Scale the deltas based on the factors passed to our constructor
-                deltaX = (int) Math.round((double) Math.abs(deltaX) * xFactor);
-                deltaY = (int) Math.round((double) Math.abs(deltaY) * yFactor);
+                deltaX = (int) Math.round((double) Math.abs(deltaX) * xFactor * sensitivity);
+                deltaY = (int) Math.round((double) Math.abs(deltaY) * yFactor * sensitivity);
 
                 // Fix up the signs
                 if (eventX < lastTouchX) {

@@ -20,6 +20,10 @@ public class AbsoluteTouchContext implements TouchContext {
     private boolean confirmedLongPress;
     private boolean confirmedTap;
 
+    // Tap and long-press buttons; swapped by Artemide's "left/right click swapped" mouse mode
+    private final byte buttonPrimary;
+    private final byte buttonSecondary;
+
     private final Runnable longPressRunnable = new Runnable() {
         @Override
         public void run() {
@@ -29,9 +33,9 @@ public class AbsoluteTouchContext implements TouchContext {
             // Switch from a left click to a right click after a long press
             confirmedLongPress = true;
             if (confirmedTap) {
-                conn.sendMouseButtonUp(MouseButtonPacket.BUTTON_LEFT);
+                conn.sendMouseButtonUp(buttonPrimary);
             }
-            conn.sendMouseButtonDown(MouseButtonPacket.BUTTON_RIGHT);
+            conn.sendMouseButtonDown(buttonSecondary);
         }
     };
 
@@ -51,7 +55,7 @@ public class AbsoluteTouchContext implements TouchContext {
     private final Runnable leftButtonUpRunnable = new Runnable() {
         @Override
         public void run() {
-            conn.sendMouseButtonUp(MouseButtonPacket.BUTTON_LEFT);
+            conn.sendMouseButtonUp(buttonPrimary);
         }
     };
 
@@ -68,10 +72,24 @@ public class AbsoluteTouchContext implements TouchContext {
 
     public AbsoluteTouchContext(NvConnection conn, int actionIndex, View view)
     {
+        this(conn, actionIndex, view, false);
+    }
+
+    public AbsoluteTouchContext(NvConnection conn, int actionIndex, View view, boolean swapped)
+    {
         this.conn = conn;
         this.actionIndex = actionIndex;
         this.targetView = view;
         this.handler = new Handler(Looper.getMainLooper());
+
+        if (swapped) {
+            buttonPrimary = MouseButtonPacket.BUTTON_RIGHT;
+            buttonSecondary = MouseButtonPacket.BUTTON_LEFT;
+        }
+        else {
+            buttonPrimary = MouseButtonPacket.BUTTON_LEFT;
+            buttonSecondary = MouseButtonPacket.BUTTON_RIGHT;
+        }
     }
 
     @Override
@@ -131,10 +149,10 @@ public class AbsoluteTouchContext implements TouchContext {
 
             // Raise the mouse buttons that we currently have down
             if (confirmedLongPress) {
-                conn.sendMouseButtonUp(MouseButtonPacket.BUTTON_RIGHT);
+                conn.sendMouseButtonUp(buttonSecondary);
             }
             else if (confirmedTap) {
-                conn.sendMouseButtonUp(MouseButtonPacket.BUTTON_LEFT);
+                conn.sendMouseButtonUp(buttonPrimary);
             }
             else {
                 // If we get here, this means that the tap completed within the touch down
@@ -186,7 +204,7 @@ public class AbsoluteTouchContext implements TouchContext {
             // Don't reposition for finger down events within the deadzone. This makes double-clicking easier.
             updatePosition(lastTouchDownX, lastTouchDownY);
         }
-        conn.sendMouseButtonDown(MouseButtonPacket.BUTTON_LEFT);
+        conn.sendMouseButtonDown(buttonPrimary);
     }
 
     @Override
@@ -228,10 +246,10 @@ public class AbsoluteTouchContext implements TouchContext {
 
         // Raise the mouse buttons
         if (confirmedLongPress) {
-            conn.sendMouseButtonUp(MouseButtonPacket.BUTTON_RIGHT);
+            conn.sendMouseButtonUp(buttonSecondary);
         }
         else if (confirmedTap) {
-            conn.sendMouseButtonUp(MouseButtonPacket.BUTTON_LEFT);
+            conn.sendMouseButtonUp(buttonPrimary);
         }
     }
 

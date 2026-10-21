@@ -35,6 +35,12 @@ public class OverlayMenuView extends LinearLayout {
         void onRotateScreen();
         void onToggleOnscreenController();
         void onToggleFloatingButton();
+        void onTogglePanZoom();
+        void onSelectMouseMode();
+        void onToggleTouchSensitivity();
+        void onUploadClipboard();
+        void onFetchClipboard();
+        void onShowServerCommands();
     }
 
     // Windows virtual key codes for Artemide's built-in shortcuts
@@ -118,6 +124,12 @@ public class OverlayMenuView extends LinearLayout {
     private static final int ACTION_ROTATE_SCREEN = 10;
     private static final int ACTION_ONSCREEN_CONTROLLER = 11;
     private static final int ACTION_FLOATING_BUTTON = 12;
+    private static final int ACTION_PAN_ZOOM = 13;
+    private static final int ACTION_MOUSE_MODE = 14;
+    private static final int ACTION_TOUCH_SENSITIVITY = 15;
+    private static final int ACTION_UPLOAD_CLIPBOARD = 16;
+    private static final int ACTION_FETCH_CLIPBOARD = 17;
+    private static final int ACTION_SERVER_COMMANDS = 18;
     private static final int ACTION_CUSTOM_BASE = 100;
     private static final int ACTION_SHORTCUT_BASE = 200;
 
@@ -235,6 +247,18 @@ public class OverlayMenuView extends LinearLayout {
             // Horizontal row: Artemide actions, custom commands, then Close
             addHorizontalButton(R.drawable.ic_overlay_key_press,
                 getContext().getString(R.string.overlay_menu_shortcuts), ACTION_SHORTCUTS, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_mouse,
+                getContext().getString(R.string.overlay_menu_mouse_mode), ACTION_MOUSE_MODE, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_maximize,
+                getContext().getString(R.string.overlay_menu_pan_zoom), ACTION_PAN_ZOOM, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_settings,
+                getContext().getString(R.string.overlay_menu_touch_sensitivity), ACTION_TOUCH_SENSITIVITY, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_save,
+                getContext().getString(R.string.overlay_menu_upload_clipboard), ACTION_UPLOAD_CLIPBOARD, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_folder,
+                getContext().getString(R.string.overlay_menu_fetch_clipboard), ACTION_FETCH_CLIPBOARD, spacing);
+            addHorizontalButton(R.drawable.ic_overlay_desktop,
+                getContext().getString(R.string.overlay_menu_server_commands), ACTION_SERVER_COMMANDS, spacing);
             addHorizontalButton(R.drawable.ic_overlay_task_manager,
                 getContext().getString(R.string.overlay_menu_task_manager), ACTION_TASK_MANAGER, spacing);
             addHorizontalButton(R.drawable.ic_overlay_restart,
@@ -640,6 +664,27 @@ public class OverlayMenuView extends LinearLayout {
             } else if (action == ACTION_FLOATING_BUTTON) {
                 actionListener.onToggleFloatingButton();
                 // Keep menu open so the change is visible
+            } else if (action == ACTION_PAN_ZOOM) {
+                actionListener.onTogglePanZoom();
+                shouldCloseMenu = true;
+            } else if (action == ACTION_MOUSE_MODE) {
+                // The picker dialog takes over; close the menu behind it
+                closeMenu();
+                actionListener.onSelectMouseMode();
+                return;
+            } else if (action == ACTION_TOUCH_SENSITIVITY) {
+                actionListener.onToggleTouchSensitivity();
+                // Keep menu open
+            } else if (action == ACTION_UPLOAD_CLIPBOARD) {
+                actionListener.onUploadClipboard();
+                shouldCloseMenu = true;
+            } else if (action == ACTION_FETCH_CLIPBOARD) {
+                actionListener.onFetchClipboard();
+                shouldCloseMenu = true;
+            } else if (action == ACTION_SERVER_COMMANDS) {
+                closeMenu();
+                actionListener.onShowServerCommands();
+                return;
             } else if (action >= ACTION_SHORTCUT_BASE) {
                 int shortcutIndex = action - ACTION_SHORTCUT_BASE;
                 if (shortcutIndex >= 0 && shortcutIndex < SHORTCUTS.length) {

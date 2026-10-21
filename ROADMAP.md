@@ -30,10 +30,16 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
         Ctrl+Alt+Shift+F1, Ctrl+Alt+Shift+F12, Win+Alt+B)
   - [x] Task Manager, Rotate screen, On-screen controller toggle
   - [x] Disconnect, Quit session, Stats, Soft keyboard, Mouse emulation (already in Moonlight X)
-  - [ ] Pan/zoom mode
-  - [ ] Mouse mode picker and touch sensitivity
+  - [x] Pan/zoom mode (pinch to zoom, drag to pan, double-tap to reset)
+  - [x] Touch mode picker with Artemide's six modes (multi-touch, direct touch, natural and
+        gaming trackpad, disabled, swapped clicks); starts from the trackpad setting each stream
+  - [x] Touch sensitivity: a trackpad sensitivity setting, toggled from the menu
+  - [x] Clipboard send/get and PC (server) commands. Vibepollo supports both
+        (`/actions/clipboard`, packet 0x3000); each needs the client's permission in Vibepollo.
+        Server commands needed a change to moonlight-common-c, committed on its local
+        `artemidex` branch (not pushed anywhere yet)
   - [ ] On-screen full keyboard and special-keys bar
-  - [ ] Clipboard fetch/upload and server commands (need host support; check with Vibepollo)
+  - [ ] Automatic clipboard sync when the stream starts or loses focus
   - [ ] Custom shortcuts imported from a file (Moonlight X's custom commands already cover adding your own)
 - [ ] Virtual Display (start in virtual or primary display)
 - [ ] Prevent Packet Loss

@@ -86,6 +86,7 @@ public class PreferenceConfiguration {
     private static final String OVERLAY_TRIGGER_BUTTON_PREF_STRING = "overlay_trigger_button";
     private static final String OVERLAY_HOLD_DURATION_PREF_STRING = "overlay_hold_duration";
     private static final String ENABLE_FLOATING_BUTTON_PREF_STRING = "checkbox_enable_floating_button";
+    private static final String TOUCH_SENSITIVITY_PREF_STRING = "seekbar_touch_sensitivity";
     private static final String AUTO_RESUME_STREAM_PREF_STRING = "checkbox_auto_resume_stream";
     private static final String VIDEO_RENDERER_PREF_STRING = "video_renderer";
     private static final String SPATIAL_DITHERING_PREF_STRING = "spatial_dithering";
@@ -140,6 +141,7 @@ public class PreferenceConfiguration {
     private static final String DEFAULT_OVERLAY_TRIGGER_BUTTON = "select";
     private static final String DEFAULT_OVERLAY_HOLD_DURATION = "1500";
     private static final boolean DEFAULT_ENABLE_FLOATING_BUTTON = true;
+    private static final int DEFAULT_TOUCH_SENSITIVITY = 100;
     private static final boolean DEFAULT_AUTO_RESUME_STREAM = false;
 
     public static final int FRAME_PACING_MIN_LATENCY = 0;
@@ -213,6 +215,7 @@ public class PreferenceConfiguration {
     public String overlayTriggerButton;
     public int overlayHoldDurationMs;
     public boolean enableFloatingButton;
+    public int touchSensitivity; // percent, applies to the trackpad touch modes
     public boolean autoResumeStream;
 
     public static boolean isNativeResolution(int width, int height) {
@@ -744,6 +747,7 @@ public class PreferenceConfiguration {
         config.overlayTriggerButton = prefs.getString(OVERLAY_TRIGGER_BUTTON_PREF_STRING, DEFAULT_OVERLAY_TRIGGER_BUTTON);
         config.overlayHoldDurationMs = Integer.parseInt(prefs.getString(OVERLAY_HOLD_DURATION_PREF_STRING, DEFAULT_OVERLAY_HOLD_DURATION));
         config.enableFloatingButton = prefs.getBoolean(ENABLE_FLOATING_BUTTON_PREF_STRING, DEFAULT_ENABLE_FLOATING_BUTTON);
+        config.touchSensitivity = prefs.getInt(TOUCH_SENSITIVITY_PREF_STRING, DEFAULT_TOUCH_SENSITIVITY);
         config.autoResumeStream = prefs.getBoolean(AUTO_RESUME_STREAM_PREF_STRING, DEFAULT_AUTO_RESUME_STREAM);
 
         return config;

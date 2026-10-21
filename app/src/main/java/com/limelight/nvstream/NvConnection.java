@@ -595,6 +595,11 @@ public class NvConnection {
         }
     }
 
+    // Runs one of the host's server commands; returns false if the host doesn't support them
+    public boolean sendExecServerCmd(final int cmdId) {
+        return isMonkey || MoonBridge.sendExecServerCmd(cmdId) == 0;
+    }
+
     public static String findExternalAddressForMdns(String stunHostname, int stunPort) {
         return MoonBridge.findExternalAddressIP4(stunHostname, stunPort);
     }

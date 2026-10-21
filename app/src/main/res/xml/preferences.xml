@@ -172,6 +172,15 @@
             android:title="@string/title_checkbox_touchscreen_trackpad"
             android:summary="@string/summary_checkbox_touchscreen_trackpad"
             android:defaultValue="true" />
+        <com.limelight.preferences.SeekBarPreference
+            android:key="seekbar_touch_sensitivity"
+            android:defaultValue="100"
+            seekbar:min="25"
+            android:max="300"
+            seekbar:step="5"
+            android:summary="@string/summary_seekbar_touch_sensitivity"
+            android:text="@string/suffix_seekbar_deadzone"
+            android:title="@string/title_seekbar_touch_sensitivity"/>
         <CheckBoxPreference
             android:key="checkbox_mouse_nav_buttons"
             android:title="@string/title_checkbox_mouse_nav_buttons"

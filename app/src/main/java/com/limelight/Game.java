@@ -9,6 +9,7 @@ import com.limelight.binding.input.capture.InputCaptureManager;
 import com.limelight.binding.input.capture.InputCaptureProvider;
 import com.limelight.binding.input.touch.AbsoluteTouchContext;
 import com.limelight.binding.input.touch.RelativeTouchContext;
+import com.limelight.binding.input.touch.TrackpadContext;
 import com.limelight.binding.input.driver.UsbDriverService;
 import com.limelight.binding.input.evdev.EvdevListener;
 import com.limelight.binding.input.touch.TouchContext;
@@ -33,6 +34,7 @@ import com.limelight.preferences.GlPreferences;
 import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.BrightnessSliderView;
 import com.limelight.ui.GameGestures;
+import com.limelight.ui.PanZoomHandler;
 import com.limelight.ui.StreamView;
 import com.limelight.ui.overlay.CustomCommand;
 import com.limelight.ui.overlay.OverlayMenuView;
@@ -46,9 +48,12 @@ import com.limelight.utils.UiHelper;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PictureInPictureParams;
 import android.app.Service;
 import android.app.UiModeManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -57,6 +62,7 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.input.InputManager;
@@ -97,6 +103,7 @@ import java.lang.reflect.Method;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -177,6 +184,22 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     // Tracks the on-screen controller's visibility for the overlay menu toggle
     private boolean onscreenControllerShown;
+
+    // Pan/zoom mode (from Artemide): touches zoom and pan the stream instead of reaching the PC
+    private PanZoomHandler panZoomHandler;
+    private boolean isPanZoomMode;
+
+    // Touch modes from Artemide's mouse mode picker, in its order
+    private static final int MOUSE_MODE_MULTI_TOUCH = 0;
+    private static final int MOUSE_MODE_DIRECT_TOUCH = 1;
+    private static final int MOUSE_MODE_TRACKPAD_NATURAL = 2;
+    private static final int MOUSE_MODE_TRACKPAD_GAMING = 3;
+    private static final int MOUSE_MODE_DISABLED = 4;
+    private static final int MOUSE_MODE_DIRECT_TOUCH_SWAPPED = 5;
+    private int mouseMode;
+
+    // Whether the trackpad modes use the custom sensitivity from settings
+    private boolean touchSensitivityEnabled;
 
     private boolean isImeVisible = false;
     private boolean isAndroidTV = false;
@@ -335,6 +358,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         streamView.setOnGenericMotionListener(this);
         streamView.setOnKeyListener(this);
         streamView.setInputCallbacks(this);
+
+        panZoomHandler = new PanZoomHandler(this, streamView);
 
         // Listen for touch events on the background touch view to enable trackpad mode
         // to work on areas outside of the StreamView itself. We use a separate View
@@ -631,17 +656,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         InputManager inputManager = (InputManager) getSystemService(Context.INPUT_SERVICE);
         inputManager.registerInputDeviceListener(keyboardTranslator, null);
 
-        // Initialize touch contexts
-        for (int i = 0; i < touchContextMap.length; i++) {
-            if (!prefConfig.touchscreenTrackpad) {
-                touchContextMap[i] = new AbsoluteTouchContext(conn, i, streamView);
-            }
-            else {
-                touchContextMap[i] = new RelativeTouchContext(conn, i,
-                        REFERENCE_HORIZ_RES, REFERENCE_VERT_RES,
-                        streamView, prefConfig);
-            }
-        }
+        // Initialize touch contexts from the touchscreen trackpad setting; the overlay menu's
+        // Touch Mode picker can switch to Artemide's other modes during the stream
+        touchSensitivityEnabled = prefConfig.touchSensitivity != 100;
+        applyMouseMode(prefConfig.touchscreenTrackpad ? MOUSE_MODE_TRACKPAD_GAMING : MOUSE_MODE_DIRECT_TOUCH);
 
         if (prefConfig.onscreenController) {
             // create virtual onscreen controller
@@ -749,6 +767,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // Refresh layout of OSC for possible new screen size
             virtualController.refreshLayout();
         }
+
+        // Keep the zoomed-in part of the stream in view after a resize or rotation
+        streamView.post(() -> panZoomHandler.handleSurfaceChange());
 
         // Hide on-screen overlays in PiP mode
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -2273,6 +2294,30 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     return true;
                 }
 
+                if (isPanZoomMode) {
+                    // Pan/zoom the stream instead of sending touches. Gestures are tracked in the
+                    // parent's coordinates, since the stream view itself moves and scales.
+                    MotionEvent parentEvent = MotionEvent.obtain(event);
+                    if (view == streamView) {
+                        Matrix toParent = new Matrix(streamView.getMatrix());
+                        toParent.postTranslate(streamView.getLeft(), streamView.getTop());
+                        parentEvent.transform(toParent);
+                    }
+                    panZoomHandler.handleTouchEvent(parentEvent);
+                    parentEvent.recycle();
+                    return true;
+                }
+
+                if (mouseMode == MOUSE_MODE_DISABLED) {
+                    return true;
+                }
+
+                if (mouseMode == MOUSE_MODE_MULTI_TOUCH && view == streamView && trySendTouchEvent(view, event)) {
+                    // Multi-touch mode sends touches straight to the host when it supports them
+                    // (Sunshine and Vibepollo do); otherwise fall through to direct touch
+                    return true;
+                }
+
                 // If this is the parent view, we'll offset our coordinates to appear as if they
                 // are relative to the StreamView like our StreamView touch events are.
                 float xOffset, yOffset;
@@ -3162,7 +3207,220 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             public void onToggleFloatingButton() {
                 setFloatingButtonShown(!floatingButtonShown);
             }
+
+            @Override
+            public void onTogglePanZoom() {
+                togglePanZoomMode();
+            }
+
+            @Override
+            public void onSelectMouseMode() {
+                selectMouseMode();
+            }
+
+            @Override
+            public void onToggleTouchSensitivity() {
+                toggleTouchSensitivity();
+            }
+
+            @Override
+            public void onUploadClipboard() {
+                uploadClipboard();
+            }
+
+            @Override
+            public void onFetchClipboard() {
+                fetchClipboard();
+            }
+
+            @Override
+            public void onShowServerCommands() {
+                showServerCommands();
+            }
         });
+    }
+
+    private void togglePanZoomMode() {
+        isPanZoomMode = !isPanZoomMode;
+
+        // Release anything held down by the touch that started this
+        for (TouchContext touchContext : touchContextMap) {
+            touchContext.cancelTouch();
+        }
+
+        Toast.makeText(this, isPanZoomMode ? R.string.pan_zoom_mode_enabled : R.string.pan_zoom_mode_disabled,
+                Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Rebuild the touch contexts for one of Artemide's touch modes (MOUSE_MODE_*).
+     */
+    private void applyMouseMode(int mode) {
+        mouseMode = mode;
+
+        // The trackpad modes move the cursor relative to the finger; the others place it under it
+        prefConfig.touchscreenTrackpad = mode == MOUSE_MODE_TRACKPAD_NATURAL || mode == MOUSE_MODE_TRACKPAD_GAMING;
+        int sensitivity = touchSensitivityEnabled ? prefConfig.touchSensitivity : 100;
+
+        for (int i = 0; i < touchContextMap.length; i++) {
+            if (touchContextMap[i] != null) {
+                touchContextMap[i].cancelTouch();
+            }
+
+            switch (mode) {
+                case MOUSE_MODE_TRACKPAD_NATURAL:
+                    touchContextMap[i] = new TrackpadContext(conn, i, false, sensitivity, sensitivity);
+                    break;
+                case MOUSE_MODE_TRACKPAD_GAMING:
+                    touchContextMap[i] = new RelativeTouchContext(conn, i,
+                            REFERENCE_HORIZ_RES, REFERENCE_VERT_RES,
+                            streamView, prefConfig, sensitivity);
+                    break;
+                case MOUSE_MODE_DIRECT_TOUCH_SWAPPED:
+                    touchContextMap[i] = new AbsoluteTouchContext(conn, i, streamView, true);
+                    break;
+                default:
+                    // Multi-touch falls back to direct touch when the host can't take touch events,
+                    // and "disabled" keeps contexts so cancelTouch() calls stay safe
+                    touchContextMap[i] = new AbsoluteTouchContext(conn, i, streamView);
+                    break;
+            }
+        }
+
+        // Changing the touch mode always leaves pan/zoom mode (as in Artemide)
+        isPanZoomMode = false;
+    }
+
+    private void selectMouseMode() {
+        String[] modes = {
+                getString(R.string.mouse_mode_multi_touch),
+                getString(R.string.mouse_mode_absolute_touch),
+                getString(R.string.mouse_mode_track_pad_natural),
+                getString(R.string.mouse_mode_track_pad_gaming),
+                getString(R.string.mouse_mode_disabled),
+                getString(R.string.mouse_mode_absolute_touch_swapped),
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.mouse_mode_title)
+                .setSingleChoiceItems(modes, mouseMode, (dialog, which) -> {
+                    applyMouseMode(which);
+                    dialog.dismiss();
+                })
+                .show();
+    }
+
+    private void toggleTouchSensitivity() {
+        touchSensitivityEnabled = !touchSensitivityEnabled;
+        applyMouseMode(mouseMode);
+
+        Toast.makeText(this, touchSensitivityEnabled ?
+                getString(R.string.touch_sensitivity_on, prefConfig.touchSensitivity) :
+                getString(R.string.touch_sensitivity_off), Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Connection to the host's HTTPS API for clipboard and server commands, built from the
+     * same intent extras as doQuit().
+     */
+    private NvHTTP createHostHttp() throws java.io.IOException, CertificateException {
+        String host = getIntent().getStringExtra(EXTRA_HOST);
+        int port = getIntent().getIntExtra(EXTRA_PORT, NvHTTP.DEFAULT_HTTP_PORT);
+        int httpsPort = getIntent().getIntExtra(EXTRA_HTTPS_PORT, 0); // 0 is treated as unknown
+        String uniqueId = getIntent().getStringExtra(EXTRA_UNIQUEID);
+        byte[] derCertData = getIntent().getByteArrayExtra(EXTRA_SERVER_CERT);
+
+        X509Certificate serverCert = null;
+        if (derCertData != null) {
+            serverCert = (X509Certificate) CertificateFactory.getInstance("X.509")
+                    .generateCertificate(new ByteArrayInputStream(derCertData));
+        }
+
+        return new NvHTTP(new ComputerDetails.AddressTuple(host, port), httpsPort, uniqueId,
+                serverCert, PlatformBinding.getCryptoProvider(this));
+    }
+
+    private void showToastOnUiThread(String message) {
+        runOnUiThread(() -> Toast.makeText(Game.this, message, Toast.LENGTH_SHORT).show());
+    }
+
+    // Send this device's clipboard text to the host (Apollo/Vibepollo; from Artemide)
+    private void uploadClipboard() {
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = clipboard.getPrimaryClip();
+        CharSequence text = clip != null && clip.getItemCount() > 0 ? clip.getItemAt(0).coerceToText(this) : null;
+        if (text == null || text.length() == 0) {
+            Toast.makeText(this, R.string.clipboard_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String content = text.toString();
+        new Thread(() -> {
+            try {
+                createHostHttp().sendClipboard(content);
+                showToastOnUiThread(getString(R.string.clipboard_sent));
+            } catch (Exception e) {
+                showToastOnUiThread(getString(R.string.clipboard_failed, e.getMessage()));
+            }
+        }).start();
+    }
+
+    // Copy the host's clipboard text to this device (Apollo/Vibepollo; from Artemide)
+    private void fetchClipboard() {
+        new Thread(() -> {
+            try {
+                String content = createHostHttp().getClipboard();
+                runOnUiThread(() -> {
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    clipboard.setPrimaryClip(ClipData.newPlainText(getString(R.string.app_label), content));
+                    Toast.makeText(Game.this, R.string.clipboard_received, Toast.LENGTH_SHORT).show();
+                });
+            } catch (Exception e) {
+                showToastOnUiThread(getString(R.string.clipboard_failed, e.getMessage()));
+            }
+        }).start();
+    }
+
+    // List the host's server commands and run the one picked (Apollo/Vibepollo; from Artemide)
+    private void showServerCommands() {
+        new Thread(() -> {
+            List<String> commands;
+            try {
+                commands = createHostHttp().getServerCommands();
+            } catch (Exception e) {
+                showToastOnUiThread(getString(R.string.server_commands_failed, e.getMessage()));
+                return;
+            }
+
+            runOnUiThread(() -> {
+                if (isFinishing()) {
+                    return;
+                }
+
+                if (commands.isEmpty()) {
+                    new AlertDialog.Builder(Game.this)
+                            .setTitle(R.string.server_commands_title)
+                            .setMessage(R.string.server_commands_none)
+                            .setPositiveButton(android.R.string.ok, null)
+                            .show();
+                    return;
+                }
+
+                new AlertDialog.Builder(Game.this)
+                        .setTitle(R.string.server_commands_title)
+                        .setItems(commands.toArray(new String[0]), (dialog, which) -> {
+                            if (conn.sendExecServerCmd(which)) {
+                                Toast.makeText(Game.this, getString(R.string.server_command_sent, commands.get(which)),
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                            else {
+                                Toast.makeText(Game.this, R.string.server_command_unsupported, Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            });
+        }).start();
     }
 
     @SuppressLint("ClickableViewAccessibility")

@@ -421,6 +421,36 @@
     <string name="title_floating_button">Floating menu button</string>
     <string name="summary_floating_button">Show a draggable button over the stream that opens the menu</string>
 
+    <!-- ArtemideX: pan/zoom, mouse modes, touch sensitivity, clipboard and server commands (from Artemide) -->
+    <string name="overlay_menu_pan_zoom">Pan/Zoom</string>
+    <string name="overlay_menu_mouse_mode">Touch Mode</string>
+    <string name="overlay_menu_touch_sensitivity">Sensitivity</string>
+    <string name="overlay_menu_upload_clipboard">Send Clipboard</string>
+    <string name="overlay_menu_fetch_clipboard">Get Clipboard</string>
+    <string name="overlay_menu_server_commands">PC Commands</string>
+    <string name="pan_zoom_mode_enabled">Pan/Zoom on: pinch to zoom, drag to pan, double-tap to reset</string>
+    <string name="pan_zoom_mode_disabled">Pan/Zoom off</string>
+    <string name="mouse_mode_title">Touch mode</string>
+    <string name="mouse_mode_multi_touch">Multi-touch (touches go straight to the PC)</string>
+    <string name="mouse_mode_absolute_touch">Direct touch (tap where you want to click)</string>
+    <string name="mouse_mode_track_pad_natural">Trackpad, natural (double-tap to drag)</string>
+    <string name="mouse_mode_track_pad_gaming">Trackpad, gaming (long-press to drag)</string>
+    <string name="mouse_mode_disabled">Touch disabled</string>
+    <string name="mouse_mode_absolute_touch_swapped">Direct touch, left/right click swapped</string>
+    <string name="touch_sensitivity_on">Touch sensitivity: %1$d%%</string>
+    <string name="touch_sensitivity_off">Touch sensitivity: default (100%)</string>
+    <string name="title_seekbar_touch_sensitivity">Trackpad sensitivity</string>
+    <string name="summary_seekbar_touch_sensitivity">Pointer speed in the trackpad touch modes. Toggle it during a stream with Sensitivity in the overlay menu.</string>
+    <string name="clipboard_sent">Clipboard sent to PC</string>
+    <string name="clipboard_received">Clipboard copied from PC</string>
+    <string name="clipboard_empty">Nothing on this device\'s clipboard to send</string>
+    <string name="clipboard_failed">Clipboard sync failed: %1$s</string>
+    <string name="server_commands_title">PC Commands</string>
+    <string name="server_commands_none">No PC commands available. Add them in Vibepollo\'s settings and allow this device to run server commands.</string>
+    <string name="server_commands_failed">Couldn\'t get PC commands: %1$s</string>
+    <string name="server_command_unsupported">This host doesn\'t support PC commands</string>
+    <string name="server_command_sent">Ran \"%1$s\" on the PC</string>
+
     <!-- Custom Commands Activity -->
     <string name="title_custom_commands">Custom Commands</string>
     <string name="custom_commands_empty">No custom commands configured.\n\nTap the + button to add a command.</string>

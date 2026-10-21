@@ -22,7 +22,9 @@ import java.security.SecureRandom;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Stack;
 import java.util.UUID;
@@ -54,8 +56,10 @@ import com.limelight.nvstream.jni.MoonBridge;
 
 import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
@@ -280,6 +284,37 @@ public class NvHTTP {
     static String getXmlString(String str, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
         return getXmlString(new StringReader(str), tagname, throwIfMissing);
     }
+
+    // Collects the text of every element with this tag name (from Artemide)
+    static List<String> getXmlArray(String str, String tagname) throws XmlPullParserException, IOException {
+        XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+        factory.setNamespaceAware(true);
+        XmlPullParser xpp = factory.newPullParser();
+
+        xpp.setInput(new StringReader(str));
+        int eventType = xpp.getEventType();
+        Stack<String> currentTag = new Stack<>();
+        List<String> array = new ArrayList<>();
+
+        while (eventType != XmlPullParser.END_DOCUMENT) {
+            switch (eventType) {
+            case (XmlPullParser.START_TAG):
+                currentTag.push(xpp.getName());
+                break;
+            case (XmlPullParser.END_TAG):
+                currentTag.pop();
+                break;
+            case (XmlPullParser.TEXT):
+                if (!currentTag.isEmpty() && currentTag.peek().equals(tagname)) {
+                    array.add(xpp.getText());
+                }
+                break;
+            }
+            eventType = xpp.next();
+        }
+
+        return array;
+    }
     
     private static void verifyResponseStatus(XmlPullParser xpp) throws HostHttpResponseException {
         // We use Long.parseLong() because in rare cases GFE can send back a status code of
@@ -428,8 +463,14 @@ public class NvHTTP {
     // The initial pair query does require outside action (user entering a PIN) but subsequent pairing
     // queries do not.
     private ResponseBody openHttpConnection(OkHttpClient client, HttpUrl baseUrl, String path, String query) throws IOException {
+        return openHttpConnection(client, baseUrl, path, query, null);
+    }
+
+    // A non-null requestBody sends a POST instead of a GET
+    private ResponseBody openHttpConnection(OkHttpClient client, HttpUrl baseUrl, String path, String query, RequestBody requestBody) throws IOException {
         HttpUrl completeUrl = getCompleteUrl(baseUrl, path, query);
-        Request request = new Request.Builder().url(completeUrl).get().build();
+        Request.Builder builder = new Request.Builder().url(completeUrl);
+        Request request = requestBody == null ? builder.get().build() : builder.post(requestBody).build();
         Response response = performAndroidTlsHack(client).newCall(request).execute();
 
         ResponseBody body = response.body();
@@ -473,6 +514,30 @@ public class NvHTTP {
             }
             
             throw e;
+        }
+    }
+
+    /**
+     * Names of the commands the host lets this client run (Apollo/Vibepollo "server_cmd").
+     * The index of a name in this list is the ID to pass to MoonBridge.sendExecServerCmd().
+     */
+    public List<String> getServerCommands() throws XmlPullParserException, IOException {
+        return getXmlArray(getServerInfo(true), "ServerCommand");
+    }
+
+    // Host clipboard, plain text only (Apollo/Vibepollo "actions/clipboard"; from Artemide)
+    public String getClipboard() throws IOException {
+        try (ResponseBody resp = openHttpConnection(httpClientLongConnectTimeout, getHttpsUrl(true),
+                "actions/clipboard", "type=text")) {
+            return resp.string();
+        }
+    }
+
+    public void sendClipboard(String content) throws IOException {
+        try (ResponseBody resp = openHttpConnection(httpClientLongConnectTimeout, getHttpsUrl(true),
+                "actions/clipboard", "type=text",
+                RequestBody.create(content, MediaType.parse("text/plain")))) {
+            resp.string();
         }
     }
 
