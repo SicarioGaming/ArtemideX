@@ -476,6 +476,10 @@
     <string name="vsync_mode_fast">Fast V-Sync</string>
     <string name="title_checkbox_sync_lfr">Sync: LFR (Experimental)</string>
     <string name="summary_checkbox_sync_lfr">Balanced pacing on the direct renderer: discard frames that are already stale when decoded and show only the newest. May drop more frames under load. The other pacing modes already do this.</string>
+    <string name="title_checkbox_async_decode">Async decode (Experimental)</string>
+    <string name="summary_checkbox_async_decode">The decoder reports ready frames as they happen instead of being checked in a loop. Direct renderer only, not with host frame timing. Turn off if video stalls or stutters.</string>
+    <string name="title_checkbox_async_lfr">Async: LFR (Experimental)</string>
+    <string name="summary_checkbox_async_lfr">With async decode, keep only the newest decoded frame waiting to be shown, for the lowest delay. May drop more frames under load.</string>
 
     <!-- Custom Commands Activity -->
     <string name="title_custom_commands">Custom Commands</string>

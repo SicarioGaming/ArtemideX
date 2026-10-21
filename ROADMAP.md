@@ -53,8 +53,11 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
       next display refresh instead
 - [x] Sync: LFR: off by default; in Balanced pacing keeps only the newest decoded frame
       (the other pacing modes already drain to the newest frame)
-- [ ] Async: LFR. Needs Artemide's async decode mode (MediaCodec callbacks), which reworks
-      the decoder's input path, start-up and crash recovery; kept for a separate step
+- [x] Async decode and Async: LFR, both off by default (Async LFR needs Async decode).
+      Artemide's AsyncCodecAdapter, used only by the direct renderer without host frame
+      timing. Codec recovery follows Artemide: release queued buffers, start() after flush,
+      detach callbacks before stop()/reset() and attach them again before configure().
+      Tested against the device's real H.264 decoder, including all three recovery paths
 - Untouched by all of the above: the Vulkan renderer, host frame timing pacing, PyroWave
 - [x] Lite mode performance overlay: one centered line with bandwidth, network/decode delay,
       loss and FPS (Advanced settings, under "Show performance stats")

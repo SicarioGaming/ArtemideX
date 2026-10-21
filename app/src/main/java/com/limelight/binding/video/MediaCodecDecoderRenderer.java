@@ -132,7 +132,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
     private final NanoPacer.OutputCallbacks nanoPacerCallbacks = new NanoPacer.OutputCallbacks() {
         @Override
         public int nextOutputIndex(BufferInfo info, int timeoutUs) {
-            return videoDecoder.dequeueOutputBuffer(info, timeoutUs);
+            return dequeueOutput(info, timeoutUs);
         }
 
         @Override
@@ -145,6 +145,39 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
             // Decode latency is tracked for the frame that ends up shown
         }
     };
+
+    // Async decode (from Artemide, opt-in): MediaCodec reports ready input and output buffers
+    // through callbacks instead of being polled. Only used by the direct renderer without host
+    // frame timing, decided each time the decoder is configured.
+    private final AsyncCodecAdapter asyncCodec = new AsyncCodecAdapter();
+    private volatile boolean useAsyncCodec;
+    private final AsyncCodecAdapter.OutputRelease asyncOutputRelease =
+            (codec, index) -> codec.releaseOutputBuffer(index, false);
+    private final AsyncCodecAdapter.Callbacks asyncCallbacks = new AsyncCodecAdapter.Callbacks() {
+        @Override
+        public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
+            outputFormat = format;
+            LimeLog.info("New output format: " + format);
+        }
+
+        @Override
+        public void onCodecError(MediaCodec codec, CodecException e) {
+            // Sync mode sees these as exceptions from dequeue calls; the decoder threads run the
+            // recovery the next time they reach doCodecRecoveryIfRequired()
+            handleDecoderException(e);
+        }
+    };
+
+    private int dequeueInput(int timeoutUs) {
+        return useAsyncCodec ? asyncCodec.dequeueInputIndex(timeoutUs) : videoDecoder.dequeueInputBuffer(timeoutUs);
+    }
+
+    // INFO_TRY_AGAIN_LATER in async mode too (the adapter returns -1, its value)
+    private int dequeueOutput(BufferInfo info, int timeoutUs) {
+        return useAsyncCodec ?
+                asyncCodec.dequeueOutputIndex(videoDecoder, info, timeoutUs, asyncOutputRelease) :
+                videoDecoder.dequeueOutputBuffer(info, timeoutUs);
+    }
     private long lastRenderedFrameTimeNanos;
     private HandlerThread choreographerHandlerThread;
     private Handler choreographerHandler;
@@ -657,6 +690,17 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
         }
 
         Surface decoderSurface = vulkanRenderer != null ? vulkanRenderer.getDecoderSurface() : outputSurface;
+
+        // Async decode needs its callbacks installed before configure(). The Vulkan renderer and
+        // host frame timing keep the polling path they were written for.
+        useAsyncCodec = prefs.asyncDecode && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                vulkanRenderer == null && hostFrameTimeline == null;
+        if (useAsyncCodec) {
+            asyncCodec.setPreferLowerDelays(prefs.asyncLfr);
+            asyncCodec.attachIfNeeded(videoDecoder, Process.THREAD_PRIORITY_DISPLAY, asyncCallbacks, asyncOutputRelease);
+            LimeLog.info("Async decode enabled" + (prefs.asyncLfr ? " with LFR" : ""));
+        }
+
         videoDecoder.configure(format, decoderSurface, null, 0);
 
         // The stream's frame rate on the surface, for the direct renderer. The Vulkan renderer paces
@@ -887,11 +931,21 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                 nextInputBufferIndex = -1;
                 outputBufferQueue.clear();
 
+                // Async decode: drop the buffer indices the callbacks queued, as Artemide does
+                if (useAsyncCodec) {
+                    try { asyncCodec.quiesceAndRelease(videoDecoder, asyncOutputRelease); } catch (Throwable ignored) { }
+                }
+
                 // If we just need a flush, do so now with all threads quiesced.
                 if (codecRecoveryType.get() == CR_RECOVERY_TYPE_FLUSH) {
                     LimeLog.warning("Flushing decoder");
                     try {
                         videoDecoder.flush();
+
+                        // In async mode the codec only resumes its callbacks after start()
+                        if (useAsyncCodec) {
+                            videoDecoder.start();
+                        }
                         codecRecoveryType.set(CR_RECOVERY_TYPE_NONE);
                     } catch (IllegalStateException e) {
                         e.printStackTrace();
@@ -912,6 +966,9 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                 if (codecRecoveryType.get() == CR_RECOVERY_TYPE_RESTART) {
                     LimeLog.warning("Trying to restart decoder after CodecException");
                     try {
+                        // stop() can silently drop async callbacks on some devices, so detach
+                        // and let configureAndStartDecoder() install them again (from Artemide)
+                        detachAsyncCodec();
                         videoDecoder.stop();
                         configureAndStartDecoder(configuredFormat);
                         codecRecoveryType.set(CR_RECOVERY_TYPE_NONE);
@@ -935,6 +992,8 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                 if (codecRecoveryType.get() == CR_RECOVERY_TYPE_RESET) {
                     LimeLog.warning("Trying to reset decoder after CodecException");
                     try {
+                        // As above: reset() also clears async callbacks
+                        detachAsyncCodec();
                         videoDecoder.reset();
                         configureAndStartDecoder(configuredFormat);
                         codecRecoveryType.set(CR_RECOVERY_TYPE_NONE);
@@ -956,6 +1015,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                 // throw away the old decoder and reinitialize a new one from scratch.
                 if (codecRecoveryType.get() == CR_RECOVERY_TYPE_RESET) {
                     LimeLog.warning("Trying to recreate decoder after CodecException");
+                    detachAsyncCodec();
                     videoDecoder.release();
 
                     try {
@@ -1006,6 +1066,13 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
         }
 
         return true;
+    }
+
+    // Removes the async callbacks and releases what they queued; nothing to do in sync mode
+    private void detachAsyncCodec() {
+        if (useAsyncCodec) {
+            try { asyncCodec.detach(videoDecoder, asyncOutputRelease); } catch (Throwable ignored) { }
+        }
     }
 
     // Returns true if the exception is transient
@@ -1204,7 +1271,13 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                 while (!stopping) {
                     try {
                         // Try to output a frame
-                        int outIndex = videoDecoder.dequeueOutputBuffer(info, 50000);
+                        // Async decode hands frames it dropped back here for release, keeping
+                        // binder calls off the codec callback thread
+                        if (useAsyncCodec) {
+                            asyncCodec.drainNoRenderReleaseQueue(videoDecoder, asyncOutputRelease);
+                        }
+
+                        int outIndex = dequeueOutput(info, 50000);
                         if (outIndex >= 0) {
                             long presentationTimeUs = info.presentationTimeUs;
                             int lastIndex = outIndex;
@@ -1227,7 +1300,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                             // Render the latest frame now if frame pacing isn't in balanced mode
                             else if (prefs.framePacing != PreferenceConfiguration.FRAME_PACING_BALANCED) {
                                 // Get the last output buffer in the queue
-                                while ((outIndex = videoDecoder.dequeueOutputBuffer(info, 0)) >= 0) {
+                                while ((outIndex = dequeueOutput(info, 0)) >= 0) {
                                     videoDecoder.releaseOutputBuffer(lastIndex, false);
 
                                     numFramesOut++;
@@ -1281,7 +1354,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                                     // one is stale, so keep only the newest. Bounded so the renderer can't
                                     // chase a decoder that keeps producing frames.
                                     for (int drained = 0; drained < SYNC_LFR_MAX_DRAIN_PER_FRAME; drained++) {
-                                        int newerIndex = videoDecoder.dequeueOutputBuffer(info, 0);
+                                        int newerIndex = dequeueOutput(info, 0);
                                         if (newerIndex >= 0) {
                                             videoDecoder.releaseOutputBuffer(lastIndex, false);
                                             numFramesOut++;
@@ -1357,9 +1430,12 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
         startTime = SystemClock.uptimeMillis();
 
         try {
-            // If we don't have an input buffer index yet, fetch one now
-            while (nextInputBufferIndex < 0 && !stopping) {
-                nextInputBufferIndex = videoDecoder.dequeueInputBuffer(10000);
+            // If we don't have an input buffer index yet, fetch one now. In async mode a codec
+            // error arrives by callback and no more input buffers will come, so stop waiting once
+            // recovery is pending (sync mode gets an exception from dequeueInputBuffer instead).
+            while (nextInputBufferIndex < 0 && !stopping &&
+                    (!useAsyncCodec || codecRecoveryType.get() == CR_RECOVERY_TYPE_NONE)) {
+                nextInputBufferIndex = dequeueInput(10000);
             }
 
             // Get the backing ByteBuffer for the input buffer index
@@ -1495,6 +1571,8 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
     @Override
     public void cleanup() {
         if (videoDecoder != null) {
+            // Stops the async callback thread too
+            detachAsyncCodec();
             videoDecoder.release();
         }
 

@@ -92,6 +92,8 @@ public class PreferenceConfiguration {
     private static final String VIRTUAL_DISPLAY_MODE_PREF_STRING = "virtual_display_mode";
     private static final String VSYNC_MODE_PREF_STRING = "vsync_mode";
     private static final String SYNC_LFR_PREF_STRING = "checkbox_sync_lfr";
+    private static final String ASYNC_DECODE_PREF_STRING = "checkbox_async_decode";
+    private static final String ASYNC_LFR_PREF_STRING = "checkbox_async_lfr";
 
     // Artemide's V-Sync options for the direct renderer (one at a time, as in Artemide)
     public static final int VSYNC_OFF = 0;
@@ -232,6 +234,8 @@ public class PreferenceConfiguration {
     public String virtualDisplayMode;
     public int vsyncMode; // VSYNC_*
     public boolean syncLfr;
+    public boolean asyncDecode;
+    public boolean asyncLfr; // only with asyncDecode
     public boolean autoResumeStream;
 
     public static boolean isNativeResolution(int width, int height) {
@@ -779,6 +783,8 @@ public class PreferenceConfiguration {
                 break;
         }
         config.syncLfr = prefs.getBoolean(SYNC_LFR_PREF_STRING, false);
+        config.asyncDecode = prefs.getBoolean(ASYNC_DECODE_PREF_STRING, false);
+        config.asyncLfr = config.asyncDecode && prefs.getBoolean(ASYNC_LFR_PREF_STRING, false);
         config.autoResumeStream = prefs.getBoolean(AUTO_RESUME_STREAM_PREF_STRING, DEFAULT_AUTO_RESUME_STREAM);
 
         return config;

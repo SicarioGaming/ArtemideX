@@ -57,6 +57,17 @@
             android:summary="@string/summary_checkbox_sync_lfr"
             android:defaultValue="false" />
         <CheckBoxPreference
+            android:key="checkbox_async_decode"
+            android:title="@string/title_checkbox_async_decode"
+            android:summary="@string/summary_checkbox_async_decode"
+            android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_async_lfr"
+            android:dependency="checkbox_async_decode"
+            android:title="@string/title_checkbox_async_lfr"
+            android:summary="@string/summary_checkbox_async_lfr"
+            android:defaultValue="false" />
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="checkbox_ultra_low_latency"
             android:summary="@string/summary_checkbox_ultra_low_latency"

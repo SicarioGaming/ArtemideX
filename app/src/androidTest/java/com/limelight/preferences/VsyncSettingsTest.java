@@ -75,4 +75,21 @@ public class VsyncSettingsTest {
         prefs.edit().putBoolean("checkbox_sync_lfr", true).commit();
         assertTrue(PreferenceConfiguration.readPreferences(context).syncLfr);
     }
+
+    @Test
+    public void asyncDecodeIsOffByDefaultAndLfrNeedsIt() {
+        prefs.edit().remove("checkbox_async_decode").remove("checkbox_async_lfr").commit();
+        PreferenceConfiguration config = PreferenceConfiguration.readPreferences(context);
+        assertFalse(config.asyncDecode);
+        assertFalse(config.asyncLfr);
+
+        // Async LFR on its own does nothing without async decode
+        prefs.edit().putBoolean("checkbox_async_lfr", true).commit();
+        assertFalse(PreferenceConfiguration.readPreferences(context).asyncLfr);
+
+        prefs.edit().putBoolean("checkbox_async_decode", true).commit();
+        config = PreferenceConfiguration.readPreferences(context);
+        assertTrue(config.asyncDecode);
+        assertTrue(config.asyncLfr);
+    }
 }
