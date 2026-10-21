@@ -778,6 +778,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
         // Start the decoder
         videoDecoder.start();
+        MediaCodecHelper.applyLowLatencyAfterStart(videoDecoder);
 
     }
 

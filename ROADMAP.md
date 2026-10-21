@@ -70,8 +70,18 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
 - Untouched by all of the above: the Vulkan renderer, host frame timing pacing, PyroWave
 - [x] Lite mode performance overlay: one centered line with bandwidth, network/decode delay,
       loss and FPS (Advanced settings, under "Show performance stats")
-- [ ] Check Moonlight X's existing Ultra Low Latency and Force Full Range Video
-      against Artemide's behaviour
+- [x] Check Moonlight X's existing Ultra Low Latency and Force Full Range Video
+      against Artemide's behaviour (2026-10-21, against Artemide's `MediaCodecHelper` and
+      `MediaCodecDecoderRenderer` at the 0.5.1 tag)
+  - Force Full Range: the same in both (asks the PC for full range, and tells the decoder
+    with `KEY_COLOR_RANGE`); ArtemideX also passes it to the Vulkan renderer. No change
+  - Ultra Low Latency: the same for Snapdragon (like the tablet's 8 Elite), Exynos and
+    decoders with Android's own low-latency support. Ported the two differences:
+    MediaTek's `vendor.mtk.vdec.ultra-low-latency` now follows the setting (Moonlight X
+    always set it to 0), and low-latency is set again after the decoder starts (Android 11+)
+  - Left as Moonlight X's: Artemide's other MediaTek queue/preload values and its NVIDIA
+    Tegra and legacy OMX Qualcomm extras. They aren't part of this setting, and there's no
+    such device here to try them on
 
 ## Phase 3: Features from other forks
 

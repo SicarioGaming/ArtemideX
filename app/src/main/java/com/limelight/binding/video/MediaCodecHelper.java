@@ -21,6 +21,7 @@ import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaFormat;
 import android.os.Build;
+import android.os.Bundle;
 
 import com.limelight.LimeLog;
 import com.limelight.preferences.PreferenceConfiguration;
@@ -623,7 +624,11 @@ public class MediaCodecHelper {
 
                     // Pipeline / code path
                     setNewOption |= safeSet(videoFormat, "vendor.mtk.vdec.low-latency.mode", 1, tryNumber, false);    // Enable low-latency path
-                    setNewOption |= safeSet(videoFormat, "vendor.mtk.vdec.ultra-low-latency", 0, tryNumber, false);   // ULL off for stability
+                    // MTK's own ultra-low-latency mode follows the Ultra Low Latency setting, as in
+                    // Artemide. When it's off the key is left out rather than set to 0.
+                    if (ultraLowLatency) {
+                        setNewOption |= safeSet(videoFormat, "vendor.mtk.vdec.ultra-low-latency", 1, tryNumber, false);
+                    }
                     setNewOption |= safeSet(videoFormat, "vendor.mtk.vdec.disable-idle", 1, tryNumber, false);        // Prevent clock downscaling
                     setNewOption |= safeSet(videoFormat, "vendor.mtk.vdec.preload.frame.count", 1, tryNumber, false); // Light prebuffering
 
@@ -1108,6 +1113,25 @@ public class MediaCodecHelper {
 
     public static void resetLog() {
         mediaFormatLog = new StringBuilder();
+    }
+
+    /**
+     * Turns on Android's low-latency decoding again once the decoder has started (Android 11+),
+     * as Artemide does. If configure() only succeeded on a later try without "low-latency" in
+     * the format, this still enables it; otherwise it's a no-op. Decoders ignore it if unsupported.
+     */
+    public static void applyLowLatencyAfterStart(MediaCodec codec) {
+        if (codec == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return;
+        }
+        try {
+            Bundle params = new Bundle();
+            params.putInt(MediaCodec.PARAMETER_KEY_LOW_LATENCY, 1);
+            codec.setParameters(params);
+        }
+        catch (RuntimeException e) {
+            LimeLog.warning("Couldn't set low-latency after start: " + e.getMessage());
+        }
     }
 
     private static boolean safeSet(MediaFormat format, String key, int value, int tryNumber, boolean throwError) {
