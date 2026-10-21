@@ -82,6 +82,23 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
 | Pinch-to-zoom anytime, accurate taps while zoomed | Moonlit Artemis (`4had45/moonlit-artemis`) |
 | Monitor switcher | Moonlit Artemis |
 
+### Phase 3 research notes (2026-10-21)
+
+- Per-game settings already exist in Moonlight X (long-press a game, App Settings: resolution,
+  FPS, bitrate, frame pacing, HDR, stats; plus Quick Launch). Remaining: add ArtemideX's new
+  options (V-Sync, LFR, async decode, touch mode) to it.
+- Bitrate mid-stream: Vibepollo `GET /bitrate?bitrate=<kbps>` (HTTPS, any streaming client),
+  clamps to the host maximum and returns the applied value in `root.bitrate`.
+- Monitor switcher: Vibepollo switches display on Ctrl+Alt+Shift+F1..F13 (input.cpp,
+  `switch_display`), so a menu page sending those keys is enough.
+- Better stats: Moonlight X already shows received vs rendered FPS variance; add 1% lows.
+- Pinch-to-zoom anytime: detect a two-finger pinch (finger span changes) outside pan/zoom mode
+  and hand that gesture to PanZoomHandler; not in multi-touch mode.
+- Custom PyroWave driver: NoCrypt commit `0703b360` (remote `turnip`), 22 files, ~800 lines plus
+  libadrenotools arm64 prebuilts and native Vulkan loader changes. Port it with
+  `git cherry-pick`-style care, since our base has newer Vulkan renderer code.
+- Audio haptics: new; low-pass the decoded audio, drive the device vibrator or controller rumble.
+
 ## Phase 4: Redesign
 
 - [ ] Mockups of the new look to choose from before building
