@@ -127,8 +127,14 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       Glow**: the screens take their colour from the selected game's cover art, frosted panels,
       a big "last played" hero with that game's settings as chips, plain-language settings with a
       "What you'll feel" panel, and the in-stream menu as a frosted side sheet tinted by the game
-- [ ] More colour, clearer settings layout, smoother animations, and more
-      shortcuts in the in-stream menu
+- [x] Cover Glow game screen: hero for the selected game tinted by its cover, cover row, PC list
+      with frosted cards (renders in `docs/cover_glow_home.png`, `docs/cover_glow_pcs.png`)
+- [x] Cover Glow settings: back button and title, a pill per section that jumps to it and
+      follows the scroll, teal headings, white rows; per-game settings share the look. The PC
+      list's overrides bar uses frosted pills (`docs/cover_glow_settings.png`)
+- [ ] Settings: the "What you'll feel" panel and plain-language names from the mockup
+- [ ] Cover Glow in-stream menu: a frosted side sheet tinted by the game, with more shortcuts
+- [ ] Try it all with a paired PC and real covers
 
 ## Open questions
 
