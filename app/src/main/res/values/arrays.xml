@@ -222,6 +222,18 @@
         <item>3000</item>
     </string-array>
 
+    <!-- ArtemideX: Artemide's V-Sync options (direct renderer only) -->
+    <string-array name="vsync_mode_names">
+        <item>@string/vsync_mode_off</item>
+        <item>@string/vsync_mode_vsync</item>
+        <item>@string/vsync_mode_fast</item>
+    </string-array>
+    <string-array name="vsync_mode_values" translatable="false">
+        <item>off</item>
+        <item>vsync</item>
+        <item>fast</item>
+    </string-array>
+
     <!-- ArtemideX: which display the host streams from (virtualDisplay launch argument) -->
     <string-array name="virtual_display_mode_names">
         <item>@string/virtual_display_mode_host</item>

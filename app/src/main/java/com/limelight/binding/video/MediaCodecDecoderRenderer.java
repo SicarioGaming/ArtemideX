@@ -123,6 +123,28 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
     private LinkedBlockingQueue<Integer> outputBufferQueue = new LinkedBlockingQueue<>();
     private static final int OUTPUT_BUFFER_QUEUE_LIMIT = 2;
+
+    // Artemide's V-Sync options and Sync LFR, used only by the direct renderer
+    private static final int SYNC_LFR_MAX_DRAIN_PER_FRAME = 4;
+    private final NanoPacer nanoPacer = new NanoPacer();
+    private final NanoPacer.LatestOutput nanoLatest = new NanoPacer.LatestOutput();
+    private float displayRefreshRateHz;
+    private final NanoPacer.OutputCallbacks nanoPacerCallbacks = new NanoPacer.OutputCallbacks() {
+        @Override
+        public int nextOutputIndex(BufferInfo info, int timeoutUs) {
+            return videoDecoder.dequeueOutputBuffer(info, timeoutUs);
+        }
+
+        @Override
+        public void releaseOutputBuffer(int index, boolean render) {
+            videoDecoder.releaseOutputBuffer(index, render);
+        }
+
+        @Override
+        public void onDequeued(long presentationTimeUs, long dequeueNs) {
+            // Decode latency is tracked for the frame that ends up shown
+        }
+    };
     private long lastRenderedFrameTimeNanos;
     private HandlerThread choreographerHandlerThread;
     private Handler choreographerHandler;
@@ -1169,6 +1191,12 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
     private void startRendererThread()
     {
+        nanoPacer.reset();
+        displayRefreshRateHz = getDisplayRefreshRate();
+        if (!(displayRefreshRateHz > 1f)) {
+            displayRefreshRateHz = 60f;
+        }
+
         rendererThread = new Thread() {
             @Override
             public void run() {
@@ -1208,11 +1236,33 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                                     presentationTimeUs = info.presentationTimeUs;
                                 }
 
+                                if (prefs.vsyncMode == PreferenceConfiguration.VSYNC_FAST &&
+                                        prefs.framePacing == PreferenceConfiguration.FRAME_PACING_MIN_LATENCY) {
+                                    // Fast V-Sync (Artemide's nano pacer): when the stream runs 1:1 with
+                                    // the display, wait for this frame's evenly spaced slot, swapping in
+                                    // any newer frame that's decoded while waiting
+                                    nanoPacer.updatePacingMode(true, refreshRate, displayRefreshRateHz);
+                                    nanoLatest.index = lastIndex;
+                                    nanoLatest.ptsUs = presentationTimeUs;
+                                    nanoLatest.flags = info.flags;
+                                    nanoLatest.dequeueNs = System.nanoTime();
+                                    numFramesOut += nanoPacer.waitAndDrainLatest(info, nanoLatest, nanoPacerCallbacks);
+                                    lastIndex = nanoLatest.index;
+                                    presentationTimeUs = nanoLatest.ptsUs;
+                                }
+
                                 if (prefs.framePacing == PreferenceConfiguration.FRAME_PACING_MAX_SMOOTHNESS ||
                                         prefs.framePacing == PreferenceConfiguration.FRAME_PACING_CAP_FPS) {
                                     // In max smoothness or cap FPS mode, we want to never drop frames
                                     // Use a PTS that will cause this frame to never be dropped
                                     videoDecoder.releaseOutputBuffer(lastIndex, 0);
+                                }
+                                else if (prefs.vsyncMode == PreferenceConfiguration.VSYNC_ON) {
+                                    // V-Sync: hold the frame for the next display refresh rather than the
+                                    // current one, so every frame waits a whole refresh (more latency,
+                                    // steadier timing)
+                                    videoDecoder.releaseOutputBuffer(lastIndex,
+                                            System.nanoTime() + (long) (1_000_000_000d / displayRefreshRateHz));
                                 }
                                 else {
                                     // Use a PTS that will cause this frame to be dropped if another comes in within
@@ -1225,6 +1275,28 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                             else {
                                 // For balanced frame pacing case, the Choreographer callback will handle rendering.
                                 // We just put all frames into the output buffer queue and let it handle things.
+
+                                if (prefs.syncLfr) {
+                                    // Sync LFR (from Artemide): if newer frames are already decoded, this
+                                    // one is stale, so keep only the newest. Bounded so the renderer can't
+                                    // chase a decoder that keeps producing frames.
+                                    for (int drained = 0; drained < SYNC_LFR_MAX_DRAIN_PER_FRAME; drained++) {
+                                        int newerIndex = videoDecoder.dequeueOutputBuffer(info, 0);
+                                        if (newerIndex >= 0) {
+                                            videoDecoder.releaseOutputBuffer(lastIndex, false);
+                                            numFramesOut++;
+                                            lastIndex = newerIndex;
+                                            presentationTimeUs = info.presentationTimeUs;
+                                        }
+                                        else if (newerIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                                            outputFormat = videoDecoder.getOutputFormat();
+                                            LimeLog.info("New output format: " + outputFormat);
+                                        }
+                                        else {
+                                            break;
+                                        }
+                                    }
+                                }
 
                                 // Discard the oldest buffer if we've exceeded our limit.
                                 //

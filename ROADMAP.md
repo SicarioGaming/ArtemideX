@@ -46,8 +46,16 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
       because Vibepollo treats `virtualDisplay=0` as turning its virtual display off
 - [x] Prevent Packet Loss: a tiny ignored control packet every 20 ms keeps Wi-Fi awake
       (new `LiSendKeepAlivePayload` in common-c)
-- [ ] V-Sync, Fast V-Sync, Sync: LFR and Async: LFR, without disturbing Moonlight X's
-      Direct Frame Pacing
+- [x] V-Sync and Fast V-Sync: one "V-Sync" setting (Off, V-Sync, Fast V-Sync), off by
+      default and used only by the direct renderer. Fast V-Sync is Artemide's nano pacer
+      (NanoPacer.java) in "Prefer lowest latency" pacing. Artemide's own V-Sync only drives
+      its GL upscaler, which ArtemideX doesn't have, so V-Sync here holds each frame for the
+      next display refresh instead
+- [x] Sync: LFR: off by default; in Balanced pacing keeps only the newest decoded frame
+      (the other pacing modes already drain to the newest frame)
+- [ ] Async: LFR. Needs Artemide's async decode mode (MediaCodec callbacks), which reworks
+      the decoder's input path, start-up and crash recovery; kept for a separate step
+- Untouched by all of the above: the Vulkan renderer, host frame timing pacing, PyroWave
 - [x] Lite mode performance overlay: one centered line with bandwidth, network/decode delay,
       loss and FPS (Advanced settings, under "Show performance stats")
 - [ ] Check Moonlight X's existing Ultra Low Latency and Force Full Range Video

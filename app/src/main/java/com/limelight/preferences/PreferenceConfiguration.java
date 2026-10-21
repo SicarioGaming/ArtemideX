@@ -90,6 +90,13 @@ public class PreferenceConfiguration {
     private static final String PERF_OVERLAY_LITE_PREF_STRING = "checkbox_enable_perf_overlay_lite";
     private static final String PREVENT_PACKET_LOSS_PREF_STRING = "checkbox_prevent_packet_loss";
     private static final String VIRTUAL_DISPLAY_MODE_PREF_STRING = "virtual_display_mode";
+    private static final String VSYNC_MODE_PREF_STRING = "vsync_mode";
+    private static final String SYNC_LFR_PREF_STRING = "checkbox_sync_lfr";
+
+    // Artemide's V-Sync options for the direct renderer (one at a time, as in Artemide)
+    public static final int VSYNC_OFF = 0;
+    public static final int VSYNC_ON = 1;
+    public static final int VSYNC_FAST = 2;
     private static final String AUTO_RESUME_STREAM_PREF_STRING = "checkbox_auto_resume_stream";
     private static final String VIDEO_RENDERER_PREF_STRING = "video_renderer";
     private static final String SPATIAL_DITHERING_PREF_STRING = "spatial_dithering";
@@ -223,6 +230,8 @@ public class PreferenceConfiguration {
     public boolean preventPacketLoss;
     // "host" (send nothing), "virtual" or "primary": the virtualDisplay launch argument
     public String virtualDisplayMode;
+    public int vsyncMode; // VSYNC_*
+    public boolean syncLfr;
     public boolean autoResumeStream;
 
     public static boolean isNativeResolution(int width, int height) {
@@ -758,6 +767,18 @@ public class PreferenceConfiguration {
         config.enablePerfOverlayLite = prefs.getBoolean(PERF_OVERLAY_LITE_PREF_STRING, false);
         config.preventPacketLoss = prefs.getBoolean(PREVENT_PACKET_LOSS_PREF_STRING, false);
         config.virtualDisplayMode = prefs.getString(VIRTUAL_DISPLAY_MODE_PREF_STRING, "host");
+        switch (prefs.getString(VSYNC_MODE_PREF_STRING, "off")) {
+            case "vsync":
+                config.vsyncMode = VSYNC_ON;
+                break;
+            case "fast":
+                config.vsyncMode = VSYNC_FAST;
+                break;
+            default:
+                config.vsyncMode = VSYNC_OFF;
+                break;
+        }
+        config.syncLfr = prefs.getBoolean(SYNC_LFR_PREF_STRING, false);
         config.autoResumeStream = prefs.getBoolean(AUTO_RESUME_STREAM_PREF_STRING, DEFAULT_AUTO_RESUME_STREAM);
 
         return config;

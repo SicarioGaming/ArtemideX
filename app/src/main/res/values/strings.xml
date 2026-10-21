@@ -468,6 +468,15 @@
     <string name="applist_menu_start_vdisplay">Start in Virtual Display</string>
     <string name="applist_menu_start_primarydisplay">Start in Primary Display</string>
 
+    <!-- ArtemideX: V-Sync, Fast V-Sync and Sync LFR (from Artemide) -->
+    <string name="title_vsync_mode">V-Sync (Experimental)</string>
+    <string name="summary_vsync_mode">Direct renderer only. V-Sync holds each frame for the next screen refresh (adds up to one frame of latency). Fast V-Sync spaces frames evenly when the stream FPS matches the screen (Prefer lowest latency pacing only). Ignored with the Vulkan renderer and host frame timing pacing.</string>
+    <string name="vsync_mode_off">Off</string>
+    <string name="vsync_mode_vsync">V-Sync</string>
+    <string name="vsync_mode_fast">Fast V-Sync</string>
+    <string name="title_checkbox_sync_lfr">Sync: LFR (Experimental)</string>
+    <string name="summary_checkbox_sync_lfr">Balanced pacing on the direct renderer: discard frames that are already stale when decoded and show only the newest. May drop more frames under load. The other pacing modes already do this.</string>
+
     <!-- Custom Commands Activity -->
     <string name="title_custom_commands">Custom Commands</string>
     <string name="custom_commands_empty">No custom commands configured.\n\nTap the + button to add a command.</string>
