@@ -1,0 +1,54 @@
+# built application files
+*.apk
+*.ap_
+*.aab
+output.json
+output-metadata.json
+out/
+
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# generated files
+bin/
+gen/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Windows thumbnail db
+Thumbs.db
+
+# OSX files
+.DS_Store
+
+# Eclipse project files
+.classpath
+.project
+
+# Android Studio
+.idea
+#.idea/workspace.xml - remove # and delete .idea if it better suit your needs.
+.gradle
+build/
+*.iml
+
+# Compiled JNI libraries folder
+**/jniLibs
+app/.externalNativeBuild/
+
+# NDK stuff
+.cxx/
+# Frame pacing traces pulled from devices (tools/pacer-trace.sh)
+pacer-traces/
+
+# ArtemideX: the release signing key and its passwords stay private
+keystore.properties
+*.jks
+*.keystore
+
+# AI tool working folders
+.claude-flow/
