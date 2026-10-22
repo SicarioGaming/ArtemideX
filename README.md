@@ -46,9 +46,6 @@ from [Moonlight V+](https://github.com/qiin2333/moonlight-vplus),
 that draws from some of the trends coming out of Silicon Valley these days. It installs next to
 any Moonlight you already have, so you can try it without giving anything up.
 
-<sub>Starwire was briefly called Voidlink. An iOS Moonlight client already uses that name, so I
-changed it early to avoid confusion.</sub>
-
 ## Features
 
 <table>

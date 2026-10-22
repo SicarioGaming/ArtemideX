@@ -9,7 +9,7 @@ $gh = 'C:\Program Files\GitHub CLI\gh.exe'
 $repo = 'SicarioGaming/Starwire'
 
 $props = @{}
-foreach ($line in Get-Content (Join-Path $PSScriptRoot '..\keystore.properties')) {
+foreach ($line in Get-Content (Join-Path $PSScriptRoot '..\..\keystore.properties')) {
     if ($line -match '^\s*([^#=]+?)\s*=\s*(.*)$') { $props[$Matches[1]] = $Matches[2] }
 }
 $store = $props['storeFile']

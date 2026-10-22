@@ -15,8 +15,6 @@ Each step ends with a build installed on the tablet and tested before the next s
 
 - [x] Rename the app to "Starwire" (`com.starwire`, debug builds `com.starwire.debug`),
       so it installs beside Moonlight X and Artemide instead of replacing them.
-      Renamed from Voidlink in October 2026, because an iOS Moonlight client already uses
-      that name (new app ID, so it installs as a separate app from Voidlink 0.1.0)
 
 ## Phase 2: Artemide features
 
