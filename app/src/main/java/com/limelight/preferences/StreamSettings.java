@@ -1011,7 +1011,10 @@ public class StreamSettings extends Activity {
             String fallback = null;
             try {
                 for (NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
-                    if (!iface.isUp() || iface.isLoopback()) {
+                    String name = iface.getName();
+                    // Mobile data interfaces can carry private-looking carrier addresses
+                    if (!iface.isUp() || iface.isLoopback() || name.startsWith("rmnet")
+                            || name.startsWith("ccmni") || name.startsWith("clat")) {
                         continue;
                     }
                     for (InetAddress address : Collections.list(iface.getInetAddresses())) {

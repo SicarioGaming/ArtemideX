@@ -92,29 +92,45 @@ static class StarwireMicReceiver
                 Console.WriteLine("Say which microphone to listen on with --input.");
                 return 2;
             }
-            return CheckCable(deviceId, input) ? 0 : 3;
+            return CheckCable(device, input) ? 0 : 3;
         }
 
         byte[] wantedName = StreamNameBytes(streamName);
         Console.Title = "Starwire microphone receiver";
         Console.WriteLine("Starwire microphone receiver");
+
+        Socket socket;
+        try {
+            if (loopback) {
+                socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                socket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+            }
+            else {
+                socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
+                socket.DualMode = true;
+                socket.Bind(new IPEndPoint(IPAddress.IPv6Any, port));
+            }
+        }
+        catch (SocketException e) {
+            if (e.SocketErrorCode == SocketError.AddressAlreadyInUse) {
+                Console.WriteLine("UDP port " + port + " is already in use by another program, often Voicemeeter's VBAN or");
+                Console.WriteLine("VBAN-Receptor. Close it or turn its VBAN off, or run setup-microphone.ps1 -Port <another>");
+                Console.WriteLine("and set the same VBAN port in Starwire.");
+            }
+            else {
+                Console.WriteLine("Couldn't listen on UDP port " + port + ": " + e.Message);
+            }
+            // Keep the (usually minimized) window open so the reason can be read
+            Console.WriteLine("Press Enter to close.");
+            Console.ReadLine();
+            return 4;
+        }
         Console.WriteLine("  Listening for \"" + streamName + "\" on UDP port " + port);
         Console.WriteLine("  Playing into " + WaveOut.DeviceName(deviceId));
         Console.WriteLine("  In Starwire: Settings > Sound & vibration > Send my microphone > A VBAN receiver on the PC");
         Console.WriteLine("Close this window to stop.");
 
-        Socket socket;
-        if (loopback) {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            socket.Bind(new IPEndPoint(IPAddress.Loopback, port));
-        }
-        else {
-            socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp);
-            socket.DualMode = true;
-            socket.Bind(new IPEndPoint(IPAddress.IPv6Any, port));
-        }
-
-        Player player = new Player(deviceId);
+        Player player = new Player(device);
         byte[] buffer = new byte[2048];
         string currentSender = null;
         bool warnedFormat = false;
@@ -210,18 +226,19 @@ static class StarwireMicReceiver
 
     // Plays a tone into the output for a moment while recording from the microphone it should
     // come out of. A virtual cable that works passes it straight through.
-    static bool CheckCable(int outputId, string inputName)
+    static bool CheckCable(string outputName, string inputName)
     {
         int inputId = WaveIn.FindDevice(inputName);
         if (inputId < 0) {
             Console.WriteLine("No microphone named like \"" + inputName + "\".");
             return false;
         }
-        Console.WriteLine("Checking " + WaveOut.DeviceName(outputId) + " -> " + WaveIn.DeviceName(inputId) + "...");
+        Console.WriteLine("Checking " + WaveOut.DeviceName(WaveOut.FindDevice(outputName)) + " -> "
+                + WaveIn.DeviceName(inputId) + "...");
 
         const int rate = 48000;
         WaveIn recorder = new WaveIn(inputId, rate, rate * 2);   // two seconds
-        Player player = new Player(outputId);
+        Player player = new Player(outputName);
         byte[] packet = new byte[HeaderSize + 480 * 2];
         double phase = 0;
         System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
@@ -300,23 +317,35 @@ sealed class Player
     const int StartBlocks = 4;   // 40 ms of audio before playback (re)starts
     const int MaxBlocks = 12;    // never more than 120 ms behind
 
-    readonly int deviceId;
+    const int StallMs = 1000;    // queued audio that hasn't moved for this long means the output died
+    const int RetryMs = 1000;    // how often to try opening the output again after a failure
+
+    // Looked up by name each time it's opened: the device's number can change after the receiver
+    // starts (headsets plugged in, VB-Cable installed or updated)
+    readonly string deviceName;
     IntPtr handle = IntPtr.Zero;
     int sampleRate;
     short[] block;
     int blockFill;
     readonly List<IntPtr> queued = new List<IntPtr>();
     bool starting = true;
+    readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
+    long lastProgress;
+    long nextOpenAttempt;
+    bool openFailed;
 
-    public Player(int deviceId)
+    public Player(string deviceName)
     {
-        this.deviceId = deviceId;
+        this.deviceName = deviceName;
     }
 
     public void Play(byte[] packet, int offset, int samples, int channels, int rate)
     {
-        if (rate != sampleRate) {
-            Open(rate);
+        if (handle == IntPtr.Zero || rate != sampleRate) {
+            if (clock.ElapsedMilliseconds < nextOpenAttempt || !Open(rate)) {
+                // Drop the audio until the output can be opened again
+                return;
+            }
         }
         for (int i = 0; i < samples; i++) {
             int at = offset + i * channels * 2;
@@ -326,31 +355,51 @@ sealed class Player
             }
             block[blockFill++] = (short) value;
             if (blockFill == block.Length) {
-                Submit();
                 blockFill = 0;
+                if (!Submit()) {
+                    return;
+                }
             }
         }
     }
 
-    void Open(int rate)
+    bool Open(int rate)
     {
         Close();
+        int deviceId = WaveOut.FindDevice(deviceName);
+        int result = -1;
+        if (deviceId >= 0) {
+            WaveOut.WAVEFORMATEX format = new WaveOut.WAVEFORMATEX();
+            format.wFormatTag = 1;
+            format.nChannels = 1;
+            format.nSamplesPerSec = rate;
+            format.wBitsPerSample = 16;
+            format.nBlockAlign = 2;
+            format.nAvgBytesPerSec = rate * 2;
+            result = WaveOut.waveOutOpen(out handle, deviceId, ref format, IntPtr.Zero, IntPtr.Zero, 0);
+        }
+        if (result != 0) {
+            handle = IntPtr.Zero;
+            nextOpenAttempt = clock.ElapsedMilliseconds + RetryMs;
+            if (!openFailed) {
+                openFailed = true;
+                Console.WriteLine(deviceId < 0
+                        ? "Can't find \"" + deviceName + "\" right now; trying again every second."
+                        : "Couldn't open " + WaveOut.DeviceName(deviceId) + " (waveOut error " + result + "); trying again every second.");
+            }
+            return false;
+        }
+        if (openFailed) {
+            openFailed = false;
+            Console.WriteLine("Playing into " + WaveOut.DeviceName(deviceId) + " again.");
+        }
         sampleRate = rate;
         block = new short[rate * BlockMs / 1000];
         blockFill = 0;
-        WaveOut.WAVEFORMATEX format = new WaveOut.WAVEFORMATEX();
-        format.wFormatTag = 1;
-        format.nChannels = 1;
-        format.nSamplesPerSec = rate;
-        format.wBitsPerSample = 16;
-        format.nBlockAlign = 2;
-        format.nAvgBytesPerSec = rate * 2;
-        int result = WaveOut.waveOutOpen(out handle, deviceId, ref format, IntPtr.Zero, IntPtr.Zero, 0);
-        if (result != 0) {
-            throw new InvalidOperationException("Couldn't open the audio output (waveOut error " + result + ")");
-        }
         starting = true;
         WaveOut.waveOutPause(handle);
+        lastProgress = clock.ElapsedMilliseconds;
+        return true;
     }
 
     void Close()
@@ -362,18 +411,28 @@ sealed class Player
         Reclaim(true);
         WaveOut.waveOutClose(handle);
         handle = IntPtr.Zero;
+        sampleRate = 0;
     }
 
-    void Submit()
+    // Queues the current block. Returns false if the output failed and was closed.
+    bool Submit()
     {
         Reclaim(false);
+        long now = clock.ElapsedMilliseconds;
+        if (queued.Count > 0 && !starting && now - lastProgress > StallMs) {
+            // Nothing has finished playing for a second: the device stopped (unplugged, driver
+            // restarted). Open it again with the next packet.
+            Console.WriteLine("The audio output stopped responding; reopening it.");
+            Close();
+            return false;
+        }
         if (queued.Count == 0 && !starting) {
             // Ran dry (the phone paused, or Wi-Fi hiccuped): build up a little audio again first
             starting = true;
             WaveOut.waveOutPause(handle);
         }
         if (queued.Count >= MaxBlocks) {
-            return;
+            return true;
         }
 
         int bytes = block.Length * 2;
@@ -385,14 +444,28 @@ sealed class Player
         int size = Marshal.SizeOf(typeof(WaveOut.WAVEHDR));
         IntPtr headerPtr = Marshal.AllocHGlobal(size);
         Marshal.StructureToPtr(header, headerPtr, false);
-        WaveOut.waveOutPrepareHeader(handle, headerPtr, size);
-        WaveOut.waveOutWrite(handle, headerPtr, size);
+        int result = WaveOut.waveOutPrepareHeader(handle, headerPtr, size);
+        if (result == 0) {
+            result = WaveOut.waveOutWrite(handle, headerPtr, size);
+            if (result != 0) {
+                WaveOut.waveOutUnprepareHeader(handle, headerPtr, size);
+            }
+        }
+        if (result != 0) {
+            Marshal.FreeHGlobal(data);
+            Marshal.FreeHGlobal(headerPtr);
+            Console.WriteLine("The audio output refused audio (waveOut error " + result + "); reopening it.");
+            Close();
+            return false;
+        }
         queued.Add(headerPtr);
 
         if (starting && queued.Count >= StartBlocks) {
             starting = false;
             WaveOut.waveOutRestart(handle);
+            lastProgress = now;
         }
+        return true;
     }
 
     // Frees blocks that have finished playing (or all of them when closing)
@@ -407,6 +480,9 @@ sealed class Player
                 Marshal.FreeHGlobal(header.lpData);
                 Marshal.FreeHGlobal(headerPtr);
                 queued.RemoveAt(i);
+                if (!all) {
+                    lastProgress = clock.ElapsedMilliseconds;
+                }
             }
         }
     }
@@ -497,7 +573,7 @@ sealed class WaveIn
     {
         int count = waveInGetNumDevs();
         for (int i = 0; i < count; i++) {
-            if (DeviceName(i).IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0) {
+            if (DeviceName(i).StartsWith(text, StringComparison.OrdinalIgnoreCase)) {
                 return i;
             }
         }
@@ -566,12 +642,13 @@ static class WaveOut
         return caps.szPname;
     }
 
-    // The first output whose name contains the text (Windows cuts these names to 31 characters)
+    // The first output whose name starts with the text, as Windows shows it (cut to 31 characters).
+    // Matching the start keeps "CABLE Input" from also matching VB-Audio's "Hi-Fi Cable Input".
     public static int FindDevice(string text)
     {
         int count = waveOutGetNumDevs();
         for (int i = 0; i < count; i++) {
-            if (DeviceName(i).IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0) {
+            if (DeviceName(i).StartsWith(text, StringComparison.OrdinalIgnoreCase)) {
                 return i;
             }
         }

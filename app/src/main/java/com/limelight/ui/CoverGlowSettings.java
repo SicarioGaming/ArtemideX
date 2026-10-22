@@ -264,8 +264,8 @@ public final class CoverGlowSettings {
         CREDITS.put("frame_pacing", "Warp Drive pacing from Artemis by Yukino Song");
         CREDITS.put("checkbox_ultra_low_latency", "From Moonlight X by MoreOrLessSoftware, Artemis and Artemide");
         CREDITS.put("list_audio_haptics", "Idea from Moonlight V+ by qiin2333");
-        CREDITS.put("checkbox_enable_microphone", "From logabell's Artemis changes. Needs logabell's Apollo build on the PC");
-        CREDITS.put("list_microphone_device", "From logabell's Artemis changes. Needs logabell's Apollo build on the PC");
+        CREDITS.put("checkbox_enable_microphone", "Capture from logabell's Artemis changes; the PC receiver is new in Starwire");
+        CREDITS.put("list_microphone_device", "From logabell's Artemis changes");
         CREDITS.put("seekbar_audio_haptics_intensity", "Idea from Moonlight V+ by qiin2333");
         for (String key : new String[] {"checkbox_enable_floating_button", "virtual_display_mode",
                 "checkbox_smart_clipboard_sync", "checkbox_smart_clipboard_sync_toast", "checkbox_hide_clipboard_content"}) {

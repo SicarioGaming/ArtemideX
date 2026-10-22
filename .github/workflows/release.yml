@@ -57,7 +57,7 @@ jobs:
           echo "apk=$APK" >> "$GITHUB_OUTPUT"
           # The PC side of the VBAN microphone: setup script, receiver source and guide
           if [ -d windows ]; then
-            (cd windows && zip -q ../Starwire-Microphone-for-Windows.zip setup-microphone.ps1 StarwireMicReceiver.cs README.md)
+            (cd windows && zip -q ../Starwire-Microphone-for-Windows.zip setup-microphone.cmd setup-microphone.ps1 StarwireMicReceiver.cs README.md)
             echo "extras=Starwire-Microphone-for-Windows.zip" >> "$GITHUB_OUTPUT"
           fi
 

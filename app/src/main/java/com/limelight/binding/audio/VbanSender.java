@@ -37,7 +37,8 @@ public final class VbanSender implements MicrophoneSink {
     private final int port;
     private final byte[] streamName;
     private final byte[] buffer = new byte[HEADER_SIZE + SAMPLES_PER_PACKET * 2];
-    private DatagramSocket socket;
+    private volatile DatagramSocket socket;
+    private volatile boolean closed;
     private DatagramPacket packet;
     private int samplesInPacket;
     private int frameNumber;
@@ -73,6 +74,7 @@ public final class VbanSender implements MicrophoneSink {
 
     @Override
     public int open() {
+        closed = false;
         try {
             socket = new DatagramSocket();
         }
@@ -90,7 +92,7 @@ public final class VbanSender implements MicrophoneSink {
 
     @Override
     public void write(short[] pcm, int samples) {
-        if (socket == null) {
+        if (socket == null || closed) {
             return;
         }
         // Fill 256-sample packets, little-endian, and send each one as it fills
@@ -106,9 +108,13 @@ public final class VbanSender implements MicrophoneSink {
     }
 
     private void send() {
+        DatagramSocket target = socket;
+        if (target == null || closed) {
+            return;
+        }
         writeHeader(buffer, SAMPLES_PER_PACKET, frameNumber++, streamName);
         try {
-            socket.send(packet);
+            target.send(packet);
         }
         catch (IOException e) {
             // Usually the network dropped for a moment; keep trying with the next packet
@@ -119,11 +125,14 @@ public final class VbanSender implements MicrophoneSink {
         }
     }
 
+    // Can run while the capture thread is still sending (stop() gives up waiting for it after 2 s
+    // on a stalled network), so the socket stays set: a send on a closed socket just fails quietly
     @Override
     public void close() {
-        if (socket != null) {
-            socket.close();
-            socket = null;
+        closed = true;
+        DatagramSocket target = socket;
+        if (target != null) {
+            target.close();
         }
     }
 

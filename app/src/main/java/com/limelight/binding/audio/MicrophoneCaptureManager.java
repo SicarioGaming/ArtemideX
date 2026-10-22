@@ -240,6 +240,7 @@ public class MicrophoneCaptureManager {
         int pendingPeak = 0;
         double pendingRms = 0.0;
         long lastUpdateTime = SystemClock.elapsedRealtime();
+        int readErrors = 0;
 
         while (running) {
             int samplesRead;
@@ -251,7 +252,21 @@ public class MicrophoneCaptureManager {
                 samplesRead = record.read(readBuffer, 0, readBuffer.length);
             }
 
-            if (samplesRead <= 0) {
+            if (samplesRead < 0) {
+                // The recorder failed (another app took the mic, or the device went away). Errors
+                // come back at once, so wait between tries, and give up after about a second.
+                if (++readErrors == 1) {
+                    LimeLog.warning("Microphone read failed: " + samplesRead);
+                }
+                if (readErrors >= 50) {
+                    LimeLog.warning("Microphone stopped after repeated read errors");
+                    break;
+                }
+                SystemClock.sleep(20);
+                continue;
+            }
+            readErrors = 0;
+            if (samplesRead == 0) {
                 continue;
             }
 

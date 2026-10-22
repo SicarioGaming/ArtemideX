@@ -117,22 +117,17 @@
             android:title="@string/title_microphone_device_list"
             android:summary="@string/summary_microphone_device_list"
             android:defaultValue="0" />
-        <Preference
+        <!-- WebLauncherPreference falls back to an in-app page on devices with no browser (TVs) -->
+        <com.limelight.preferences.WebLauncherPreference
             android:key="microphone_host_info"
             android:title="@string/title_microphone_host_info"
-            android:summary="@string/summary_microphone_host_info">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://github.com/logabell/apollo-microphone/releases" />
-        </Preference>
-        <Preference
+            android:summary="@string/summary_microphone_host_info"
+            url="https://github.com/logabell/apollo-microphone/releases" />
+        <com.limelight.preferences.WebLauncherPreference
             android:key="vban_setup_info"
             android:dependency="checkbox_enable_microphone"
-            android:title="@string/title_vban_setup">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:data="https://github.com/SicarioGaming/Starwire/tree/main/windows#readme" />
-        </Preference>
+            android:title="@string/title_vban_setup"
+            url="https://github.com/SicarioGaming/Starwire/tree/main/windows#readme" />
         <EditTextPreference
             android:key="text_vban_stream_name"
             android:dependency="checkbox_enable_microphone"

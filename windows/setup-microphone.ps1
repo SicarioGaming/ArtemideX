@@ -7,7 +7,7 @@ Sets up this PC to receive Starwire's microphone, whatever streaming host it run
   window opens: click "Install Driver". Restart Windows afterwards when it's new.
 - Builds Starwire's microphone receiver (StarwireMicReceiver.cs, next to this script) with the
   C# compiler that comes with Windows, and installs it in Program Files\Starwire.
-- Lets the receiver through Windows Firewall for your home network and private VPNs only.
+- Lets the receiver through Windows Firewall for local-network and private VPN addresses only.
 - Starts the receiver now and whenever you sign in (minimized), and checks the virtual
   microphone works.
 
@@ -58,6 +58,14 @@ function Finish($code) {
     exit $code
 }
 
+# Any error stops here and stays on screen, instead of the window closing before it can be read
+trap {
+    Write-Host ''
+    Write-Host "Setup stopped: $($_.Exception.Message)" -ForegroundColor Red
+    Note 'Fix that and run the setup again. Nothing after this step was changed.'
+    Finish 1
+}
+
 # --- Administrator rights (the driver and the firewall rule need them) ---
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -81,6 +89,16 @@ if ($Uninstall) {
     Remove-Item $installDir -Recurse -Force -ErrorAction SilentlyContinue
     Done 'Removed. VB-Cable is still installed; remove it with its own setup if you want.'
     Finish 0
+}
+
+# --- Smart App Control blocks programs built on this PC, like the receiver ---
+$smartAppControl = (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' -Name VerifiedAndReputablePolicyState -ErrorAction SilentlyContinue).VerifiedAndReputablePolicyState
+if ($smartAppControl -eq 1) {
+    Step 'Smart App Control is on'
+    Note "Windows' Smart App Control only runs signed programs, and Starwire's receiver is built on this PC,"
+    Note "so Windows would block it. Use VB-Audio's signed VBAN-Receptor instead: https://vb-audio.com/Voicemeeter/vban.htm"
+    Note '(set its stream to Stream1, its output to CABLE Input), with VB-Cable from https://vb-audio.com/Cable/.'
+    Finish 1
 }
 
 # --- Build and install the receiver ---
@@ -107,7 +125,15 @@ Done "Installed $exe"
 # --- VB-Cable, the virtual microphone ---
 Step 'Checking for VB-Cable'
 $restartNeeded = $false
-$outputs = & $exe --list
+try {
+    $outputs = & $exe --list
+}
+catch {
+    # Antivirus or an app-control policy refused the freshly built program
+    Note "Windows wouldn't run the receiver: $($_.Exception.Message)"
+    Note "Allow StarwireMicReceiver.exe in your antivirus, or use VB-Audio's signed VBAN-Receptor instead."
+    Finish 1
+}
 if ($outputs -match 'CABLE Input') {
     Done 'VB-Cable is installed.'
 }
@@ -142,14 +168,15 @@ else {
     $restartNeeded = $true
 }
 
-# --- Firewall: home network and private VPNs only ---
-Step 'Letting the receiver through Windows Firewall (home network only)'
+# --- Firewall: local-network and private VPN addresses only, the same ones the receiver accepts ---
+Step 'Letting the receiver through Windows Firewall (local network and private VPNs only)'
 Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
 New-NetFirewallRule -DisplayName $ruleName `
-    -Description 'Starwire sends your microphone to this PC as VBAN. Only devices on your home network or a private VPN can reach it.' `
+    -Description 'Starwire sends your microphone to this PC as VBAN. Only local-network and private VPN addresses can reach it.' `
     -Direction Inbound -Action Allow -Program $exe -Protocol UDP -LocalPort $Port `
-    -RemoteAddress @('LocalSubnet', '100.64.0.0/10', 'fc00::/7') -Profile Any | Out-Null
-Done "UDP port $Port, from this network and private VPNs (like Tailscale)."
+    -RemoteAddress @('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '169.254.0.0/16', '100.64.0.0/10', 'fc00::/7', 'fe80::/10') `
+    -Profile Any | Out-Null
+Done "UDP port $Port, from local-network and private VPN addresses (like Tailscale)."
 
 # --- Start it now and when you sign in ---
 Step 'Starting the receiver'
@@ -208,7 +235,7 @@ $speakers = [StarwireDefaults]::Name(0)
 $microphone = [StarwireDefaults]::Name(1)
 if ($speakers -match 'CABLE' -or $microphone -match 'CABLE') {
     Step 'One thing to fix in Sound settings'
-    if ($speakers -match 'CABLE') { Note "Windows made '$speakers' your default speakers, so the PC's sound goes nowhere. Pick your real speakers or headphones." }
+    if ($speakers -match 'CABLE') { Note "Windows made '$speakers' your default speakers, so the PC's sound (and the stream's) would go into the virtual microphone. Pick the output you used before: your speakers, the monitor's HDMI audio, or Steam Streaming Speakers." }
     if ($microphone -match 'CABLE') { Note "Windows made '$microphone' your default microphone. That's fine for Starwire; pick your own microphone if you also use one at the PC." }
     Start-Process 'ms-settings:sound'
 }

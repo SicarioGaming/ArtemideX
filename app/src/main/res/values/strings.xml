@@ -689,7 +689,7 @@
     <string name="microphone_target_host">The PC\'s streaming app (logabell\'s Apollo build)</string>
     <string name="microphone_target_vban">A VBAN receiver on the PC (any host)</string>
     <string name="title_vban_setup">Set up the PC</string>
-    <string name="summary_vban_setup">Run Starwire\'s microphone setup on the PC once. It installs VB-Cable (a free virtual microphone) and a small receiver. Then choose CABLE Output as the microphone in Discord or the game. Tap for the guide. Another VBAN receiver works too: stream %2$s from %1$s, port %3$d.</string>
+    <string name="summary_vban_setup">Run Starwire\'s microphone setup on the PC once. It installs VB-Cable (a free virtual microphone) and a small receiver. Then choose CABLE Output as the microphone in Discord or the game. Tap for the guide. Another VBAN receiver works too: stream %2$s from %1$s (or this device\'s VPN address over a VPN), port %3$d.</string>
     <string name="vban_this_device">this device\'s address</string>
     <string name="title_vban_stream_name">VBAN stream name</string>
     <string name="summary_vban_stream_name">%1$s. Must match the stream name on the PC\'s receiver.</string>
@@ -731,7 +731,7 @@
     <string name="impact_surround">Surround uses a little more bandwidth. No change to latency.</string>
     <string name="impact_audiofx">Can add audio delay. Leave it off unless you use an equalizer.</string>
     <string name="impact_microphone">Uses a little upload bandwidth and battery. No change to video.</string>
-    <string name="impact_microphone_target">Over the stream it\'s compressed to about 24 kbps. VBAN sends it uncompressed, under 1 Mbps, on your home network only. No change to video.</string>
+    <string name="impact_microphone_target">Over the stream it\'s compressed to about 24 kbps. VBAN sends it uncompressed, just under 1 Mbps, and only to a PC on your home network or a private VPN. No change to video.</string>
     <string name="impact_audio_haptics">Uses some battery. No change to the stream.</string>
     <string name="impact_deadzone">Lower feels more responsive, but worn sticks may drift.</string>
     <string name="impact_prevent_packet_loss">Fewer stutters on devices whose Wi-Fi naps between packets. Slightly more battery.</string>
