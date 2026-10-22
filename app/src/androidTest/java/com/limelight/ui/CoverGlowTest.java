@@ -174,6 +174,19 @@ public class CoverGlowTest {
             params.setMargins((int) (16 * d), (int) (16 * d), (int) (16 * d), (int) (16 * d));
             root.addView(menu, params);
             menu.setGameInfo("Desktop", "1440p · 120 FPS", AppIcons.accentFor("Desktop"));
+            menu.setCover(AppIcons.tile(context, "Desktop"));
+            // Stats and the menu button switched on, to show both looks of a toggle
+            menu.setMenuActionListener((com.limelight.ui.overlay.OverlayMenuView.MenuActionListener) java.lang.reflect.Proxy.newProxyInstance(
+                    getClass().getClassLoader(),
+                    new Class<?>[] {com.limelight.ui.overlay.OverlayMenuView.MenuActionListener.class},
+                    (proxy, method, args) -> {
+                        if (method.getName().equals("isToggleOn")) {
+                            int toggle = (Integer) args[0];
+                            return toggle == com.limelight.ui.overlay.OverlayMenuView.TOGGLE_STATS
+                                    || toggle == com.limelight.ui.overlay.OverlayMenuView.TOGGLE_FLOATING_BUTTON;
+                        }
+                        return null;
+                    }));
             menu.buildMenu();
             menu.setVisibility(View.VISIBLE);
             // Close selected, as when the menu opens

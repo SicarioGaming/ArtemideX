@@ -488,6 +488,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         overlayMenuView.setGameInfo(appName,
                 getString(R.string.cg_chip_resolution, prefConfig.height, prefConfig.fps),
                 CoverGlow.rememberedTint(this, getIntent().getStringExtra(EXTRA_PC_UUID), appId));
+        overlayMenuView.setCover(menuCover(getIntent().getStringExtra(EXTRA_PC_UUID), appId, appName));
 
         X509Certificate serverCert = null;
         try {
@@ -3920,6 +3921,33 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                         .show();
             });
         }).start();
+    }
+
+    // The menu header's picture: the game's box art from the app list's cache, or the Starwire
+    // tile for Desktop and games without art (as on the game screen)
+    private android.graphics.drawable.Drawable menuCover(String pcUuid, int appId, String appName) {
+        if (pcUuid == null || com.limelight.ui.AppIcons.useIcon(this, appName)) {
+            return com.limelight.ui.AppIcons.tile(this, appName);
+        }
+        java.io.File file = com.limelight.utils.CacheHelper.openPath(false, getCacheDir(), "boxart", pcUuid, appId + ".png");
+        if (file.exists()) {
+            android.graphics.BitmapFactory.Options options = new android.graphics.BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            android.graphics.BitmapFactory.decodeFile(file.getPath(), options);
+            // The host's plain default image (GFE sizes) counts as no art
+            boolean placeholder = (options.outWidth == 628 && options.outHeight == 888)
+                    || (options.outWidth == 130 && options.outHeight == 180);
+            if (!placeholder && options.outWidth > 0) {
+                // Small enough for the 42dp header
+                options.inJustDecodeBounds = false;
+                options.inSampleSize = Math.max(1, options.outWidth / 128);
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(file.getPath(), options);
+                if (bitmap != null) {
+                    return new android.graphics.drawable.BitmapDrawable(getResources(), bitmap);
+                }
+            }
+        }
+        return com.limelight.ui.AppIcons.tile(this, appName);
     }
 
     @SuppressLint("ClickableViewAccessibility")

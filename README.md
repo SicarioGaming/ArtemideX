@@ -12,7 +12,7 @@
 
 <img src="docs/cover_glow_home.png" width="820" alt="Starwire's game screen: Desktop selected and shown large with its stream settings and a Play button, and the PC's apps below as icon tiles, each in its own colour">
 
-<sub>The whole screen picks up the colour of whatever you select. Games show their own cover art; apps like Desktop or Steam Big Picture get their own icons.</sub>
+<sub>The whole screen picks up the colour of whatever you select. Games show their own cover art; Desktop and games without art get the Starwire tile, and apps like Steam Big Picture get their own icons.</sub>
 
 </div>
 
@@ -63,7 +63,8 @@ name.
 ### 🎮 Everything during a stream, one tap away
 Open the menu with the floating button, a three-finger tap or by holding Select on a
 controller. Keyboard, full on-screen keyboard, mouse modes, zoom, key shortcuts, monitor
-switching, bitrate, clipboard: it's all in one grid, and works with a controller too.
+switching, bitrate, clipboard: it's all in one grid, and works with a controller too. Anything
+that turns on and off has a small switch, so you can see what's on at a glance.
 
 ### ⚡ Fast and smooth
 A Vulkan renderer, the PyroWave codec, and low-latency options like Warp Drive, Fast V-Sync and
@@ -73,7 +74,7 @@ async decoding for when every millisecond counts.
 <td width="50%" valign="top">
 
 <img src="docs/stream_menu_aniimo.jpg" alt="The in-stream menu open over a game: the game's name, a grid of tools such as Keyboard, Full Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
-<sub>The new in-stream menu over Aniimo. Game screenshot © Pawprint Studio, from its Steam page.</sub>
+<sub>The in-stream menu over Aniimo on my tablet. Stats and the menu button are switched on. Aniimo © Pawprint Studio.</sub>
 
 </td>
 </tr>
@@ -102,6 +103,12 @@ Audio haptics turns a game's bass into vibration on your device or controller.
 </td>
 </tr>
 </table>
+
+<p align="center">
+<img src="docs/aniimo_gameplay.jpg" width="820" alt="Aniimo streaming full screen on a tablet, with a one-line stats readout at the top: 47 Mbps, ping 4 ms, decode 1.2 ms, dropped 0.0%, 160 FPS">
+<br>
+<sub>Aniimo streamed to my RedMagic Astra, with the Lite stats line at the top. Aniimo © Pawprint Studio.</sub>
+</p>
 
 ## Get started
 

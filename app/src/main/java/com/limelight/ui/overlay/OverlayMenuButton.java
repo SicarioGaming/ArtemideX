@@ -222,11 +222,12 @@ public class OverlayMenuButton extends LinearLayout {
         // A small switch in the top corner: an outline with the knob at the start when off,
         // filled with the knob at the end when on
         float d = getResources().getDisplayMetrics().density;
-        float w = 20 * d, h = 11 * d, inset = 9 * d;
+        // Small and tucked into the corner, clear of the centred icon
+        float w = 15 * d, h = 8 * d, inset = 6 * d;
         float left = getLayoutDirection() == LAYOUT_DIRECTION_RTL ? inset : getWidth() - inset - w;
         switchTrack.set(left, inset, left + w, inset + h);
         int ink = isSelected ? DARK : Color.WHITE;
-        float knobRadius = h / 2 - 2.5f * d;
+        float knobRadius = h / 2 - 2f * d;
         boolean knobAtEnd = isOn != (getLayoutDirection() == LAYOUT_DIRECTION_RTL);
         float knobX = knobAtEnd ? switchTrack.right - h / 2 : switchTrack.left + h / 2;
 
@@ -238,7 +239,7 @@ public class OverlayMenuButton extends LinearLayout {
         }
         else {
             switchPaint.setStyle(Paint.Style.STROKE);
-            switchPaint.setStrokeWidth(1.5f * d);
+            switchPaint.setStrokeWidth(1.2f * d);
             switchPaint.setColor((ink & 0x00FFFFFF) | 0x99000000);
             canvas.drawRoundRect(switchTrack, h / 2, h / 2, switchPaint);
             switchPaint.setStyle(Paint.Style.FILL);

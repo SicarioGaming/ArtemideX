@@ -3,6 +3,8 @@ package com.limelight.ui.overlay;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -137,7 +139,7 @@ public class OverlayMenuView extends LinearLayout {
     private static final int MONITOR_COUNT = 6;
 
     private GradientDrawable sheetBackground;
-    private View coverSwatch;
+    private ImageView coverSwatch;
     private TextView titleView;
     private TextView detailView;
     private ScrollView gridScroll;
@@ -232,7 +234,10 @@ public class OverlayMenuView extends LinearLayout {
         LinearLayout header = new LinearLayout(context);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        coverSwatch = new View(context);
+        // The game's cover (or a swatch of its colour until one is set), with rounded corners
+        coverSwatch = new ImageView(context);
+        coverSwatch.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        coverSwatch.setClipToOutline(true);
         header.addView(coverSwatch, new LinearLayout.LayoutParams(dp(42), dp(56)));
 
         LinearLayout texts = new LinearLayout(context);
@@ -303,6 +308,11 @@ public class OverlayMenuView extends LinearLayout {
         swatch.setCornerRadius(dp(10));
         swatch.setColor(tint);
         coverSwatch.setBackground(swatch);
+    }
+
+    /** The game's cover for the header; null keeps the plain colour swatch. */
+    public void setCover(Drawable cover) {
+        coverSwatch.setImageDrawable(cover);
     }
 
     @Override
