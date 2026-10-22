@@ -45,4 +45,7 @@ variables → Actions), set once:
 | `VOIDLINK_KEY_ALIAS` | `voidlink` |
 | `VOIDLINK_KEY_PASSWORD` | the key password |
 
+With the GitHub CLI signed in, `.\tools\set-release-secrets.ps1` sets all four from
+`keystore.properties` without showing the passwords.
+
 Tags with a hyphen (like `v0.2.0-beta1`) are published as pre-releases.
