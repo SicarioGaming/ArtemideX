@@ -107,6 +107,13 @@ public class OverlayMenuViewTest {
     }
 
     @Test
+    public void fullKeyboardSitsInTheTopRowNextToKeyboard() {
+        View keyboard = findButton(menu, str(com.limelight.R.string.overlay_menu_keyboard));
+        View fullKeyboard = findButton(menu, str(com.limelight.R.string.overlay_menu_full_keyboard));
+        assertTrue("Full Keyboard isn't in the same row as Keyboard", keyboard.getParent() == fullKeyboard.getParent());
+    }
+
+    @Test
     public void mainRowHasAllArtemideButtons() {
         int[] labels = {
             com.limelight.R.string.overlay_menu_shortcuts,
@@ -234,16 +241,16 @@ public class OverlayMenuViewTest {
         press(KeyEvent.KEYCODE_DPAD_DOWN);
         assertTrue(selected(com.limelight.R.string.overlay_menu_close));
 
-        // The grid has four columns: up from the last tile lands one row higher
+        // The grid has five columns: up from the last tile lands one row higher
         press(KeyEvent.KEYCODE_DPAD_UP);
         press(KeyEvent.KEYCODE_DPAD_UP);
-        assertTrue(selected(com.limelight.R.string.overlay_menu_task_manager));
+        assertTrue(selected(com.limelight.R.string.overlay_menu_fetch_clipboard));
         press(KeyEvent.KEYCODE_DPAD_LEFT);
-        assertTrue(selected(com.limelight.R.string.overlay_menu_server_commands));
+        assertTrue(selected(com.limelight.R.string.overlay_menu_upload_clipboard));
 
         // Down twice: the bottom row, then Close, which sits above Quit and Disconnect
         press(KeyEvent.KEYCODE_DPAD_DOWN);
-        assertTrue(selected(com.limelight.R.string.overlay_menu_full_keyboard));
+        assertTrue(selected(com.limelight.R.string.overlay_menu_onscreen_controller));
         press(KeyEvent.KEYCODE_DPAD_DOWN);
         assertTrue(selected(com.limelight.R.string.overlay_menu_close));
         press(KeyEvent.KEYCODE_DPAD_DOWN);

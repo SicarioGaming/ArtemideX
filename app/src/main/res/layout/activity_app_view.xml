@@ -58,9 +58,11 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:fontFamily="sans-serif-black"
+                android:includeFontPadding="false"
+                android:letterSpacing="-0.01"
                 android:text="@string/cg_wordmark"
                 android:textColor="#FFFFFFFF"
-                android:textSize="20sp" />
+                android:textSize="34sp" />
         </FrameLayout>
 
         <LinearLayout

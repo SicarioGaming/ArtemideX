@@ -59,7 +59,8 @@ async decoding for when every millisecond counts.
 </td>
 <td width="50%" valign="top">
 
-<img src="docs/readme_menu.png" alt="The in-stream menu: the game's name, a grid of tools such as Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
+<img src="docs/stream_menu_aniimo.jpg" alt="The in-stream menu open over a game: the game's name, a grid of tools such as Keyboard, Full Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
+<sub>The in-stream menu over Aniimo. Game screenshot © Pawprint Studio, from its Steam page.</sub>
 
 </td>
 </tr>
@@ -73,7 +74,9 @@ async decoding for when every millisecond counts.
 
 ### 🧭 Settings that explain themselves
 Sections with plain names (Stream, Sound & vibration, Controllers…), and a **Predicted impact**
-panel that shows whether your choices lean towards fastest response or smoothest motion.
+panel that shows whether your choices lean towards fastest response or smoothest motion, and
+which setting is pushing it which way. Tap a setting that came from another fork and a small
+line under the panel says where it came from and who made it.
 
 ### 🖐 Made for touchscreens
 Pinch to zoom anytime, trackpad modes, long-press to right-click, an on-screen keyboard with

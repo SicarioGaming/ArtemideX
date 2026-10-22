@@ -308,6 +308,13 @@ public class StreamSettings extends Activity {
         }
 
         @Override
+        public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
+            // Credit settings that came from another Moonlight version, under the panel
+            CoverGlowSettings.showCredit(getActivity(), preference);
+            return super.onPreferenceTreeClick(preferenceScreen, preference);
+        }
+
+        @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 

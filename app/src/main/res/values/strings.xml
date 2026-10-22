@@ -584,6 +584,18 @@
 
     <!-- Cover Glow settings: the "Predicted impact" panel -->
     <string name="feel_title">Predicted impact</string>
+    <string name="feel_moving_it">What\'s moving it</string>
+    <string name="feel_factor_pacing">Frame pacing</string>
+    <string name="feel_factor_vsync">V-Sync</string>
+    <string name="feel_factor_async_lfr">Async LFR</string>
+    <string name="feel_on">On</string>
+    <string name="feel_off">Off</string>
+    <string name="feel_effect_faster">◀ Faster</string>
+    <string name="feel_effect_smoother">Smoother ▶</string>
+    <string name="feel_effect_balanced">Middle</string>
+    <string name="feel_effect_none">No effect</string>
+    <string name="feel_effect_not_used">Not used</string>
+    <string name="feel_factor_row">%1$s: %2$s</string>
     <string name="feel_fastest">Fastest response</string>
     <string name="feel_smoothest">Smoothest motion</string>
     <string name="feel_delay">Input delay</string>

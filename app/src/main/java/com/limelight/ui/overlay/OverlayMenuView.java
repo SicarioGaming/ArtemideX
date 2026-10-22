@@ -34,7 +34,8 @@ import java.util.List;
 public class OverlayMenuView extends LinearLayout {
     private static final int BUTTON_SPACING_DP = 8;
     private static final int SHEET_WIDTH_DP = 440;
-    private static final int MAIN_COLUMNS = 4;
+    // Five across, so the built-in tools fit on a tablet without scrolling
+    private static final int MAIN_COLUMNS = 5;
     // Shortcut and monitor names are longer, so their pages use wider tiles
     private static final int PAGE_COLUMNS = 2;
     private static final float ANALOG_STICK_THRESHOLD = 0.5f;
@@ -334,11 +335,13 @@ public class OverlayMenuView extends LinearLayout {
             }
             addTile(0, getContext().getString(R.string.overlay_menu_back), ACTION_BACK);
         } else {
-            // The most used first: keyboard, mouse, stats and the Guide button, then Artemide's
-            // actions and custom commands
+            // The most used first: both keyboards, mouse, stats and the Guide button, then
+            // Artemide's actions and custom commands
             columns = MAIN_COLUMNS;
             addTile(R.drawable.ic_overlay_keyboard_toggle,
                 getContext().getString(R.string.overlay_menu_keyboard), ACTION_SHOW_KEYBOARD);
+            addTile(R.drawable.ic_overlay_keyboard,
+                getContext().getString(R.string.overlay_menu_full_keyboard), ACTION_FULL_KEYBOARD);
             addTile(R.drawable.ic_overlay_mouse,
                 getContext().getString(R.string.overlay_menu_mouse_emulation), ACTION_TOGGLE_MOUSE_EMULATION);
             addTile(R.drawable.ic_overlay_perf,
@@ -369,8 +372,6 @@ public class OverlayMenuView extends LinearLayout {
                 getContext().getString(R.string.overlay_menu_rotate_screen), ACTION_ROTATE_SCREEN);
             addTile(R.drawable.ic_overlay_gamepad,
                 getContext().getString(R.string.overlay_menu_onscreen_controller), ACTION_ONSCREEN_CONTROLLER);
-            addTile(R.drawable.ic_overlay_keyboard,
-                getContext().getString(R.string.overlay_menu_full_keyboard), ACTION_FULL_KEYBOARD);
             addTile(R.drawable.ic_overlay_window_menu,
                 getContext().getString(R.string.overlay_menu_floating_button), ACTION_FLOATING_BUTTON);
 
@@ -440,7 +441,9 @@ public class OverlayMenuView extends LinearLayout {
     private void finishGridRow() {
         if (currentRow != null) {
             while (currentRow.getChildCount() < columns) {
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, 0, 1);
+                // MATCH_PARENT like the tiles: a fixed-height filler would make the row measure
+                // itself from the fillers and collapse to nothing
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1);
                 params.setMarginStart(dp(BUTTON_SPACING_DP));
                 currentRow.addView(new Space(getContext()), params);
             }
@@ -705,9 +708,20 @@ public class OverlayMenuView extends LinearLayout {
         }
 
         gridIndex = index;
-        gridButtons.get(index).setSelected(true);
-        // Focusing a tile also scrolls the grid to it
-        gridButtons.get(index).requestFocus();
+        OverlayMenuButton tile = gridButtons.get(index);
+        tile.setSelected(true);
+        tile.requestFocus();
+        // Focus doesn't scroll in touch mode (after the screen was touched), so bring the tile's
+        // row into view explicitly
+        View row = (View) tile.getParent();
+        int top = row.getTop(), bottom = row.getBottom();
+        int visibleTop = gridScroll.getScrollY(), visibleBottom = visibleTop + gridScroll.getHeight();
+        if (bottom > visibleBottom) {
+            gridScroll.smoothScrollTo(0, bottom - gridScroll.getHeight());
+        }
+        else if (top < visibleTop) {
+            gridScroll.smoothScrollTo(0, top);
+        }
     }
 
     private void clearBarSelection() {

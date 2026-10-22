@@ -115,7 +115,7 @@ public class OverlayMenuButton extends LinearLayout {
             setGravity(Gravity.CENTER);
             int padding = (int) (8 * density);
             setPadding(padding, (int) (12 * density), padding, (int) (10 * density));
-            setMinimumHeight((int) (88 * density));
+            setMinimumHeight((int) (82 * density));
             background.setCornerRadius(18 * density);
             ((LinearLayout.LayoutParams) iconView.getLayoutParams()).gravity = Gravity.CENTER_HORIZONTAL;
             labelParams.leftMargin = 0;

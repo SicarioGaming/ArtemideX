@@ -63,9 +63,10 @@ public final class CoverGlow {
                 darken(Color.blue(tint), 0.16f, 8));
     }
 
-    /** Frosted panels and sheets: a little lighter than deep(), mostly opaque. */
+    /** Frosted panels and sheets: a little lighter than deep(), nearly opaque so the stream
+     *  behind doesn't show through the text. */
     public static int panel(int tint) {
-        return Color.argb(0xE0, darken(Color.red(tint), 0.22f, 10),
+        return Color.argb(0xF4, darken(Color.red(tint), 0.22f, 10),
                 darken(Color.green(tint), 0.22f, 10),
                 darken(Color.blue(tint), 0.22f, 10));
     }

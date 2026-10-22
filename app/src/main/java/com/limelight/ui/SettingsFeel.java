@@ -5,27 +5,52 @@ import android.content.SharedPreferences;
 
 import com.limelight.R;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
- * The settings screen's "Predicted impact" panel: where the frame pacing and V-Sync choices sit
- * between fastest response and smoothest motion, in plain words. These are rough comparisons
- * between the choices, not measurements.
+ * The settings screen's "Predicted impact" panel: where the frame pacing, V-Sync and Async LFR
+ * choices put you between fastest response and smoothest motion, and which way each of them
+ * pushes. These are rough comparisons between the choices, not measurements.
  */
 public final class SettingsFeel {
     public static final int LEVEL_LOWER = 0;
     public static final int LEVEL_MEDIUM = 1;
     public static final int LEVEL_HIGHER = 2;
 
+    public static final int EFFECT_FASTER = -1;
+    public static final int EFFECT_NONE = 0;
+    public static final int EFFECT_SMOOTHER = 1;
+    public static final int EFFECT_NOT_USED = 2;
+    public static final int EFFECT_BALANCED = 3;
+
+    /** One setting that moves the marker: its name, its current value, and which way it pushes. */
+    public static final class Factor {
+        public final String name;
+        public final String value;
+        public final int effect;
+
+        Factor(String name, String value, int effect) {
+            this.name = name;
+            this.value = value;
+            this.effect = effect;
+        }
+    }
+
     /** 0 is fastest response, 1 is smoothest motion. */
     public final float position;
     public final String text;
     public final int delay;
     public final int battery;
+    public final List<Factor> factors;
 
-    private SettingsFeel(float position, String text, int delay, int battery) {
+    private SettingsFeel(float position, String text, int delay, int battery, List<Factor> factors) {
         this.position = position;
         this.text = text;
         this.delay = delay;
         this.battery = battery;
+        this.factors = Collections.unmodifiableList(factors);
     }
 
     public static SettingsFeel describe(Context context, SharedPreferences prefs) {
@@ -76,30 +101,68 @@ public final class SettingsFeel {
                 break;
             case "balanced":
             default:
+                pacing = "balanced";
                 position = 0.45f;
                 textRes = R.string.feel_balanced;
                 delay = LEVEL_MEDIUM;
                 break;
         }
 
-        StringBuilder text = new StringBuilder(context.getString(textRes));
-        // V-Sync and the async options apply to the direct renderer, not host frame timing
+        List<Factor> factors = new ArrayList<>();
+        int pacingEffect = position < 0.35f ? EFFECT_FASTER : position > 0.6f ? EFFECT_SMOOTHER : EFFECT_BALANCED;
+        factors.add(new Factor(context.getString(R.string.feel_factor_pacing),
+                entryName(context, R.array.video_frame_pacing_names, R.array.video_frame_pacing_values, pacing),
+                pacingEffect));
+
+        // V-Sync and Async LFR apply to the direct renderer, not host frame timing
         boolean direct = !"host-timed".equals(pacing);
-        if (direct && "vsync".equals(vsync)) {
+        String vsyncName = entryName(context, R.array.vsync_mode_names, R.array.vsync_mode_values, vsync);
+        int vsyncEffect;
+        if (!direct) {
+            vsyncEffect = EFFECT_NOT_USED;
+        }
+        else if ("vsync".equals(vsync)) {
             position += 0.15f;
             delay = Math.min(LEVEL_HIGHER, delay + 1);
-            text.append(' ').append(context.getString(R.string.feel_vsync));
+            vsyncEffect = EFFECT_SMOOTHER;
         }
-        else if (direct && "fast".equals(vsync)) {
+        else if ("fast".equals(vsync)) {
             position += 0.05f;
-            text.append(' ').append(context.getString(R.string.feel_fast_vsync));
+            vsyncEffect = EFFECT_SMOOTHER;
         }
-        if (direct && asyncLfr) {
-            position -= 0.05f;
-            text.append(' ').append(context.getString(R.string.feel_async_lfr));
+        else {
+            vsyncEffect = EFFECT_NONE;
         }
+        factors.add(new Factor(context.getString(R.string.feel_factor_vsync), vsyncName, vsyncEffect));
 
-        return new SettingsFeel(Math.max(0f, Math.min(1f, position)), text.toString(), delay, battery);
+        int lfrEffect;
+        if (!direct) {
+            lfrEffect = EFFECT_NOT_USED;
+        }
+        else if (asyncLfr) {
+            position -= 0.05f;
+            lfrEffect = EFFECT_FASTER;
+        }
+        else {
+            lfrEffect = EFFECT_NONE;
+        }
+        factors.add(new Factor(context.getString(R.string.feel_factor_async_lfr),
+                context.getString(asyncLfr ? R.string.feel_on : R.string.feel_off), lfrEffect));
+
+        return new SettingsFeel(Math.max(0f, Math.min(1f, position)), context.getString(textRes),
+                delay, battery, factors);
+    }
+
+    // The name shown in settings for a list setting's value
+    private static String entryName(Context context, int namesRes, int valuesRes, String value) {
+        String[] names = context.getResources().getStringArray(namesRes);
+        String[] values = context.getResources().getStringArray(valuesRes);
+        for (int i = 0; i < values.length && i < names.length; i++) {
+            if (values[i].equals(value)) {
+                return names[i];
+            }
+        }
+        return value;
     }
 
     public static String levelName(Context context, int level) {
@@ -110,6 +173,34 @@ public final class SettingsFeel {
                 return context.getString(R.string.feel_level_higher);
             default:
                 return context.getString(R.string.feel_level_medium);
+        }
+    }
+
+    public static String effectName(Context context, int effect) {
+        switch (effect) {
+            case EFFECT_FASTER:
+                return context.getString(R.string.feel_effect_faster);
+            case EFFECT_SMOOTHER:
+                return context.getString(R.string.feel_effect_smoother);
+            case EFFECT_NOT_USED:
+                return context.getString(R.string.feel_effect_not_used);
+            case EFFECT_BALANCED:
+                return context.getString(R.string.feel_effect_balanced);
+            default:
+                return context.getString(R.string.feel_effect_none);
+        }
+    }
+
+    public static int effectColor(int effect) {
+        switch (effect) {
+            case EFFECT_FASTER:
+                return 0xFFFDBA74;
+            case EFFECT_SMOOTHER:
+                return 0xFFA5B4FC;
+            case EFFECT_BALANCED:
+                return 0xFFE9D5FF;
+            default:
+                return 0xFF94A3B8;
         }
     }
 }

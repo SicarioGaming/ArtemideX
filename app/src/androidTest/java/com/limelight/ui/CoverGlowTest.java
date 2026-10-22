@@ -192,9 +192,9 @@ public class CoverGlowTest {
         SettingsFeel vsync = SettingsFeel.describe(context, "latency", "vsync", false);
         assertTrue(vsync.position > latency.position);
         assertEquals(SettingsFeel.LEVEL_MEDIUM, vsync.delay);
-        assertTrue(vsync.text.contains("V-Sync"));
+        assertEquals(SettingsFeel.EFFECT_SMOOTHER, vsync.factors.get(1).effect);
         SettingsFeel host = SettingsFeel.describe(context, "host-timed", "vsync", true);
-        assertEquals(SettingsFeel.describe(context, "host-timed", "off", false).text, host.text);
+        assertEquals(SettingsFeel.describe(context, "host-timed", "off", false).position, host.position, 0.001f);
 
         // Unknown values fall back to Balanced
         assertEquals(balanced.text, SettingsFeel.describe(context, "something-new", "off", false).text);
@@ -248,6 +248,86 @@ public class CoverGlowTest {
             ring.setVisible(false, false);
             assertFalse(ring.isRunning());
         });
+    }
+
+    @Test
+    public void streamMenuOverlayRendersOnTransparent() {
+        Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Context context = new ContextThemeWrapper(target, R.style.AppTheme);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            // Transparent around the sheet, to lay over a game screenshot
+            FrameLayout root = new FrameLayout(context);
+            com.limelight.ui.overlay.OverlayMenuView menu = new com.limelight.ui.overlay.OverlayMenuView(context);
+            float d = context.getResources().getDisplayMetrics().density;
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.Gravity.END);
+            params.setMargins((int) (16 * d), (int) (16 * d), (int) (16 * d), (int) (16 * d));
+            root.addView(menu, params);
+            menu.setGameInfo("Aniimo", "1504p · 120 FPS", 0xFF4F46E5);
+            menu.buildMenu();
+            menu.setVisibility(View.VISIBLE);
+            menu.dispatchKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN,
+                    android.view.KeyEvent.KEYCODE_DPAD_UP));
+            menu.dispatchKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN,
+                    android.view.KeyEvent.KEYCODE_DPAD_DOWN));
+            save(root, target, "menu_overlay.png");
+
+            // Every row of tools is laid out and inside the visible part of the grid
+            android.widget.ScrollView grid = findFirst(menu, android.widget.ScrollView.class);
+            ViewGroup rows = (ViewGroup) grid.getChildAt(0);
+            StringBuilder layout = new StringBuilder("scroll h=" + grid.getHeight() + " content h=" + rows.getHeight() + ";");
+            for (int i = 0; i < rows.getChildCount(); i++) {
+                View row = rows.getChildAt(i);
+                layout.append(" row").append(i).append(" top=").append(row.getTop()).append(" h=").append(row.getHeight())
+                        .append(" n=").append(((ViewGroup) row).getChildCount())
+                        .append(" first h=").append(((ViewGroup) row).getChildAt(0).getHeight()).append(';');
+            }
+            View last = rows.getChildAt(rows.getChildCount() - 1);
+            assertTrue(layout.toString(), last.getHeight() > 0 && last.getBottom() <= grid.getHeight());
+        });
+    }
+
+    private static <T extends View> T findFirst(View root, Class<T> type) {
+        if (type.isInstance(root)) {
+            return type.cast(root);
+        }
+        if (root instanceof ViewGroup) {
+            for (int i = 0; i < ((ViewGroup) root).getChildCount(); i++) {
+                T found = findFirst(((ViewGroup) root).getChildAt(i), type);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Test
+    public void predictedImpactSaysWhatMovesIt() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        SettingsFeel warpVsync = SettingsFeel.describe(context, "warp", "vsync", true);
+        assertEquals(3, warpVsync.factors.size());
+        assertEquals(SettingsFeel.EFFECT_FASTER, warpVsync.factors.get(0).effect);
+        assertEquals(SettingsFeel.EFFECT_SMOOTHER, warpVsync.factors.get(1).effect);
+        assertEquals(SettingsFeel.EFFECT_FASTER, warpVsync.factors.get(2).effect);
+        // The values are the names people see in settings, not internal ones
+        assertTrue(warpVsync.factors.get(0).value, warpVsync.factors.get(0).value.startsWith("Warp Drive"));
+
+        // Host frame timing ignores V-Sync and Async LFR
+        SettingsFeel host = SettingsFeel.describe(context, "host-timed", "vsync", true);
+        assertEquals(SettingsFeel.EFFECT_NOT_USED, host.factors.get(1).effect);
+        assertEquals(SettingsFeel.EFFECT_NOT_USED, host.factors.get(2).effect);
+    }
+
+    @Test
+    public void borrowedSettingsAreCredited() {
+        assertTrue(CoverGlowSettings.creditFor("checkbox_async_decode").contains("derflacco"));
+        assertTrue(CoverGlowSettings.creditFor("list_audio_haptics").contains("Moonlight V+"));
+        assertTrue(CoverGlowSettings.creditFor("checkbox_custom_vulkan_driver").contains("NoCrypt"));
+        // Moonlight's own and Voidlink's new settings have no credit line
+        assertEquals(null, CoverGlowSettings.creditFor("list_resolution"));
+        assertEquals(null, CoverGlowSettings.creditFor("hide_cursor_mode"));
     }
 
     @Test

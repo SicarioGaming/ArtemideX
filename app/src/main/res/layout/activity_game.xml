@@ -71,14 +71,15 @@
     <!-- Floating menu button (from Artemide): tap to open the overlay menu, drag to move -->
     <ImageButton
         android:id="@+id/floatingMenuButton"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
         android:layout_gravity="top|start"
         android:layout_marginTop="24dp"
+        android:layout_marginStart="16dp"
         android:background="@drawable/floating_menu_button"
         android:contentDescription="@string/menu_button"
         android:src="@drawable/ic_menu"
-        android:padding="6dp"
+        android:padding="11dp"
         android:visibility="gone"
         android:elevation="9999dp" />
 

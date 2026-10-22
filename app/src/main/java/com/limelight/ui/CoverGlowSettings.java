@@ -196,6 +196,35 @@ public final class CoverGlowSettings {
         ((TextView) activity.findViewById(R.id.feelDelay)).setText(SettingsFeel.levelName(activity, feel.delay));
         ((TextView) activity.findViewById(R.id.feelBattery)).setText(SettingsFeel.levelName(activity, feel.battery));
 
+        // One row per setting that moves the marker: its value, and which way it pushes
+        LinearLayout factors = activity.findViewById(R.id.feelFactors);
+        factors.removeAllViews();
+        float d = activity.getResources().getDisplayMetrics().density;
+        for (SettingsFeel.Factor factor : feel.factors) {
+            LinearLayout row = new LinearLayout(activity);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, (int) (4 * d), 0, (int) (4 * d));
+
+            TextView name = new TextView(activity);
+            name.setText(activity.getString(R.string.feel_factor_row, factor.name, factor.value));
+            name.setTextColor(0xFFFFFFFF);
+            name.setTextSize(13);
+            name.setMaxLines(2);
+            row.addView(name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+            TextView effect = new TextView(activity);
+            effect.setText(SettingsFeel.effectName(activity, factor.effect));
+            effect.setTextColor(SettingsFeel.effectColor(factor.effect));
+            effect.setTextSize(13);
+            effect.setTypeface(Typeface.DEFAULT_BOLD);
+            LinearLayout.LayoutParams effectParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            effectParams.setMarginStart((int) (10 * d));
+            row.addView(effect, effectParams);
+            factors.addView(row);
+        }
+
         View track = activity.findViewById(R.id.feelTrack);
         View knob = activity.findViewById(R.id.feelKnob);
         knob.setTag(feel.position);
@@ -209,6 +238,69 @@ public final class CoverGlowSettings {
                 knob.setTranslationX(x);
             }
         });
+    }
+
+    // Settings that came from another Moonlight version, credited the same way as the README
+    private static final java.util.Map<String, String> CREDITS = new java.util.HashMap<>();
+
+    static {
+        String artemide = "From Artemide by derflacco";
+        String artemis = "From Artemis by Yukino Song";
+        String moonlightX = "From Moonlight X by MoreOrLessSoftware";
+        String turnip = "From Moonlight X Turnip by NoCrypt";
+        String keyboard = "Full keyboard from Axixi2233 and Artemis by Yukino Song";
+        for (String key : new String[] {"checkbox_sync_lfr", "checkbox_async_decode", "checkbox_async_lfr"}) {
+            CREDITS.put(key, artemide);
+        }
+        CREDITS.put("vsync_mode", "Fast V-Sync from Artemide by derflacco");
+        CREDITS.put("frame_pacing", "Warp Drive pacing from Artemis by Yukino Song");
+        CREDITS.put("checkbox_ultra_low_latency", "From Moonlight X by MoreOrLessSoftware, Artemis and Artemide");
+        CREDITS.put("list_audio_haptics", "Idea from Moonlight V+ by qiin2333");
+        CREDITS.put("seekbar_audio_haptics_intensity", "Idea from Moonlight V+ by qiin2333");
+        for (String key : new String[] {"checkbox_enable_floating_button", "virtual_display_mode",
+                "checkbox_smart_clipboard_sync", "checkbox_smart_clipboard_sync_toast", "checkbox_hide_clipboard_content"}) {
+            CREDITS.put(key, artemis);
+        }
+        CREDITS.put("checkbox_prevent_packet_loss", "From Artemis by Yukino Song, via Artemide");
+        CREDITS.put("seekbar_touch_sensitivity", "From Artemis by Yukino Song and Axixi2233");
+        for (String key : new String[] {"overlay_custom_commands", "overlay_trigger_button", "overlay_hold_duration",
+                "video_format", "video_renderer", "pyrowave_late_frames"}) {
+            CREDITS.put(key, moonlightX);
+        }
+        CREDITS.put("import_shortcuts_file", "File format from Axixi2233 and Artemis by Yukino Song");
+        CREDITS.put("clear_imported_shortcuts", "File format from Axixi2233 and Artemis by Yukino Song");
+        CREDITS.put("checkbox_pinch_to_zoom", "Idea from Moonlit Artemis by 4had45");
+        for (String key : new String[] {"checkbox_keyboard_vibrate", "checkbox_sticky_modifier_keys", "seekbar_keyboard_opacity"}) {
+            CREDITS.put(key, keyboard);
+        }
+        for (String key : new String[] {"checkbox_custom_vulkan_driver", "text_custom_vulkan_driver_path",
+                "checkbox_custom_vulkan_driver_toast"}) {
+            CREDITS.put(key, turnip);
+        }
+        CREDITS.put("checkbox_enable_perf_overlay_lite", "From Axixi2233, via Artemis and Artemide");
+    }
+
+    /** Where a setting came from, or null for Moonlight's own and Voidlink's new settings. */
+    static String creditFor(String key) {
+        return key == null ? null : CREDITS.get(key);
+    }
+
+    /** Shows, quietly under the Predicted impact panel, where the setting just tapped came from. */
+    public static void showCredit(Activity activity, Preference preference) {
+        TextView credit = activity.findViewById(R.id.settingCredit);
+        View panel = activity.findViewById(R.id.feelPanel);
+        if (credit == null || panel == null || panel.getVisibility() != View.VISIBLE) {
+            return;
+        }
+        String source = creditFor(preference.getKey());
+        if (source == null) {
+            credit.setVisibility(View.GONE);
+            return;
+        }
+        credit.setText(preference.getTitle() + " · " + source);
+        credit.setAlpha(0f);
+        credit.setVisibility(View.VISIBLE);
+        credit.animate().alpha(1f).setDuration(250).start();
     }
 
     /** "Audio Settings" reads as "Audio" on a pill. */

@@ -156,7 +156,13 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 - [x] Icon tiles for apps without cover art (Desktop, Steam Big Picture, Playnite and so on),
       chosen under Settings → App → App covers; a flowing rainbow on the wordmark and the selected
       game's ring; a faint dot grid and HUD-style tags for a gamer feel
-- [ ] Try it all with a paired PC and real covers
+- [x] Predicted impact lists what's moving it (frame pacing, V-Sync, Async LFR) and which way;
+      settings taken from another fork show a quiet credit line under the panel when tapped
+- [x] In-stream menu: five tiles across with Full Keyboard next to Keyboard, a nearly opaque
+      panel, the selected row scrolled into view, and a bigger floating button
+- [x] Larger Voidlink wordmark on the home screen
+- [x] Tried on the RedMagic Astra over a live stream: the menu tools work; the last row of the
+      menu was hidden by a layout bug, now fixed and covered by a test
 
 ## Open questions
 
