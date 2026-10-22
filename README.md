@@ -20,23 +20,36 @@
 
 ## Why I made Starwire
 
-I stream games from my PC to my tablet all the time with Moonlight. The community has built some
-brilliant versions of it, but each one is great at something different: one has the smoothest
-video, another has the best touch controls, another has the handiest in-stream menu. I got tired
-of switching between them.
+I have been exclusively streaming games from my headless PC to client devices for about five
+years now. I recently found myself looking for a new Android client, and came upon
+[MoreOrLessSoftware](https://github.com/MoreOrLessSoftware)'s
+[Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android), which includes direct
+frame pacing and PyroWave support. It had a noticeable impact on my stream quality, even without
+using PyroWave (I don't have the connection strength to use it in practice), but I wondered how
+the stream could perform if it had the Fast V-Sync, LFR, Async, and Codec options that
+Artemis/Artemide has. I also missed some QoL features that the recent Windows forks have adopted
+that seem to be lagging in terms of an Android client equivalent.
 
-Starwire brings the best of them into one app and keeps up with them as they improve. It starts
-from [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android)'s fast video
-pipeline, adds the touchscreen tools from
-[Artemide](https://github.com/derflacco/moonlight-android) and
+The community has built some brilliant solutions as we continue down the Nth generation of forks,
+but I found each one is great at something different: one has the smoothest video, another has
+the best touch controls, another has the handiest in-stream menu. I got tired of having to pick
+between them, so I made Starwire. Give it a try and see if it warrants replacing your current
+client; it has been a godsend to my use case while testing.
+
+Back-end development started from
+[Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android)'s fast video pipeline, adds
+the touchscreen tools from [Artemide](https://github.com/derflacco/moonlight-android) and
 [Artemis](https://github.com/ClassicOldSong/moonlight-android), and picks up favourite features
 from [Moonlight V+](https://github.com/qiin2333/moonlight-vplus),
 [Moonlit Artemis](https://github.com/4had45/moonlit-artemis) and
-[Moonlight X Turnip](https://github.com/NoCrypt/moonlight-x-turnip). Then I gave it a look I
-actually enjoy opening. It installs next to any Moonlight you already have, so you can try it
-without giving anything up.
+[Moonlight X Turnip](https://github.com/NoCrypt/moonlight-x-turnip). I then gave it a refreshed UI
+that draws from some of the trends coming out of Silicon Valley these days. It installs next to
+any Moonlight you already have, so you can try it without giving anything up.
 
-## What you get
+<sub>Starwire was briefly called Voidlink. An iOS Moonlight client already uses that name, so I
+changed it early to avoid confusion.</sub>
+
+## Features
 
 <table>
 <tr>
@@ -49,8 +62,8 @@ name.
 
 ### 🎮 Everything during a stream, one tap away
 Open the menu with the floating button, a three-finger tap or by holding Select on a
-controller. Keyboard, mouse modes, zoom, key shortcuts, monitor switching, bitrate,
-clipboard: it's all in one grid, and works with a controller too.
+controller. Keyboard, full on-screen keyboard, mouse modes, zoom, key shortcuts, monitor
+switching, bitrate, clipboard: it's all in one grid, and works with a controller too.
 
 ### ⚡ Fast and smooth
 A Vulkan renderer, the PyroWave codec, and low-latency options like Warp Drive, Fast V-Sync and
@@ -60,7 +73,7 @@ async decoding for when every millisecond counts.
 <td width="50%" valign="top">
 
 <img src="docs/stream_menu_aniimo.jpg" alt="The in-stream menu open over a game: the game's name, a grid of tools such as Keyboard, Full Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
-<sub>The in-stream menu over Aniimo. Game screenshot © Pawprint Studio, from its Steam page.</sub>
+<sub>The new in-stream menu over Aniimo. Game screenshot © Pawprint Studio, from its Steam page.</sub>
 
 </td>
 </tr>
@@ -68,11 +81,12 @@ async decoding for when every millisecond counts.
 <td width="50%" valign="top">
 
 <img src="docs/cover_glow_settings.png" alt="The settings screen: section buttons along the top, settings in plain words, and a panel predicting how the chosen options will play">
+<sub>Redesigned settings, with the Predicted impact panel on the right.</sub>
 
 </td>
 <td width="50%" valign="top">
 
-### 🧭 Settings that explain themselves
+### 🧭 Feature-packed and intuitive settings
 Sections with plain names (Stream, Sound & vibration, Controllers…), and a **Predicted impact**
 panel that shows whether your choices lean towards fastest response or smoothest motion, and
 which setting is pushing it which way. Tap a setting that came from another fork and a small
@@ -94,9 +108,8 @@ Audio haptics turns a game's bass into vibration on your device or controller.
 You'll need a Windows PC to stream from, and your Android device on the same Wi-Fi network.
 
 ### 1. Set up your PC
-Install a streaming host on the PC. I use and recommend
-[**Vibepollo**](https://github.com/Nonary/Vibepollo): it's what I build Starwire with, and it
-unlocks every feature. [Apollo](https://github.com/ClassicOldSong/Apollo) works too, and
+Install a streaming host on the PC. I use [**Vibepollo**](https://github.com/Nonary/Vibepollo);
+it enables every feature. [Apollo](https://github.com/ClassicOldSong/Apollo) works too, and
 [Sunshine](https://github.com/LizardByte/Sunshine) works for everything except a few extras
 (clipboard sharing, PC commands, Virtual Display and changing the bitrate mid-stream).
 
@@ -115,9 +128,10 @@ address). Tap it and Starwire shows a **PIN**. On the PC, open your host's web p
 Tap your PC, then tap a game to bring it up, and tap **Play**. During a stream, the floating
 button, a three-finger tap or holding **Select** on your controller opens the menu.
 
-## How I made it
+## Development
 
-I made Starwire with AI. I decided what the app should do and how it should look, and
+I made Starwire as a vibecoding exercise after experiencing the wonderful software that is
+Vibepollo. I decided what the app should do and how it should look, and
 [Claude Code](https://claude.com/claude-code) (Anthropic's coding tool) wrote the code. I also
 used [REA](https://github.com/morluto/rea) by morluto to look inside the other apps and see how
 their features work. Every feature is tested on my RedMagic Astra with a GameSir G8+ before it
