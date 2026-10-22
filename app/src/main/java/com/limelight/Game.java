@@ -774,6 +774,16 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         // For semi-square displays, we use more complex logic to determine which orientation to use (if any)
         if (PreferenceConfiguration.isSquarishScreen(display)) {
+            // A foldable's inner screen: forcing landscape there can hand the stream a rotated
+            // surface, shrunk with black borders (seen on Galaxy Z Folds). Let it follow the
+            // device instead. Idea from Moonlight Fold (sblocktechnologies) and
+            // moonlight-stream/moonlight-android#1613; the cover screen keeps landscape.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                    getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE)) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
+                return;
+            }
+
             int desiredOrientation = Configuration.ORIENTATION_UNDEFINED;
 
             // OSC doesn't properly support portrait displays, so don't use it in portrait mode by default
