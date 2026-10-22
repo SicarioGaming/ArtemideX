@@ -18,6 +18,7 @@ import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.AdapterFragment;
 import com.limelight.ui.AdapterFragmentCallbacks;
 import com.limelight.ui.AppIcons;
+import com.limelight.ui.CollapsingHeader;
 import com.limelight.ui.CoverGlow;
 import com.limelight.ui.Rainbow;
 import com.limelight.ui.CoverImageView;
@@ -83,14 +84,17 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     // Cover Glow home: the hero shows the selected game, and the screen takes its cover's colour
     private static final String COVER_GLOW_PREF_FILENAME = "CoverGlow";
     private View appRoot, coverGlow, heroDetails;
-    // Below this width the game screen uses its narrow layout (res/values/cover_glow_dimens.xml)
+    // The game screen has three sets of sizes (cover_glow_dimens.xml): narrow below 480 dp wide,
+    // a smaller header on wide screens under 520 dp tall (a phone held sideways), and the full one
     private static final int NARROW_WIDTH_DP = 480;
-    private boolean builtNarrow;
+    private static final int SHORT_HEIGHT_DP = 520;
+    private int builtSizes;
 
     private CoverImageView heroCover;
-    private TextView heroLoaderText, heroLabel, heroTitle;
+    private TextView heroLoaderText, heroLabel, heroTitle, miniTitle;
     private LinearLayout heroChips;
-    private Button heroPlay;
+    private Button heroPlay, miniPlay;
+    private CollapsingHeader collapsingHeader;
     private AppObject selectedApp;
     private int currentTint = CoverGlow.DEFAULT_TINT;
     private ValueAnimator tintAnimator;
@@ -200,9 +204,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        // Folding or unfolding across the narrow-screen sizes (values-w480dp) needs the layout
+        // Folding, unfolding or turning the phone into another set of sizes needs the layout
         // built again; this screen otherwise keeps its views through size changes
-        if ((newConfig.screenWidthDp < NARROW_WIDTH_DP) != builtNarrow) {
+        if (sizesFor(newConfig) != builtSizes) {
             recreate();
             return;
         }
@@ -339,7 +343,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         UiHelper.setLocale(this);
 
         setContentView(R.layout.activity_app_view);
-        builtNarrow = getResources().getConfiguration().screenWidthDp < NARROW_WIDTH_DP;
+        builtSizes = sizesFor(getResources().getConfiguration());
 
         // Allow floating expanded PiP overlays while browsing apps
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -761,6 +765,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             }
         });
         UiHelper.applyStatusBarPadding(listView);
+        if (collapsingHeader != null) {
+            collapsingHeader.attach(listView);
+        }
         registerForContextMenu(listView);
         listView.requestFocus();
     }
@@ -775,6 +782,12 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         heroTitle = findViewById(R.id.heroTitle);
         heroChips = findViewById(R.id.heroChips);
         heroPlay = findViewById(R.id.heroPlay);
+        miniTitle = findViewById(R.id.miniTitle);
+        miniPlay = findViewById(R.id.miniPlay);
+        collapsingHeader = new CollapsingHeader(findViewById(R.id.appHeader),
+                findViewById(R.id.heroSection), findViewById(R.id.miniBar));
+        collapsingHeader.expandOnFocus(heroPlay, findViewById(R.id.heroSettings), findViewById(R.id.appListText));
+        miniPlay.setOnClickListener(v -> playSelectedApp());
 
         TextView coverRowLabel = findViewById(R.id.coverRowLabel);
         coverRowLabel.setText(getString(R.string.cg_on_pc, computerName));
@@ -824,6 +837,13 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         // The wordmark slowly flows through the rainbow
         wordmarkRainbow = Rainbow.applyTo((TextView) findViewById(R.id.cgWordmark));
+    }
+
+    private static int sizesFor(Configuration config) {
+        if (config.screenWidthDp < NARROW_WIDTH_DP) {
+            return 0;
+        }
+        return config.screenHeightDp < SHORT_HEIGHT_DP ? 1 : 2;
     }
 
     private float dp(float value) {
@@ -887,6 +907,8 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         heroTitle.setText(selectedApp.app.getAppName());
         heroPlay.setText(running ? R.string.cg_resume : R.string.cg_play);
+        miniTitle.setText(selectedApp.app.getAppName());
+        miniPlay.setText(running ? R.string.cg_resume : R.string.cg_play);
         if (running) {
             heroLabel.setText(R.string.cg_running);
             heroLabel.setVisibility(View.VISIBLE);
@@ -909,6 +931,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             heroCover.setScaleY(0.94f);
             heroCover.animate().scaleX(1f).scaleY(1f)
                     .setDuration(420).setInterpolator(new DecelerateInterpolator(2f)).start();
+            // With the header scrolled away, the bar shows the change instead
+            miniTitle.setAlpha(0f);
+            miniTitle.animate().alpha(1f).setDuration(300).start();
         }
     }
 

@@ -57,6 +57,9 @@ public final class CoverGlowSettings {
         }
         float d = activity.getResources().getDisplayMetrics().density;
 
+        // The fragment binds its list after this, so add the impact lines once it has
+        list.post(() -> SettingsImpact.attach(list));
+
         list.setDivider(new ColorDrawable(0x1AFFFFFF));
         list.setDividerHeight(Math.max(1, Math.round(d)));
         list.setClipToPadding(false);

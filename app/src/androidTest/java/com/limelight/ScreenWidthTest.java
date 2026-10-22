@@ -1,5 +1,6 @@
 package com.limelight;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -55,6 +56,20 @@ public class ScreenWidthTest {
     }
 
     private ComputerDetails addTestPc() throws Exception {
+        return addTestPc(APP_LIST);
+    }
+
+    // Enough games to fill a few rows on any screen
+    private static String longAppList() {
+        StringBuilder list = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?><root status_code=\"200\">");
+        for (int i = 1; i <= 30; i++) {
+            list.append("<App><IsHdrSupported>0</IsHdrSupported><AppTitle>Game ").append(i)
+                    .append("</AppTitle><ID>").append(500000 + i).append("</ID></App>");
+        }
+        return list.append("</root>").toString();
+    }
+
+    private ComputerDetails addTestPc(String appList) throws Exception {
         ComputerDetails details = new ComputerDetails();
         details.uuid = UUID;
         details.name = "TEST-PC";
@@ -64,7 +79,7 @@ public class ScreenWidthTest {
         db.updateComputer(details);
         db.close();
         try (OutputStream out = CacheHelper.openCacheFileForOutput(target.getCacheDir(), "applist", UUID)) {
-            CacheHelper.writeStringToOutputStream(out, APP_LIST);
+            CacheHelper.writeStringToOutputStream(out, appList);
         }
         return details;
     }
@@ -97,6 +112,93 @@ public class ScreenWidthTest {
                 assertFalse("game screen closed", activity.isFinishing());
                 assertNothingOffScreen(activity, name);
             });
+        }
+    }
+
+    // From Reddit: on a phone held sideways the header took most of the screen and didn't scroll,
+    // leaving half a row of games. The games start just under the header, the header scrolls away
+    // with them, and the slim bar with Play takes over once the hero's gone.
+    @Test
+    public void gameScreenHeaderScrollsAway() throws Exception {
+        ComputerDetails details = addTestPc(longAppList());
+        Intent intent = new Intent(target, AppView.class)
+                .putExtra(AppView.NAME_EXTRA, details.name)
+                .putExtra(AppView.UUID_EXTRA, UUID);
+        try (ActivityScenario<AppView> scenario = ActivityScenario.launch(intent)) {
+            for (int i = 0; i < 3; i++) {
+                SystemClock.sleep(1000);
+                scenario.onActivity(activity -> layOutAndSave(activity, "game_screen_top"));
+            }
+            scenario.onActivity(activity -> {
+                View header = activity.findViewById(R.id.appHeader);
+                View miniBar = activity.findViewById(R.id.miniBar);
+                android.widget.GridView grid = activity.findViewById(R.id.fragmentView);
+                assertTrue("no games in the grid", grid.getChildCount() > 0);
+
+                // At the top: the whole header shows, the first row starts below it, no bar
+                String state = "h=" + header.getHeight() + " pad=" + grid.getPaddingTop() + " top=" + grid.getChildAt(0).getTop() + " first=" + grid.getFirstVisiblePosition() + " cols=" + grid.getNumColumns() + " childH=" + grid.getChildAt(0).getHeight() + " count=" + grid.getChildCount() + " ty=" + header.getTranslationY();
+                assertEquals(state, 0f, header.getTranslationY(), 0.5f);
+                assertEquals(header.getHeight(), grid.getPaddingTop());
+                assertTrue("first row starts under the header",
+                        grid.getChildAt(0).getTop() >= header.getHeight());
+                assertEquals(View.INVISIBLE, miniBar.getVisibility());
+
+                // A finger dragging up on the header (not just on the covers) scrolls too
+                int[] at = new int[2];
+                header.getLocationInWindow(at);
+                dragUp(activity.getWindow().getDecorView(), at[0] + header.getWidth() * 0.85f,
+                        at[1] + header.getHeight() * 0.5f, header.getHeight() * 0.3f);
+                assertTrue("dragging on the header didn't scroll", header.getTranslationY() < -10);
+                scrollInSteps(grid, -grid.getHeight());
+                assertEquals(0f, header.getTranslationY(), 0.5f);
+
+                // Scrolled past the hero: the header has gone up with the games and the bar shows
+                scrollInSteps(grid, header.getHeight() + 40);
+                layOutAndSave(activity, "game_screen_scrolled");
+                assertTrue("header didn't move", header.getTranslationY() <= -header.getHeight() + 1);
+                assertEquals(View.VISIBLE, miniBar.getVisibility());
+                assertEquals(1f, miniBar.getAlpha(), 0.01f);
+                // The space the header left is filled with more games
+                assertTrue("only " + grid.getChildCount() + " of " + grid.getCount() + " games shown in "
+                                + grid.getNumColumns() + " columns, grid " + grid.getHeight() + " px tall",
+                        grid.getChildCount() > grid.getNumColumns());
+                assertEquals(((android.widget.TextView) activity.findViewById(R.id.heroTitle)).getText(),
+                        ((android.widget.TextView) activity.findViewById(R.id.miniTitle)).getText());
+
+                // Back at the top it's as it was
+                scrollInSteps(grid, -(header.getHeight() + 40));
+                layOutAndSave(activity, "game_screen_top");
+                assertEquals(0f, header.getTranslationY(), 0.5f);
+                assertEquals(View.INVISIBLE, miniBar.getVisibility());
+            });
+        }
+    }
+
+    // A slow drag, so it scrolls without flinging
+    private static void dragUp(View root, float x, float y, float distance) {
+        long down = SystemClock.uptimeMillis();
+        android.view.MotionEvent event = android.view.MotionEvent.obtain(down, down,
+                android.view.MotionEvent.ACTION_DOWN, x, y, 0);
+        root.dispatchTouchEvent(event);
+        event.recycle();
+        int steps = 20;
+        for (int i = 1; i <= steps; i++) {
+            event = android.view.MotionEvent.obtain(down, down + i * 40L,
+                    android.view.MotionEvent.ACTION_MOVE, x, y - distance * i / steps, 0);
+            root.dispatchTouchEvent(event);
+            event.recycle();
+        }
+        event = android.view.MotionEvent.obtain(down, down + (steps + 10) * 40L,
+                android.view.MotionEvent.ACTION_UP, x, y - distance, 0);
+        root.dispatchTouchEvent(event);
+        event.recycle();
+    }
+
+    // A list only moves so far in one go, so scroll the way a finger does, a little at a time
+    private static void scrollInSteps(android.widget.AbsListView list, int pixels) {
+        int step = pixels > 0 ? 60 : -60;
+        for (int done = 0; Math.abs(done) < Math.abs(pixels); done += step) {
+            list.scrollListBy(Math.abs(pixels - done) < Math.abs(step) ? pixels - done : step);
         }
     }
 

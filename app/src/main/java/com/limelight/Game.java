@@ -4006,7 +4006,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @SuppressLint("ClickableViewAccessibility")
     private void initFloatingButton() {
-        // Tap opens the overlay menu; drag moves the button, kept within the screen (from Artemide)
+        // Tap opens the overlay menu, or closes it when it's open; drag moves the button, kept
+        // within the screen (from Artemide). The button sits above the menu, so it stays tappable.
         floatingMenuButton.setOnTouchListener((view, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
@@ -4031,7 +4032,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     return true;
                 case MotionEvent.ACTION_UP:
                     if (!floatingButtonMoving) {
-                        overlayMenuView.show();
+                        toggleOverlayMenu();
                     }
                     floatingButtonMoving = false;
                     view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
@@ -4044,6 +4045,17 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     return false;
             }
         });
+        // TalkBack's double-tap arrives as a click, not as touches
+        floatingMenuButton.setOnClickListener(view -> toggleOverlayMenu());
+    }
+
+    private void toggleOverlayMenu() {
+        if (overlayMenuView.getVisibility() == View.VISIBLE) {
+            overlayMenuView.closeMenu();
+        }
+        else {
+            overlayMenuView.show();
+        }
     }
 
     private void setFloatingButtonShown(boolean shown) {

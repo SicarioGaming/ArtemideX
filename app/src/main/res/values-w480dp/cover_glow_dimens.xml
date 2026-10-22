@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cover Glow's game screen on screens 480 dp and wider: the sizes it has always had -->
+<!-- Cover Glow's game screen on wide but short screens (a phone held sideways): a smaller header,
+     so the covers start higher. values-w480dp-h520dp holds the sizes for tablets. -->
 <resources>
-    <dimen name="cg_content_padding">36dp</dimen>
-    <dimen name="cg_wordmark_size">34sp</dimen>
-    <dimen name="cg_hero_cover_width">180dp</dimen>
-    <dimen name="cg_hero_cover_height">240dp</dimen>
-    <dimen name="cg_hero_gap">32dp</dimen>
-    <dimen name="cg_hero_title_size">44sp</dimen>
+    <dimen name="cg_content_padding">28dp</dimen>
+    <dimen name="cg_wordmark_size">28sp</dimen>
+    <dimen name="cg_hero_cover_width">96dp</dimen>
+    <dimen name="cg_hero_cover_height">128dp</dimen>
+    <dimen name="cg_hero_gap">20dp</dimen>
+    <dimen name="cg_hero_title_size">28sp</dimen>
+    <dimen name="cg_hero_top_margin">8dp</dimen>
+    <dimen name="cg_hero_button_height">48dp</dimen>
+    <integer name="cg_hero_title_lines">1</integer>
 
     <style name="CgWordmarkPlace">
         <item name="android:layout_gravity">center</item>
