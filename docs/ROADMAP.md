@@ -163,14 +163,6 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 - [x] Larger Starwire wordmark on the home screen
 - [x] Tried on the RedMagic Astra over a live stream: the menu tools work; the last row of the
       menu was hidden by a layout bug, now fixed and covered by a test
-- [x] After launch feedback: a smaller floating button that stays faded until touched; on/off
-      menu tools show a small switch and keep the menu open; a Starwire tile (logo over a
-      starfield) for Desktop and games without cover art, also in the menu's header; Lite stats
-      in plain words (Mbps, Ping, Decode, Dropped, FPS)
-- [x] Microphone from the device to the PC, ported from logabell's design (a separate audio
-      channel). Only works with logabell's Apollo build on the PC
-- [ ] Microphone with Vibepollo or regular Apollo: waiting for either to accept a microphone
-      design
 
 ## Open questions
 

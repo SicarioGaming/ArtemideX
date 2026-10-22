@@ -30,12 +30,6 @@ the stream could perform if it had the Fast V-Sync, LFR, Async, and Codec option
 Artemis/Artemide has. I also missed some QoL features that the recent Windows forks have adopted
 that seem to be lagging in terms of an Android client equivalent.
 
-The community has built some brilliant solutions as we continue down the Nth generation of forks,
-but I found each one is great at something different: one has the smoothest video, another has
-the best touch controls, another has the handiest in-stream menu. I got tired of having to pick
-between them, so I made Starwire. Give it a try and see if it warrants replacing your current
-client; it has been a godsend to my use case while testing.
-
 Back-end development started from
 [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android)'s fast video pipeline, adds
 the touchscreen tools from [Artemide](https://github.com/derflacco/moonlight-android) and
@@ -60,8 +54,7 @@ name.
 ### 🎮 Everything during a stream, one tap away
 Open the menu with the floating button, a three-finger tap or by holding Select on a
 controller. Keyboard, full on-screen keyboard, mouse modes, zoom, key shortcuts, monitor
-switching, bitrate, clipboard: it's all in one grid, and works with a controller too. Anything
-that turns on and off has a small switch, so you can see what's on at a glance.
+switching, bitrate, clipboard: it's all in one grid, and works with a controller too.
 
 ### ⚡ Fast and smooth
 A Vulkan renderer, the PyroWave codec, and low-latency options like Warp Drive, Fast V-Sync and
@@ -71,7 +64,7 @@ async decoding for when every millisecond counts.
 <td width="50%" valign="top">
 
 <img src="docs/images/stream_menu_aniimo.jpg" alt="The in-stream menu open over a game: the game's name, a grid of tools such as Keyboard, Full Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
-<sub>The in-stream menu over Aniimo on my tablet. Stats and the menu button are switched on. Aniimo © Pawprint Studio.</sub>
+<sub>The in-stream menu over Aniimo on my tablet. Aniimo © Pawprint Studio.</sub>
 
 </td>
 </tr>
@@ -97,12 +90,6 @@ every key, and the option to hide the PC's mouse pointer while you play.
 ### 📳 Feel the bass
 Audio haptics turns a game's bass into vibration on your device or controller.
 
-### 🎙 Your microphone on the PC
-Talk in game chat or Discord through your device's microphone. **This needs a different host:**
-the PC has to run [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), which plays your voice into the Steam Streaming Microphone.
-Vibepollo, Sunshine and regular Apollo can't receive it yet, so with those the stream just carries
-on without it. Turn it on in **Settings → Sound & vibration → Send my microphone**.
-
 </td>
 </tr>
 </table>
@@ -115,38 +102,36 @@ on without it. Turn it on in **Settings → Sound & vibration → Send my microp
 
 ## Get started
 
-You'll need a Windows PC to stream from, and your Android device on the same Wi-Fi network.
+1. **Set up your PC.** I use [Vibepollo](https://github.com/Nonary/Vibepollo); it enables every
+   feature. [Apollo](https://github.com/ClassicOldSong/Apollo) works too, and
+   [Sunshine](https://github.com/LizardByte/Sunshine) works for everything except a few extras
+   (clipboard sharing, PC commands, Virtual Display and changing the bitrate mid-stream).
+2. **Install Starwire.** Download the latest `Starwire-…apk` from the
+   [Releases page](https://github.com/SicarioGaming/Starwire/releases) and open it.
+3. **Pair.** Tap your PC, then type the PIN Starwire shows into your host's PIN page (usually
+   `https://localhost:47990`). You only do this once.
+4. **Play.** Tap a game, then **Play**.
 
-### 1. Set up your PC
-Install a streaming host on the PC. I use [**Vibepollo**](https://github.com/Nonary/Vibepollo);
-it enables every feature. [Apollo](https://github.com/ClassicOldSong/Apollo) works too, and
-[Sunshine](https://github.com/LizardByte/Sunshine) works for everything except a few extras
-(clipboard sharing, PC commands, Virtual Display and changing the bitrate mid-stream).
-
-### 2. Install Starwire
-On your phone or tablet, open the
-[**Releases page**](https://github.com/SicarioGaming/Starwire/releases), download the latest
-`Starwire-…apk` and open it. Android will ask you to allow installing apps from your browser
-or file manager; allow it, then tap **Install**.
-
-### 3. Pair with your PC
-Open Starwire and your PC appears in the list (if it doesn't, tap **+** and type the PC's IP
-address). Tap it and Starwire shows a **PIN**. On the PC, open your host's web page (usually
-`https://localhost:47990`), go to the **PIN** page and type it in. You only do this once.
-
-### 4. Play
-Tap your PC, then tap a game to bring it up, and tap **Play**. During a stream, the floating
-button, a three-finger tap or holding **Select** on your controller opens the menu.
+Android 5.0+. PyroWave and the custom Turnip driver need a 64-bit ARM device. Updates from the
+Releases page install over the top and keep your settings, and
+[Obtainium](https://github.com/ImranR98/Obtainium) can keep it updated for you.
 
 ## Development
 
 I made Starwire as a vibecoding exercise after experiencing the wonderful software that is
 Vibepollo. I decided what the app should do and how it should look, and
-[Claude Code](https://claude.com/claude-code) (Anthropic's coding tool) wrote the code. I also
+[Claude Code](https://claude.com/claude-code) wrote the code. I also
 used [REA](https://github.com/morluto/rea) by morluto to look inside the other apps and see how
 their features work. Every feature is tested on my RedMagic Astra with a GameSir G8+ before it
-goes in. Anything that came from another Moonlight version is that author's work, and I've
-credited every one of them below.
+goes in.
+
+## Changelog
+
+**2026/10/22:** [Version 0.1.2](https://github.com/SicarioGaming/Starwire/releases/tag/v0.1.2)
+has been released, and fixes an error that caused the client to crash upon loading the list of
+apps. To update, download the new APK and open it on your device. You will receive a prompt to
+update the existing app, which will retain existing settings. Obtainium users should receive the
+update automatically.
 
 ---
 
@@ -239,7 +224,6 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Audio haptics: the game's bass becomes vibration on the device and/or the controller | Idea from Moonlight V+ (qiin2333); written new for Starwire |
 | Hide PC cursor (never / while touching / always) **(Vibepollo)** | New in Starwire |
 | Long-press to right-click in gaming trackpad mode | New in Starwire |
-| Send your microphone to the PC, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)) |
 | Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
 
 </details>
@@ -259,7 +243,8 @@ queue/preload values and NVIDIA Tegra and legacy Qualcomm decoder extras.
 
 ## Credits
 
-Starwire wouldn't exist without these projects and the people behind them:
+Anything that came from another Moonlight version is that author's work. Please go give their
+repos a star:
 
 | Project | Author | Used for |
 | --- | --- | --- |
@@ -271,7 +256,6 @@ Starwire wouldn't exist without these projects and the people behind them:
 | [Moonlight X Turnip](https://github.com/NoCrypt/moonlight-x-turnip) | ncpt (NoCrypt) | Custom Turnip Vulkan driver for PyroWave |
 | [Moonlight V+](https://github.com/qiin2333/moonlight-vplus) | qiin2333 | Ideas: bitrate mid-stream, audio haptics, 1% lows |
 | [Moonlit Artemis](https://github.com/4had45/moonlit-artemis) | Mohammad Forhad (4had45) | Ideas: monitor switcher, pinch to zoom anytime |
-| [Apollo microphone](https://github.com/logabell/apollo-microphone) | logabell | Microphone streaming: the Android capture and the protocol, and the Apollo build that receives it |
 | [PyroWave](https://github.com/Themaister/pyrowave) | Hans-Kristian Arntzen (Themaister) | The PyroWave codec (MIT) |
 | [libadrenotools](https://github.com/bylaws/libadrenotools) | Billy Laws (bylaws) | Loading a custom Adreno Vulkan driver (BSD-2-Clause) |
 | [Vibepollo](https://github.com/Nonary/Vibepollo) | Chase Payne (Nonary) | The host Starwire is developed with (fork of Apollo) |
@@ -279,7 +263,10 @@ Starwire wouldn't exist without these projects and the people behind them:
 | [Claude Code](https://claude.com/claude-code) | Anthropic | Writing the Starwire code, ports, redesign and tests |
 | [REA](https://github.com/morluto/rea) | morluto | Reverse-engineering and analysis (MIT) |
 
-If I've credited something wrongly or missed you, please open an issue and I'll fix it.
+If I've credited something wrongly or missed you, please let me know.
+
+Bug reports and ideas are very welcome as a
+[GitHub issue](https://github.com/SicarioGaming/Starwire/issues).
 
 ## More details
 
