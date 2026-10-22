@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+        Base application theme, dependent on API level. This theme is replaced
+        by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
+
+    -->
+    <style name="AppBaseTheme" parent="android:Theme">
+        <!--
+            Theme customizations available in newer API levels can go in
+            res/values-vXX/styles.xml, while customizations related to
+            backward-compatibility can go here.
+
+        -->
+    </style>
+
+    <!-- Application theme. -->
+    <style name="AppTheme" parent="AppBaseTheme">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <!-- Cover Glow: the settings pages (deep space, white rows, violet switches and lavender headings) -->
+    <style name="CoverGlowSettingsTheme" parent="AppTheme">
+        <item name="android:windowBackground">@color/cg_settings_background</item>
+        <item name="android:statusBarColor">@color/cg_settings_background</item>
+        <item name="android:navigationBarColor">@color/cg_settings_background</item>
+        <item name="android:colorAccent">#FF8B5CF6</item>
+        <item name="android:textColorPrimary">#FFFFFFFF</item>
+        <item name="android:textColorSecondary">#FFCBD5E1</item>
+        <item name="android:textAppearanceListItem">@style/CgPrefTitle</item>
+        <item name="android:textAppearanceListItemSecondary">@style/CgPrefSummary</item>
+        <item name="android:preferenceCategoryStyle">@style/CgPreferenceCategory</item>
+    </style>
+
+    <style name="CgPrefTitle" parent="@android:style/TextAppearance.Material.Subhead">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#FFFFFFFF</item>
+    </style>
+
+    <style name="CgPrefSummary" parent="@android:style/TextAppearance.Material.Body1">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">#FFCBD5E1</item>
+    </style>
+
+    <style name="CgPreferenceCategory">
+        <item name="android:layout">@layout/cg_pref_category</item>
+    </style>
+
+    <style name="StreamBaseTheme" parent="AppBaseTheme">
+        <!-- Transparent streaming background to avoid extra overdraw -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <!-- Stream activity theme -->
+    <style name="StreamTheme" parent="StreamBaseTheme">
+        <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+</resources>

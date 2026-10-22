@@ -1,0 +1,683 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shortcut strings -->
+    <string name="scut_deleted_pc">PC deleted</string>
+    <string name="scut_not_paired">PC not paired</string>
+    <string name="scut_pc_not_found">PC not found</string>
+    <string name="scut_invalid_uuid">Provided PC is not valid</string>
+    <string name="scut_invalid_app_id">Provided App is not valid</string>
+
+    <!-- Help strings -->
+    <string name="help_loading_title">Help Viewer</string>
+    <string name="help_loading_msg">Loading help page…</string>
+
+    <!-- PC view menu entries -->
+    <string name="pcview_menu_header_online">Online</string>
+    <string name="pcview_menu_header_offline">Offline</string>
+    <string name="pcview_menu_header_unknown">Refreshing</string>
+    <string name="pcview_menu_app_list">View All Apps</string>
+    <string name="pcview_menu_pair_pc">Pair with PC</string>
+    <string name="pcview_menu_unpair_pc">Unpair</string>
+    <string name="pcview_menu_send_wol">Send Wake-On-LAN request</string>
+    <string name="pcview_menu_delete_pc">Delete PC</string>
+    <string name="pcview_menu_test_network">Test Network Connection</string>
+    <string name="pcview_menu_details">View Details</string>
+    <string name="pcview_menu_eol">NVIDIA GameStream End-of-Service</string>
+
+    <!-- Network test strings -->
+    <string name="nettest_title_waiting">Testing Network Connection</string>
+    <string name="nettest_text_waiting">Moonlight is testing your network connection to determine if any required ports are blocked.\n\nThis may take a few seconds…</string>
+    <string name="nettest_title_done">Network Test Complete</string>
+    <string name="nettest_text_success">Your network does not appear to be blocking Moonlight. If you still have trouble connecting, check your PC\'s firewall settings.\n\nIf you are trying to stream over the Internet, install the Moonlight Internet Hosting Tool on your PC and run the included Internet Streaming Tester to check your PC\'s Internet connection.</string>
+    <string name="nettest_text_inconclusive">The network test could not be performed because none of Moonlight\'s connection testing servers were reachable. Check your Internet connection or try again later.</string>
+    <string name="nettest_text_failure">Your device\'s current network connection seems to be blocking Moonlight. Streaming over the Internet may not work while connected to this network.\n\nThe following network ports were blocked:\n</string>
+    <string name="nettest_text_blocked">Your device\'s current network connection is blocking Moonlight. Streaming over the Internet may not work while connected to this network.</string>
+
+    <!-- Pair messages -->
+    <string name="pairing">Pairing…</string>
+    <string name="pair_pc_offline">Computer is offline</string>
+    <string name="pair_pc_ingame">Computer is currently in a game. You must close the game before pairing.</string>
+    <string name="pair_pairing_title">Pairing</string>
+    <string name="pair_pairing_msg">Please enter the following PIN on the target PC:</string>
+    <string name="pair_pairing_help">If your host PC is running Sunshine, navigate to the Sunshine web UI to enter the PIN.</string>
+    <string name="pair_incorrect_pin">Incorrect PIN</string>
+    <string name="pair_fail">Pairing failed</string>
+    <string name="pair_already_in_progress">Pairing already in progress</string>
+
+    <!-- WOL messages -->
+    <string name="wol_pc_online">Computer is online</string>
+    <string name="wol_no_mac">Unable to wake PC because there is no stored MAC address</string>
+    <string name="wol_waking_pc">Waking PC…</string>
+    <string name="wol_waking_msg">It may take a few seconds for your PC to wake up.
+	    If it doesn\'t, make sure it\'s configured properly for Wake-On-LAN.
+    </string>
+    <string name="wol_fail">Failed to send Wake-On-LAN packets</string>
+
+    <!-- Unpair messages -->
+    <string name="unpairing">Unpairing…</string>
+    <string name="unpair_success">Unpaired successfully</string>
+    <string name="unpair_fail">Failed to unpair</string>
+    <string name="unpair_error">Device was not paired</string>
+
+    <!-- Errors -->
+    <string name="error_pc_offline">Computer is offline</string>
+    <string name="error_manager_not_running">The ComputerManager service is not running. Please wait a few seconds or restart the app.</string>
+    <string name="error_unknown_host">Failed to resolve host</string>
+    <string name="error_404">GFE returned an HTTP 404 error. Make sure your PC is running a supported GPU.
+	    Using remote desktop software can also cause this error. Try rebooting your machine or reinstalling GFE.
+    </string>
+    <string name="title_decoding_error">Video Decoder Crashed</string>
+    <string name="message_decoding_error">Moonlight has crashed due to an incompatibility with this device\'s video decoder. Try adjusting the streaming settings if the crashes continue.</string>
+    <string name="title_decoding_reset">Video Settings Reset</string>
+    <string name="message_decoding_reset">Your device\'s video decoder continues to crash at your selected streaming settings. Your streaming settings have been reset to default.</string>
+    <string name="error_usb_prohibited">USB access is prohibited by your device administrator. Check your Knox or MDM settings.</string>
+    <string name="unable_to_pin_shortcut">Your current launcher does not allow for creating pinned shortcuts.</string>
+    <string name="video_decoder_init_failed">Video decoder failed to initialize. Your device may not support the selected resolution or frame rate.</string>
+    <string name="no_video_received_error">No video received from host.</string>
+    <string name="no_frame_received_error">Your network connection isn\'t performing well. Reduce your video bitrate setting or try a faster connection.</string>
+    <string name="early_termination_error">Something went wrong on your host PC when starting the stream.\n\nMake sure you don\'t have any DRM-protected content open on your host PC. You can also try restarting your host PC.</string>
+    <string name="frame_conversion_error">The host PC reported a fatal video encoding error.\n\nTry disabling HDR mode, changing the streaming resolution, or changing your host PC\'s display resolution.</string>
+    <string name="check_ports_msg">Check your firewall and port forwarding rules for port(s):</string>
+
+    <!-- Start application messages -->
+    <string name="conn_establishing_title">Establishing Connection</string>
+    <string name="conn_establishing_msg">Starting connection</string>
+    <string name="conn_metered">Warning: Your active network connection is metered!</string>
+    <string name="conn_client_latency">Average frame decoding latency:</string>
+    <string name="conn_client_latency_hw">hardware decoder latency:</string>
+    <string name="conn_hardware_latency">Average hardware decoding latency:</string>
+    <string name="conn_starting">Starting</string>
+    <string name="conn_error_title">Connection Error</string>
+    <string name="conn_error_msg">Failed to start</string>
+    <string name="conn_terminated_title">Connection Terminated</string>
+    <string name="conn_terminated_msg">The connection was terminated.</string>
+    <string name="error_code_prefix">Error code:</string>
+
+    <!-- General strings -->
+    <string name="ip_hint">IP address of host PC</string>
+    <string name="searching_pc">Searching for host PCs on your local network…\n\n
+        Ensure Sunshine is running on your host PC or GameStream is enabled in the GeForce Experience SHIELD settings.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="lost_connection">Lost connection to PC</string>
+    <string name="title_details">Details</string>
+    <string name="help">Help</string>
+    <string name="delete_pc_msg">Are you sure you want to delete this PC?</string>
+    <string name="slow_connection_msg">Slow connection to PC\nReduce your bitrate</string>
+    <string name="poor_connection_msg">Poor connection to PC</string>
+    <string name="perf_overlay_streamdetails">└ %1$s @ %2$.2f FPS</string>
+    <string name="perf_overlay_decoder">%1$s</string>
+    <string name="perf_overlay_fps">FPS in/render: %1$.2f/%2$.2f FPS (%3$+.1f%%)</string>
+    <string name="perf_overlay_hostprocessinglatency">Host latency min/max/avg: %1$.1f/%2$.1f/%3$.1f ms</string>
+    <string name="perf_overlay_netdrops">Frames dropped: %1$.2f%%</string>
+    <string name="perf_overlay_netdrops_partial">Frames dropped: %1$.2f%% (partial %2$.2f%%)</string>
+    <string name="perf_overlay_netlatency">Network latency: %1$d ms (variance %2$d ms)</string>
+    <string name="perf_overlay_dectime">Decoding time: %1$.2f ms</string>
+    <string name="perf_overlay_bandwidth">Network bandwidth: %1$.1f Mbps</string>
+    <string name="perf_overlay_pacing">Frame pacing: %1$s</string>
+    <string name="perf_overlay_pacing_details">└ %1$s</string>
+
+    <!-- AppList activity -->
+    <string name="applist_connect_msg">Connecting to PC…</string>
+    <string name="applist_menu_resume">Resume Session</string>
+    <string name="applist_menu_quit">Quit Session</string>
+    <string name="applist_menu_quit_and_start">Quit Current Game and Start</string>
+    <string name="applist_menu_cancel">Cancel</string>
+    <string name="applist_menu_details">View Details</string>
+    <string name="applist_menu_scut">Create Shortcut</string>
+    <string name="applist_menu_tv_channel">Add to Channel</string>
+    <string name="applist_menu_hide_app">Hide App</string>
+    <string name="applist_menu_add_quick_launch">Add Quick Launch</string>
+    <string name="applist_refresh_title">App List</string>
+    <string name="applist_refresh_msg">Refreshing apps…</string>
+    <string name="applist_refresh_error_title">Error</string>
+    <string name="applist_refresh_error_msg">Failed to get app list</string>
+    <string name="applist_quit_app">Quitting</string>
+    <string name="applist_quit_success">Successfully quit</string>
+    <string name="applist_quit_fail">Failed to quit</string>
+    <string name="applist_quit_confirmation">Are you sure you want to quit the running app? All unsaved data will be lost.</string>
+    <string name="applist_details_id">App ID:</string>
+
+    <!-- Add computer manually activity -->
+    <string name="title_add_pc">Add PC Manually</string>
+    <string name="msg_add_pc">Connecting to the PC…</string>
+    <string name="addpc_fail">Unable to connect to the specified computer. Make sure the required ports are allowed through the firewall.</string>
+    <string name="addpc_success">Successfully added computer</string>
+    <string name="addpc_unknown_host">Unable to resolve PC address. Make sure you didn\'t make a typo in the address.</string>
+    <string name="addpc_enter_ip">You must enter an IP address</string>
+    <string name="addpc_wrong_sitelocal">That address doesn\'t look right. You must use your router\'s public IP address for streaming over the Internet.</string>
+
+    <!-- Preferences -->
+    <string name="category_basic_settings">Basic Settings</string>
+    <string name="title_resolution_list">Video resolution</string>
+    <string name="summary_resolution_list">Increase to improve image clarity. Decrease for better performance on lower end devices and slower networks.</string>
+    <string name="title_native_res_dialog">Native Resolution Warning</string>
+    <string name="text_native_res_dialog">Native resolution and/or FPS may not be supported by the streaming server. You will probably need to configure a matching custom display mode for the host PC manually.\n\nIf you choose to create a custom resolution in NVIDIA Control Panel to match your screen settings, please ensure you have read and understood NVIDIA\'s warning regarding possible monitor damage, PC instability, and other potential problems.\n\nWe are not responsible for any problems resulting from creating a custom resolution on your PC.\n\nIt may be that your monitor does not support a necessary display configuration. If so, you may try to set up a virtual monitor. Finally, if your device or host PC does not support streaming at a specific resolution or refresh rate, you\'re out of luck unfortunately.</string>
+    <string name="title_fps_list">Video frame rate</string>
+    <string name="summary_fps_list">Increase for a smoother video stream. Decrease for better performance on lower end devices.</string>
+    <string name="title_seekbar_bitrate">Video bitrate</string>
+    <string name="summary_seekbar_bitrate">Increase for better image quality. Decrease to improve performance on slower connections.</string>
+    <string name="suffix_seekbar_bitrate_mbps">Mbps</string>
+    <string name="seekbar_custom">Custom</string>
+    <string name="seekbar_custom_message">Enter a value in %1$s</string>
+    <string name="seekbar_custom_invalid">Enter a number greater than 0</string>
+    <string name="title_checkbox_stretch_video">Stretch video to full-screen</string>
+    <string name="resolution_prefix_native">Native</string>
+    <string name="resolution_prefix_native_fullscreen">Native Full-Screen</string>
+    <string name="resolution_prefix_native_landscape">(Landscape)</string>
+    <string name="resolution_prefix_native_portrait">(Portrait)</string>
+    <string name="fps_suffix_fps">FPS</string>
+    <string name="title_native_fps_dialog">Native FPS Warning</string>
+    <string name="title_checkbox_auto_resume_stream">Auto-resume stream after sleep</string>
+    <string name="summary_checkbox_auto_resume_stream">If a stream is running when you put your device to sleep, resume it automatically upon wakeup.</string>
+
+    <string name="category_audio_settings">Audio Settings</string>
+    <string name="title_audio_config_list">Surround sound configuration</string>
+    <string name="summary_audio_config_list">Enable 5.1 or 7.1 surround sound for home-theater systems</string>
+    <string name="title_checkbox_enable_audiofx">Enable system equalizer support</string>
+    <string name="summary_checkbox_enable_audiofx">Allows audio effects to function while streaming, but may increase audio latency</string>
+
+    <string name="category_gamepad_settings">Gamepad Settings</string>
+    <string name="title_checkbox_multi_controller">Automatic gamepad presence detection</string>
+    <string name="summary_checkbox_multi_controller">Unchecking this option forces a gamepad to always be present</string>
+    <string name="title_checkbox_vibrate_fallback">Emulate rumble support with vibration</string>
+    <string name="summary_checkbox_vibrate_fallback">Vibrates your device to emulate rumble if your gamepad does not support it</string>
+    <string name="title_seekbar_vibrate_fallback_strength">Adjust emulated rumble intensity</string>
+    <string name="summary_seekbar_vibrate_fallback_strength">Amplify or reduce the vibration intensity on your device</string>
+    <string name="suffix_seekbar_vibrate_fallback_strength">%</string>
+    <string name="title_seekbar_deadzone">Adjust analog stick deadzone</string>
+    <string name="summary_seekbar_deadzone">Note: Some games can enforce a larger deadzone than what Moonlight is configured to use.</string>
+    <string name="suffix_seekbar_deadzone">%</string>
+    <string name="title_checkbox_xb1_driver">Xbox 360/One USB gamepad driver</string>
+    <string name="summary_checkbox_xb1_driver">Enables a built-in USB driver for devices without native Xbox controller support</string>
+    <string name="title_checkbox_usb_bind_all">Override native Xbox gamepad support</string>
+    <string name="summary_checkbox_usb_bind_all">Use Moonlight\'s USB driver for all supported gamepads, even if native Xbox controller support is present</string>
+    <string name="title_checkbox_mouse_emulation">Mouse emulation via gamepad</string>
+    <string name="summary_checkbox_mouse_emulation">Long pressing the Start button will switch the gamepad into mouse mode</string>
+    <string name="title_checkbox_flip_face_buttons">Flip face buttons</string>
+    <string name="summary_checkbox_flip_face_buttons">Switches the face buttons A/B and X/Y for gamepads and the on-screen controls</string>
+    <string name="title_checkbox_gamepad_touchpad_as_mouse">Always control mouse with touchpad</string>
+    <string name="summary_checkbox_gamepad_touchpad_as_mouse">Forces gamepad touchpad input to control the host mouse, even when emulating a gamepad with a touchpad.</string>
+    <string name="title_checkbox_gamepad_motion_sensors">Allow use of gamepad motion sensors</string>
+    <string name="summary_checkbox_gamepad_motion_sensors">Enables supported hosts to request motion sensor data when emulating a gamepad with motion sensors. Disabling may slightly reduce power and network usage if motion sensors are not being used in game.</string>
+    <string name="title_checkbox_gamepad_motion_fallback">Emulate gamepad motion sensor support</string>
+    <string name="summary_checkbox_gamepad_motion_fallback">Uses your device\'s built-in motion sensors if gamepad sensors are not supported by your connected gamepad or your Android version.\nNote: Enabling this option may cause your gamepad to appear as a PlayStation controller on the host.</string>
+
+    <string name="category_overlay_menu">Overlay Menu</string>
+    <string name="title_overlay_trigger_button">Menu trigger button</string>
+    <string name="summary_overlay_trigger_button">Choose which button opens the overlay menu when held</string>
+    <string name="title_overlay_hold_duration">Trigger button hold duration</string>
+    <string name="summary_overlay_hold_duration">How long to hold the button before the overlay menu opens</string>
+
+    <string name="category_input_settings">Input Settings</string>
+    <string name="title_checkbox_touchscreen_trackpad">Use the touchscreen as a trackpad</string>
+    <string name="summary_checkbox_touchscreen_trackpad">If enabled, the touchscreen acts like a trackpad. If disabled, the touchscreen directly controls the mouse cursor.</string>
+    <string name="title_checkbox_absolute_mouse_mode">Remote desktop mouse mode</string>
+    <string name="summary_checkbox_absolute_mouse_mode">This can make mouse acceleration behave more naturally for remote desktop usage, but it is incompatible with many games.</string>
+    <string name="title_checkbox_mouse_nav_buttons">Enable back and forward mouse buttons</string>
+    <string name="summary_checkbox_mouse_nav_buttons">Enabling this option may break right clicking on some buggy devices</string>
+
+    <string name="category_on_screen_controls_settings">On-screen Controls Settings</string>
+    <string name="title_checkbox_show_onscreen_controls">Show on-screen controls</string>
+    <string name="summary_checkbox_show_onscreen_controls">Show virtual controller overlay on touchscreen</string>
+    <string name="title_checkbox_vibrate_osc">Enable vibration</string>
+    <string name="summary_checkbox_vibrate_osc">Vibrates your device to emulate rumble for the on-screen controls</string>
+    <string name="title_only_l3r3">Only show L3 and R3</string>
+    <string name="summary_only_l3r3">Hide all virtual buttons except L3 and R3</string>
+    <string name="title_show_guide_button">Show Guide Button</string>
+    <string name="summary_show_guide_button">Show the guide button on screen</string>
+    <string name="title_reset_osc">Clear saved on-screen controls layout</string>
+    <string name="summary_reset_osc">Resets all on-screen controls to their default size and position</string>
+    <string name="dialog_title_reset_osc">Reset Layout</string>
+    <string name="dialog_text_reset_osc">Are you sure you want to delete your saved on-screen controls layout?</string>
+    <string name="toast_reset_osc_success">On-screen controls reset to default</string>
+    <string name="title_osc_opacity">Change opacity of on-screen controls</string>
+    <string name="summary_osc_opacity">Make the on-screen controls more/less transparent</string>
+    <string name="dialog_title_osc_opacity">Change opacity</string>
+    <string name="suffix_osc_opacity">%</string>
+
+    <string name="category_ui_settings">UI Settings</string>
+    <string name="title_checkbox_enable_pip">Enable Picture-in-Picture observer mode</string>
+    <string name="summary_checkbox_enable_pip">Allows the stream to be viewed (but not controlled) while multitasking</string>
+    <string name="title_language_list">Language</string>
+    <string name="summary_language_list">Language to use for Moonlight</string>
+    <string name="title_checkbox_small_icon_mode">Use small box art</string>
+    <string name="summary_checkbox_small_icon_mode">Smaller box art in the app grid allows more apps to be visible on screen</string>
+
+    <string name="category_host_settings">Host Settings</string>
+    <string name="title_checkbox_enable_sops">Optimize game settings</string>
+    <string name="summary_checkbox_enable_sops">Allow GFE to modify game settings for optimal streaming</string>
+    <string name="title_checkbox_host_audio">Play audio on PC</string>
+    <string name="summary_checkbox_host_audio">Play audio from the computer and this device</string>
+
+    <string name="category_advanced_settings">Advanced Settings</string>
+    <string name="title_unlock_fps">Unlock all possible frame rates</string>
+    <string name="summary_unlock_fps">Streaming at 90 or 120 FPS may reduce latency on high-end devices but can cause lag or instability on devices that can\'t support it</string>
+    <string name="title_checkbox_reduce_refresh_rate">Allow refresh rate reduction</string>
+    <string name="summary_checkbox_reduce_refresh_rate">Lower display refresh rates can save power at the expense of some additional video latency</string>
+    <string name="title_checkbox_disable_warnings">Disable warning messages</string>
+    <string name="summary_checkbox_disable_warnings">Disable on-screen connection warning messages while streaming</string>
+    <string name="title_disable_frame_drop">Never drop frames</string>
+    <string name="summary_disable_frame_drop">May reduce micro-stuttering on some devices, but can increase latency</string>
+    <string name="title_video_format">Change codec settings</string>
+    <string name="title_pyrowave_late_frames">PyroWave late frames</string>
+    <string name="summary_pyrowave_late_frames">Only used with the PyroWave codec and host frame timing pacing: configure how much blurriness you want to accept for a smoother stream</string>
+    <string name="pyrowave_late_frames_off">Off (least blur)</string>
+    <string name="pyrowave_late_frames_sharp">Sharper</string>
+    <string name="pyrowave_late_frames_balanced">Balanced (Recommended)</string>
+    <string name="pyrowave_late_frames_smooth">Smoother</string>
+    <string name="pyrowave_late_frames_smoothest">Smoothest (most blur)</string>
+    <string name="summary_video_format">Newer codecs can lower video bandwidth requirements if your device supports them. Codec selections may be ignored if not supported by the host software or GPU.</string>
+    <string name="title_enable_hdr">Enable HDR / 10-bit SDR (Experimental)</string>
+    <string name="summary_enable_hdr">Stream HDR / 10-bit SDR when the game and PC GPU support it. Requires a GPU with HEVC Main 10 encoding support.</string>
+    <string name="title_full_range">Force full range video (Experimental)</string>
+    <string name="summary_full_range">This will cause loss of detail in light and dark areas if your device doesn\'t properly display full range video content.</string>
+    <string name="title_enable_perf_overlay">Show performance stats while streaming</string>
+    <string name="summary_enable_perf_overlay">Display real-time stream performance information while streaming</string>
+    <string name="title_enable_post_stream_toast">Show latency message after streaming</string>
+    <string name="summary_enable_post_stream_toast">Display a latency information message after the stream ends</string>
+
+    <string name="category_help">Help</string>
+    <string name="title_setup_guide">Setup guide</string>
+    <string name="summary_setup_guide">View instructions on how to set up your gaming PC for streaming</string>
+    <string name="title_troubleshooting">Troubleshooting guide</string>
+    <string name="summary_troubleshooting">View tips for diagnosing and fixing common streaming issues</string>
+    <string name="title_privacy_policy">Privacy policy</string>
+    <string name="summary_privacy_policy">View Moonlight\'s privacy policy</string>
+
+    <!-- Toasts -->
+    <string name="toast_controller_type_changed">Gamepad type may be changed due to motion sensor emulation</string>
+
+    <!-- Permission justification -->
+    <string name="local_network_rationale">Moonlight requires local network permissions to communicate with nearby hosts</string>
+
+    <!-- Array strings -->
+    <string name="resolution_360p">360p</string>
+    <string name="resolution_480p">480p</string>
+    <string name="resolution_720p">720p</string>
+    <string name="resolution_1080p">1080p</string>
+    <string name="resolution_1440p">1440p</string>
+    <string name="resolution_4k">4K</string>
+
+    <string name="fps_30">30 FPS</string>
+    <string name="fps_60">60 FPS</string>
+    <string name="fps_90">90 FPS</string>
+    <string name="fps_120">120 FPS</string>
+
+    <string name="audioconf_stereo">Stereo</string>
+    <string name="audioconf_51surround">5.1 Surround Sound</string>
+    <string name="audioconf_71surround">7.1 Surround Sound</string>
+
+    <string name="videoformat_auto">Automatic (Recommended)</string>
+    <string name="videoformat_av1always">Prefer AV1 (Experimental)</string>
+    <string name="videoformat_hevcalways">Prefer HEVC</string>
+    <string name="videoformat_h264always">Prefer H.264</string>
+    <string name="videoformat_pyrowave">PyroWave (Experimental, 200+ Mbps LAN)</string>
+
+    <string name="videorenderer_auto">Automatic (Recommended)</string>
+    <string name="videorenderer_direct">Direct Surface (Legacy)</string>
+    <string name="videorenderer_vulkan">Vulkan (Experimental)</string>
+
+    <string name="title_video_renderer">Video renderer</string>
+    <string name="summary_video_renderer">Vulkan adds dithering and native frame pacing. Automatic uses the direct renderer.</string>
+
+    <string name="title_custom_vulkan_driver">Custom Vulkan driver</string>
+    <string name="summary_custom_vulkan_driver">Load a custom Vulkan driver (for example Turnip) through libadrenotools, for arm64 devices on Android 10+. Used by PyroWave; other codecs keep the system Vulkan driver. If the driver doesn\'t work, the system one is used instead. Restart Starwire after changing it.</string>
+    <string name="title_custom_vulkan_driver_path">Custom driver file</string>
+    <string name="summary_custom_vulkan_driver_path">Tap to choose the driver (.so, .zip, or .adpkg). It is copied into the app\'s private storage.</string>
+    <string name="custom_vulkan_driver_imported">Custom driver imported: %1$s</string>
+    <string name="custom_vulkan_driver_import_failed">Could not import the custom driver</string>
+    <string name="custom_vulkan_driver_no_picker">No file picker available</string>
+    <string name="title_custom_vulkan_driver_toast">Driver loaded toast</string>
+    <string name="summary_custom_vulkan_driver_toast">Show a message when the custom Vulkan driver is loaded.</string>
+    <string name="custom_vulkan_driver_loaded">Custom Vulkan driver loaded: %1$s</string>
+
+    <string name="dithering_off">Off</string>
+    <string name="dithering_low">Low</string>
+    <string name="dithering_high">High</string>
+
+    <string name="title_spatial_dithering">Spatial Dithering</string>
+    <string name="summary_spatial_dithering">Adds fine moving noise that hides color banding, most visible in HDR gradients (Vulkan renderer only)</string>
+
+    <string name="title_frame_pacing">Video frame pacing</string>
+    <string name="summary_frame_pacing">Specify how to balance video latency and smoothness</string>
+    <string name="pacing_latency">Prefer lowest latency</string>
+    <string name="pacing_balanced">Balanced</string>
+    <string name="pacing_balanced_alt">Balanced with FPS limit</string>
+    <string name="pacing_smoothness">Prefer smoothest video (may significantly increase latency)</string>
+    <string name="title_jitter_buffer">Jitter buffer</string>
+    <string name="summary_jitter_buffer">Only used with host frame timing pacing: configure how much latency you want to accept for a smoother stream</string>
+    <string name="jitter_buffer_lowest_latency">Lowest latency</string>
+    <string name="jitter_buffer_low_latency">Low latency</string>
+    <string name="jitter_buffer_balanced">Balanced (Recommended)</string>
+    <string name="jitter_buffer_smooth">Smooth</string>
+    <string name="pacing_host_timed">Sync to host frame timing (best with the Vulkan renderer)</string>
+
+    <string name="title_analog_scrolling">Use an analog stick to scroll</string>
+    <string name="summary_analog_scrolling">Select an analog stick to scroll when in mouse emulation mode</string>
+    <string name="analogscroll_none">None (both sticks move the mouse)</string>
+    <string name="analogscroll_right">Right analog stick</string>
+    <string name="analogscroll_left">Left analog stick</string>
+
+    <string name="overlay_trigger_select">Select</string>
+    <string name="overlay_trigger_start">Start</string>
+    <string name="overlay_trigger_guide">Guide</string>
+    <string name="overlay_trigger_lb_rb">LB + RB</string>
+
+    <string name="overlay_duration_500">0.5 seconds</string>
+    <string name="overlay_duration_1000">1 second</string>
+    <string name="overlay_duration_1500">1.5 seconds</string>
+    <string name="overlay_duration_2000">2 seconds</string>
+    <string name="overlay_duration_2500">2.5 seconds</string>
+    <string name="overlay_duration_3000">3 seconds</string>
+
+    <!-- New strings -->
+    <string name="title_actual_display_refresh_rate">Actual display refresh rate</string>
+    <string name="summary_actual_display_refresh_rate">Leave at 0 to measure the display\'s exact refresh rate when the stream starts and ask the host for a frame rate that lines up with it. Enter a rate to send that instead. (Experimental)</string>
+    <string name="title_checkbox_ultra_low_latency">Ultra low latency (Experimental)</string>
+    <string name="summary_checkbox_ultra_low_latency">Apply additional decoder flags for SD8Gen2/8(s)Gen3/8Elite, Exynos and MTK devices that may reduce latency</string>
+    
+    <!-- Quick Launch strings -->
+    <string name="quick_launch_section_title">Quick Launch</string>
+    <string name="quick_launch_added">Added to Quick Launch</string>
+    <string name="quick_launch_removed">Removed from Quick Launch</string>
+    <string name="quick_launch_error">Error with Quick Launch</string>
+    <string name="quick_launch_rename">Rename</string>
+    <string name="quick_launch_settings">App Settings Override</string>
+    <string name="quick_launch_move_left">Move Left</string>
+    <string name="quick_launch_move_right">Move Right</string>
+    <string name="quick_launch_delete">Remove from Quick Launch</string>
+    <string name="quick_launch_rename_title">Rename Quick Launch</string>
+    <string name="quick_launch_rename_message">Enter a new name for this Quick Launch item:</string>
+    <string name="quick_launch_renamed">Quick Launch renamed</string>
+
+    <!-- Overrides Section strings -->
+    <string name="overrides_section_title">Overrides</string>
+    <string name="title_bitrate_override">Bitrate Override</string>
+    <string name="summary_bitrate_override">Override all bitrate settings. Set to left for default behavior.</string>
+    <string name="bitrate_use_default">Bitrate: (Default)</string>
+
+    <!-- Overlay Menu strings -->
+    <string name="overlay_menu_disconnect">Disconnect</string>
+    <string name="overlay_menu_quit_session">Quit Session</string>
+    <string name="overlay_menu_toggle_stats">Stats (RB)</string>
+    <string name="overlay_menu_mouse_emulation">Mouse (X)</string>
+    <string name="overlay_menu_keyboard">Keyboard (Y)</string>
+    <string name="overlay_menu_guide">Guide (▶)</string>
+    <string name="overlay_menu_close">Close (B)</string>
+    <string name="overlay_menu_hint">Hold &lt;b&gt;%s&lt;/b&gt; to open menu</string>
+
+    <!-- Starwire: actions ported from Artemide's in-stream menu -->
+    <string name="overlay_menu_shortcuts">Shortcuts</string>
+    <string name="overlay_menu_back">Back</string>
+    <string name="overlay_menu_title">Stream menu</string>
+    <string name="title_cover_style">App covers</string>
+    <string name="cover_style_missing">Icons for apps without cover art</string>
+    <string name="cover_style_always">Icons for every app</string>
+    <string name="cover_style_never">Covers from your PC only</string>
+
+    <!-- Shortcuts imported from a file (Artemide's format) -->
+    <string name="title_import_shortcuts">Import shortcuts from a file</string>
+    <string name="summary_import_shortcuts">A JSON file in Artemide\'s format, such as {\"data\": [{\"name\": \"Snip\", \"keys\": [\"VK_LWIN\", \"VK_LSHIFT\", \"VK_S\"]}]}. They appear on the in-stream menu\'s Shortcuts page. Importing again replaces them.</string>
+    <string name="summary_imported_shortcuts">%1$d imported: %2$s. Tap to import a different file.</string>
+    <string name="title_clear_imported_shortcuts">Remove imported shortcuts</string>
+    <string name="summary_clear_imported_shortcuts">Takes the imported shortcuts off the Shortcuts page</string>
+    <string name="imported_shortcuts_done">Imported %1$d shortcuts</string>
+    <string name="imported_shortcuts_failed">Couldn\'t import the shortcuts: %1$s</string>
+    <string name="imported_shortcuts_too_big">the file is too big to be a shortcuts file</string>
+    <string name="imported_shortcuts_cleared">Imported shortcuts removed</string>
+    <string name="overlay_menu_task_manager">Task Manager</string>
+    <string name="overlay_menu_rotate_screen">Rotate</string>
+    <string name="overlay_menu_onscreen_controller">On-screen Controls</string>
+    <string name="overlay_menu_floating_button">Menu Button</string>
+    <string name="overlay_menu_send_esc">Esc</string>
+    <string name="overlay_menu_send_f11">F11</string>
+    <string name="overlay_menu_send_alt_f4">Alt+F4</string>
+    <string name="overlay_menu_send_alt_enter">Alt+Enter</string>
+    <string name="overlay_menu_send_ctrl_v">Ctrl+V</string>
+    <string name="overlay_menu_send_win">Win</string>
+    <string name="overlay_menu_send_win_d">Win+D</string>
+    <string name="overlay_menu_send_win_g">Win+G</string>
+    <string name="overlay_menu_send_ctrl_alt_tab">Ctrl+Alt+Tab</string>
+    <string name="overlay_menu_send_shift_tab">Shift+Tab</string>
+    <string name="overlay_menu_send_win_shift_left">Win+Shift+Left</string>
+    <string name="overlay_menu_send_ctrl_alt_shift_f1">Ctrl+Alt+Shift+F1</string>
+    <string name="overlay_menu_send_ctrl_alt_shift_f12">Ctrl+Alt+Shift+F12</string>
+    <string name="overlay_menu_send_win_alt_b">Win+Alt+B</string>
+    <string name="menu_button">Menu</string>
+    <string name="title_floating_button">Floating menu button</string>
+    <string name="summary_floating_button">Show a draggable button over the stream that opens the menu</string>
+
+    <!-- Starwire: pan/zoom, mouse modes, touch sensitivity, clipboard and server commands (from Artemide) -->
+    <string name="overlay_menu_pan_zoom">Pan/Zoom</string>
+    <string name="overlay_menu_mouse_mode">Touch Mode</string>
+    <string name="overlay_menu_touch_sensitivity">Sensitivity</string>
+    <string name="overlay_menu_upload_clipboard">Send Clipboard</string>
+    <string name="overlay_menu_fetch_clipboard">Get Clipboard</string>
+    <string name="overlay_menu_server_commands">PC Commands</string>
+    <string name="pan_zoom_mode_enabled">Pan/Zoom on: pinch to zoom, drag to pan, double-tap to reset</string>
+    <string name="pan_zoom_mode_disabled">Pan/Zoom off</string>
+    <string name="mouse_mode_title">Touch mode</string>
+    <string name="mouse_mode_multi_touch">Multi-touch (touches go straight to the PC)</string>
+    <string name="mouse_mode_absolute_touch">Direct touch (tap where you want to click)</string>
+    <string name="mouse_mode_track_pad_natural">Trackpad, natural (double-tap to drag)</string>
+    <string name="mouse_mode_track_pad_gaming">Trackpad, gaming (long-press to drag)</string>
+    <string name="mouse_mode_disabled">Touch disabled</string>
+    <string name="mouse_mode_absolute_touch_swapped">Direct touch, left/right click swapped</string>
+    <string name="touch_sensitivity_on">Touch sensitivity: %1$d%%</string>
+    <string name="touch_sensitivity_off">Touch sensitivity: default (100%)</string>
+    <string name="title_seekbar_touch_sensitivity">Trackpad sensitivity</string>
+    <string name="summary_seekbar_touch_sensitivity">Pointer speed in the trackpad touch modes. Toggle it during a stream with Sensitivity in the overlay menu.</string>
+    <string name="clipboard_sent">Clipboard sent to PC</string>
+    <string name="clipboard_received">Clipboard copied from PC</string>
+    <string name="clipboard_empty">Nothing on this device\'s clipboard to send</string>
+    <string name="clipboard_failed">Clipboard sync failed: %1$s</string>
+    <string name="server_commands_title">PC Commands</string>
+    <string name="server_commands_none">No PC commands available. Add them in Vibepollo\'s settings and allow this device to run server commands.</string>
+    <string name="server_commands_failed">Couldn\'t get PC commands: %1$s</string>
+    <string name="server_command_unsupported">This host doesn\'t support PC commands</string>
+    <string name="server_command_sent">Ran \"%1$s\" on the PC</string>
+
+    <!-- Starwire: Lite performance overlay, Prevent Packet Loss and Virtual Display (from Artemide) -->
+    <string name="perf_overlay_lite_bandwidth">Bw %1$.1f Mbps</string>
+    <string name="perf_overlay_lite_delay">Net/Dec %1$d/%2$.1f ms</string>
+    <string name="perf_overlay_lite_loss">Loss %1$.1f%%</string>
+    <string name="perf_overlay_lite_fps">%1$.0f FPS</string>
+    <string name="perf_overlay_lite_one_percent_low"> (1%% low %1$.0f)</string>
+    <string name="perf_overlay_one_percent_low">, 1%% low %1$.1f FPS</string>
+    <string name="title_checkbox_enable_perf_overlay_lite">Lite mode</string>
+    <string name="summary_checkbox_enable_perf_overlay_lite">Show one compact line at the top: bandwidth, network/decode delay, packet loss and FPS</string>
+    <string name="title_checkbox_prevent_packet_loss">Prevent packet loss</string>
+    <string name="summary_checkbox_prevent_packet_loss">Keeps the Wi-Fi connection busy with a tiny packet every 20 ms, so devices that drop packets in Wi-Fi power saving stay awake. Uses slightly more battery.</string>
+    <string name="title_virtual_display_mode">Display on the PC</string>
+    <string name="summary_virtual_display_mode">Where the host streams from. Host default leaves it to Vibepollo\'s own setting.</string>
+    <string name="virtual_display_mode_host">Host default</string>
+    <string name="virtual_display_mode_virtual">Virtual display</string>
+    <string name="virtual_display_mode_primary">Primary display</string>
+    <string name="applist_menu_start_vdisplay">Start in Virtual Display</string>
+    <string name="applist_menu_start_primarydisplay">Start in Primary Display</string>
+
+    <!-- Starwire: V-Sync, Fast V-Sync and Sync LFR (from Artemide) -->
+    <string name="title_vsync_mode">V-Sync (Experimental)</string>
+    <string name="summary_vsync_mode">Direct renderer only. V-Sync holds each frame for the next screen refresh (adds up to one frame of latency). Fast V-Sync spaces frames evenly when the stream FPS matches the screen (Prefer lowest latency pacing only). Ignored with the Vulkan renderer and host frame timing pacing.</string>
+    <string name="vsync_mode_off">Off</string>
+    <string name="vsync_mode_vsync">V-Sync</string>
+    <string name="vsync_mode_fast">Fast V-Sync</string>
+    <string name="title_checkbox_sync_lfr">Sync: LFR (Experimental)</string>
+    <string name="summary_checkbox_sync_lfr">Balanced pacing on the direct renderer: discard frames that are already stale when decoded and show only the newest. May drop more frames under load. The other pacing modes already do this.</string>
+    <string name="title_checkbox_async_decode">Async decode (Experimental)</string>
+    <string name="summary_checkbox_async_decode">The decoder reports ready frames as they happen instead of being checked in a loop. Direct renderer only, not with host frame timing. Turn off if video stalls or stutters.</string>
+    <string name="title_checkbox_async_lfr">Async: LFR (Experimental)</string>
+    <string name="summary_checkbox_async_lfr">With async decode, keep only the newest decoded frame waiting to be shown, for the lowest delay. May drop more frames under load.</string>
+
+    <!-- Starwire: on-screen full keyboard and automatic clipboard sync (from Artemide) -->
+    <string name="overlay_menu_full_keyboard">Full Keyboard</string>
+    <string name="virtual_keyboard_hide">Hide\nKBD</string>
+    <string name="title_checkbox_keyboard_vibrate">Keyboard key vibration</string>
+    <string name="summary_checkbox_keyboard_vibrate">Vibrate when keys on the on-screen full keyboard are pressed</string>
+    <string name="title_checkbox_sticky_modifier_keys">Sticky modifier keys</string>
+    <string name="summary_checkbox_sticky_modifier_keys">On the on-screen full keyboard, long-press Ctrl, Alt, Shift or Win to hold it down; tap it again to let go</string>
+    <string name="title_seekbar_keyboard_opacity">On-screen full keyboard opacity</string>
+    <string name="summary_seekbar_keyboard_opacity">How see-through the on-screen full keyboard is</string>
+    <string name="title_checkbox_smart_clipboard_sync">Automatic clipboard sync</string>
+    <string name="summary_checkbox_smart_clipboard_sync">Send this device\'s clipboard to the PC when the stream starts or you return to it, and copy the PC\'s clipboard here when you leave the stream. Needs clipboard permission for this device in Vibepollo.</string>
+    <string name="title_checkbox_smart_clipboard_sync_toast">Show clipboard sync messages</string>
+    <string name="summary_checkbox_smart_clipboard_sync_toast">Show a short message each time the clipboard is synced automatically</string>
+    <string name="title_checkbox_hide_clipboard_content">Hide clipboard content</string>
+    <string name="summary_checkbox_hide_clipboard_content">Mark text copied from the PC as sensitive, so Android doesn\'t preview it on screen</string>
+
+    <!-- Starwire: monitor switcher (Moonlit Artemis) and bitrate mid-stream (Moonlight V+) -->
+    <string name="overlay_menu_monitors">Monitors</string>
+    <string name="overlay_menu_monitor_n">Monitor %1$d</string>
+    <string name="overlay_menu_bitrate">Bitrate</string>
+    <string name="bitrate_dialog_title">Bitrate (now %1$d Mbps)</string>
+    <string name="bitrate_mbps">%1$d Mbps</string>
+    <string name="bitrate_changed">Bitrate set to %1$d Mbps</string>
+    <string name="bitrate_failed">Couldn\'t change bitrate: %1$s</string>
+
+    <!-- Starwire: Warp Drive / Warp 2 pacing (from Artemide), cursor hiding, long-press right click -->
+    <string name="pacing_warp">Warp Drive: 2x FPS from the PC, newest frame shown (Experimental)</string>
+    <string name="pacing_warp2">Warp 2: 4x FPS from the PC, newest frame shown (Experimental)</string>
+    <string name="title_hide_cursor_mode">Hide PC cursor</string>
+    <string name="summary_hide_cursor_mode">Hide the PC\'s mouse cursor in the video, using Vibepollo\'s Ctrl+Alt+Shift+N toggle. It\'s shown again when the stream ends.</string>
+    <string name="hide_cursor_never">Never</string>
+    <string name="hide_cursor_touching">While touching the screen</string>
+    <string name="hide_cursor_always">Always</string>
+
+    <!-- Starwire: Cover Glow home screen -->
+    <string name="cg_wordmark" translatable="false">Starwire</string>
+    <string name="cg_play">Play</string>
+    <string name="cg_resume">Resume</string>
+    <string name="cg_game_settings">This game\'s settings</string>
+    <string name="cg_last_played">Last played</string>
+    <string name="cg_running">Running now</string>
+    <string name="cg_pick_a_game">Pick a game</string>
+    <string name="cg_on_pc">On %1$s</string>
+    <string name="cg_chip_resolution">%1$dp · %2$d FPS</string>
+    <string name="cg_chip_custom">Custom settings</string>
+    <string name="cg_chip_haptics">Audio haptics</string>
+    <string name="cg_chip_vsync">V-Sync</string>
+    <string name="cg_chip_fast_vsync">Fast V-Sync</string>
+    <string name="cg_chip_warp">Warp Drive</string>
+    <string name="cg_chip_warp2">Warp 2</string>
+    <string name="cg_chip_hevc">HEVC</string>
+    <string name="cg_chip_av1">AV1</string>
+    <string name="cg_chip_h264">H.264</string>
+    <string name="cg_chip_pyrowave">PyroWave</string>
+    <string name="cg_chip_hdr">HDR</string>
+    <string name="cg_back">Back</string>
+    <string name="cg_settings">Settings</string>
+    <string name="cg_settings_for">%1$s settings</string>
+    <color name="cg_settings_background">#FF0A0918</color>
+
+    <!-- Cover Glow settings: plain-language section names (English only; other languages keep
+         their translated headings) -->
+    <string name="cg_section_stream">Stream</string>
+    <string name="cg_section_sound">Sound &amp; vibration</string>
+    <string name="cg_section_controllers">Controllers</string>
+    <string name="cg_section_menu">In-stream menu</string>
+    <string name="cg_section_touch">Touch &amp; mouse</string>
+    <string name="cg_section_onscreen">On-screen controls</string>
+    <string name="cg_section_pc">PC</string>
+    <string name="cg_section_app">App</string>
+    <string name="cg_section_advanced">Advanced</string>
+
+    <!-- Cover Glow settings: the "Predicted impact" panel -->
+    <string name="feel_title">Predicted impact</string>
+    <string name="feel_moving_it">What\'s moving it</string>
+    <string name="feel_factor_pacing">Frame pacing</string>
+    <string name="feel_factor_vsync">V-Sync</string>
+    <string name="feel_factor_async_lfr">Async LFR</string>
+    <string name="feel_on">On</string>
+    <string name="feel_off">Off</string>
+    <string name="feel_effect_faster">◀ Faster</string>
+    <string name="feel_effect_smoother">Smoother ▶</string>
+    <string name="feel_effect_balanced">Middle</string>
+    <string name="feel_effect_none">No effect</string>
+    <string name="feel_effect_not_used">Not used</string>
+    <string name="feel_factor_row">%1$s: %2$s</string>
+    <string name="feel_fastest">Fastest response</string>
+    <string name="feel_smoothest">Smoothest motion</string>
+    <string name="feel_delay">Input delay</string>
+    <string name="feel_battery">Battery use</string>
+    <string name="feel_level_lower">Lower</string>
+    <string name="feel_level_medium">Medium</string>
+    <string name="feel_level_higher">Higher</string>
+    <string name="feel_latency">Each frame is shown as soon as it arrives. Inputs feel quick, but motion can stutter on a busy network.</string>
+    <string name="feel_balanced">Frames are lined up with the screen and late ones are skipped. A good default for most games.</string>
+    <string name="feel_cap_fps">Like Balanced, with the PC sending no more frames than this screen shows.</string>
+    <string name="feel_smoothness">Every frame is shown in order, so motion is the smoothest, but the delay can grow a lot.</string>
+    <string name="feel_host_timed">Frames are shown on the PC\'s own timing. Steady motion, best with the Vulkan renderer.</string>
+    <string name="feel_warp">The PC sends twice the frames and the newest one is always shown. Lower delay, but the tablet, PC and network work harder.</string>
+    <string name="feel_warp2">The PC sends four times the frames and the newest one is always shown. The lowest delay, with the most work for the tablet, PC and network.</string>
+    <string name="feel_vsync">V-Sync stops tearing but can add up to one frame of delay.</string>
+    <string name="feel_fast_vsync">Fast V-Sync spaces frames evenly when the stream matches the screen.</string>
+    <string name="feel_async_lfr">Async LFR keeps only the newest decoded frame waiting.</string>
+
+    <!-- Starwire: per-game settings -->
+    <string name="title_game_touch_mode">Touch mode</string>
+    <string name="game_touch_mode_trackpad">Trackpad</string>
+    <string name="game_touch_mode_direct">Direct touch (mouse goes where you tap)</string>
+
+    <!-- Starwire: audio haptics (from Moonlight V+) -->
+    <string name="title_audio_haptics">Audio haptics</string>
+    <string name="summary_audio_haptics">Feel the game\'s bass (explosions, engines) as vibration on this device or your controller</string>
+    <string name="audio_haptics_off">Off</string>
+    <string name="audio_haptics_device">This device</string>
+    <string name="audio_haptics_controller">Controller</string>
+    <string name="audio_haptics_both">This device and controller</string>
+    <string name="title_audio_haptics_intensity">Audio haptics strength</string>
+    <string name="summary_audio_haptics_intensity">How strongly the bass vibrates</string>
+    <string name="title_checkbox_pinch_to_zoom">Pinch to zoom anytime</string>
+    <string name="summary_checkbox_pinch_to_zoom">Pinch with two fingers to zoom and move around the stream, without turning on Pan/Zoom. Two-finger scrolls and taps still go to the PC. Not in Multi-touch mode.</string>
+    <string name="title_checkbox_long_press_right_click">Long-press to right-click</string>
+    <string name="summary_checkbox_long_press_right_click">In the trackpad (gaming) touch mode, a long press holds the right mouse button instead of starting a left-button drag</string>
+
+    <!-- Custom Commands Activity -->
+    <string name="title_custom_commands">Custom Commands</string>
+    <string name="custom_commands_empty">No custom commands configured.\n\nTap the + button to add a command.</string>
+    <string name="custom_commands_add">Add Command</string>
+    <string name="custom_commands_edit">Edit Command</string>
+    <string name="custom_commands_menu_title">Command Options</string>
+    <string name="custom_commands_move_up">Move Up</string>
+    <string name="custom_commands_move_down">Move Down</string>
+    <string name="custom_commands_delete">Delete Command</string>
+    <string name="custom_commands_delete_confirm">Are you sure you want to delete this command?</string>
+    <string name="custom_commands_deleted">Command deleted</string>
+
+    <!-- Custom Command Editor Dialog -->
+    <string name="editor_title_add">Add Custom Command</string>
+    <string name="editor_title_edit">Edit Custom Command</string>
+    <string name="editor_command_name">Command Name</string>
+    <string name="editor_command_name_hint"></string>
+    <string name="editor_icon">Icon</string>
+    <string name="editor_icon_select">Select Icon</string>
+    <string name="editor_key_combination">Key Combination</string>
+    <string name="editor_modifiers">Modifiers</string>
+    <string name="editor_modifier_ctrl">Ctrl</string>
+    <string name="editor_modifier_alt">Alt</string>
+    <string name="editor_modifier_shift">Shift</string>
+    <string name="editor_modifier_meta">Win/Cmd</string>
+    <string name="editor_key_code">Key</string>
+    <string name="editor_key_code_hint">Select a key</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_cancel">Cancel</string>
+    <string name="editor_error_name_empty">Please enter a command name</string>
+    <string name="editor_error_key_empty">Please select a key</string>
+    <string name="editor_command_saved">Command saved</string>
+    <string name="editor_then">Then</string>
+    <string name="editor_then_nothing">Nothing</string>
+    <string name="editor_then_close_menu">Close Menu</string>
+    <string name="editor_then_disconnect">Disconnect</string>
+    <string name="editor_then_quit">Quit Session</string>
+    <string name="editor_then_sleep">Sleep</string>
+    <string name="sleep_admin_explanation">Required to lock the screen when the Sleep post-action is used in a custom command.</string>
+
+    <!-- Overlay Menu Preferences -->
+    <string name="title_overlay_custom_commands">Overlay menu commands</string>
+    <string name="summary_overlay_custom_commands">Configure custom keyboard commands for the overlay menu</string>
+    <string name="title_overlay_menu">Overlay menu</string>
+    <string name="summary_overlay_menu">Configure custom commands for the in-game overlay menu</string>
+    <string name="title_enable_overlay_menu">Enable overlay menu</string>
+    <string name="summary_enable_overlay_menu">Hold select button for 5 seconds during streaming to open the overlay menu</string>
+</resources>

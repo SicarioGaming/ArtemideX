@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Starwire icon: an event-horizon ring in the app's rainbow around a dark void, a tilted orbit
+     for the "link", and a bright star on the rim. Kept inside the adaptive icon's 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Soft glow behind the ring -->
+    <path android:pathData="M54,22a32,32 0,1 1,0 64a32,32 0,1 1,0 -64z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="54"
+                android:centerY="54"
+                android:gradientRadius="32"
+                android:startColor="#667C3AED"
+                android:endColor="#007C3AED" />
+        </aapt:attr>
+    </path>
+    <!-- The orbit, tilted -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="-24">
+        <path
+            android:pathData="M23,54a31,9.5 0,1 0,62 0a31,9.5 0,1 0,-62 0z"
+            android:strokeWidth="1.8"
+            android:strokeColor="#B3C4B5FD" />
+    </group>
+    <!-- The void -->
+    <path
+        android:fillColor="#FF05040F"
+        android:pathData="M54,36a18,18 0,1 1,0 36a18,18 0,1 1,0 -36z" />
+    <!-- The ring -->
+    <path
+        android:pathData="M54,33a21,21 0,1 1,0 42a21,21 0,1 1,0 -42z"
+        android:strokeWidth="5.5">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="sweep"
+                android:centerX="54"
+                android:centerY="54">
+                <item android:offset="0" android:color="#FF0894FF" />
+                <item android:offset="0.25" android:color="#FFC959DD" />
+                <item android:offset="0.5" android:color="#FFFF2E54" />
+                <item android:offset="0.75" android:color="#FFFF9004" />
+                <item android:offset="1" android:color="#FF0894FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- A star on the rim -->
+    <path android:pathData="M69,32a7,7 0,1 1,0 14a7,7 0,1 1,0 -14z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="69"
+                android:centerY="39"
+                android:gradientRadius="7"
+                android:startColor="#CCFFFFFF"
+                android:endColor="#00FFFFFF" />
+        </aapt:attr>
+    </path>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M69,36.6a2.4,2.4 0,1 1,0 4.8a2.4,2.4 0,1 1,0 -4.8z" />
+</vector>

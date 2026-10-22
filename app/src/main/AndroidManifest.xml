@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CAPTURE_KEYBOARD" />
+    <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA"/>
+    <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA"/>
+
+    <!-- We don't need a MulticastLock on API level 34+ because we use NsdManager for mDNS -->
+    <uses-permission
+        android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"
+        android:maxSdkVersion="33" />
+
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.gamepad"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.sensor.accelerometer"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.sensor.gyroscope"
+        android:required="false" />
+
+    <!-- Disable legacy input emulation on ChromeOS -->
+    <uses-feature
+        android:name="android.hardware.type.pc"
+        android:required="false"/>
+
+    <application
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/backup_rules_s"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:isGame="true"
+        android:banner="@drawable/atv_banner"
+        android:appCategory="game"
+        android:icon="@mipmap/ic_launcher"
+        android:installLocation="auto"
+        android:gwpAsanMode="always"
+        android:localeConfig="@xml/locales_config"
+        android:enableOnBackInvokedCallback="false"
+        android:theme="@style/AppTheme">
+
+        <provider
+            android:name=".PosterContentProvider"
+            android:authorities="poster.${applicationId}"
+            android:enabled="true"
+            android:exported="true">
+        </provider>
+
+        <!-- Samsung multi-window support -->
+        <uses-library
+            android:name="com.sec.android.app.multiwindow"
+            android:required="false" />
+        <meta-data
+            android:name="com.sec.android.support.multiwindow"
+            android:value="true" />
+
+        <!-- Disable Game Mode downscaling since it can break our UI dialogs and doesn't benefit
+             performance much for us since we don't use GL/Vulkan for rendering anyway -->
+        <meta-data
+            android:name="com.android.graphics.intervention.wm.allowDownscale"
+            android:value="false"/>
+        
+        <!-- Game Mode configuration -->
+        <meta-data
+            android:name="android.game_mode_config"
+            android:resource="@xml/game_mode_config" />
+
+        <!-- Samsung DeX support requires explicit placement of android:resizeableActivity="true"
+             in each activity even though it is implied by targeting API 24+ -->
+
+        <activity
+            android:name=".PcView"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
+
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="tv.ouya.intent.category.APP" />
+            </intent-filter>
+        </activity>
+        <!-- Small hack to support launcher shortcuts without relaunching over and over again when the back button is pressed -->
+        <activity
+            android:name=".ShortcutTrampoline"
+            android:noHistory="true"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+        </activity>
+
+        <!-- Activity for creating Quick Launch shortcuts -->
+        <activity
+            android:name=".QuickLaunchShortcutPicker"
+            android:label="Quick Launch App"
+            android:icon="@mipmap/ic_shortcut_quick_launch"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Light.Dialog">
+            <intent-filter>
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".AppView"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+        </activity>
+        <activity
+            android:name=".preferences.StreamSettings"
+            android:theme="@style/CoverGlowSettingsTheme"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:label="Streaming Settings">
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+        </activity>
+        <activity
+            android:name=".preferences.AppStreamSettings"
+            android:theme="@style/CoverGlowSettingsTheme"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:label="App Settings">
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+        </activity>
+        <activity
+            android:name=".preferences.AddComputerManually"
+            android:resizeableActivity="true"
+            android:windowSoftInputMode="stateVisible"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:label="Add Computer Manually">
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+        </activity>
+        <activity
+            android:name=".preferences.CustomCommandsActivity"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:label="@string/title_custom_commands">
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+        </activity>
+        <activity
+            android:name=".Game"
+            android:configChanges="mcc|mnc|density|colorMode|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection"
+            android:noHistory="true"
+            android:supportsPictureInPicture="true"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="false"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true"
+            android:theme="@style/StreamTheme"
+            android:preferMinimalPostProcessing="true">
+
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+
+            <!-- Special metadata for NVIDIA Shield devices to prevent input buffering
+                 and most importantly, opt out of mouse acceleration while streaming -->
+            <meta-data
+                android:name="com.nvidia.immediateInput"
+                android:value="true" />
+            <meta-data
+                android:name="com.nvidia.rawCursorInput"
+                android:value="true" />
+        </activity>
+
+        <service
+            android:name=".discovery.DiscoveryService"
+            android:label="mDNS PC Auto-Discovery Service" />
+        <service
+            android:name=".computers.ComputerManagerService"
+            android:label="Computer Management Service" />
+        <service
+            android:name=".binding.input.driver.UsbDriverService"
+            android:label="Usb Driver Service" />
+
+        <!-- Broadcast receiver for quitting the stream from external apps -->
+        <receiver
+            android:name=".receivers.StreamControlReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.limelight.QUIT_STREAM" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Device admin receiver for Sleep post-action (lockNow) -->
+        <receiver
+            android:name=".SleepDeviceAdmin"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name=".HelpActivity"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="true"
+            android:configChanges="mcc|mnc|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize|layoutDirection">
+            <meta-data android:name="WindowManagerPreference:FreeformWindowSize" android:value="system-default" />
+            <meta-data android:name="WindowManagerPreference:FreeformWindowOrientation" android:value="landscape" />
+        </activity>
+    </application>
+
+</manifest>

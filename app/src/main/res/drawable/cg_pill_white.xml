@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow: the main action (Play) -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33000000">
+    <item>
+        <selector>
+            <item android:state_focused="true">
+                <shape android:shape="rectangle">
+                    <corners android:radius="999dp" />
+                    <solid android:color="#FFFFFFFF" />
+                    <stroke android:width="3dp" android:color="#FF0B0F14" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="999dp" />
+                    <solid android:color="#FFFFFFFF" />
+                </shape>
+            </item>
+        </selector>
+    </item>
+</ripple>

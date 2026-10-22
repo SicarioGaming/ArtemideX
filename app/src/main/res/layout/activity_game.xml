@@ -1,0 +1,86 @@
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Game" >
+
+    <View
+        android:id="@+id/backgroundTouchView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center" />
+
+    <com.limelight.ui.StreamView
+        android:id="@+id/surfaceView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:focusedByDefault="true"
+        android:defaultFocusHighlightEnabled="false">
+        <requestFocus />
+    </com.limelight.ui.StreamView>
+
+    <TextView
+        android:id="@+id/performanceOverlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="5dp"
+        android:layout_gravity="left"
+        android:padding="2dp"
+        android:textSize="10sp"
+        android:textColor="#BFFFFFFF"
+        android:typeface="monospace"
+        android:gravity="left"
+        android:background="#60000000"
+        android:preferKeepClear="true"
+        android:visibility="gone"
+        android:text="..." />
+
+    <TextView
+        android:id="@+id/notificationOverlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_gravity="right"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:gravity="right"
+        android:background="#80000000"
+        android:preferKeepClear="true"
+        android:visibility="gone" />
+
+    <include layout="@layout/brightness_slider" />
+
+    <com.limelight.ui.overlay.OverlayMenuView
+        android:id="@+id/overlayMenuView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="16dp"
+        android:layout_gravity="end|center_vertical"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:defaultFocusHighlightEnabled="false"
+        android:preferKeepClear="true"
+        android:visibility="gone" />
+
+    <!-- Floating menu button (from Artemide): tap to open the overlay menu, drag to move -->
+    <ImageButton
+        android:id="@+id/floatingMenuButton"
+        android:layout_width="46dp"
+        android:layout_height="46dp"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="24dp"
+        android:layout_marginStart="16dp"
+        android:background="@drawable/floating_menu_button"
+        android:contentDescription="@string/menu_button"
+        android:src="@drawable/ic_menu"
+        android:padding="11dp"
+        android:visibility="gone"
+        android:elevation="9999dp" />
+
+</merge>

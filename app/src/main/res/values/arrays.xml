@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="resolution_names">
+        <item>@string/resolution_360p</item>
+        <item>@string/resolution_480p</item>
+        <item>@string/resolution_720p</item>
+        <item>@string/resolution_1080p</item>
+        <item>@string/resolution_1440p</item>
+        <item>@string/resolution_4k</item>
+    </string-array>
+
+    <!-- Keep this in sync with PreferenceConfiguration.isNativeResolution()! -->
+    <string-array name="resolution_values" translatable="false">
+        <item>640x360</item>
+        <item>854x480</item>
+        <item>1280x720</item>
+        <item>1920x1080</item>
+        <item>2560x1440</item>
+        <item>3840x2160</item>
+    </string-array>
+
+    <string-array name="fps_names">
+        <item>@string/fps_30</item>
+        <item>@string/fps_60</item>
+        <item>@string/fps_90</item>
+        <item>@string/fps_120</item>
+    </string-array>
+    <string-array name="fps_values" translatable="false">
+        <item>30</item>
+        <item>60</item>
+        <item>90</item>
+        <item>120</item>
+    </string-array>
+
+    <string-array name="audio_config_names">
+        <item>@string/audioconf_stereo</item>
+        <item>@string/audioconf_51surround</item>
+        <item>@string/audioconf_71surround</item>
+    </string-array>
+    <string-array name="audio_config_values" translatable="false">
+        <item>2</item>
+        <item>51</item>
+        <item>71</item>
+    </string-array>
+
+    <!-- Don't forget to update locales_config.xml when you modify this! -->
+    <string-array name="language_names" translatable="false">
+        <item>Default</item>
+        <item>English</item>
+        <item>Italiano</item>
+        <item>日本語</item>
+        <item>Русский</item>
+        <item>Nederlands</item>
+        <item>中文(简体)</item>
+        <item>中文(繁體)</item>
+        <item>한국어</item>
+        <item>Español</item>
+        <item>Français</item>
+        <item>Deutsch</item>
+        <item>Română</item>
+        <item>Українська</item>
+        <item>Norsk bokmål</item>
+        <item>Tiếng Việt</item>
+        <item>Magyar</item>
+        <item>Ελληνικά</item>
+        <item>Português do Brasil</item>
+        <item>Čeština</item>
+        <item>עִבְרִית</item>
+        <item>Svenska</item>
+        <item>Bahasa Indonesia</item>
+        <item>Esperanto</item>
+        <item>Latviešu valoda</item>
+        <item>தமிழ்</item>
+    </string-array>
+    <string-array name="language_values" translatable="false">
+        <item>default</item>
+        <item>en</item>
+        <item>it</item>
+        <item>ja</item>
+        <item>ru</item>
+        <item>nl</item>
+        <item>zh-CN</item>
+        <item>zh-TW</item>
+        <item>ko</item>
+        <item>es</item>
+        <item>fr</item>
+        <item>de</item>
+        <item>ro</item>
+        <item>uk</item>
+        <item>nb-NO</item>
+        <item>vi</item>
+        <item>hu</item>
+        <item>el</item>
+        <item>pt-BR</item>
+        <item>cs</item>
+        <item>iw</item>
+        <item>sv</item>
+        <item>in</item>
+        <item>eo</item>
+        <item>lv</item>
+        <item>ta</item>
+    </string-array>
+
+    <string-array name="video_format_names">
+        <item>@string/videoformat_auto</item>
+        <item>@string/videoformat_av1always</item>
+        <item>@string/videoformat_hevcalways</item>
+        <item>@string/videoformat_h264always</item>
+        <item>@string/videoformat_pyrowave</item>
+    </string-array>
+    <string-array name="video_format_values" translatable="false">
+        <item>auto</item>
+        <item>forceav1</item>
+        <item>forceh265</item>
+        <item>neverh265</item>
+        <item>forcepyrowave</item>
+    </string-array>
+
+    <string-array name="video_renderer_names">
+        <item>@string/videorenderer_auto</item>
+        <item>@string/videorenderer_direct</item>
+        <item>@string/videorenderer_vulkan</item>
+    </string-array>
+    <string-array name="video_renderer_values" translatable="false">
+        <item>auto</item>
+        <item>direct</item>
+        <item>vulkan</item>
+    </string-array>
+
+    <string-array name="pyrowave_late_frames_names">
+        <item>@string/pyrowave_late_frames_off</item>
+        <item>@string/pyrowave_late_frames_sharp</item>
+        <item>@string/pyrowave_late_frames_balanced</item>
+        <item>@string/pyrowave_late_frames_smooth</item>
+        <item>@string/pyrowave_late_frames_smoothest</item>
+    </string-array>
+    <string-array name="pyrowave_late_frames_values" translatable="false">
+        <item>off</item>
+        <item>sharp</item>
+        <item>balanced</item>
+        <item>smooth</item>
+        <item>smoothest</item>
+    </string-array>
+
+    <string-array name="jitter_buffer_names">
+        <item>@string/jitter_buffer_lowest_latency</item>
+        <item>@string/jitter_buffer_low_latency</item>
+        <item>@string/jitter_buffer_balanced</item>
+        <item>@string/jitter_buffer_smooth</item>
+    </string-array>
+    <string-array name="jitter_buffer_values" translatable="false">
+        <item>lowest-latency</item>
+        <item>low-latency</item>
+        <item>balanced</item>
+        <item>smooth</item>
+    </string-array>
+
+    <string-array name="spatial_dithering_names">
+        <item>@string/dithering_off</item>
+        <item>@string/dithering_low</item>
+        <item>@string/dithering_high</item>
+    </string-array>
+    <string-array name="spatial_dithering_values" translatable="false">
+        <item>off</item>
+        <item>low</item>
+        <item>high</item>
+    </string-array>
+
+    <string-array name="video_frame_pacing_names">
+        <item>@string/pacing_latency</item>
+        <item>@string/pacing_balanced</item>
+        <item>@string/pacing_balanced_alt</item>
+        <item>@string/pacing_smoothness</item>
+        <item>@string/pacing_host_timed</item>
+        <item>@string/pacing_warp</item>
+        <item>@string/pacing_warp2</item>
+    </string-array>
+    <string-array name="video_frame_pacing_values" translatable="false">
+        <item>latency</item>
+        <item>balanced</item>
+        <item>cap-fps</item>
+        <item>smoothness</item>
+        <item>host-timed</item>
+        <item>warp</item>
+        <item>warp2</item>
+    </string-array>
+
+    <!-- Starwire: hiding the PC's cursor in the video -->
+    <string-array name="hide_cursor_mode_names">
+        <item>@string/hide_cursor_never</item>
+        <item>@string/hide_cursor_touching</item>
+        <item>@string/hide_cursor_always</item>
+    </string-array>
+    <string-array name="hide_cursor_mode_values" translatable="false">
+        <item>never</item>
+        <item>touching</item>
+        <item>always</item>
+    </string-array>
+
+    <!-- Starwire: touch mode in per-game settings (the global "Use the touchscreen as a trackpad") -->
+    <string-array name="game_touch_mode_names">
+        <item>@string/game_touch_mode_trackpad</item>
+        <item>@string/game_touch_mode_direct</item>
+    </string-array>
+    <string-array name="game_touch_mode_values" translatable="false">
+        <item>true</item>
+        <item>false</item>
+    </string-array>
+
+    <!-- Starwire: audio haptics -->
+    <string-array name="audio_haptics_names">
+        <item>@string/audio_haptics_off</item>
+        <item>@string/audio_haptics_device</item>
+        <item>@string/audio_haptics_controller</item>
+        <item>@string/audio_haptics_both</item>
+    </string-array>
+    <string-array name="audio_haptics_values" translatable="false">
+        <item>off</item>
+        <item>device</item>
+        <item>controller</item>
+        <item>both</item>
+    </string-array>
+
+    <string-array name="analog_scrolling_names">
+        <item>@string/analogscroll_none</item>
+        <item>@string/analogscroll_right</item>
+        <item>@string/analogscroll_left</item>
+    </string-array>
+    <string-array name="analog_scrolling_values" translatable="false">
+        <item>none</item>
+        <item>right</item>
+        <item>left</item>
+    </string-array>
+
+    <string-array name="overlay_trigger_button_names">
+        <item>@string/overlay_trigger_select</item>
+        <item>@string/overlay_trigger_start</item>
+        <item>@string/overlay_trigger_guide</item>
+        <item>@string/overlay_trigger_lb_rb</item>
+    </string-array>
+    <string-array name="overlay_trigger_button_values" translatable="false">
+        <item>select</item>
+        <item>start</item>
+        <item>guide</item>
+        <item>lb_rb</item>
+    </string-array>
+
+    <string-array name="overlay_hold_duration_names">
+        <item>@string/overlay_duration_500</item>
+        <item>@string/overlay_duration_1000</item>
+        <item>@string/overlay_duration_1500</item>
+        <item>@string/overlay_duration_2000</item>
+        <item>@string/overlay_duration_2500</item>
+        <item>@string/overlay_duration_3000</item>
+    </string-array>
+    <string-array name="overlay_hold_duration_values" translatable="false">
+        <item>500</item>
+        <item>1000</item>
+        <item>1500</item>
+        <item>2000</item>
+        <item>2500</item>
+        <item>3000</item>
+    </string-array>
+
+    <!-- Starwire: Artemide's V-Sync options (direct renderer only) -->
+    <string-array name="vsync_mode_names">
+        <item>@string/vsync_mode_off</item>
+        <item>@string/vsync_mode_vsync</item>
+        <item>@string/vsync_mode_fast</item>
+    </string-array>
+    <string-array name="vsync_mode_values" translatable="false">
+        <item>off</item>
+        <item>vsync</item>
+        <item>fast</item>
+    </string-array>
+
+    <!-- Cover Glow: icon tiles in place of the PC's covers (AppIcons) -->
+    <string-array name="cover_style_names">
+        <item>@string/cover_style_missing</item>
+        <item>@string/cover_style_always</item>
+        <item>@string/cover_style_never</item>
+    </string-array>
+    <string-array name="cover_style_values" translatable="false">
+        <item>missing</item>
+        <item>always</item>
+        <item>never</item>
+    </string-array>
+
+    <!-- Starwire: which display the host streams from (virtualDisplay launch argument) -->
+    <string-array name="virtual_display_mode_names">
+        <item>@string/virtual_display_mode_host</item>
+        <item>@string/virtual_display_mode_virtual</item>
+        <item>@string/virtual_display_mode_primary</item>
+    </string-array>
+    <string-array name="virtual_display_mode_values" translatable="false">
+        <item>host</item>
+        <item>virtual</item>
+        <item>primary</item>
+    </string-array>
+
+    <string-array name="hdr_setting_names">
+        <item>On</item>
+        <item>Off</item>
+    </string-array>
+    <string-array name="hdr_setting_values" translatable="false">
+        <item>true</item>
+        <item>false</item>
+    </string-array>
+
+    <string-array name="perf_overlay_setting_names">
+        <item>On</item>
+        <item>Off</item>
+    </string-array>
+    <string-array name="perf_overlay_setting_values" translatable="false">
+        <item>true</item>
+        <item>false</item>
+    </string-array>
+
+    <string-array name="custom_command_post_actions">
+        <item>@string/editor_then_nothing</item>
+        <item>@string/editor_then_close_menu</item>
+        <item>@string/editor_then_disconnect</item>
+        <item>@string/editor_then_quit</item>
+        <item>@string/editor_then_sleep</item>
+    </string-array>
+</resources>

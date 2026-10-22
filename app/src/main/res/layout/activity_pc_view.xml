@@ -1,0 +1,159 @@
+<!-- Portrait orientation only -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF0A0918"
+    android:clipChildren="false"
+    tools:context=".PcView" >
+
+    <!-- Cover Glow: the soft teal light behind the PC list -->
+    <View
+        android:layout_width="600dp"
+        android:layout_height="600dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="-280dp"
+        android:layout_marginEnd="-240dp"
+        android:alpha="0.4"
+        android:background="@drawable/cg_glow"
+        android:backgroundTint="#FF7C3AED"
+        android:importantForAccessibility="no" />
+
+    <!-- Stars and nebula over the glow -->
+    <com.limelight.ui.StarfieldView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Quick Launch Section -->
+    <include layout="@layout/quick_launch_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/settingsButton"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- Overrides Section -->
+    <include layout="@layout/overrides_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/quickLaunchSection"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="10dp"/>
+
+    <RelativeLayout
+        android:id="@+id/pcFragmentContainer"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_below="@+id/overridesSection"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        >
+
+        <RelativeLayout
+            android:id="@+id/no_pc_found_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:layout_centerInParent="true"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true">
+            <ProgressBar
+                android:id="@+id/pcs_loading"
+                android:layout_width="75dp"
+                android:layout_height="75dp"
+                android:indeterminate="true"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toRightOf="@+id/pcs_loading"
+                android:layout_toEndOf="@+id/pcs_loading"
+                android:layout_marginLeft="10dp"
+                android:layout_marginStart="10dp"
+                android:layout_centerVertical="true"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:gravity="center"
+                android:text="@string/searching_pc"/>
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+    <ImageButton
+        android:id="@+id/settingsButton"
+        android:layout_width="70dp"
+        android:layout_height="65dp"
+        android:cropToPadding="false"
+        android:scaleType="fitXY"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:src="@drawable/ic_settings"
+        android:preferKeepClear="true"
+        style="?android:attr/borderlessButtonStyle"/>
+
+    <ImageButton
+        android:id="@+id/overridesToggleButton"
+        android:layout_width="70dp"
+        android:layout_height="65dp"
+        android:cropToPadding="false"
+        android:scaleType="fitXY"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/settingsButton"
+        android:layout_toEndOf="@+id/settingsButton"
+        android:src="@drawable/ic_overrides_enabled"
+        android:preferKeepClear="true"
+        android:contentDescription="Toggle Overrides Section"
+        style="?android:attr/borderlessButtonStyle"/>
+
+    <ImageButton
+        android:id="@+id/autoResumeToggleButton"
+        android:layout_width="70dp"
+        android:layout_height="65dp"
+        android:cropToPadding="false"
+        android:scaleType="fitXY"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/overridesToggleButton"
+        android:layout_toEndOf="@+id/overridesToggleButton"
+        android:src="@drawable/ic_auto_resume_enabled"
+        android:preferKeepClear="true"
+        android:contentDescription="Toggle Auto Resume"
+        style="?android:attr/borderlessButtonStyle"/>
+
+    <ImageButton
+        android:id="@+id/helpButton"
+        android:layout_width="70dp"
+        android:layout_height="65dp"
+        android:cropToPadding="false"
+        android:scaleType="fitXY"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@+id/autoResumeToggleButton"
+        android:layout_toEndOf="@+id/autoResumeToggleButton"
+        android:src="@drawable/ic_help"
+        android:preferKeepClear="true"
+        style="?android:attr/borderlessButtonStyle"/>
+    
+    <ImageButton
+        android:id="@+id/manuallyAddPc"
+        android:layout_width="70dp"
+        android:layout_height="65dp"
+        android:cropToPadding="false"
+        android:scaleType="fitXY"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:src="@drawable/ic_add"
+        android:preferKeepClear="true"
+        style="?android:attr/borderlessButtonStyle"/>
+
+</RelativeLayout>

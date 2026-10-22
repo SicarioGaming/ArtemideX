@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow: the soft light behind the home screen, tinted with the cover's colour in code -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <gradient
+        android:type="radial"
+        android:gradientRadius="320dp"
+        android:startColor="#99FFFFFF"
+        android:centerColor="#33FFFFFF"
+        android:endColor="#00FFFFFF" />
+</shape>

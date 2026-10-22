@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Floating in-stream menu button (from Artemide), in Starwire's frosted violet -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#80FFFFFF">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#D91A1238" />
+            <stroke android:color="#B3C4B5FD" android:width="1.5dp" />
+            <size android:width="46dp" android:height="46dp" />
+        </shape>
+    </item>
+</ripple>

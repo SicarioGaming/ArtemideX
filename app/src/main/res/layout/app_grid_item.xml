@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow: one game cover in the home screen's cover row -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="136dp"
+    android:layout_height="176dp"
+    android:padding="8dp">
+    <ImageView
+        android:id="@+id/grid_image"
+        android:cropToPadding="false"
+        android:scaleType="fitXY"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/cg_cover"
+        android:clipToOutline="true">
+    </ImageView>
+    <ImageView
+        android:id="@+id/grid_overlay"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:layout_width="44dp"
+        android:layout_height="44dp">
+    </ImageView>
+    <TextView
+        android:id="@+id/grid_text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/grid_overlay"
+        android:layout_margin="6dp"
+        android:gravity="center"
+        android:textColor="#FFFFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold">
+    </TextView>
+    <ImageView
+        android:id="@+id/settings_indicator"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="8dp"
+        android:src="@drawable/ic_tool_red"
+        android:visibility="gone">
+    </ImageView>
+</RelativeLayout>

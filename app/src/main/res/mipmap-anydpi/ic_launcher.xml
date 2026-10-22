@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Starwire icon for Android 5-7 (no adaptive icons, and vector gradients need Android 7):
+     the same design in solid colours on a round backdrop -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FF160C36"
+        android:pathData="M54,6a48,48 0,1 1,0 96a48,48 0,1 1,0 -96z" />
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="-24">
+        <path
+            android:pathData="M19,54a35,11 0,1 0,70 0a35,11 0,1 0,-70 0z"
+            android:strokeWidth="2"
+            android:strokeColor="#B3C4B5FD" />
+    </group>
+    <path
+        android:fillColor="#FF05040F"
+        android:pathData="M54,33a21,21 0,1 1,0 42a21,21 0,1 1,0 -42z" />
+    <path
+        android:pathData="M54,30a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z"
+        android:strokeWidth="6.5"
+        android:strokeColor="#FFA78BFA" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M71,32.2a2.8,2.8 0,1 1,0 5.6a2.8,2.8 0,1 1,0 -5.6z" />
+</vector>
