@@ -5,14 +5,14 @@ into Starwire and out to people.
 
 ## 1. See what's new
 
-Every Monday a GitHub workflow runs `tools/upstream/check.sh` and opens (or updates) an issue
+Every Monday a GitHub workflow runs `.github/tools/upstream/check.sh` and opens (or updates) an issue
 called **Upstream changes** listing new commits in each source. To check by hand:
 
 ```bash
-tools/upstream/check.sh
+.github/tools/upstream/check.sh
 ```
 
-The sources and the last commit reviewed for each are in `tools/upstream/sources.txt`.
+The sources and the last commit reviewed for each are in `.github/tools/upstream/sources.txt`.
 
 ## 2. Bring a feature in
 
@@ -24,13 +24,13 @@ The sources and the last commit reviewed for each are in `tools/upstream/sources
   `./gradlew connectedNonRootDebugAndroidTest`.
 - Credit it in the README's **Where every feature comes from** table (project, author, and
   whether it was ported or an idea).
-- Move that source's last-reviewed commit forward in `tools/upstream/sources.txt`, even for
+- Move that source's last-reviewed commit forward in `.github/tools/upstream/sources.txt`, even for
   commits you decided to skip.
 
 ## 3. Release it
 
 1. Raise `versionName` and `versionCode` in `app/build.gradle`.
-2. Write the notes in `docs/release/v<version>-notes.md` (plain, first person). Leave
+2. Write the notes in `.github/release-notes/v<version>-notes.md` (plain, first person). Leave
    `APK_SHA256` and `CERT_SHA256` where the checksums go; the release fills them in.
 3. Tag and push: `git tag v<version> && git push origin v<version>`.
 

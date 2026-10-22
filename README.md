@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1><img src="docs/title.svg" width="460" alt="Starwire"></h1>
+<h1><img src="docs/images/title.svg" width="460" alt="Starwire"></h1>
 
 **Stream your PC games to your Android phone or tablet, with the best of every Moonlight client in one app.**
 
@@ -10,7 +10,7 @@
 
 ### [⬇ Download Starwire](https://github.com/SicarioGaming/Starwire/releases)
 
-<img src="docs/cover_glow_home.png" width="820" alt="Starwire's game screen: Desktop selected and shown large with its stream settings and a Play button, and the PC's apps below as icon tiles, each in its own colour">
+<img src="docs/images/cover_glow_home.png" width="820" alt="Starwire's game screen: Desktop selected and shown large with its stream settings and a Play button, and the PC's apps below as icon tiles, each in its own colour">
 
 <sub>The whole screen picks up the colour of whatever you select. Games show their own cover art; Desktop and games without art get the Starwire tile, and apps like Steam Big Picture get their own icons.</sub>
 
@@ -73,7 +73,7 @@ async decoding for when every millisecond counts.
 </td>
 <td width="50%" valign="top">
 
-<img src="docs/stream_menu_aniimo.jpg" alt="The in-stream menu open over a game: the game's name, a grid of tools such as Keyboard, Full Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
+<img src="docs/images/stream_menu_aniimo.jpg" alt="The in-stream menu open over a game: the game's name, a grid of tools such as Keyboard, Full Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
 <sub>The in-stream menu over Aniimo on my tablet. Stats and the menu button are switched on. Aniimo © Pawprint Studio.</sub>
 
 </td>
@@ -81,7 +81,7 @@ async decoding for when every millisecond counts.
 <tr>
 <td width="50%" valign="top">
 
-<img src="docs/cover_glow_settings.png" alt="The settings screen: section buttons along the top, settings in plain words, and a panel predicting how the chosen options will play">
+<img src="docs/images/cover_glow_settings.png" alt="The settings screen: section buttons along the top, settings in plain words, and a panel predicting how the chosen options will play">
 <sub>Redesigned settings, with the Predicted impact panel on the right.</sub>
 
 </td>
@@ -111,7 +111,7 @@ on without it. Turn it on in **Settings → Sound & vibration → Send my microp
 </table>
 
 <p align="center">
-<img src="docs/aniimo_gameplay.jpg" width="820" alt="Aniimo streaming full screen on a tablet, with a one-line stats readout at the top: 47 Mbps, ping 4 ms, decode 1.2 ms, dropped 0.0%, 160 FPS">
+<img src="docs/images/aniimo_gameplay.jpg" width="820" alt="Aniimo streaming full screen on a tablet, with a one-line stats readout at the top: 47 Mbps, ping 4 ms, decode 1.2 ms, dropped 0.0%, 160 FPS">
 <br>
 <sub>Aniimo streamed to my RedMagic Astra, with the Lite stats line at the top. Aniimo © Pawprint Studio.</sub>
 </p>

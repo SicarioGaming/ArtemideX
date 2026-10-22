@@ -34,7 +34,7 @@ jobs:
           STARWIRE_KEY_PASSWORD: ${{ secrets.STARWIRE_KEY_PASSWORD }}
         run: |
           if [ -z "$STARWIRE_KEYSTORE_BASE64" ]; then
-            echo "::error::Set the STARWIRE_* repository secrets first (see docs/UPDATING.md)"
+            echo "::error::Set the STARWIRE_* repository secrets first (see docs/dev/UPDATING.md)"
             exit 1
           fi
           echo "$STARWIRE_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
@@ -51,7 +51,7 @@ jobs:
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$APKSIGNER" verify "$APK"
           CERT=$("$APKSIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}' | sed 's/../&:/g; s/:$//' | tr a-f A-F)
-          NOTES="docs/release/$GITHUB_REF_NAME-notes.md"
+          NOTES=".github/release-notes/$GITHUB_REF_NAME-notes.md"
           [ -f "$NOTES" ] || { echo "::error::Write $NOTES first"; exit 1; }
           sed -e "s/APK_SHA256/$(sha256sum "$APK" | cut -d' ' -f1)/" -e "s/CERT_SHA256/$CERT/" "$NOTES" > notes.md
           echo "apk=$APK" >> "$GITHUB_OUTPUT"

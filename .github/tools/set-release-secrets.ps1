@@ -1,7 +1,7 @@
 # Gives the Release workflow the signing key, as encrypted GitHub secrets. Run it once (and again
 # only if the key changes), after signing in with `gh auth login`:
 #
-#   .\tools\set-release-secrets.ps1
+#   .\.github\tools\set-release-secrets.ps1
 #
 # It reads keystore.properties in the project folder and never prints the passwords.
 $ErrorActionPreference = 'Stop'

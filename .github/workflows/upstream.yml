@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Check the sources
-        run: bash tools/upstream/check.sh > report.md
+        run: bash .github/tools/upstream/check.sh > report.md
 
       - name: Open or update the issue
         env:
