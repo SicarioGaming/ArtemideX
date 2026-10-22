@@ -96,14 +96,17 @@ public class MicrophoneSettingsTest {
 
     @Test
     public void vbanIsChosenWithItsStreamNameAndPort() {
-        // Default: over the stream, to logabell's Apollo build, with VBAN's usual name and port
+        // Default: a VBAN receiver on the PC (works with any host), VBAN's usual name and port
         prefs.edit().remove(PreferenceConfiguration.MICROPHONE_TARGET_PREF_STRING)
                 .remove(PreferenceConfiguration.VBAN_STREAM_NAME_PREF_STRING)
                 .remove(PreferenceConfiguration.VBAN_PORT_PREF_STRING).commit();
         PreferenceConfiguration config = PreferenceConfiguration.readPreferences(context);
-        assertFalse(config.microphoneToVban);
+        assertTrue(config.microphoneToVban);
         assertEquals("Stream1", config.vbanStreamName);
         assertEquals(6980, config.vbanPort);
+
+        prefs.edit().putString(PreferenceConfiguration.MICROPHONE_TARGET_PREF_STRING, "host").commit();
+        assertFalse(PreferenceConfiguration.readPreferences(context).microphoneToVban);
 
         prefs.edit().putString(PreferenceConfiguration.MICROPHONE_TARGET_PREF_STRING, "vban")
                 .putString(PreferenceConfiguration.VBAN_STREAM_NAME_PREF_STRING, "Phone")
@@ -144,7 +147,7 @@ public class MicrophoneSettingsTest {
                 assertTrue(preference(adapter, "text_vban_stream_name").isEnabled());
                 assertFalse(isShown(adapter, "microphone_host_info"));
                 String steps = setup.getSummary().toString();
-                assertTrue(steps, steps.contains("Phone") && steps.contains("6990") && steps.contains("CABLE Input"));
+                assertTrue(steps, steps.contains("Phone") && steps.contains("6990") && steps.contains("CABLE Output"));
 
                 // Switching to the host swaps the rows (the list catches up on its next frame)
                 target.getOnPreferenceChangeListener().onPreferenceChange(target, "host");

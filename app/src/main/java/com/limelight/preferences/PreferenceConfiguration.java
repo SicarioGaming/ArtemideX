@@ -162,7 +162,8 @@ public class PreferenceConfiguration {
     private static final String DEFAULT_MICROPHONE_DEVICE = "0";
     static final String MICROPHONE_TARGET_HOST = "host";
     static final String MICROPHONE_TARGET_VBAN = "vban";
-    private static final String DEFAULT_MICROPHONE_TARGET = MICROPHONE_TARGET_HOST;
+    // A VBAN receiver works with every host; over the stream only works with logabell's Apollo build
+    private static final String DEFAULT_MICROPHONE_TARGET = MICROPHONE_TARGET_VBAN;
     private static final boolean DEFAULT_LATENCY_TOAST = false;
     private static final String DEFAULT_FRAME_PACING = "balanced";
     private static final boolean DEFAULT_ABSOLUTE_MOUSE_MODE = false;

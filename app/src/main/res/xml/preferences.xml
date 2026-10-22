@@ -110,7 +110,7 @@
             android:summary="%s"
             android:entries="@array/microphone_target_names"
             android:entryValues="@array/microphone_target_values"
-            android:defaultValue="host" />
+            android:defaultValue="vban" />
         <ListPreference
             android:key="list_microphone_device"
             android:dependency="checkbox_enable_microphone"
@@ -131,7 +131,7 @@
             android:title="@string/title_vban_setup">
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://vb-audio.com/Voicemeeter/vban.htm" />
+                android:data="https://github.com/SicarioGaming/Starwire/tree/main/windows#readme" />
         </Preference>
         <EditTextPreference
             android:key="text_vban_stream_name"
