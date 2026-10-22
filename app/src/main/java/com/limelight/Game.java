@@ -3,6 +3,7 @@ package com.limelight;
 
 import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.AndroidAudioRenderer;
+import com.limelight.binding.audio.MicrophoneCaptureManager;
 import com.limelight.binding.audio.AudioHaptics;
 import com.limelight.binding.input.ControllerHandler;
 import com.limelight.binding.input.KeyboardTranslator;
@@ -234,6 +235,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private boolean isAndroidTV = false;
 
     private MediaCodecDecoderRenderer decoderRenderer;
+    private MicrophoneCaptureManager microphoneCaptureManager;
     private boolean reportedCrash;
 
     private WifiManager.WifiLock highPerfWifiLock;
@@ -679,6 +681,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setSupportedVideoFormats(supportedVideoFormats)
                 .setAttachedGamepadMask(gamepadMask)
                 .setAudioConfiguration(prefConfig.audioConfiguration)
+                .setEnableMicrophone(prefConfig.enableMicrophone)
                 .setColorSpace(decoderRenderer.getPreferredColorSpace())
                 .setColorRange(decoderRenderer.getPreferredColorRange())
                 .setPersistGamepadsAfterDisconnect(!prefConfig.multiController);
@@ -1303,6 +1306,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     protected void onDestroy() {
+        stopMicrophoneCapture();
         super.onDestroy();
 
         // Unregister broadcast receiver
@@ -2645,7 +2649,46 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public void stageComplete(String stage) {
     }
 
+    private void stopMicrophoneCapture() {
+        if (microphoneCaptureManager != null) {
+            microphoneCaptureManager.stop();
+        }
+    }
+
+    // Microphone streaming only works with hosts that accept it (logabell's Apollo build).
+    // Other hosts never negotiate it, so the stream carries on without the mic.
+    private void startMicrophoneCapture() {
+        if (!prefConfig.enableMicrophone) {
+            return;
+        }
+
+        if (!MicrophoneCaptureManager.hasRecordAudioPermission(this)) {
+            LimeLog.info("Skipping microphone capture because RECORD_AUDIO permission is missing");
+            Toast.makeText(this, R.string.microphone_stream_permission_revoked, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (!MoonBridge.isMicrophoneStreamActive()) {
+            LimeLog.info("Host did not negotiate microphone streaming");
+            Toast.makeText(this, R.string.microphone_host_not_negotiated, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (microphoneCaptureManager == null) {
+            microphoneCaptureManager = new MicrophoneCaptureManager(this);
+        }
+
+        LimeLog.info("Starting microphone streaming on device id " + prefConfig.microphoneDeviceId +
+                " (encrypted=" + MoonBridge.isMicrophoneEncryptionEnabled() + ")");
+
+        if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null)) {
+            LimeLog.warning("Unable to start local microphone capture for the current stream");
+            Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void stopConnection() {
+        stopMicrophoneCapture();
         // Give the PC its cursor back before the connection goes away
         restoreHostCursor();
 
@@ -2865,6 +2908,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 UiHelper.notifyStreamConnected(Game.this);
 
                 hideSystemUi(1000);
+                startMicrophoneCapture();
 
                 // Show overlay menu hint toast
                 showOverlayMenuHint();

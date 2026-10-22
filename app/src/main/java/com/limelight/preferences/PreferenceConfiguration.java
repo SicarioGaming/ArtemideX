@@ -54,6 +54,8 @@ public class PreferenceConfiguration {
     private static final String SMALL_ICONS_PREF_STRING = "checkbox_small_icon_mode";
     private static final String MULTI_CONTROLLER_PREF_STRING = "checkbox_multi_controller";
     static final String AUDIO_CONFIG_PREF_STRING = "list_audio_config";
+    static final String ENABLE_MICROPHONE_PREF_STRING = "checkbox_enable_microphone";
+    static final String MICROPHONE_DEVICE_PREF_STRING = "list_microphone_device";
     private static final String USB_DRIVER_PREF_SRING = "checkbox_usb_driver";
     private static final String VIDEO_FORMAT_PREF_STRING = "video_format";
     private static final String ONSCREEN_CONTROLLER_PREF_STRING = "checkbox_show_onscreen_controls";
@@ -152,6 +154,8 @@ public class PreferenceConfiguration {
     private static final boolean DEFAULT_FLIP_FACE_BUTTONS = false;
     private static final boolean DEFAULT_TOUCHSCREEN_TRACKPAD = true;
     private static final String DEFAULT_AUDIO_CONFIG = "2"; // Stereo
+    private static final boolean DEFAULT_ENABLE_MICROPHONE = false;
+    private static final String DEFAULT_MICROPHONE_DEVICE = "0";
     private static final boolean DEFAULT_LATENCY_TOAST = false;
     private static final String DEFAULT_FRAME_PACING = "balanced";
     private static final boolean DEFAULT_ABSOLUTE_MOUSE_MODE = false;
@@ -225,6 +229,8 @@ public class PreferenceConfiguration {
     public int vibrateFallbackToDeviceStrength;
     public boolean touchscreenTrackpad;
     public MoonBridge.AudioConfiguration audioConfiguration;
+    public boolean enableMicrophone;
+    public int microphoneDeviceId;
     public int framePacing;
     public int jitterBuffer;
     public int pyrowaveLateFrames;
@@ -819,6 +825,14 @@ public class PreferenceConfiguration {
         }
         else /* if (audioConfig.equals("2")) */ {
             config.audioConfiguration = MoonBridge.AUDIO_CONFIGURATION_STEREO;
+        }
+
+        config.enableMicrophone = prefs.getBoolean(ENABLE_MICROPHONE_PREF_STRING, DEFAULT_ENABLE_MICROPHONE);
+        try {
+            config.microphoneDeviceId = Integer.parseInt(prefs.getString(MICROPHONE_DEVICE_PREF_STRING, DEFAULT_MICROPHONE_DEVICE));
+        }
+        catch (NumberFormatException e) {
+            config.microphoneDeviceId = 0;
         }
 
         config.videoFormat = getVideoFormatValue(context);

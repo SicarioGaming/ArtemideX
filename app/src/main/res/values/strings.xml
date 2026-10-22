@@ -682,4 +682,24 @@
     <string name="summary_overlay_menu">Configure custom commands for the in-game overlay menu</string>
     <string name="title_enable_overlay_menu">Enable overlay menu</string>
     <string name="summary_enable_overlay_menu">Hold select button for 5 seconds during streaming to open the overlay menu</string>
+    <!-- Microphone streaming (needs logabell's Apollo build on the PC) -->
+    <string name="title_checkbox_enable_microphone">Send my microphone</string>
+    <string name="summary_checkbox_enable_microphone">Only works if the PC runs logabell\'s Apollo build. Vibepollo, Sunshine and regular Apollo can\'t receive it yet.</string>
+    <string name="title_microphone_host_info">Get the Apollo build for microphone</string>
+    <string name="summary_microphone_host_info">Opens logabell\'s Apollo on GitHub. Install it on the PC in place of your current host.</string>
+    <string name="title_microphone_device_list">Microphone</string>
+    <string name="summary_microphone_device_list">Which microphone to send</string>
+    <string name="microphone_device_default">Default microphone</string>
+    <string name="microphone_preview_inactive">Microphone off</string>
+    <string name="microphone_preview_permission_required">Starwire needs microphone permission</string>
+    <string name="microphone_preview_selected_missing">That microphone isn\'t connected, so the default one is used</string>
+    <string name="microphone_preview_default_active">Using the default microphone</string>
+    <string name="microphone_preview_selected_active">Using the chosen microphone</string>
+    <string name="microphone_preview_open_failed">Couldn\'t open the microphone</string>
+    <string name="microphone_encoder_setup_failed">Couldn\'t start sending the microphone</string>
+    <string name="microphone_capture_start_failed">Couldn\'t open the microphone</string>
+    <string name="microphone_permission_denied">Microphone permission denied</string>
+    <string name="microphone_host_not_negotiated">This PC can\'t receive your microphone. It needs logabell\'s Apollo build.</string>
+    <string name="microphone_stream_permission_revoked">Microphone is off because Starwire doesn\'t have permission to use it</string>
+    <string name="microphone_stream_start_failed">Couldn\'t start the microphone. The stream carries on without it.</string>
 </resources>

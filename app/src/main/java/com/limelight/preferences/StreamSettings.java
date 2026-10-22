@@ -1,5 +1,6 @@
 package com.limelight.preferences;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -35,6 +36,7 @@ import android.widget.Toast;
 import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
+import com.limelight.binding.audio.MicrophoneCaptureManager;
 import com.limelight.ui.CoverGlowSettings;
 import com.limelight.ui.overlay.ImportedShortcuts;
 import com.limelight.binding.video.MediaCodecHelper;
@@ -153,6 +155,7 @@ public class StreamSettings extends Activity {
     public static class SettingsFragment extends PreferenceFragment {
         private static final int REQUEST_CUSTOM_VULKAN_DRIVER = 0x6472;  // "dr"
         private static final int REQUEST_IMPORT_SHORTCUTS = 0x7363;  // "sc"
+        private static final int REQUEST_RECORD_AUDIO = 0x6d63;  // "mc"
         private int nativeResolutionStartIndex = Integer.MAX_VALUE;
         private boolean nativeFramerateShown = false;
 
@@ -320,6 +323,7 @@ public class StreamSettings extends Activity {
 
             addPreferencesFromResource(R.xml.preferences);
             PreferenceScreen screen = getPreferenceScreen();
+            initializeMicrophonePreferences();
 
             // hide on-screen controls category on non touch screen devices
             if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
@@ -858,6 +862,65 @@ public class StreamSettings extends Activity {
             }
             else {
                 pref.setSummary(new File(path).getName());
+            }
+        }
+
+        // Microphone streaming needs logabell's Apollo build on the PC; the summary says so.
+        private void initializeMicrophonePreferences() {
+            CheckBoxPreference enablePref =
+                    (CheckBoxPreference) findPreference(PreferenceConfiguration.ENABLE_MICROPHONE_PREF_STRING);
+            ListPreference devicePref =
+                    (ListPreference) findPreference(PreferenceConfiguration.MICROPHONE_DEVICE_PREF_STRING);
+
+            enablePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                if ((Boolean) newValue && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                        !MicrophoneCaptureManager.hasRecordAudioPermission(getActivity())) {
+                    // Turn it on once the permission is granted
+                    requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},
+                            REQUEST_RECORD_AUDIO);
+                    return false;
+                }
+                return true;
+            });
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                // No way to pick an input before Android 6, so always use the default
+                ((PreferenceCategory) findPreference("category_audio_settings")).removePreference(devicePref);
+                return;
+            }
+
+            List<MicrophoneCaptureManager.InputDeviceEntry> devices =
+                    MicrophoneCaptureManager.getAvailableInputDevices(getActivity());
+            CharSequence[] labels = new CharSequence[devices.size() + 1];
+            CharSequence[] values = new CharSequence[devices.size() + 1];
+            labels[0] = getString(R.string.microphone_device_default);
+            values[0] = "0";
+            for (int i = 0; i < devices.size(); i++) {
+                labels[i + 1] = devices.get(i).label;
+                values[i + 1] = Integer.toString(devices.get(i).id);
+            }
+            devicePref.setEntries(labels);
+            devicePref.setEntryValues(values);
+            if (devicePref.findIndexOfValue(devicePref.getValue()) < 0) {
+                // The saved microphone is gone
+                devicePref.setValue("0");
+            }
+        }
+
+        @Override
+        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            if (requestCode != REQUEST_RECORD_AUDIO) {
+                return;
+            }
+
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            if (granted) {
+                ((CheckBoxPreference) findPreference(PreferenceConfiguration.ENABLE_MICROPHONE_PREF_STRING))
+                        .setChecked(true);
+            }
+            else {
+                Toast.makeText(getActivity(), R.string.microphone_permission_denied, Toast.LENGTH_SHORT).show();
             }
         }
 

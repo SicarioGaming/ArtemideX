@@ -100,6 +100,12 @@ every key, and the option to hide the PC's mouse pointer while you play.
 ### 📳 Feel the bass
 Audio haptics turns a game's bass into vibration on your device or controller.
 
+### 🎙 Your microphone on the PC
+Talk in game chat or Discord through your device's microphone. **This needs a different host:**
+the PC has to run [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), which plays your voice into the Steam Streaming Microphone.
+Vibepollo, Sunshine and regular Apollo can't receive it yet, so with those the stream just carries
+on without it. Turn it on in **Settings → Sound & vibration → Send my microphone**.
+
 </td>
 </tr>
 </table>
@@ -236,6 +242,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Audio haptics: the game's bass becomes vibration on the device and/or the controller | Idea from Moonlight V+ (qiin2333); written new for Starwire |
 | Hide PC cursor (never / while touching / always) **(Vibepollo)** | New in Starwire |
 | Long-press to right-click in gaming trackpad mode | New in Starwire |
+| Send your microphone to the PC, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)) |
 | Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
 
 </details>
@@ -267,6 +274,7 @@ Starwire wouldn't exist without these projects and the people behind them:
 | [Moonlight X Turnip](https://github.com/NoCrypt/moonlight-x-turnip) | ncpt (NoCrypt) | Custom Turnip Vulkan driver for PyroWave |
 | [Moonlight V+](https://github.com/qiin2333/moonlight-vplus) | qiin2333 | Ideas: bitrate mid-stream, audio haptics, 1% lows |
 | [Moonlit Artemis](https://github.com/4had45/moonlit-artemis) | Mohammad Forhad (4had45) | Ideas: monitor switcher, pinch to zoom anytime |
+| [Apollo microphone](https://github.com/logabell/apollo-microphone) | logabell | Microphone streaming: the Android capture and the protocol, and the Apollo build that receives it |
 | [PyroWave](https://github.com/Themaister/pyrowave) | Hans-Kristian Arntzen (Themaister) | The PyroWave codec (MIT) |
 | [libadrenotools](https://github.com/bylaws/libadrenotools) | Billy Laws (bylaws) | Loading a custom Adreno Vulkan driver (BSD-2-Clause) |
 | [Vibepollo](https://github.com/Nonary/Vibepollo) | Chase Payne (Nonary) | The host Starwire is developed with (fork of Apollo) |

@@ -82,7 +82,7 @@
             android:summary="@string/summary_checkbox_auto_resume_stream"
             android:defaultValue="false" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/category_audio_settings">
+    <PreferenceCategory android:key="category_audio_settings" android:title="@string/category_audio_settings">
         <ListPreference
             android:key="list_audio_config"
             android:title="@string/title_audio_config_list"
@@ -95,6 +95,25 @@
             android:title="@string/title_checkbox_enable_audiofx"
             android:summary="@string/summary_checkbox_enable_audiofx"
             android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_enable_microphone"
+            android:title="@string/title_checkbox_enable_microphone"
+            android:summary="@string/summary_checkbox_enable_microphone"
+            android:defaultValue="false" />
+        <ListPreference
+            android:key="list_microphone_device"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_microphone_device_list"
+            android:summary="@string/summary_microphone_device_list"
+            android:defaultValue="0" />
+        <Preference
+            android:key="microphone_host_info"
+            android:title="@string/title_microphone_host_info"
+            android:summary="@string/summary_microphone_host_info">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://github.com/logabell/apollo-microphone/releases" />
+        </Preference>
         <ListPreference
             android:key="list_audio_haptics"
             android:title="@string/title_audio_haptics"

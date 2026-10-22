@@ -169,9 +169,10 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       menu tools show a small switch and keep the menu open; a Starwire tile (logo over a
       starfield) for Desktop and games without cover art, also in the menu's header; Lite stats
       in plain words (Mbps, Ping, Decode, Dropped, FPS)
-- [ ] Microphone from the device to the PC: two incompatible designs exist (a separate audio
-      channel, and one inside the control connection), each needing a patched Apollo. Waiting
-      for Vibepollo or Apollo to support one
+- [x] Microphone from the device to the PC, ported from logabell's design (a separate audio
+      channel). Only works with logabell's Apollo build on the PC
+- [ ] Microphone with Vibepollo or regular Apollo: waiting for either to accept a microphone
+      design
 
 ## Open questions
 

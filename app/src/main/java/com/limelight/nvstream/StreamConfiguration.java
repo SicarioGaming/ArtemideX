@@ -29,6 +29,7 @@ public class StreamConfiguration {
     private int colorSpace;
     private boolean persistGamepadsAfterDisconnect;
     private boolean enableUltraLowLatency;
+    private boolean enableMicrophone;
 
     // Which host display to stream from (Apollo/Vibepollo virtualDisplay launch argument)
     public static final int VIRTUAL_DISPLAY_HOST_DEFAULT = -1;
@@ -145,6 +146,11 @@ public class StreamConfiguration {
             return this;
         }
 
+        public StreamConfiguration.Builder setEnableMicrophone(boolean enable) {
+            config.enableMicrophone = enable;
+            return this;
+        }
+
         public StreamConfiguration build() {
             return config;
         }
@@ -248,6 +254,10 @@ public class StreamConfiguration {
 
     public boolean getEnableUltraLowLatency() {
         return enableUltraLowLatency;
+    }
+
+    public boolean getEnableMicrophone() {
+        return enableMicrophone;
     }
 
     public int getVirtualDisplay() {
