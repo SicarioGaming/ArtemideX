@@ -1,20 +1,22 @@
-# Voidlink roadmap
+# Starwire roadmap
 
-Voidlink is a Moonlight Android client for streaming from a Vibepollo host to a
+Starwire is a Moonlight Android client for streaming from a Vibepollo host to a
 RedMagic Astra tablet (Snapdragon 8 Elite, Android 16) with a GameSir G8+. It keeps Moonlight X's video
 pipeline (Direct Frame Pacing, PyroWave, Vulkan renderer) and adds Artemide's
 options and in-stream menu, selected features from other forks, and a new UI.
 
 Base: Moonlight X (`MoreOrLessSoftware/moonlight-android`, branch `mlsoft-x`).
 Work happens on the `artemidex` branch. Every source below is GPL-3.0, so
-Voidlink is GPL-3.0 too.
+Starwire is GPL-3.0 too.
 
 Each step ends with a build installed on the tablet and tested before the next starts.
 
 ## Phase 1: Identity
 
-- [x] Rename the app to "Voidlink" (`com.voidlink`, debug builds `com.voidlink.debug`),
+- [x] Rename the app to "Starwire" (`com.starwire`, debug builds `com.starwire.debug`),
       so it installs beside Moonlight X and Artemide instead of replacing them.
+      Renamed from Voidlink in October 2026, because an iOS Moonlight client already uses
+      that name (new app ID, so it installs as a separate app from Voidlink 0.1.0)
 
 ## Phase 2: Artemide features
 
@@ -58,7 +60,7 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
 - [x] V-Sync and Fast V-Sync: one "V-Sync" setting (Off, V-Sync, Fast V-Sync), off by
       default and used only by the direct renderer. Fast V-Sync is Artemide's nano pacer
       (NanoPacer.java) in "Prefer lowest latency" pacing. Artemide's own V-Sync only drives
-      its GL upscaler, which Voidlink doesn't have, so V-Sync here holds each frame for the
+      its GL upscaler, which Starwire doesn't have, so V-Sync here holds each frame for the
       next display refresh instead
 - [x] Sync: LFR: off by default; in Balanced pacing keeps only the newest decoded frame
       (the other pacing modes already drain to the newest frame)
@@ -74,7 +76,7 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
       against Artemide's behaviour (2026-10-21, against Artemide's `MediaCodecHelper` and
       `MediaCodecDecoderRenderer` at the 0.5.1 tag)
   - Force Full Range: the same in both (asks the PC for full range, and tells the decoder
-    with `KEY_COLOR_RANGE`); Voidlink also passes it to the Vulkan renderer. No change
+    with `KEY_COLOR_RANGE`); Starwire also passes it to the Vulkan renderer. No change
   - Ultra Low Latency: the same for Snapdragon (like the tablet's 8 Elite), Exynos and
     decoders with Android's own low-latency support. Ported the two differences:
     MediaTek's `vendor.mtk.vdec.ultra-low-latency` now follows the setting (Moonlight X
@@ -121,7 +123,7 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 ### Phase 3 research notes (2026-10-21)
 
 - Per-game settings already exist in Moonlight X (long-press a game, App Settings: resolution,
-  FPS, bitrate, frame pacing, HDR, stats; plus Quick Launch). Remaining: add Voidlink's new
+  FPS, bitrate, frame pacing, HDR, stats; plus Quick Launch). Remaining: add Starwire's new
   options (V-Sync, LFR, async decode, touch mode) to it.
 - Bitrate mid-stream: Vibepollo `GET /bitrate?bitrate=<kbps>` (HTTPS, any streaming client),
   clamps to the host maximum and returns the applied value in `root.bitrate`.
@@ -160,7 +162,7 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       settings taken from another fork show a quiet credit line under the panel when tapped
 - [x] In-stream menu: five tiles across with Full Keyboard next to Keyboard, a nearly opaque
       panel, the selected row scrolled into view, and a bigger floating button
-- [x] Larger Voidlink wordmark on the home screen
+- [x] Larger Starwire wordmark on the home screen
 - [x] Tried on the RedMagic Astra over a live stream: the menu tools work; the last row of the
       menu was hidden by a layout bug, now fixed and covered by a test
 

@@ -1,16 +1,16 @@
 <div align="center">
 
-<h1><img src="docs/title.svg" width="460" alt="Voidlink"></h1>
+<h1><img src="docs/title.svg" width="460" alt="Starwire"></h1>
 
 **Stream your PC games to your Android phone or tablet, with the best of every Moonlight client in one app.**
 
-[![Latest release](https://img.shields.io/github/v/release/SicarioGaming/Voidlink?include_prereleases&label=release&style=flat-square)](https://github.com/SicarioGaming/Voidlink/releases)
-[![Android 5.0+](https://img.shields.io/badge/Android-5.0%2B-34A853?style=flat-square&logo=android&logoColor=white)](https://github.com/SicarioGaming/Voidlink/releases)
+[![Latest release](https://img.shields.io/github/v/release/SicarioGaming/Starwire?include_prereleases&label=release&style=flat-square)](https://github.com/SicarioGaming/Starwire/releases)
+[![Android 5.0+](https://img.shields.io/badge/Android-5.0%2B-34A853?style=flat-square&logo=android&logoColor=white)](https://github.com/SicarioGaming/Starwire/releases)
 [![Licence: GPL-3.0](https://img.shields.io/badge/licence-GPL--3.0-EF9421?style=flat-square)](LICENSE.txt)
 
-### [⬇ Download Voidlink](https://github.com/SicarioGaming/Voidlink/releases)
+### [⬇ Download Starwire](https://github.com/SicarioGaming/Starwire/releases)
 
-<img src="docs/cover_glow_home.png" width="820" alt="Voidlink's game screen: Desktop selected and shown large with its stream settings and a Play button, and the PC's apps below as icon tiles, each in its own colour">
+<img src="docs/cover_glow_home.png" width="820" alt="Starwire's game screen: Desktop selected and shown large with its stream settings and a Play button, and the PC's apps below as icon tiles, each in its own colour">
 
 <sub>The whole screen picks up the colour of whatever you select. Games show their own cover art; apps like Desktop or Steam Big Picture get their own icons.</sub>
 
@@ -18,14 +18,14 @@
 
 ---
 
-## Why I made Voidlink
+## Why I made Starwire
 
 I stream games from my PC to my tablet all the time with Moonlight. The community has built some
 brilliant versions of it, but each one is great at something different: one has the smoothest
 video, another has the best touch controls, another has the handiest in-stream menu. I got tired
 of switching between them.
 
-Voidlink brings the best of them into one app and keeps up with them as they improve. It starts
+Starwire brings the best of them into one app and keeps up with them as they improve. It starts
 from [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android)'s fast video
 pipeline, adds the touchscreen tools from
 [Artemide](https://github.com/derflacco/moonlight-android) and
@@ -95,20 +95,20 @@ You'll need a Windows PC to stream from, and your Android device on the same Wi-
 
 ### 1. Set up your PC
 Install a streaming host on the PC. I use and recommend
-[**Vibepollo**](https://github.com/Nonary/Vibepollo): it's what I build Voidlink with, and it
+[**Vibepollo**](https://github.com/Nonary/Vibepollo): it's what I build Starwire with, and it
 unlocks every feature. [Apollo](https://github.com/ClassicOldSong/Apollo) works too, and
 [Sunshine](https://github.com/LizardByte/Sunshine) works for everything except a few extras
 (clipboard sharing, PC commands, Virtual Display and changing the bitrate mid-stream).
 
-### 2. Install Voidlink
+### 2. Install Starwire
 On your phone or tablet, open the
-[**Releases page**](https://github.com/SicarioGaming/Voidlink/releases), download the latest
-`Voidlink-…apk` and open it. Android will ask you to allow installing apps from your browser
+[**Releases page**](https://github.com/SicarioGaming/Starwire/releases), download the latest
+`Starwire-…apk` and open it. Android will ask you to allow installing apps from your browser
 or file manager; allow it, then tap **Install**.
 
 ### 3. Pair with your PC
-Open Voidlink and your PC appears in the list (if it doesn't, tap **+** and type the PC's IP
-address). Tap it and Voidlink shows a **PIN**. On the PC, open your host's web page (usually
+Open Starwire and your PC appears in the list (if it doesn't, tap **+** and type the PC's IP
+address). Tap it and Starwire shows a **PIN**. On the PC, open your host's web page (usually
 `https://localhost:47990`), go to the **PIN** page and type it in. You only do this once.
 
 ### 4. Play
@@ -117,7 +117,7 @@ button, a three-finger tap or holding **Select** on your controller opens the me
 
 ## How I made it
 
-I made Voidlink with AI. I decided what the app should do and how it should look, and
+I made Starwire with AI. I decided what the app should do and how it should look, and
 [Claude Code](https://claude.com/claude-code) (Anthropic's coding tool) wrote the code. I also
 used [REA](https://github.com/morluto/rea) by morluto to look inside the other apps and see how
 their features work. Every feature is tested on my RedMagic Astra with a GameSir G8+ before it
@@ -130,9 +130,9 @@ credited every one of them below.
 
 Each feature below says where it came from:
 
-- **Ported from *project* (*author*)**: that project's code, brought into Voidlink and adapted.
-- **Idea from *project* (*author*)**: inspired by that project, but written new for Voidlink.
-- **New in Voidlink**: written for Voidlink.
+- **Ported from *project* (*author*)**: that project's code, brought into Starwire and adapted.
+- **Idea from *project* (*author*)**: inspired by that project, but written new for Starwire.
+- **New in Starwire**: written for Starwire.
 
 Where a feature started in an older version and was carried forward (for example Artemis →
 Artemide), both are named. Features marked **(Apollo / Vibepollo)** need an Apollo-based host.
@@ -140,7 +140,7 @@ Artemide), both are named. Features marked **(Apollo / Vibepollo)** need an Apol
 <details>
 <summary><b>Cover Glow, the new design</b></summary>
 
-*New in Voidlink.*
+*New in Starwire.*
 
 - **Game screen:** the selected game shown large with its cover, name, Play/Resume and its
   stream settings as small tags. It starts on the game running on the PC, otherwise the one you
@@ -150,7 +150,7 @@ Artemide), both are named. Features marked **(Apollo / Vibepollo)** need an Apol
 - **Icons for apps without cover art:** Desktop, Steam Big Picture, Playnite and similar apps get
   an icon tile in their own colour instead of the host's plain default image. **Settings → App →
   App covers** can also use icons for every app, or only ever the PC's covers.
-- **A little flair:** the Voidlink wordmark and the ring around the selected game slowly flow
+- **A little flair:** the Starwire wordmark and the ring around the selected game slowly flow
   through a rainbow, and a faint dot grid sits behind the screens.
 - **PC list:** frosted cards and a frosted quick-settings bar.
 - **Settings:** section buttons that jump to each section and follow you as you scroll, plain
@@ -165,13 +165,13 @@ Artemide), both are named. Features marked **(Apollo / Vibepollo)** need an Apol
 <summary><b>In-stream menu</b></summary>
 
 The menu itself, its quick actions and custom commands come from Moonlight X
-(MoreOrLessSoftware). Voidlink adds:
+(MoreOrLessSoftware). Starwire adds:
 
 | Feature | Source |
 | --- | --- |
 | Floating menu button (tap to open, drag to move) | Ported from Artemis (Yukino Song / ClassicOldSong), via Artemide |
 | Shortcuts page: Esc, F11, Alt+F4, Alt+Enter, Ctrl+V, Win, Win+D, Win+G, Ctrl+Alt+Tab, Shift+Tab, Win+Shift+Left, Ctrl+Alt+Shift+F1/F12, Win+Alt+B | Ported from Axixi2233's Moonlight fork (axi), via Artemis and Artemide |
-| Custom shortcuts imported from a file (same JSON format) | Format from Axixi2233's fork (axi) and Artemis (Yukino Song); importer written new for Voidlink |
+| Custom shortcuts imported from a file (same JSON format) | Format from Axixi2233's fork (axi) and Artemis (Yukino Song); importer written new for Starwire |
 | Task Manager (Ctrl+Shift+Esc) | Ported from Artemis (Yukino Song), via Artemide |
 | Rotate screen, Pan/Zoom mode (pinch to zoom, drag to pan, double-tap to reset) | Ported from Artemis (Yukino Song), via Artemide |
 | Touch mode picker (multi-touch, direct touch, natural and gaming trackpad, disabled, swapped clicks) | Ported from Artemis (Yukino Song), via Artemide |
@@ -191,15 +191,15 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Feature | Source |
 | --- | --- |
 | Vulkan renderer with host frame timing, PyroWave codec | From Moonlight X (MoreOrLessSoftware) |
-| Custom Vulkan driver (Turnip) for PyroWave | Ported from Moonlight X Turnip (ncpt / NoCrypt), uses libadrenotools (Billy Laws / bylaws). Voidlink rebuilds libadrenotools from source, refuses files that aren't 64-bit ARM libraries, and falls back to the system driver if the custom one can't run PyroWave |
+| Custom Vulkan driver (Turnip) for PyroWave | Ported from Moonlight X Turnip (ncpt / NoCrypt), uses libadrenotools (Billy Laws / bylaws). Starwire rebuilds libadrenotools from source, refuses files that aren't 64-bit ARM libraries, and falls back to the system driver if the custom one can't run PyroWave |
 | Warp Drive / Warp 2 frame pacing (2x / 4x FPS from the PC, newest frame shown) | Ported from Artemis (Yukino Song), via Artemide |
 | Fast V-Sync (Artemide's Nano Pacer) | Ported from Artemide (derflacco) |
-| V-Sync (one setting: Off, V-Sync, Fast V-Sync) | V-Sync for the direct renderer is new in Voidlink; Fast V-Sync as above |
+| V-Sync (one setting: Off, V-Sync, Fast V-Sync) | V-Sync for the direct renderer is new in Starwire; Fast V-Sync as above |
 | Sync: LFR | Ported from Artemide (derflacco) |
 | Async decode and Async: LFR | Ported from Artemide (derflacco) |
 | Ultra Low Latency: MediaTek's own ultra-low-latency mode follows the setting, and low latency is set again after the decoder starts | Ported from Artemide (derflacco). The base option and its Snapdragon/Exynos/Amlogic flags are from Moonlight X (MoreOrLessSoftware) and Artemis |
 | Virtual Display: "Display on the PC" setting, "Start in Virtual/Primary Display" **(Apollo / Vibepollo)** | Ported from Artemis (Yukino Song), via Artemide |
-| Prevent Packet Loss (keeps Wi-Fi awake during streams) | Option from Artemis (Yukino Song), via Artemide; rewritten for Voidlink as a small keep-alive packet |
+| Prevent Packet Loss (keeps Wi-Fi awake during streams) | Option from Artemis (Yukino Song), via Artemide; rewritten for Starwire as a small keep-alive packet |
 | Lite performance overlay (one compact line) | Ported from Axixi2233's fork (axi), via Artemis and Artemide |
 | 1% low FPS in the stats | Idea from Moonlight V+ (qiin2333) and Moonlight X Turnip (NoCrypt) |
 
@@ -212,9 +212,9 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | --- | --- |
 | Pinch to zoom anytime, outside Pan/Zoom mode | Idea from Moonlit Artemis (Mohammad Forhad / 4had45); uses Artemis's pan/zoom code (Yukino Song) |
 | Automatic clipboard sync (send yours when the stream starts, copy the PC's when you leave) **(Apollo / Vibepollo)** | Ported from Artemis (Yukino Song), via Artemide |
-| Audio haptics: the game's bass becomes vibration on the device and/or the controller | Idea from Moonlight V+ (qiin2333); written new for Voidlink |
-| Hide PC cursor (never / while touching / always) **(Vibepollo)** | New in Voidlink |
-| Long-press to right-click in gaming trackpad mode | New in Voidlink |
+| Audio haptics: the game's bass becomes vibration on the device and/or the controller | Idea from Moonlight V+ (qiin2333); written new for Starwire |
+| Hide PC cursor (never / while touching / always) **(Vibepollo)** | New in Starwire |
+| Long-press to right-click in gaming trackpad mode | New in Starwire |
 | Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
 
 </details>
@@ -234,23 +234,23 @@ queue/preload values and NVIDIA Tegra and legacy Qualcomm decoder extras.
 
 ## Credits
 
-Voidlink wouldn't exist without these projects and the people behind them:
+Starwire wouldn't exist without these projects and the people behind them:
 
 | Project | Author | Used for |
 | --- | --- | --- |
 | [Moonlight Android](https://github.com/moonlight-stream/moonlight-android) | Cameron Gutman and contributors | The original client everything here is built on |
-| [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android) | MoreOrLessSoftware | The base of Voidlink: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch |
+| [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android) | MoreOrLessSoftware | The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch |
 | [Artemis](https://github.com/ClassicOldSong/moonlight-android) | Yukino Song (ClassicOldSong) | Pan/zoom, touch modes, clipboard, server commands, Virtual Display, Warp pacing, floating button, and more (via Artemide) |
-| [Artemide](https://github.com/derflacco/moonlight-android) | derflacco | Nano Pacer / Fast V-Sync, Sync and Async LFR, async decode, MediaTek low-latency work, and the version of all the Artemis features above that Voidlink ported |
+| [Artemide](https://github.com/derflacco/moonlight-android) | derflacco | Nano Pacer / Fast V-Sync, Sync and Async LFR, async decode, MediaTek low-latency work, and the version of all the Artemis features above that Starwire ported |
 | [Moonlight (Axixi2233 fork)](https://github.com/Axixi2233/moonlight-android) | Axixi2233 | Full keyboard, shortcuts list, Lite overlay, shortcut file format (via Artemis) |
 | [Moonlight X Turnip](https://github.com/NoCrypt/moonlight-x-turnip) | ncpt (NoCrypt) | Custom Turnip Vulkan driver for PyroWave |
 | [Moonlight V+](https://github.com/qiin2333/moonlight-vplus) | qiin2333 | Ideas: bitrate mid-stream, audio haptics, 1% lows |
 | [Moonlit Artemis](https://github.com/4had45/moonlit-artemis) | Mohammad Forhad (4had45) | Ideas: monitor switcher, pinch to zoom anytime |
 | [PyroWave](https://github.com/Themaister/pyrowave) | Hans-Kristian Arntzen (Themaister) | The PyroWave codec (MIT) |
 | [libadrenotools](https://github.com/bylaws/libadrenotools) | Billy Laws (bylaws) | Loading a custom Adreno Vulkan driver (BSD-2-Clause) |
-| [Vibepollo](https://github.com/Nonary/Vibepollo) | Chase Payne (Nonary) | The host Voidlink is developed with (fork of Apollo) |
+| [Vibepollo](https://github.com/Nonary/Vibepollo) | Chase Payne (Nonary) | The host Starwire is developed with (fork of Apollo) |
 | [Apollo](https://github.com/ClassicOldSong/Apollo) / [Sunshine](https://github.com/LizardByte/Sunshine) | ClassicOldSong / LizardByte | The hosts Vibepollo is built on |
-| [Claude Code](https://claude.com/claude-code) | Anthropic | Writing the Voidlink code, ports, redesign and tests |
+| [Claude Code](https://claude.com/claude-code) | Anthropic | Writing the Starwire code, ports, redesign and tests |
 | [REA](https://github.com/morluto/rea) | morluto | Reverse-engineering and analysis (MIT) |
 
 If I've credited something wrongly or missed you, please open an issue and I'll fix it.
@@ -276,28 +276,28 @@ Releases page.
    newer.
 2. Clone with the submodules:
    ```bash
-   git clone --recursive https://github.com/SicarioGaming/Voidlink.git
+   git clone --recursive https://github.com/SicarioGaming/Starwire.git
    ```
-   Voidlink uses its own fork of
+   Starwire uses its own fork of
    [moonlight-common-c](https://github.com/SicarioGaming/moonlight-common-c) (branch `main`),
    which adds the calls for PC commands and Prevent Packet Loss.
 3. Create `local.properties` in the project folder with `ndk.dir=` set to your NDK folder.
-4. Build a debug APK with `./gradlew assembleNonRootDebug`. It installs as "Voidlink (Debug)"
-   (`com.voidlink.debug`).
+4. Build a debug APK with `./gradlew assembleNonRootDebug`. It installs as "Starwire (Debug)"
+   (`com.starwire.debug`).
 5. On-device tests: `./gradlew connectedNonRootDebugAndroidTest`.
 
 **Signed release builds** use a key that's never committed. Put its details in
 `keystore.properties` in the project folder (it's in `.gitignore`):
 
 ```properties
-storeFile=voidlink-release.jks
+storeFile=starwire-release.jks
 storePassword=...
-keyAlias=voidlink
+keyAlias=starwire
 keyPassword=...
 ```
 
-or set `VOIDLINK_KEYSTORE`, `VOIDLINK_KEYSTORE_PASSWORD`, `VOIDLINK_KEY_ALIAS` and
-`VOIDLINK_KEY_PASSWORD`. Then run `./gradlew assembleNonRootRelease`. Without a key, release
+or set `STARWIRE_KEYSTORE`, `STARWIRE_KEYSTORE_PASSWORD`, `STARWIRE_KEY_ALIAS` and
+`STARWIRE_KEY_PASSWORD`. Then run `./gradlew assembleNonRootRelease`. Without a key, release
 builds come out unsigned.
 
 The libadrenotools and PyroWave libraries are included prebuilt, with the scripts that build

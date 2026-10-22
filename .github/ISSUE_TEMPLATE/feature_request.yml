@@ -1,5 +1,5 @@
 name: Feature idea
-description: Something you'd like Voidlink to do
+description: Something you'd like Starwire to do
 labels: [enhancement]
 body:
   - type: textarea
@@ -13,4 +13,4 @@ body:
     id: source
     attributes:
       label: Does another Moonlight app already have it?
-      description: If so, which one (a link helps). Voidlink can often bring it over.
+      description: If so, which one (a link helps). Starwire can often bring it over.

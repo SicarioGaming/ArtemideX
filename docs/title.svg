@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="560" height="110" viewBox="0 0 560 110" role="img" aria-label="Voidlink">
-  <title>Voidlink</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="110" viewBox="0 0 560 110" role="img" aria-label="Starwire">
+  <title>Starwire</title>
   <defs>
     <!-- The same flowing rainbow as the app's wordmark: blue, purple, pink, orange -->
     <linearGradient id="rainbow" x1="0" y1="0" x2="1120" y2="0" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
@@ -13,5 +13,5 @@
   </defs>
   <text x="280" y="58" text-anchor="middle" dominant-baseline="middle"
         font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="84" font-weight="900"
-        letter-spacing="-1" fill="url(#rainbow)">Voidlink</text>
+        letter-spacing="-1" fill="url(#rainbow)">Starwire</text>
 </svg>

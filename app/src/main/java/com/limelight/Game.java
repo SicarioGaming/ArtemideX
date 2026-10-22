@@ -3449,7 +3449,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             OverlayMenuView.VK_LCONTROL, OverlayMenuView.VK_LMENU, OverlayMenuView.VK_LSHIFT, 0x4E /* N */
     };
 
-    // Whether Voidlink has toggled the PC's cursor off, so it can be turned back on
+    // Whether Starwire has toggled the PC's cursor off, so it can be turned back on
     private boolean hostCursorHidden;
     private final Runnable showHostCursor = () -> setHostCursorHidden(false);
 

@@ -1,6 +1,6 @@
 name: Upstream changes
 
-# Every Monday, list what's new in the Moonlight versions Voidlink follows, in one issue.
+# Every Monday, list what's new in the Moonlight versions Starwire follows, in one issue.
 on:
   schedule:
     - cron: '0 9 * * 1'

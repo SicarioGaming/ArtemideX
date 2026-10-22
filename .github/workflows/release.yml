@@ -28,17 +28,17 @@ jobs:
 
       - name: Build the signed release APK
         env:
-          VOIDLINK_KEYSTORE_BASE64: ${{ secrets.VOIDLINK_KEYSTORE_BASE64 }}
-          VOIDLINK_KEYSTORE_PASSWORD: ${{ secrets.VOIDLINK_KEYSTORE_PASSWORD }}
-          VOIDLINK_KEY_ALIAS: ${{ secrets.VOIDLINK_KEY_ALIAS }}
-          VOIDLINK_KEY_PASSWORD: ${{ secrets.VOIDLINK_KEY_PASSWORD }}
+          STARWIRE_KEYSTORE_BASE64: ${{ secrets.STARWIRE_KEYSTORE_BASE64 }}
+          STARWIRE_KEYSTORE_PASSWORD: ${{ secrets.STARWIRE_KEYSTORE_PASSWORD }}
+          STARWIRE_KEY_ALIAS: ${{ secrets.STARWIRE_KEY_ALIAS }}
+          STARWIRE_KEY_PASSWORD: ${{ secrets.STARWIRE_KEY_PASSWORD }}
         run: |
-          if [ -z "$VOIDLINK_KEYSTORE_BASE64" ]; then
-            echo "::error::Set the VOIDLINK_* repository secrets first (see docs/UPDATING.md)"
+          if [ -z "$STARWIRE_KEYSTORE_BASE64" ]; then
+            echo "::error::Set the STARWIRE_* repository secrets first (see docs/UPDATING.md)"
             exit 1
           fi
-          echo "$VOIDLINK_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
-          export VOIDLINK_KEYSTORE="$RUNNER_TEMP/release.jks"
+          echo "$STARWIRE_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          export STARWIRE_KEYSTORE="$RUNNER_TEMP/release.jks"
           ./gradlew --no-daemon assembleNonRootRelease
           rm -f "$RUNNER_TEMP/release.jks"
 
@@ -46,7 +46,7 @@ jobs:
         id: files
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          APK="Voidlink-$VERSION.apk"
+          APK="Starwire-$VERSION.apk"
           cp app/build/outputs/apk/nonRoot/release/app-nonRoot-release.apk "$APK"
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$APKSIGNER" verify "$APK"
@@ -63,4 +63,4 @@ jobs:
           PRERELEASE=""
           case "$GITHUB_REF_NAME" in *-*) PRERELEASE="--prerelease" ;; esac
           gh release create "$GITHUB_REF_NAME" "${{ steps.files.outputs.apk }}" \
-            --title "Voidlink ${GITHUB_REF_NAME#v}" --notes-file notes.md $PRERELEASE
+            --title "Starwire ${GITHUB_REF_NAME#v}" --notes-file notes.md $PRERELEASE

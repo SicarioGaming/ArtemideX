@@ -1,7 +1,7 @@
 /**
  * Created by Karim Mreisi.
  *
- * Voidlink: Artemide's on-screen full keyboard. Keys go to a KeySender instead of Game's
+ * Starwire: Artemide's on-screen full keyboard. Keys go to a KeySender instead of Game's
  * static instance, and the long-press table belongs to each keyboard.
  */
 

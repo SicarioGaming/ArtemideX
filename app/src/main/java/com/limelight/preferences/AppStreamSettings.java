@@ -52,7 +52,7 @@ public class AppStreamSettings extends Activity {
         UiHelper.notifyNewRootView(this);
     }
 
-    // Voidlink options: the global setting's key (stored in AppSettings.gameOptions, and the
+    // Starwire options: the global setting's key (stored in AppSettings.gameOptions, and the
     // preference here is "game_" plus it), and the choices' names and values
     private static final Object[][] GAME_OPTIONS = {
             {"video_format", R.array.video_format_names, R.array.video_format_values},
@@ -476,7 +476,7 @@ public class AppStreamSettings extends Activity {
                 }
             }
 
-            // Voidlink options: the chosen entry's name, or the default label
+            // Starwire options: the chosen entry's name, or the default label
             for (Object[] option : GAME_OPTIONS) {
                 ListPreference pref = (ListPreference) findPreference("game_" + option[0]);
                 int index = pref.findIndexOfValue(pref.getValue() == null ? "" : pref.getValue());

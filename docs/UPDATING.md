@@ -1,7 +1,7 @@
-# Keeping Voidlink current
+# Keeping Starwire current
 
-Voidlink follows several Moonlight versions. When they add something good, this is how it gets
-into Voidlink and out to people.
+Starwire follows several Moonlight versions. When they add something good, this is how it gets
+into Starwire and out to people.
 
 ## 1. See what's new
 
@@ -17,9 +17,9 @@ The sources and the last commit reviewed for each are in `tools/upstream/sources
 ## 2. Bring a feature in
 
 - **Ported code** (Moonlight X, Artemide, Moonlight X Turnip, moonlight-common-c): add the source
-  as a git remote and port the commits by hand. Voidlink's base has moved on, so plain merges
+  as a git remote and port the commits by hand. Starwire's base has moved on, so plain merges
   rarely apply cleanly.
-- **Ideas** (Moonlight V+, Moonlit Artemis, upstream Moonlight): write the feature for Voidlink.
+- **Ideas** (Moonlight V+, Moonlit Artemis, upstream Moonlight): write the feature for Starwire.
 - Add an on-device test for it (`app/src/androidTest`) and run them all:
   `./gradlew connectedNonRootDebugAndroidTest`.
 - Credit it in the README's **Where every feature comes from** table (project, author, and
@@ -40,10 +40,10 @@ variables → Actions), set once:
 
 | Secret | Value |
 | --- | --- |
-| `VOIDLINK_KEYSTORE_BASE64` | the release keystore file, base64-encoded |
-| `VOIDLINK_KEYSTORE_PASSWORD` | the keystore password |
-| `VOIDLINK_KEY_ALIAS` | `voidlink` |
-| `VOIDLINK_KEY_PASSWORD` | the key password |
+| `STARWIRE_KEYSTORE_BASE64` | the release keystore file, base64-encoded |
+| `STARWIRE_KEYSTORE_PASSWORD` | the keystore password |
+| `STARWIRE_KEY_ALIAS` | `starwire` |
+| `STARWIRE_KEY_PASSWORD` | the key password |
 
 With the GitHub CLI signed in, `.\tools\set-release-secrets.ps1` sets all four from
 `keystore.properties` without showing the passwords.

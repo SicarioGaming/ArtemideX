@@ -612,7 +612,7 @@ public class PreferenceConfiguration {
         return 1;
     }
 
-    // Voidlink options that App Settings can also set per game, by their global setting's key
+    // Starwire options that App Settings can also set per game, by their global setting's key
     static final String HIDE_CURSOR_MODE_PREF_STRING = "hide_cursor_mode";
     static final String AUDIO_HAPTICS_PREF_STRING = "list_audio_haptics";
     static final String[] GAME_OPTION_KEYS = {

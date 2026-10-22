@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lists what's new in each Moonlight version Voidlink follows (tools/upstream/sources.txt) since
+# Lists what's new in each Moonlight version Starwire follows (tools/upstream/sources.txt) since
 # the commit last reviewed, as a Markdown report on stdout. Needs only git.
 #
 #   tools/upstream/check.sh            report for every source

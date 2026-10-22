@@ -280,7 +280,7 @@ public final class CoverGlowSettings {
         CREDITS.put("checkbox_enable_perf_overlay_lite", "From Axixi2233, via Artemis and Artemide");
     }
 
-    /** Where a setting came from, or null for Moonlight's own and Voidlink's new settings. */
+    /** Where a setting came from, or null for Moonlight's own and Starwire's new settings. */
     static String creditFor(String key) {
         return key == null ? null : CREDITS.get(key);
     }

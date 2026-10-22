@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Floating in-stream menu button (from Artemide), in Voidlink's frosted violet -->
+<!-- Floating in-stream menu button (from Artemide), in Starwire's frosted violet -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="#80FFFFFF">
     <item>

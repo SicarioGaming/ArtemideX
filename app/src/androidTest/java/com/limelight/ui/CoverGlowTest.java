@@ -325,7 +325,7 @@ public class CoverGlowTest {
         assertTrue(CoverGlowSettings.creditFor("checkbox_async_decode").contains("derflacco"));
         assertTrue(CoverGlowSettings.creditFor("list_audio_haptics").contains("Moonlight V+"));
         assertTrue(CoverGlowSettings.creditFor("checkbox_custom_vulkan_driver").contains("NoCrypt"));
-        // Moonlight's own and Voidlink's new settings have no credit line
+        // Moonlight's own and Starwire's new settings have no credit line
         assertEquals(null, CoverGlowSettings.creditFor("list_resolution"));
         assertEquals(null, CoverGlowSettings.creditFor("hide_cursor_mode"));
     }
@@ -341,7 +341,7 @@ public class CoverGlowTest {
         // Not blank: the void in the middle is dark and the ring around it is bright
         int middle = bitmap.getPixel(size / 2, size / 2);
         assertTrue("middle " + Integer.toHexString(middle), Color.alpha(middle) > 200 && luminanceOf(middle) < 0.05);
-        File out = new File(target.getExternalFilesDir(null), "voidlink_icon.png");
+        File out = new File(target.getExternalFilesDir(null), "starwire_icon.png");
         try (FileOutputStream stream = new FileOutputStream(out)) {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
         }
@@ -412,7 +412,7 @@ public class CoverGlowTest {
                 chips.addView(view, params);
             }
 
-            // The cover row, with the icon tiles Voidlink draws for these kinds of app
+            // The cover row, with the icon tiles Starwire draws for these kinds of app
             FrameLayout container = root.findViewById(R.id.appFragmentContainer);
             LinearLayout row = new LinearLayout(context);
             String[] names = {"Desktop", "Steam Big Picture", "Playnite", "RetroArch", "Netflix", "PowerShell"};

@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 import com.limelight.R;
 
 /**
- * Voidlink's options in per-game App Settings (AppSettings.gameOptions).
+ * Starwire's options in per-game App Settings (AppSettings.gameOptions).
  */
 @RunWith(AndroidJUnit4.class)
 public class GameOptionsTest {

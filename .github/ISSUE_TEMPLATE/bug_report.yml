@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in Voidlink doesn't work as it should
+description: Something in Starwire doesn't work as it should
 labels: [bug]
 body:
   - type: textarea
@@ -20,7 +20,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Voidlink version
+      label: Starwire version
       description: Check the release you installed.
       placeholder: "0.1.0"
     validations:

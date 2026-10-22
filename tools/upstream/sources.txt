@@ -1,4 +1,4 @@
-# The Moonlight versions Voidlink follows, and the last commit of each that was reviewed.
+# The Moonlight versions Starwire follows, and the last commit of each that was reviewed.
 # name  repository  branch  last-reviewed-commit  kind (port = code is ported, ideas = features reimplemented)
 moonlight-x       MoreOrLessSoftware/moonlight-android  mlsoft-x                     7c8209cf705ad1bf7d491b4835274bfb7c101626  port
 artemide          derflacco/moonlight-android           Artemide_Experimental_Async  6648fe1b7c9289ee6c978962438c1071e10da1df  port

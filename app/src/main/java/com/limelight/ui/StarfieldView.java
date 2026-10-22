@@ -13,7 +13,7 @@ import android.view.animation.LinearInterpolator;
 import java.util.Random;
 
 /**
- * Voidlink's background: soft purple and blue nebula clouds with a field of small stars, a few of
+ * Starwire's background: soft purple and blue nebula clouds with a field of small stars, a few of
  * which slowly twinkle. The stars are placed from a fixed seed so the sky looks the same every
  * time. Twinkling follows Android's animation settings and stops while the view is hidden.
  */

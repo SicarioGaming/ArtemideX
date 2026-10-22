@@ -27,7 +27,7 @@ public class AppPreferences {
         public String enableHdr;
         public String enablePerfOverlay;
         public boolean useGlobalSettings;
-        // Voidlink options set for this game, by their global setting's key
+        // Starwire options set for this game, by their global setting's key
         // (PreferenceConfiguration.GAME_OPTION_KEYS); options left out use the default
         public final Map<String, String> gameOptions = new HashMap<>();
 
@@ -247,7 +247,7 @@ public class AppPreferences {
             config.enablePerfOverlay = Boolean.parseBoolean(enablePerfOverlayValue);
         }
 
-        // Voidlink options
+        // Starwire options
         for (String key : PreferenceConfiguration.GAME_OPTION_KEYS) {
             String value = null;
             if (quickLaunchSettings != null && quickLaunchSettings.gameOptions.containsKey(key)) {

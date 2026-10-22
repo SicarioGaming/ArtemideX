@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Voidlink icon for Android 5-7 (no adaptive icons, and vector gradients need Android 7):
+<!-- Starwire icon for Android 5-7 (no adaptive icons, and vector gradients need Android 7):
      the same design in solid colours on a round backdrop -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="48dp"
