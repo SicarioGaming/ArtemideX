@@ -100,6 +100,17 @@
             android:title="@string/title_checkbox_enable_microphone"
             android:summary="@string/summary_checkbox_enable_microphone"
             android:defaultValue="false" />
+        <!-- Where the microphone goes: over the stream (logabell's Apollo build) or to a VBAN
+             receiver on the PC, which works with any host. Only the rows for the chosen one show
+             (StreamSettings.showMicrophoneTarget). -->
+        <ListPreference
+            android:key="list_microphone_target"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_microphone_target"
+            android:summary="%s"
+            android:entries="@array/microphone_target_names"
+            android:entryValues="@array/microphone_target_values"
+            android:defaultValue="host" />
         <ListPreference
             android:key="list_microphone_device"
             android:dependency="checkbox_enable_microphone"
@@ -114,6 +125,28 @@
                 android:action="android.intent.action.VIEW"
                 android:data="https://github.com/logabell/apollo-microphone/releases" />
         </Preference>
+        <Preference
+            android:key="vban_setup_info"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_vban_setup">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://vb-audio.com/Voicemeeter/vban.htm" />
+        </Preference>
+        <EditTextPreference
+            android:key="text_vban_stream_name"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_vban_stream_name"
+            android:defaultValue="Stream1"
+            android:singleLine="true"
+            android:maxLength="16" />
+        <EditTextPreference
+            android:key="text_vban_port"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_vban_port"
+            android:defaultValue="6980"
+            android:inputType="number"
+            android:maxLength="5" />
         <ListPreference
             android:key="list_audio_haptics"
             android:title="@string/title_audio_haptics"

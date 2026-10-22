@@ -4,6 +4,7 @@ package com.limelight;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.AndroidAudioRenderer;
 import com.limelight.binding.audio.MicrophoneCaptureManager;
+import com.limelight.binding.audio.VbanSender;
 import com.limelight.binding.audio.AudioHaptics;
 import com.limelight.binding.input.ControllerHandler;
 import com.limelight.binding.input.KeyboardTranslator;
@@ -107,6 +108,8 @@ import android.widget.Toast;
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -681,7 +684,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setSupportedVideoFormats(supportedVideoFormats)
                 .setAttachedGamepadMask(gamepadMask)
                 .setAudioConfiguration(prefConfig.audioConfiguration)
-                .setEnableMicrophone(prefConfig.enableMicrophone)
+                // With VBAN the microphone goes straight to the PC, not over the stream
+                .setEnableMicrophone(prefConfig.enableMicrophone && !prefConfig.microphoneToVban)
                 .setColorSpace(decoderRenderer.getPreferredColorSpace())
                 .setColorRange(decoderRenderer.getPreferredColorRange())
                 .setPersistGamepadsAfterDisconnect(!prefConfig.multiController);
@@ -2665,8 +2669,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
     }
 
-    // Microphone streaming only works with hosts that accept it (logabell's Apollo build).
-    // Other hosts never negotiate it, so the stream carries on without the mic.
+    // Microphone streaming over the stream only works with hosts that accept it (logabell's Apollo
+    // build); other hosts never negotiate it, so the stream carries on without the mic. With VBAN
+    // the microphone goes to a receiver on the PC instead, whatever the host.
     private void startMicrophoneCapture() {
         if (!prefConfig.enableMicrophone) {
             return;
@@ -2675,6 +2680,23 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         if (!MicrophoneCaptureManager.hasRecordAudioPermission(this)) {
             LimeLog.info("Skipping microphone capture because RECORD_AUDIO permission is missing");
             Toast.makeText(this, R.string.microphone_stream_permission_revoked, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (prefConfig.microphoneToVban) {
+            // The PC's address can be a name, and looking it up isn't allowed on this thread
+            String host = getIntent().getStringExtra(EXTRA_HOST);
+            new Thread(() -> {
+                InetAddress address = null;
+                try {
+                    address = InetAddress.getByName(host);
+                }
+                catch (UnknownHostException | SecurityException e) {
+                    LimeLog.warning("Couldn't look up the PC for VBAN: " + e.getMessage());
+                }
+                final InetAddress resolved = address;
+                runOnUiThread(() -> startVbanMicrophone(resolved));
+            }, "MicVbanLookup").start();
             return;
         }
 
@@ -2693,6 +2715,32 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null)) {
             LimeLog.warning("Unable to start local microphone capture for the current stream");
+            Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void startVbanMicrophone(InetAddress address) {
+        // The stream may have ended while the PC's address was looked up
+        if (!connected || isFinishing()) {
+            return;
+        }
+        if (address == null) {
+            Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
+            return;
+        }
+        // VBAN isn't encrypted, so the audio only goes to a PC on the home network or a private VPN
+        if (!VbanSender.isHomeNetworkAddress(address)) {
+            LimeLog.info("Not sending the microphone over VBAN to " + address.getHostAddress());
+            Toast.makeText(this, R.string.microphone_vban_not_home, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (microphoneCaptureManager == null) {
+            microphoneCaptureManager = new MicrophoneCaptureManager(this);
+        }
+        VbanSender sender = new VbanSender(address, prefConfig.vbanPort, prefConfig.vbanStreamName);
+        if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null, sender)) {
+            LimeLog.warning("Unable to start the microphone for VBAN");
             Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
         }
     }

@@ -16,6 +16,7 @@ import android.app.Activity;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
@@ -37,6 +38,7 @@ import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
 import com.limelight.binding.audio.MicrophoneCaptureManager;
+import com.limelight.binding.audio.VbanSender;
 import com.limelight.ui.CoverGlowSettings;
 import com.limelight.ui.overlay.ImportedShortcuts;
 import com.limelight.binding.video.MediaCodecHelper;
@@ -50,7 +52,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class StreamSettings extends Activity {
@@ -883,6 +890,8 @@ public class StreamSettings extends Activity {
                 return true;
             });
 
+            initializeMicrophoneTargetPreferences();
+
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 // No way to pick an input before Android 6, so always use the default
                 ((PreferenceCategory) findPreference("category_audio_settings")).removePreference(devicePref);
@@ -905,6 +914,122 @@ public class StreamSettings extends Activity {
                 // The saved microphone is gone
                 devicePref.setValue("0");
             }
+        }
+
+        // The rows that only apply to one microphone destination, kept while they're hidden
+        private PreferenceCategory audioCategory;
+        private Preference micHostInfoPref, vbanSetupPref;
+        private EditTextPreference vbanNamePref, vbanPortPref;
+
+        // Only the rows for the chosen destination show: the Apollo link for the host, the setup
+        // steps, stream name and port for VBAN. (Disabled rows look like live ones in this theme.)
+        private void initializeMicrophoneTargetPreferences() {
+            ListPreference targetPref =
+                    (ListPreference) findPreference(PreferenceConfiguration.MICROPHONE_TARGET_PREF_STRING);
+            audioCategory = (PreferenceCategory) findPreference("category_audio_settings");
+            micHostInfoPref = findPreference("microphone_host_info");
+            vbanSetupPref = findPreference("vban_setup_info");
+            vbanNamePref = (EditTextPreference) findPreference(PreferenceConfiguration.VBAN_STREAM_NAME_PREF_STRING);
+            vbanPortPref = (EditTextPreference) findPreference(PreferenceConfiguration.VBAN_PORT_PREF_STRING);
+            if (targetPref == null || audioCategory == null || micHostInfoPref == null || vbanSetupPref == null
+                    || vbanNamePref == null || vbanPortPref == null) {
+                return;
+            }
+            final EditTextPreference namePref = vbanNamePref;
+            final EditTextPreference portPref = vbanPortPref;
+
+            targetPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                showMicrophoneTarget((String) newValue, namePref.getText(), portPref.getText());
+                return true;
+            });
+            namePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                showMicrophoneTarget(targetPref.getValue(), (String) newValue, portPref.getText());
+                return true;
+            });
+            portPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String port = ((String) newValue).trim();
+                try {
+                    int value = Integer.parseInt(port);
+                    if (value < 1 || value > 65535) {
+                        return false;
+                    }
+                }
+                catch (NumberFormatException e) {
+                    return false;
+                }
+                showMicrophoneTarget(targetPref.getValue(), namePref.getText(), port);
+                return true;
+            });
+            showMicrophoneTarget(targetPref.getValue(), namePref.getText(), portPref.getText());
+        }
+
+        private void showMicrophoneTarget(String target, String streamName, String port) {
+            boolean vban = PreferenceConfiguration.MICROPHONE_TARGET_VBAN.equals(target);
+            if (streamName == null || streamName.trim().isEmpty()) {
+                streamName = VbanSender.DEFAULT_STREAM_NAME;
+            }
+            if (port == null || port.trim().isEmpty()) {
+                port = Integer.toString(VbanSender.DEFAULT_PORT);
+            }
+
+            setShown(micHostInfoPref, !vban);
+            setShown(vbanSetupPref, vban);
+            setShown(vbanNamePref, vban);
+            setShown(vbanPortPref, vban);
+            Preference setupPref = vbanSetupPref;
+            Preference namePref = vbanNamePref;
+            Preference portPref = vbanPortPref;
+
+            String deviceAddress = localNetworkAddress();
+            int portNumber;
+            try {
+                portNumber = Integer.parseInt(port.trim());
+            }
+            catch (NumberFormatException e) {
+                portNumber = VbanSender.DEFAULT_PORT;
+            }
+            setupPref.setSummary(getString(R.string.summary_vban_setup,
+                    deviceAddress != null ? deviceAddress : getString(R.string.vban_this_device),
+                    streamName.trim(), portNumber));
+            namePref.setSummary(getString(R.string.summary_vban_stream_name, streamName.trim()));
+            portPref.setSummary(getString(R.string.summary_vban_port, port.trim()));
+        }
+
+        // A removed row keeps its place (its order from the XML) when it's added back
+        private void setShown(Preference preference, boolean shown) {
+            boolean present = audioCategory.findPreference(preference.getKey()) != null;
+            if (shown && !present) {
+                audioCategory.addPreference(preference);
+            }
+            else if (!shown && present) {
+                audioCategory.removePreference(preference);
+            }
+        }
+
+        // This device's home-network IPv4 address, for the receiver on the PC to accept; Wi-Fi first
+        private static String localNetworkAddress() {
+            String fallback = null;
+            try {
+                for (NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                    if (!iface.isUp() || iface.isLoopback()) {
+                        continue;
+                    }
+                    for (InetAddress address : Collections.list(iface.getInetAddresses())) {
+                        if (address instanceof Inet4Address && address.isSiteLocalAddress()) {
+                            if (iface.getName().startsWith("wlan")) {
+                                return address.getHostAddress();
+                            }
+                            if (fallback == null) {
+                                fallback = address.getHostAddress();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (SocketException | NullPointerException e) {
+                // No interfaces to look at; the setup text says "this device" instead
+            }
+            return fallback;
         }
 
         @Override

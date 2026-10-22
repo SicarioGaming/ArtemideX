@@ -7,6 +7,7 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.view.Display;
 
+import com.limelight.binding.audio.VbanSender;
 import com.limelight.nvstream.jni.MoonBridge;
 
 public class PreferenceConfiguration {
@@ -56,6 +57,9 @@ public class PreferenceConfiguration {
     static final String AUDIO_CONFIG_PREF_STRING = "list_audio_config";
     static final String ENABLE_MICROPHONE_PREF_STRING = "checkbox_enable_microphone";
     static final String MICROPHONE_DEVICE_PREF_STRING = "list_microphone_device";
+    static final String MICROPHONE_TARGET_PREF_STRING = "list_microphone_target";
+    static final String VBAN_STREAM_NAME_PREF_STRING = "text_vban_stream_name";
+    static final String VBAN_PORT_PREF_STRING = "text_vban_port";
     private static final String USB_DRIVER_PREF_SRING = "checkbox_usb_driver";
     private static final String VIDEO_FORMAT_PREF_STRING = "video_format";
     private static final String ONSCREEN_CONTROLLER_PREF_STRING = "checkbox_show_onscreen_controls";
@@ -156,6 +160,9 @@ public class PreferenceConfiguration {
     private static final String DEFAULT_AUDIO_CONFIG = "2"; // Stereo
     private static final boolean DEFAULT_ENABLE_MICROPHONE = false;
     private static final String DEFAULT_MICROPHONE_DEVICE = "0";
+    static final String MICROPHONE_TARGET_HOST = "host";
+    static final String MICROPHONE_TARGET_VBAN = "vban";
+    private static final String DEFAULT_MICROPHONE_TARGET = MICROPHONE_TARGET_HOST;
     private static final boolean DEFAULT_LATENCY_TOAST = false;
     private static final String DEFAULT_FRAME_PACING = "balanced";
     private static final boolean DEFAULT_ABSOLUTE_MOUSE_MODE = false;
@@ -231,6 +238,10 @@ public class PreferenceConfiguration {
     public MoonBridge.AudioConfiguration audioConfiguration;
     public boolean enableMicrophone;
     public int microphoneDeviceId;
+    // Send the microphone to a VBAN receiver on the PC instead of over the stream
+    public boolean microphoneToVban;
+    public String vbanStreamName;
+    public int vbanPort;
     public int framePacing;
     public int jitterBuffer;
     public int pyrowaveLateFrames;
@@ -833,6 +844,19 @@ public class PreferenceConfiguration {
         }
         catch (NumberFormatException e) {
             config.microphoneDeviceId = 0;
+        }
+        config.microphoneToVban = MICROPHONE_TARGET_VBAN.equals(
+                prefs.getString(MICROPHONE_TARGET_PREF_STRING, DEFAULT_MICROPHONE_TARGET));
+        config.vbanStreamName = prefs.getString(VBAN_STREAM_NAME_PREF_STRING, VbanSender.DEFAULT_STREAM_NAME);
+        try {
+            config.vbanPort = Integer.parseInt(prefs.getString(VBAN_PORT_PREF_STRING,
+                    Integer.toString(VbanSender.DEFAULT_PORT)).trim());
+            if (config.vbanPort < 1 || config.vbanPort > 65535) {
+                config.vbanPort = VbanSender.DEFAULT_PORT;
+            }
+        }
+        catch (NumberFormatException e) {
+            config.vbanPort = VbanSender.DEFAULT_PORT;
         }
 
         config.videoFormat = getVideoFormatValue(context);

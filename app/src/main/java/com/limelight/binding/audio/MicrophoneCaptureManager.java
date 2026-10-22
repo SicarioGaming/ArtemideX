@@ -17,7 +17,6 @@ import android.os.SystemClock;
 
 import com.limelight.LimeLog;
 import com.limelight.R;
-import com.limelight.nvstream.jni.MoonBridge;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -41,9 +40,7 @@ public class MicrophoneCaptureManager {
     }
 
     private static final int SAMPLE_RATE = 48000;
-    private static final int CHANNEL_COUNT = 1;
     private static final int FRAME_SIZE = 960;
-    private static final int DEFAULT_BITRATE = 24000;
     private static final int LEVEL_UPDATE_INTERVAL_MS = 50;
     private static final int SIGNAL_PEAK_THRESHOLD = 250;
     private static final double SIGNAL_RMS_THRESHOLD = 90.0;
@@ -60,7 +57,8 @@ public class MicrophoneCaptureManager {
     private NoiseSuppressor noiseSuppressor;
     private Thread captureThread;
     private volatile boolean running;
-    private boolean streamingToHost;
+    // Where streamed audio goes (null while previewing)
+    private MicrophoneSink sink;
     private LevelListener levelListener;
     private String currentStatus;
     private double currentLevel;
@@ -101,22 +99,28 @@ public class MicrophoneCaptureManager {
     }
 
     public boolean startPreview(int preferredDeviceId, LevelListener listener) {
-        return startCapture(preferredDeviceId, listener, false);
+        return startCapture(preferredDeviceId, listener, null);
     }
 
+    /** Streams to the host over the stream itself (logabell's Apollo build). */
     public boolean startStreaming(int preferredDeviceId, LevelListener listener) {
-        return startCapture(preferredDeviceId, listener, true);
+        return startStreaming(preferredDeviceId, listener, new HostMicrophoneSink());
+    }
+
+    /** Streams to the given destination, such as a VBAN receiver on the PC. */
+    public boolean startStreaming(int preferredDeviceId, LevelListener listener, MicrophoneSink destination) {
+        return startCapture(preferredDeviceId, listener, destination);
     }
 
     public void stop() {
         AudioRecord recordToRelease;
         Thread threadToJoin;
-        boolean wasStreaming;
+        MicrophoneSink sinkToClose;
 
         running = false;
         recordToRelease = audioRecord;
         threadToJoin = captureThread;
-        wasStreaming = streamingToHost;
+        sinkToClose = sink;
 
         if (recordToRelease != null) {
             try {
@@ -142,18 +146,17 @@ public class MicrophoneCaptureManager {
             recordToRelease.release();
         }
 
-        if (wasStreaming) {
-            MoonBridge.stopMicrophoneStreaming();
-            MoonBridge.cleanupMicrophoneEncoder();
+        if (sinkToClose != null) {
+            sinkToClose.close();
         }
-        streamingToHost = false;
+        sink = null;
 
         currentLevel = 0.0;
         signalDetected = false;
         dispatchStatus(string(R.string.microphone_preview_inactive), 0.0, false);
     }
 
-    private boolean startCapture(int preferredDeviceId, LevelListener listener, boolean streamToHost) {
+    private boolean startCapture(int preferredDeviceId, LevelListener listener, MicrophoneSink streamSink) {
         CaptureConfig config;
         AudioRecord newRecord;
         final int bufferSamples;
@@ -166,11 +169,6 @@ public class MicrophoneCaptureManager {
             return false;
         }
 
-        if (streamToHost && !MoonBridge.isMicrophoneStreamActive()) {
-            dispatchStatus(string(R.string.microphone_host_not_negotiated), 0.0, false);
-            return false;
-        }
-
         config = createCaptureConfig(preferredDeviceId);
         if (config == null) {
             dispatchStatus(string(R.string.microphone_preview_open_failed), 0.0, false);
@@ -180,19 +178,22 @@ public class MicrophoneCaptureManager {
         newRecord = config.record;
         bufferSamples = config.bufferSamples;
 
-        if (streamToHost && MoonBridge.setupMicrophoneEncoder(SAMPLE_RATE, CHANNEL_COUNT, DEFAULT_BITRATE) != 0) {
-            releaseVoiceEffects();
-            newRecord.release();
-            dispatchStatus(string(R.string.microphone_encoder_setup_failed), 0.0, false);
-            return false;
+        if (streamSink != null) {
+            int error = streamSink.open();
+            if (error != 0) {
+                releaseVoiceEffects();
+                newRecord.release();
+                dispatchStatus(string(error), 0.0, false);
+                return false;
+            }
         }
 
         try {
             newRecord.startRecording();
         }
         catch (IllegalStateException e) {
-            if (streamToHost) {
-                MoonBridge.cleanupMicrophoneEncoder();
+            if (streamSink != null) {
+                streamSink.close();
             }
             releaseVoiceEffects();
             newRecord.release();
@@ -201,8 +202,8 @@ public class MicrophoneCaptureManager {
         }
 
         if (newRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
-            if (streamToHost) {
-                MoonBridge.cleanupMicrophoneEncoder();
+            if (streamSink != null) {
+                streamSink.close();
             }
             releaseVoiceEffects();
             newRecord.release();
@@ -217,26 +218,25 @@ public class MicrophoneCaptureManager {
                 bufferSamples));
 
         audioRecord = newRecord;
-        streamingToHost = streamToHost;
+        sink = streamSink;
         currentStatus = config.statusMessage;
         currentLevel = 0.0;
         signalDetected = false;
         running = true;
 
-        if (streamToHost) {
-            MoonBridge.startMicrophoneStreaming();
-        }
-
-        // The thread keeps its own reference, since stop() clears the field while it may still be reading
+        // The thread keeps its own references, since stop() clears the fields while it may still be reading
         final AudioRecord recordForThread = newRecord;
-        captureThread = new Thread(() -> runCaptureLoop(recordForThread, bufferSamples), streamToHost ? "MicStreamCapture" : "MicPreviewCapture");
+        captureThread = new Thread(() -> runCaptureLoop(recordForThread, streamSink, bufferSamples),
+                streamSink != null ? "MicStreamCapture" : "MicPreviewCapture");
         captureThread.start();
         dispatchStatus(config.statusMessage, 0.0, false);
         return true;
     }
 
-    private void runCaptureLoop(AudioRecord record, int bufferSamples) {
-        short[] readBuffer = new short[bufferSamples];
+    private void runCaptureLoop(AudioRecord record, MicrophoneSink destination, int bufferSamples) {
+        // Read 20 ms at a time: the record buffer stays large so nothing is lost, but each piece
+        // goes out as soon as it's captured instead of waiting for the whole buffer to fill
+        short[] readBuffer = new short[Math.min(bufferSamples, FRAME_SIZE)];
         int pendingPeak = 0;
         double pendingRms = 0.0;
         long lastUpdateTime = SystemClock.elapsedRealtime();
@@ -263,11 +263,8 @@ public class MicrophoneCaptureManager {
                 pendingRms = signalStats.rms;
             }
 
-            if (streamingToHost) {
-                int queued = MoonBridge.queueMicrophonePcm(readBuffer, samplesRead);
-                if (queued < 0) {
-                    LimeLog.warning("Failed to queue microphone PCM data for native encoding");
-                }
+            if (destination != null) {
+                destination.write(readBuffer, samplesRead);
             }
 
             long now = SystemClock.elapsedRealtime();

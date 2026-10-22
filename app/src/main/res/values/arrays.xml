@@ -221,6 +221,15 @@
         <item>both</item>
     </string-array>
 
+    <string-array name="microphone_target_names">
+        <item>@string/microphone_target_host</item>
+        <item>@string/microphone_target_vban</item>
+    </string-array>
+    <string-array name="microphone_target_values" translatable="false">
+        <item>host</item>
+        <item>vban</item>
+    </string-array>
+
     <string-array name="analog_scrolling_names">
         <item>@string/analogscroll_none</item>
         <item>@string/analogscroll_right</item>

@@ -53,6 +53,7 @@ public final class SettingsImpact {
         IMPACT.put("list_audio_config", R.string.impact_surround);
         IMPACT.put("checkbox_enable_audiofx", R.string.impact_audiofx);
         IMPACT.put("checkbox_enable_microphone", R.string.impact_microphone);
+        IMPACT.put("list_microphone_target", R.string.impact_microphone_target);
         IMPACT.put("list_audio_haptics", R.string.impact_audio_haptics);
         IMPACT.put("seekbar_deadzone", R.string.impact_deadzone);
         IMPACT.put("checkbox_prevent_packet_loss", R.string.impact_prevent_packet_loss);

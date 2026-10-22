@@ -684,7 +684,19 @@
     <string name="summary_enable_overlay_menu">Hold select button for 5 seconds during streaming to open the overlay menu</string>
     <!-- Microphone streaming (needs logabell's Apollo build on the PC) -->
     <string name="title_checkbox_enable_microphone">Send my microphone</string>
-    <string name="summary_checkbox_enable_microphone">Only works if the PC runs logabell\'s Apollo build. Vibepollo, Sunshine and regular Apollo can\'t receive it yet.</string>
+    <string name="summary_checkbox_enable_microphone">Talk in voice chat on the PC. The PC needs logabell\'s Apollo build, or a free VBAN receiver, which works with Vibepollo, Sunshine and regular Apollo.</string>
+    <string name="title_microphone_target">Send my microphone to</string>
+    <string name="microphone_target_host">The PC\'s streaming app (logabell\'s Apollo build)</string>
+    <string name="microphone_target_vban">A VBAN receiver on the PC (any host)</string>
+    <string name="title_vban_setup">Set up the PC for VBAN</string>
+    <string name="summary_vban_setup">Install VB-Cable and VBAN-Receptor on the PC (both free from VB-Audio). In VBAN-Receptor, receive the stream named %2$s from %1$s on port %3$d, and set its output to CABLE Input. Then choose CABLE Output as the microphone in Discord or the game. Tap for VB-Audio\'s page.</string>
+    <string name="vban_this_device">this device\'s address</string>
+    <string name="title_vban_stream_name">VBAN stream name</string>
+    <string name="summary_vban_stream_name">%1$s. Must match the stream name on the PC\'s receiver.</string>
+    <string name="title_vban_port">VBAN port</string>
+    <string name="summary_vban_port">%1$s. VBAN normally uses 6980.</string>
+    <string name="microphone_vban_not_home">The microphone wasn\'t sent. VBAN isn\'t encrypted, so Starwire only sends it to a PC on your home network or a private VPN.</string>
+    <string name="microphone_vban_failed">Couldn\'t start sending the microphone over VBAN</string>
     <string name="title_microphone_host_info">Get the Apollo build for microphone</string>
     <string name="summary_microphone_host_info">Opens logabell\'s Apollo on GitHub. Install it on the PC in place of your current host.</string>
     <string name="title_microphone_device_list">Microphone</string>
@@ -719,6 +731,7 @@
     <string name="impact_surround">Surround uses a little more bandwidth. No change to latency.</string>
     <string name="impact_audiofx">Can add audio delay. Leave it off unless you use an equalizer.</string>
     <string name="impact_microphone">Uses a little upload bandwidth and battery. No change to video.</string>
+    <string name="impact_microphone_target">Over the stream it\'s compressed to about 24 kbps. VBAN sends it uncompressed, under 1 Mbps, on your home network only. No change to video.</string>
     <string name="impact_audio_haptics">Uses some battery. No change to the stream.</string>
     <string name="impact_deadzone">Lower feels more responsive, but worn sticks may drift.</string>
     <string name="impact_prevent_packet_loss">Fewer stutters on devices whose Wi-Fi naps between packets. Slightly more battery.</string>
