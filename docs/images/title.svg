@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="110" viewBox="0 0 560 110" role="img" aria-label="Starwire">
+  <title>Starwire</title>
+  <defs>
+    <!-- The same flowing rainbow as the app's wordmark: blue, purple, pink, orange -->
+    <linearGradient id="rainbow" x1="0" y1="0" x2="1120" y2="0" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+      <stop offset="0" stop-color="#0894FF"/>
+      <stop offset="0.25" stop-color="#C959DD"/>
+      <stop offset="0.5" stop-color="#FF2E54"/>
+      <stop offset="0.75" stop-color="#FF9004"/>
+      <stop offset="1" stop-color="#0894FF"/>
+      <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="1120 0" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+  </defs>
+  <text x="280" y="58" text-anchor="middle" dominant-baseline="middle"
+        font-family="'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="84" font-weight="900"
+        letter-spacing="-1" fill="url(#rainbow)">Starwire</text>
+</svg>
