@@ -26,7 +26,7 @@ You need two things on the PC, and the setup below installs both:
      Tailscale) addresses only;
    - starts the receiver now and whenever you sign in (minimized in the taskbar);
    - plays a test tone through VB-Cable to check the virtual microphone works.
-3. If VB-Cable was new, **restart Windows** to finish installing it.
+3. If the setup says VB-Cable isn't showing up yet, **restart Windows** to finish installing it.
 4. In Discord or the game, choose **CABLE Output (VB-Audio Virtual Cable)** as the microphone.
 
 ## Set up Starwire

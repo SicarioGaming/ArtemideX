@@ -127,7 +127,9 @@ static class StarwireMicReceiver
         }
         Console.WriteLine("  Listening for \"" + streamName + "\" on UDP port " + port);
         Console.WriteLine("  Playing into " + WaveOut.DeviceName(deviceId));
-        Console.WriteLine("  In Starwire: Settings > Sound & vibration > Send my microphone > A VBAN receiver on the PC");
+        // Kept short so the lines fit a small console window
+        Console.WriteLine("  In Starwire: Settings > Sound & vibration > Send my microphone,");
+        Console.WriteLine("  sent to \"A VBAN receiver on the PC\"");
         Console.WriteLine("Close this window to stop.");
 
         Player player = new Player(device);
@@ -310,12 +312,18 @@ static class StarwireMicReceiver
 }
 
 // Plays mono 16-bit PCM through Windows' waveOut API in 10 ms blocks. A short buffer rides out
-// Wi-Fi jitter; when audio piles up past it, new blocks are dropped so the delay stays low.
+// Wi-Fi jitter; when audio piles up past it (a burst, or clock drift), blocks are skipped so the
+// delay stays low.
 sealed class Player
 {
     const int BlockMs = 10;
     const int StartBlocks = 4;   // 40 ms of audio before playback (re)starts
     const int MaxBlocks = 12;    // never more than 120 ms behind
+    // The phone's audio clock never quite matches the PC's (60 ppm apart in testing, about 3.6 ms
+    // a minute), so a phone running fast slowly fills the buffer. If it hasn't dipped below
+    // TrimBlocks for TrimMs, one block is skipped so the delay stays near where it started.
+    const int TrimBlocks = 6;    // 60 ms
+    const int TrimMs = 2000;
 
     const int StallMs = 1000;    // queued audio that hasn't moved for this long means the output died
     const int RetryMs = 1000;    // how often to try opening the output again after a failure
@@ -331,6 +339,7 @@ sealed class Player
     bool starting = true;
     readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
     long lastProgress;
+    long lastBelowTrim;
     long nextOpenAttempt;
     bool openFailed;
 
@@ -432,6 +441,14 @@ sealed class Player
             WaveOut.waveOutPause(handle);
         }
         if (queued.Count >= MaxBlocks) {
+            return true;
+        }
+        if (starting || queued.Count < TrimBlocks) {
+            lastBelowTrim = now;
+        }
+        else if (now - lastBelowTrim > TrimMs) {
+            // Clock drift has built the buffer up: skip this block
+            lastBelowTrim = now;
             return true;
         }
 

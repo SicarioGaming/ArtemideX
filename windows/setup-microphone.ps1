@@ -49,9 +49,27 @@ $startupShortcut = Join-Path $StartupFolder 'Starwire microphone receiver.lnk'
 $ruleName = 'Starwire microphone receiver'
 $vbCableUrl = 'https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack45.zip'
 
+# Messages wrap at the window's width instead of running off the edge; later lines get $rest
+function Say($text, $color, $first = '   ', $rest = '   ') {
+    $width = 80
+    try { $width = [Math]::Max(40, $Host.UI.RawUI.WindowSize.Width - 1) } catch { }
+    $lines = @()
+    $line = $first
+    foreach ($word in ($text -split ' ')) {
+        if ($line.Trim() -and $line.Length + $word.Length -gt $width) {
+            $lines += $line.TrimEnd()
+            $line = $rest
+        }
+        $line += $word + ' '
+    }
+    $lines += $line.TrimEnd()
+    foreach ($l in $lines) {
+        if ($color) { Write-Host $l -ForegroundColor $color } else { Write-Host $l }
+    }
+}
 function Step($text) { Write-Host ''; Write-Host "== $text" -ForegroundColor Cyan }
-function Done($text) { Write-Host "   $text" -ForegroundColor Green }
-function Note($text) { Write-Host "   $text" -ForegroundColor Yellow }
+function Done($text) { Say $text Green }
+function Note($text) { Say $text Yellow }
 function Finish($code) {
     Write-Host ''
     Read-Host 'Press Enter to close'
@@ -76,6 +94,15 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     Start-Process powershell.exe -Verb RunAs -ArgumentList $arguments
     exit
 }
+
+# A buffer wider than the window scrolls it sideways on long lines, cutting the others off
+try {
+    $raw = $Host.UI.RawUI
+    if ($raw.BufferSize.Width -gt $raw.WindowSize.Width) {
+        $raw.BufferSize = New-Object Management.Automation.Host.Size($raw.WindowSize.Width, $raw.BufferSize.Height)
+    }
+}
+catch { }
 
 Write-Host 'Starwire microphone setup' -ForegroundColor White
 
@@ -143,6 +170,8 @@ else {
     New-Item -ItemType Directory $work | Out-Null
     $zip = Join-Path $work 'VBCABLE_Driver_Pack45.zip'
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    # PowerShell 5.1's progress bar garbles the window and slows the download a lot
+    $ProgressPreference = 'SilentlyContinue'
     Invoke-WebRequest -Uri $vbCableUrl -OutFile $zip -UseBasicParsing
     Expand-Archive -Path $zip -DestinationPath $work -Force
     $setup = Join-Path $work $(if ([Environment]::Is64BitOperatingSystem) { 'VBCABLE_Setup_x64.exe' } else { 'VBCABLE_Setup.exe' })
@@ -164,8 +193,8 @@ else {
     }
     else {
         Note "VB-Cable isn't showing up yet. Windows needs a restart to finish installing it."
+        $restartNeeded = $true
     }
-    $restartNeeded = $true
 }
 
 # --- Firewall: local-network and private VPN addresses only, the same ones the receiver accepts ---
@@ -174,7 +203,7 @@ Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
 New-NetFirewallRule -DisplayName $ruleName `
     -Description 'Starwire sends your microphone to this PC as VBAN. Only local-network and private VPN addresses can reach it.' `
     -Direction Inbound -Action Allow -Program $exe -Protocol UDP -LocalPort $Port `
-    -RemoteAddress @('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '169.254.0.0/16', '100.64.0.0/10', 'fc00::/7', 'fe80::/10') `
+    -RemoteAddress @('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '169.254.0.0/16', '100.64.0.0/10', 'fc00::/7', 'fe80::/10', 'fec0::/10') `
     -Profile Any | Out-Null
 Done "UDP port $Port, from local-network and private VPN addresses (like Tailscale)."
 
@@ -233,11 +262,13 @@ public static class StarwireDefaults {
 "@
 $speakers = [StarwireDefaults]::Name(0)
 $microphone = [StarwireDefaults]::Name(1)
-if ($speakers -match 'CABLE' -or $microphone -match 'CABLE') {
+if ($speakers -match 'CABLE') {
     Step 'One thing to fix in Sound settings'
-    if ($speakers -match 'CABLE') { Note "Windows made '$speakers' your default speakers, so the PC's sound (and the stream's) would go into the virtual microphone. Pick the output you used before: your speakers, the monitor's HDMI audio, or Steam Streaming Speakers." }
-    if ($microphone -match 'CABLE') { Note "Windows made '$microphone' your default microphone. That's fine for Starwire; pick your own microphone if you also use one at the PC." }
+    Note "Windows made '$speakers' your default speakers, so the PC's sound (and the stream's) would go into the virtual microphone. Pick the output you used before: your speakers, the monitor's HDMI audio, or Steam Streaming Speakers."
     Start-Process 'ms-settings:sound'
+}
+if ($microphone -match 'CABLE') {
+    Note "Windows also made '$microphone' your default microphone. That's fine for Starwire; pick your own microphone in Sound settings if you also use one at the PC."
 }
 
 # --- What to do next ---
@@ -245,12 +276,11 @@ Step 'Next'
 if ($restartNeeded) {
     Note 'Restart Windows to finish installing VB-Cable. The receiver starts by itself afterwards.'
 }
-Write-Host '   1. In Discord or the game, choose "CABLE Output (VB-Audio Virtual Cable)" as the microphone.'
-Write-Host '   2. In Starwire: Settings > Sound & vibration > Send my microphone, then'
-Write-Host '      "Send my microphone to" > "A VBAN receiver on the PC".'
-Write-Host "   3. Starwire's VBAN stream name must be `"$StreamName`" and its port $Port (the defaults)."
+Say '1. In Discord or the game, choose "CABLE Output (VB-Audio Virtual Cable)" as the microphone.' $null '   ' '      '
+Say '2. In Starwire: Settings > Sound & vibration > Send my microphone, then "Send my microphone to" > "A VBAN receiver on the PC".' $null '   ' '      '
+Say "3. Starwire's VBAN stream name must be `"$StreamName`" and its port $Port (the defaults)." $null '   ' '      '
 $addresses = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
     ForEach-Object { $_.IPAddress }
-if ($addresses) { Write-Host "   This PC's addresses: $($addresses -join ', ')" }
+if ($addresses) { Say "This PC's addresses: $($addresses -join ', ')" $null }
 Finish 0
