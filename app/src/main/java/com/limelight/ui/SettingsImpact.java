@@ -8,6 +8,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.view.View;
 import android.view.ViewGroup;
@@ -102,6 +103,10 @@ public final class SettingsImpact {
         SpannableStringBuilder text = new SpannableStringBuilder();
         if (!TextUtils.isEmpty(summary)) {
             text.append(summary).append('\n');
+            // A half-height blank line, so the impact line doesn't run into the description
+            int gap = text.length();
+            text.append('\n');
+            text.setSpan(new RelativeSizeSpan(0.5f), gap, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         int start = text.length();
         text.append(context.getString(R.string.impact_label)).append(' ');

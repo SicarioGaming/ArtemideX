@@ -52,7 +52,8 @@ public class SettingsImpactTest {
     @Test
     public void impactLineFollowsTheDescription() {
         CharSequence text = SettingsImpact.withImpact(target, "Description", R.string.impact_vsync);
-        assertEquals("Description\n" + target.getString(R.string.impact_label) + " "
+        // A blank (half-height) line separates the two
+        assertEquals("Description\n\n" + target.getString(R.string.impact_label) + " "
                 + target.getString(R.string.impact_vsync), text.toString());
         // A setting without a description still shows the line
         assertTrue(SettingsImpact.withImpact(target, null, R.string.impact_none).toString()
