@@ -368,6 +368,23 @@ public class ControllerHandler implements InputManager.InputDeviceListener, UsbD
         defaultContext.toggleMouseEmulation();
     }
 
+    /** Whether controller 0 (the one the menu toggles) is in mouse emulation now. */
+    public boolean isMouseEmulationActiveForController0() {
+        for (int i = 0; i < inputDeviceContexts.size(); i++) {
+            InputDeviceContext context = inputDeviceContexts.valueAt(i);
+            if (context.assignedControllerNumber && context.controllerNumber == 0) {
+                return context.mouseEmulationActive;
+            }
+        }
+        for (int i = 0; i < usbDeviceContexts.size(); i++) {
+            UsbDeviceContext context = usbDeviceContexts.valueAt(i);
+            if (context.assignedControllerNumber && context.controllerNumber == 0) {
+                return context.mouseEmulationActive;
+            }
+        }
+        return defaultContext.mouseEmulationActive;
+    }
+
     public void stop() {
         if (stopped) {
             return;

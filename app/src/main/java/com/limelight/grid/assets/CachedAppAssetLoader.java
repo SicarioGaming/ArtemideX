@@ -232,7 +232,7 @@ public class CachedAppAssetLoader {
                             @Override
                             public void onAnimationEnd(Animation animation) {
                                 // Fade in the new box art
-                                imageView.setImageBitmap(bitmap.bitmap);
+                                imageView.setImageBitmap(shownBitmap(bitmap));
                                 imageView.startAnimation(AnimationUtils.loadAnimation(imageView.getContext(), R.anim.boxart_fadein));
                             }
 
@@ -243,7 +243,7 @@ public class CachedAppAssetLoader {
                     }
                     else {
                         // View is invisible already, so just fade in the new art
-                        imageView.setImageBitmap(bitmap.bitmap);
+                        imageView.setImageBitmap(shownBitmap(bitmap));
                         imageView.startAnimation(AnimationUtils.loadAnimation(imageView.getContext(), R.anim.boxart_fadein));
                         imageView.setVisibility(View.VISIBLE);
                     }
@@ -325,6 +325,11 @@ public class CachedAppAssetLoader {
         });
     }
 
+    // Starwire: the host's plain default box art is swapped for the missing-cover tile
+    private Bitmap shownBitmap(ScaledBitmap bitmap) {
+        return isBitmapPlaceholder(bitmap) ? noAppImageBitmap : bitmap.bitmap;
+    }
+
     private boolean isBitmapPlaceholder(ScaledBitmap bitmap) {
         return (bitmap == null) ||
                 (bitmap.originalWidth == 130 && bitmap.originalHeight == 180) || // GFE 2.0
@@ -349,7 +354,7 @@ public class CachedAppAssetLoader {
         if (bmp != null) {
             // Show the bitmap immediately
             imgView.setVisibility(View.VISIBLE);
-            imgView.setImageBitmap(bmp.bitmap);
+            imgView.setImageBitmap(shownBitmap(bmp));
 
             // Show the text if it's a placeholder bitmap
             textView.setVisibility(isBitmapPlaceholder(bmp) ? View.VISIBLE : View.GONE);

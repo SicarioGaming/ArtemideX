@@ -187,6 +187,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private float floatingButtonDX, floatingButtonDY;
     private float floatingButtonStartX, floatingButtonStartY;
     private static final int FLOATING_BUTTON_DRAG_THRESHOLD = 10;
+    // Matches android:alpha on floatingMenuButton in activity_game.xml
+    private static final float FLOATING_BUTTON_IDLE_ALPHA = 0.55f;
 
     // Tracks the on-screen controller's visibility for the overlay menu toggle
     private boolean onscreenControllerShown;
@@ -3375,6 +3377,28 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             public void onChangeBitrate() {
                 showBitratePicker();
             }
+
+            @Override
+            public boolean isToggleOn(int toggle) {
+                switch (toggle) {
+                    case OverlayMenuView.TOGGLE_STATS:
+                        return performanceOverlayView.getVisibility() == View.VISIBLE;
+                    case OverlayMenuView.TOGGLE_MOUSE_EMULATION:
+                        return controllerHandler.isMouseEmulationActiveForController0();
+                    case OverlayMenuView.TOGGLE_FULL_KEYBOARD:
+                        return fullKeyboard != null && fullKeyboard.isKeyboardVisible();
+                    case OverlayMenuView.TOGGLE_PAN_ZOOM:
+                        return isPanZoomMode;
+                    case OverlayMenuView.TOGGLE_TOUCH_SENSITIVITY:
+                        return touchSensitivityEnabled;
+                    case OverlayMenuView.TOGGLE_ONSCREEN_CONTROLLER:
+                        return onscreenControllerShown;
+                    case OverlayMenuView.TOGGLE_FLOATING_BUTTON:
+                        return floatingButtonShown;
+                    default:
+                        return false;
+                }
+            }
         });
     }
 
@@ -3909,6 +3933,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     floatingButtonDX = view.getX() - event.getRawX();
                     floatingButtonDY = view.getY() - event.getRawY();
                     floatingButtonMoving = false;
+                    // The button sits faded over the game and lights up while touched
+                    view.animate().alpha(1f).setDuration(120).start();
                     return true;
                 case MotionEvent.ACTION_MOVE:
                     if (Math.abs(event.getRawX() - floatingButtonStartX) > FLOATING_BUTTON_DRAG_THRESHOLD ||
@@ -3926,6 +3952,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                         overlayMenuView.show();
                     }
                     floatingButtonMoving = false;
+                    view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    floatingButtonMoving = false;
+                    view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
                     return true;
                 default:
                     return false;

@@ -1822,13 +1822,13 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                 float droppedPercent = (float)lastTwo.framesLost / lastTwo.totalFrames * 100;
 
                 if (prefs.enablePerfOverlayLite) {
-                    // Artemide's Lite mode: one line of bandwidth, network/decode delay, loss and FPS
+                    // Artemide's Lite mode: one line of data rate, ping, decode time, dropped frames and FPS
                     StringBuilder lite = new StringBuilder();
                     if (realtimeNetData >= 0) {
-                        lite.append(context.getString(R.string.perf_overlay_lite_bandwidth, realtimeNetData)).append("  ");
+                        lite.append(context.getString(R.string.perf_overlay_lite_bandwidth, realtimeNetData)).append(" \u00b7 ");
                     }
-                    lite.append(context.getString(R.string.perf_overlay_lite_delay, (int)(rttInfo >> 32), decodeTimeMs)).append("  ");
-                    lite.append(context.getString(R.string.perf_overlay_lite_loss, droppedPercent)).append("  ");
+                    lite.append(context.getString(R.string.perf_overlay_lite_delay, (int)(rttInfo >> 32), decodeTimeMs)).append(" \u00b7 ");
+                    lite.append(context.getString(R.string.perf_overlay_lite_loss, droppedPercent)).append(" \u00b7 ");
                     lite.append(context.getString(R.string.perf_overlay_lite_fps, fps.totalFps));
                     float low = onePercentLowFps(frameIntervalsNs, frameIntervalCount);
                     if (low > 0) {

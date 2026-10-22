@@ -430,6 +430,8 @@
     <string name="overlay_menu_rotate_screen">Rotate</string>
     <string name="overlay_menu_onscreen_controller">On-screen Controls</string>
     <string name="overlay_menu_floating_button">Menu Button</string>
+    <string name="overlay_menu_toggle_on">On</string>
+    <string name="overlay_menu_toggle_off">Off</string>
     <string name="overlay_menu_send_esc">Esc</string>
     <string name="overlay_menu_send_f11">F11</string>
     <string name="overlay_menu_send_alt_f4">Alt+F4</string>
@@ -479,14 +481,14 @@
     <string name="server_command_sent">Ran \"%1$s\" on the PC</string>
 
     <!-- Starwire: Lite performance overlay, Prevent Packet Loss and Virtual Display (from Artemide) -->
-    <string name="perf_overlay_lite_bandwidth">Bw %1$.1f Mbps</string>
-    <string name="perf_overlay_lite_delay">Net/Dec %1$d/%2$.1f ms</string>
-    <string name="perf_overlay_lite_loss">Loss %1$.1f%%</string>
+    <string name="perf_overlay_lite_bandwidth">%1$.0f Mbps</string>
+    <string name="perf_overlay_lite_delay">Ping %1$d ms · Decode %2$.1f ms</string>
+    <string name="perf_overlay_lite_loss">Dropped %1$.1f%%</string>
     <string name="perf_overlay_lite_fps">%1$.0f FPS</string>
     <string name="perf_overlay_lite_one_percent_low"> (1%% low %1$.0f)</string>
     <string name="perf_overlay_one_percent_low">, 1%% low %1$.1f FPS</string>
     <string name="title_checkbox_enable_perf_overlay_lite">Lite mode</string>
-    <string name="summary_checkbox_enable_perf_overlay_lite">Show one compact line at the top: bandwidth, network/decode delay, packet loss and FPS</string>
+    <string name="summary_checkbox_enable_perf_overlay_lite">One short line at the top: data rate, ping, decode time, dropped frames and FPS</string>
     <string name="title_checkbox_prevent_packet_loss">Prevent packet loss</string>
     <string name="summary_checkbox_prevent_packet_loss">Keeps the Wi-Fi connection busy with a tiny packet every 20 ms, so devices that drop packets in Wi-Fi power saving stay awake. Uses slightly more battery.</string>
     <string name="title_virtual_display_mode">Display on the PC</string>

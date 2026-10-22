@@ -1,7 +1,6 @@
 package com.limelight.grid;
 
 import android.content.Context;
-import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
@@ -115,7 +114,7 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
                 new NetworkAssetLoader(context, uniqueId),
                 new MemoryAssetLoader(),
                 new DiskAssetLoader(context),
-                BitmapFactory.decodeResource(context.getResources(), R.drawable.no_app_image));
+                AppIcons.missingCoverBitmap());
 
         // This will trigger the view to reload with the new layout
         setLayoutId(getLayoutIdForPreferences(prefs));
@@ -202,9 +201,9 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
             showIconTile(obj, imgView, txtView);
         }
         else {
-            // Let the cached asset loader handle it (tiles are reused, so the name goes back to
-            // the middle, where it shows over a missing cover)
-            txtView.setGravity(Gravity.CENTER);
+            // Let the cached asset loader handle it. A missing cover shows the Starwire tile
+            // with the name at the bottom, under the logo.
+            txtView.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
             loader.populateImageView(obj.app, imgView, txtView);
         }
 

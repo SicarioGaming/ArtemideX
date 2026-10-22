@@ -2,6 +2,7 @@ package com.limelight.ui;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -10,7 +11,9 @@ import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.RadialGradient;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Shader;
+import android.graphics.SweepGradient;
 import android.graphics.drawable.Drawable;
 import android.preference.PreferenceManager;
 
@@ -24,7 +27,8 @@ import java.util.Locale;
  * from the PC unless "Icons for every app" is chosen.
  *
  * Each kind of app has its own colour and icon; the tile is a gradient in that colour with a
- * faint HUD grid, a soft light sweep and a glow behind the icon.
+ * faint HUD grid, a soft light sweep and a glow behind the icon. Desktop and games without art get
+ * the Starwire tile instead: the logo over a small starfield, with a glow in the app's colour.
  */
 public final class AppIcons {
     public static final String PREF_COVER_STYLE = "cover_style";
@@ -131,6 +135,10 @@ public final class AppIcons {
     }
 
     public static Drawable tile(Context context, String appName) {
+        Kind kind = kindFor(appName);
+        if (kind == Kind.DESKTOP || kind == Kind.GAME) {
+            return new StarwireTile(accentFor(appName), appName == null ? 0 : appName.hashCode());
+        }
         Drawable icon = context.getDrawable(kindFor(appName).icon).mutate();
         icon.setTint(Color.WHITE);
         return new Tile(icon, accentFor(appName));
@@ -199,6 +207,139 @@ public final class AppIcons {
         @Override
         public void setColorFilter(ColorFilter colorFilter) {
             fill.setColorFilter(colorFilter);
+            invalidateSelf();
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.OPAQUE;
+        }
+    }
+
+    /** The Starwire tile as a bitmap, for covers the PC doesn't have (shown with the app's name). */
+    public static Bitmap missingCoverBitmap() {
+        // Box art proportions, like the covers it stands in for
+        Bitmap bitmap = Bitmap.createBitmap(300, 400, Bitmap.Config.ARGB_8888);
+        Drawable tile = new StarwireTile(CoverGlow.DEFAULT_TINT, 7);
+        tile.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        tile.draw(new Canvas(bitmap));
+        return bitmap;
+    }
+
+    // The launcher icon's colours: the ring flows blue, violet, red, orange
+    private static final int[] RAINBOW = {0xFF0894FF, 0xFFC959DD, 0xFFFF2E54, 0xFFFF9004, 0xFF0894FF};
+
+    /** Starwire's logo (the void, its rainbow ring, a tilted orbit with a moon, a star on the rim)
+     *  over deep space with a few stars. */
+    static final class StarwireTile extends Drawable {
+        private final int accent;
+        private final long seed;
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint ring = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final Paint orbit = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private final RectF oval = new RectF();
+        private float[] stars = new float[0];
+        private Shader space, nebula, haze, starGlow;
+
+        StarwireTile(int accent, long seed) {
+            this.accent = accent;
+            this.seed = seed;
+        }
+
+        int accent() {
+            return accent;
+        }
+
+        @Override
+        protected void onBoundsChange(Rect b) {
+            float w = b.width(), h = b.height();
+            space = new LinearGradient(b.left, b.top, b.right, b.bottom, 0xFF24124F, 0xFF05040F, Shader.TileMode.CLAMP);
+            nebula = new RadialGradient(b.left + w * 0.8f, b.top + h * 0.12f, Math.max(1f, w * 0.85f),
+                    (accent & 0x00FFFFFF) | 0x66000000, accent & 0x00FFFFFF, Shader.TileMode.CLAMP);
+            haze = new RadialGradient(b.left + w * 0.15f, b.bottom, Math.max(1f, w * 0.7f),
+                    0x40C026D3, 0x00C026D3, Shader.TileMode.CLAMP);
+
+            float cx = b.exactCenterX(), cy = b.top + h * 0.42f, s = Math.min(w, h) * 0.5f;
+            ring.setStyle(Paint.Style.STROKE);
+            ring.setStrokeWidth(s * 0.1f);
+            ring.setShader(new SweepGradient(cx, cy, RAINBOW, null));
+            orbit.setStyle(Paint.Style.STROKE);
+            orbit.setStrokeWidth(Math.max(1f, s * 0.022f));
+            orbit.setColor(0xB3C4B5FD);
+            starGlow = new RadialGradient(cx + s * 0.27f, cy - s * 0.27f, Math.max(1f, s * 0.2f),
+                    0xCCFFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP);
+
+            // The same stars every time for the same app: x, y, radius, alpha
+            java.util.Random random = new java.util.Random(seed);
+            int count = 28;
+            stars = new float[count * 4];
+            for (int i = 0; i < count; i++) {
+                stars[i * 4] = b.left + random.nextFloat() * w;
+                stars[i * 4 + 1] = b.top + random.nextFloat() * h;
+                stars[i * 4 + 2] = Math.max(0.6f, w * (0.003f + random.nextFloat() * 0.006f));
+                stars[i * 4 + 3] = 0.3f + random.nextFloat() * 0.6f;
+            }
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            Rect b = getBounds();
+            paint.setStyle(Paint.Style.FILL);
+            paint.setShader(space);
+            canvas.drawRect(b, paint);
+            paint.setShader(nebula);
+            canvas.drawRect(b, paint);
+            paint.setShader(haze);
+            canvas.drawRect(b, paint);
+            paint.setShader(null);
+            for (int i = 0; i < stars.length; i += 4) {
+                paint.setColor(Color.argb(Math.round(stars[i + 3] * 255), 255, 255, 255));
+                canvas.drawCircle(stars[i], stars[i + 1], stars[i + 2], paint);
+            }
+
+            float cx = b.exactCenterX(), cy = b.top + b.height() * 0.42f;
+            float s = Math.min(b.width(), b.height()) * 0.5f;
+            float rx = s * 0.6f, ry = s * 0.18f;
+            oval.set(-rx, -ry, rx, ry);
+
+            // The orbit passes behind the void, then its front half crosses over it
+            canvas.save();
+            canvas.translate(cx, cy);
+            canvas.rotate(-24);
+            canvas.drawOval(oval, orbit);
+            canvas.restore();
+
+            paint.setColor(0xFF05040F);
+            canvas.drawCircle(cx, cy, s * 0.34f, paint);
+            canvas.drawCircle(cx, cy, s * 0.39f, ring);
+
+            canvas.save();
+            canvas.translate(cx, cy);
+            canvas.rotate(-24);
+            canvas.drawArc(oval, 0, 180, false, orbit);
+            // The moon, on the front of its orbit
+            double angle = Math.toRadians(125);
+            paint.setColor(0xFFF3EEFF);
+            canvas.drawCircle((float) (rx * Math.cos(angle)), (float) (ry * Math.sin(angle)), s * 0.055f, paint);
+            canvas.restore();
+
+            // The star on the rim, with its glow
+            paint.setShader(starGlow);
+            canvas.drawCircle(cx + s * 0.27f, cy - s * 0.27f, s * 0.2f, paint);
+            paint.setShader(null);
+            paint.setColor(Color.WHITE);
+            canvas.drawCircle(cx + s * 0.27f, cy - s * 0.27f, s * 0.07f, paint);
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            paint.setAlpha(alpha);
+            invalidateSelf();
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+            paint.setColorFilter(colorFilter);
             invalidateSelf();
         }
 
