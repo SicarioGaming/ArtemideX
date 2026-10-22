@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow's game screen on narrow screens (phones held upright, a foldable's cover screen).
+     values-w480dp holds the sizes for wider screens. -->
+<resources>
+    <dimen name="cg_content_padding">20dp</dimen>
+    <dimen name="cg_wordmark_size">26sp</dimen>
+    <dimen name="cg_hero_cover_width">112dp</dimen>
+    <dimen name="cg_hero_cover_height">150dp</dimen>
+    <dimen name="cg_hero_gap">16dp</dimen>
+    <dimen name="cg_hero_title_size">28sp</dimen>
+
+    <!-- The wordmark sits at the end, clear of the PC name, when there's no room to centre it -->
+    <style name="CgWordmarkPlace">
+        <item name="android:layout_gravity">end|center_vertical</item>
+    </style>
+
+    <!-- Play and "This game's settings" stack instead of squeezing the Play label away -->
+    <style name="CgHeroButtons">
+        <item name="android:orientation">vertical</item>
+    </style>
+    <style name="CgHeroSettingsButton">
+        <item name="android:layout_marginStart">0dp</item>
+        <item name="android:layout_marginTop">10dp</item>
+    </style>
+</resources>

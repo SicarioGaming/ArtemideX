@@ -83,6 +83,10 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     // Cover Glow home: the hero shows the selected game, and the screen takes its cover's colour
     private static final String COVER_GLOW_PREF_FILENAME = "CoverGlow";
     private View appRoot, coverGlow, heroDetails;
+    // Below this width the game screen uses its narrow layout (res/values/cover_glow_dimens.xml)
+    private static final int NARROW_WIDTH_DP = 480;
+    private boolean builtNarrow;
+
     private CoverImageView heroCover;
     private TextView heroLoaderText, heroLabel, heroTitle;
     private LinearLayout heroChips;
@@ -195,6 +199,13 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+
+        // Folding or unfolding across the narrow-screen sizes (values-w480dp) needs the layout
+        // built again; this screen otherwise keeps its views through size changes
+        if ((newConfig.screenWidthDp < NARROW_WIDTH_DP) != builtNarrow) {
+            recreate();
+            return;
+        }
 
         // If appGridAdapter is initialized, let it know about the configuration change.
         // If not, it will pick it up when it initializes.
@@ -328,6 +339,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         UiHelper.setLocale(this);
 
         setContentView(R.layout.activity_app_view);
+        builtNarrow = getResources().getConfiguration().screenWidthDp < NARROW_WIDTH_DP;
 
         // Allow floating expanded PiP overlays while browsing apps
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

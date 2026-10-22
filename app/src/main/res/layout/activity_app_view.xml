@@ -30,8 +30,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:paddingStart="36dp"
-        android:paddingEnd="36dp"
+        android:paddingStart="@dimen/cg_content_padding"
+        android:paddingEnd="@dimen/cg_content_padding"
         android:paddingTop="20dp">
 
         <FrameLayout
@@ -52,17 +52,18 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
+            <!-- Centred, or at the end on narrow screens (cover_glow_dimens.xml) -->
             <TextView
                 android:id="@+id/cgWordmark"
+                style="@style/CgWordmarkPlace"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
                 android:fontFamily="sans-serif-black"
                 android:includeFontPadding="false"
                 android:letterSpacing="-0.01"
                 android:text="@string/cg_wordmark"
                 android:textColor="#FFFFFFFF"
-                android:textSize="34sp" />
+                android:textSize="@dimen/cg_wordmark_size" />
         </FrameLayout>
 
         <LinearLayout
@@ -75,8 +76,8 @@
 
             <com.limelight.ui.CoverImageView
                 android:id="@+id/heroCover"
-                android:layout_width="180dp"
-                android:layout_height="240dp"
+                android:layout_width="@dimen/cg_hero_cover_width"
+                android:layout_height="@dimen/cg_hero_cover_height"
                 android:background="@drawable/cg_cover"
                 android:clipToOutline="true"
                 android:elevation="16dp"
@@ -93,7 +94,7 @@
                 android:id="@+id/heroDetails"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="32dp"
+                android:layout_marginStart="@dimen/cg_hero_gap"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
@@ -114,7 +115,7 @@
                     android:fontFamily="sans-serif-black"
                     android:maxLines="2"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="44sp" />
+                    android:textSize="@dimen/cg_hero_title_size" />
 
                 <LinearLayout
                     android:id="@+id/heroChips"
@@ -123,11 +124,12 @@
                     android:layout_marginTop="14dp"
                     android:orientation="horizontal" />
 
+                <!-- Side by side, or stacked on narrow screens (cover_glow_dimens.xml) -->
                 <LinearLayout
+                    style="@style/CgHeroButtons"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="18dp"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="18dp">
 
                     <Button
                         android:id="@+id/heroPlay"
@@ -147,9 +149,9 @@
 
                     <Button
                         android:id="@+id/heroSettings"
+                        style="@style/CgHeroSettingsButton"
                         android:layout_width="wrap_content"
                         android:layout_height="56dp"
-                        android:layout_marginStart="12dp"
                         android:background="@drawable/cg_pill_frosted"
                         android:paddingStart="24dp"
                         android:paddingEnd="24dp"

@@ -7,6 +7,8 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.media.audiofx.AcousticEchoCanceler;
+import android.media.audiofx.NoiseSuppressor;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
@@ -54,6 +56,8 @@ public class MicrophoneCaptureManager {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private AudioRecord audioRecord;
+    private AcousticEchoCanceler echoCanceler;
+    private NoiseSuppressor noiseSuppressor;
     private Thread captureThread;
     private volatile boolean running;
     private boolean streamingToHost;
@@ -133,6 +137,7 @@ public class MicrophoneCaptureManager {
 
         captureThread = null;
         audioRecord = null;
+        releaseVoiceEffects();
         if (recordToRelease != null) {
             recordToRelease.release();
         }
@@ -176,6 +181,7 @@ public class MicrophoneCaptureManager {
         bufferSamples = config.bufferSamples;
 
         if (streamToHost && MoonBridge.setupMicrophoneEncoder(SAMPLE_RATE, CHANNEL_COUNT, DEFAULT_BITRATE) != 0) {
+            releaseVoiceEffects();
             newRecord.release();
             dispatchStatus(string(R.string.microphone_encoder_setup_failed), 0.0, false);
             return false;
@@ -188,6 +194,7 @@ public class MicrophoneCaptureManager {
             if (streamToHost) {
                 MoonBridge.cleanupMicrophoneEncoder();
             }
+            releaseVoiceEffects();
             newRecord.release();
             dispatchStatus(string(R.string.microphone_capture_start_failed), 0.0, false);
             return false;
@@ -197,6 +204,7 @@ public class MicrophoneCaptureManager {
             if (streamToHost) {
                 MoonBridge.cleanupMicrophoneEncoder();
             }
+            releaseVoiceEffects();
             newRecord.release();
             dispatchStatus(string(R.string.microphone_capture_start_failed), 0.0, false);
             return false;
@@ -219,26 +227,28 @@ public class MicrophoneCaptureManager {
             MoonBridge.startMicrophoneStreaming();
         }
 
-        captureThread = new Thread(() -> runCaptureLoop(bufferSamples), streamToHost ? "MicStreamCapture" : "MicPreviewCapture");
+        // The thread keeps its own reference, since stop() clears the field while it may still be reading
+        final AudioRecord recordForThread = newRecord;
+        captureThread = new Thread(() -> runCaptureLoop(recordForThread, bufferSamples), streamToHost ? "MicStreamCapture" : "MicPreviewCapture");
         captureThread.start();
         dispatchStatus(config.statusMessage, 0.0, false);
         return true;
     }
 
-    private void runCaptureLoop(int bufferSamples) {
+    private void runCaptureLoop(AudioRecord record, int bufferSamples) {
         short[] readBuffer = new short[bufferSamples];
         int pendingPeak = 0;
         double pendingRms = 0.0;
         long lastUpdateTime = SystemClock.elapsedRealtime();
 
-        while (running && audioRecord != null) {
+        while (running) {
             int samplesRead;
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                samplesRead = audioRecord.read(readBuffer, 0, readBuffer.length, AudioRecord.READ_BLOCKING);
+                samplesRead = record.read(readBuffer, 0, readBuffer.length, AudioRecord.READ_BLOCKING);
             }
             else {
-                samplesRead = audioRecord.read(readBuffer, 0, readBuffer.length);
+                samplesRead = record.read(readBuffer, 0, readBuffer.length);
             }
 
             if (samplesRead <= 0) {
@@ -277,8 +287,10 @@ public class MicrophoneCaptureManager {
     }
 
     private CaptureConfig createCaptureConfig(int preferredDeviceId) {
+        // Voice-call capture first: it cancels the game's own sound coming back in through the
+        // microphone, so teammates don't hear an echo when the device plays through its speakers
         int[] preferredSources = new int[] {
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ? MediaRecorder.AudioSource.UNPROCESSED : -1,
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
                 MediaRecorder.AudioSource.VOICE_RECOGNITION,
                 MediaRecorder.AudioSource.MIC
         };
@@ -328,6 +340,8 @@ public class MicrophoneCaptureManager {
                 continue;
             }
 
+            enableVoiceEffects(candidate);
+
             CaptureConfig config = new CaptureConfig();
             config.record = candidate;
             config.bufferSamples = bufferSamples;
@@ -342,6 +356,42 @@ public class MicrophoneCaptureManager {
         }
 
         return null;
+    }
+
+    // Echo cancelling and noise suppression, where the device offers them (voice-call capture
+    // usually turns them on already; this covers devices that don't)
+    private void enableVoiceEffects(AudioRecord record) {
+        releaseVoiceEffects();
+        int session = record.getAudioSessionId();
+        try {
+            if (AcousticEchoCanceler.isAvailable()) {
+                echoCanceler = AcousticEchoCanceler.create(session);
+                if (echoCanceler != null) {
+                    echoCanceler.setEnabled(true);
+                }
+            }
+            if (NoiseSuppressor.isAvailable()) {
+                noiseSuppressor = NoiseSuppressor.create(session);
+                if (noiseSuppressor != null) {
+                    noiseSuppressor.setEnabled(true);
+                }
+            }
+        }
+        catch (RuntimeException e) {
+            // The effects are a bonus; capture works without them
+            LimeLog.warning("Microphone voice effects unavailable: " + e.getMessage());
+        }
+    }
+
+    private void releaseVoiceEffects() {
+        if (echoCanceler != null) {
+            echoCanceler.release();
+            echoCanceler = null;
+        }
+        if (noiseSuppressor != null) {
+            noiseSuppressor.release();
+            noiseSuppressor = null;
+        }
     }
 
     private AudioRecord buildAudioRecord(int audioSource, int bufferSizeBytes) {
@@ -385,6 +435,10 @@ public class MicrophoneCaptureManager {
 
     private void dispatchStatus(String status, double level, boolean detected) {
         currentStatus = status;
+        if (levelListener == null) {
+            // Nothing shows the level during a stream, so don't wake the main thread 20 times a second
+            return;
+        }
         mainHandler.post(() -> {
             if (levelListener != null) {
                 levelListener.onLevelUpdate(level, detected, status);
@@ -423,12 +477,11 @@ public class MicrophoneCaptureManager {
     }
 
     private static String audioSourceToString(int audioSource) {
+        if (audioSource == MediaRecorder.AudioSource.VOICE_COMMUNICATION) {
+            return "VOICE_COMMUNICATION";
+        }
         if (audioSource == MediaRecorder.AudioSource.VOICE_RECOGNITION) {
             return "VOICE_RECOGNITION";
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-                audioSource == MediaRecorder.AudioSource.UNPROCESSED) {
-            return "UNPROCESSED";
         }
         return "MIC";
     }

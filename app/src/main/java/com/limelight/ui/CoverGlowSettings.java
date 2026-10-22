@@ -151,13 +151,18 @@ public final class CoverGlowSettings {
      */
     public static SharedPreferences.OnSharedPreferenceChangeListener attachFeel(Activity activity) {
         View panel = activity.findViewById(R.id.feelPanel);
-        if (panel == null) {
+        View column = activity.findViewById(R.id.feelColumn);
+        if (panel == null || column == null) {
             return null;
         }
         if (activity.getResources().getConfiguration().screenWidthDp < 840) {
+            // Hide the whole column, not just the panel: its fixed width would otherwise squeeze
+            // the settings list to nothing on narrow screens (Galaxy Z Fold cover screen)
+            column.setVisibility(View.GONE);
             panel.setVisibility(View.GONE);
             return null;
         }
+        column.setVisibility(View.VISIBLE);
         panel.setVisibility(View.VISIBLE);
 
         View track = activity.findViewById(R.id.feelTrack);
