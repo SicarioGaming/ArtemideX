@@ -212,6 +212,18 @@ public class OverlayMenuButton extends LinearLayout {
         invalidate();
     }
 
+    // TalkBack reads a toggle tile as a switch with its state ("Stats, switch, on"), on every
+    // Android version rather than only where state descriptions exist
+    @Override
+    public void onInitializeAccessibilityNodeInfo(android.view.accessibility.AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        if (isToggle) {
+            info.setClassName(android.widget.Switch.class.getName());
+            info.setCheckable(true);
+            info.setChecked(isOn);
+        }
+    }
+
     @Override
     protected void dispatchDraw(Canvas canvas) {
         super.dispatchDraw(canvas);

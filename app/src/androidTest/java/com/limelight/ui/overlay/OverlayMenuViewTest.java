@@ -187,6 +187,23 @@ public class OverlayMenuViewTest {
     }
 
     @Test
+    public void screenReadersHearSwitchesAndTheirState() {
+        listener.on.add(OverlayMenuView.TOGGLE_FLOATING_BUTTON);
+        onMain(() -> menu.buildMenu());
+        OverlayMenuButton stats = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_toggle_stats));
+        OverlayMenuButton floating = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_floating_button));
+        OverlayMenuButton guide = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_guide));
+        onMain(() -> {
+            android.view.accessibility.AccessibilityNodeInfo off = stats.createAccessibilityNodeInfo();
+            assertTrue(off.isCheckable());
+            assertFalse(off.isChecked());
+            assertTrue(off.getClassName().toString().endsWith("Switch"));
+            assertTrue(floating.createAccessibilityNodeInfo().isChecked());
+            assertFalse("one-shot buttons aren't switches", guide.createAccessibilityNodeInfo().isCheckable());
+        });
+    }
+
+    @Test
     public void dialogButtonsCloseTheMenuFirst() {
         // Touch Mode and PC Commands open a dialog, so the menu closes before the action runs
         click(str(com.limelight.R.string.overlay_menu_mouse_mode));
