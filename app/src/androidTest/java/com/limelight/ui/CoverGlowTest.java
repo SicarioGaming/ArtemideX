@@ -65,6 +65,18 @@ public class CoverGlowTest {
     }
 
     @Test
+    public void aHardwareCoverTintsWithoutCrashing() {
+        // Box art is decoded straight to GPU memory, where its pixels can't be read directly
+        // (0.1.0 crashed on the first cover that loaded)
+        Bitmap soft = Bitmap.createBitmap(120, 160, Bitmap.Config.ARGB_8888);
+        soft.eraseColor(Color.rgb(200, 30, 40));
+        Bitmap cover = soft.copy(Bitmap.Config.HARDWARE, false);
+        assertEquals(Bitmap.Config.HARDWARE, cover.getConfig());
+        float h = hue(CoverGlow.tintFromBitmap(cover));
+        assertTrue("hue " + h, h < 10 || h > 350);
+    }
+
+    @Test
     public void aGreyCoverKeepsTheDefault() {
         int[] pixels = new int[100];
         Arrays.fill(pixels, Color.rgb(128, 128, 128));
