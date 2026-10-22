@@ -8,23 +8,33 @@
 // It only accepts audio from home-network and private VPN addresses (VBAN isn't encrypted), and
 // only the stream name it's told to listen for.
 //
+// It runs without a window: an icon in the notification area shows what it's doing and has a menu
+// to check the virtual microphone, play a test tone or quit.
+//
 //   StarwireMicReceiver.exe [--device "CABLE Input"] [--name Stream1] [--port 6980]
 //   StarwireMicReceiver.exe --list               the audio outputs it can play into
 //   StarwireMicReceiver.exe --test-tone [secs]   sends a tone to a receiver running on this PC
 //   StarwireMicReceiver.exe --check [--input "CABLE Output"]
 //                                                plays a tone into the output and listens on the
 //                                                matching microphone, to show the cable works
+//   --console                                    runs in a console window instead (troubleshooting)
 //   --loopback                                   listen on this PC only (for testing)
+//
+// From PowerShell, pipe the output of --list, --check and --test-tone (for example `| Out-Host`):
+// a program without a window isn't waited for otherwise.
 //
 // setup-microphone.ps1 builds this with the C# compiler that comes with Windows, so it's written
 // for C# 5.
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Windows.Forms;
 
 static class StarwireMicReceiver
 {
@@ -35,6 +45,17 @@ static class StarwireMicReceiver
         11025, 22050, 44100, 88200, 176400, 352800, 705600
     };
 
+    [DllImport("kernel32.dll")] static extern bool AttachConsole(int processId);
+    [DllImport("kernel32.dll")] static extern bool AllocConsole();
+
+    // The notification-area icon, or null with --console and the one-off tools (they print instead)
+    static Tray tray;
+    static int lastPacket = Environment.TickCount;
+
+    // No packets for 3 seconds: the phone stopped sending (stream ended, or the mic was turned off)
+    public static bool Idle { get { return Environment.TickCount - lastPacket > 3000; } }
+
+    [STAThread]
     static int Main(string[] args)
     {
         string device = "CABLE Input";
@@ -42,14 +63,14 @@ static class StarwireMicReceiver
         int port = 6980;
         bool loopback = false;
         bool check = false;
+        bool list = false;
+        bool console = false;
         string input = null;
         int toneSeconds = 0;
         for (int i = 0; i < args.Length; i++) {
             string a = args[i].ToLowerInvariant();
-            if (a == "--list") {
-                ListDevices();
-                return 0;
-            }
+            if (a == "--list") { list = true; continue; }
+            if (a == "--console") { console = true; continue; }
             if (a == "--loopback") { loopback = true; continue; }
             if (a == "--check") { check = true; continue; }
             if (a == "--test-tone") {
@@ -70,13 +91,21 @@ static class StarwireMicReceiver
             else if (a == "--port") { port = int.Parse(args[++i]); }
         }
 
+        // Built without a window of its own: the tools print to the terminal they were run from
+        if ((list || check || toneSeconds > 0) && !Console.IsOutputRedirected) {
+            AttachConsole(-1);
+        }
+        if (list) {
+            ListDevices();
+            return 0;
+        }
         if (toneSeconds > 0) {
             SendTestTone(port, streamName, toneSeconds);
             return 0;
         }
 
         int deviceId = WaveOut.FindDevice(device);
-        if (deviceId < 0) {
+        if (deviceId < 0 && check) {
             Console.WriteLine("No audio output named like \"" + device + "\". Outputs on this PC:");
             ListDevices();
             Console.WriteLine("Install VB-Cable (setup-microphone.ps1 does it), or pick one with --device.");
@@ -92,12 +121,20 @@ static class StarwireMicReceiver
                 Console.WriteLine("Say which microphone to listen on with --input.");
                 return 2;
             }
-            return CheckCable(device, input) ? 0 : 3;
+            return CheckCable(device, input, Console.WriteLine) ? 0 : 3;
         }
 
-        byte[] wantedName = StreamNameBytes(streamName);
-        Console.Title = "Starwire microphone receiver";
-        Console.WriteLine("Starwire microphone receiver");
+        if (console) {
+            AllocConsole();
+            Console.Title = "Starwire microphone receiver";
+        }
+        // One receiver at a time (a second one would only find the port taken)
+        bool first;
+        Mutex single = new Mutex(true, "StarwireMicReceiver", out first);
+        if (!first) {
+            Fail(console, "Starwire's microphone receiver is already running. Its icon is in the notification area, by the clock.");
+            return 0;
+        }
 
         Socket socket;
         try {
@@ -112,26 +149,63 @@ static class StarwireMicReceiver
             }
         }
         catch (SocketException e) {
-            if (e.SocketErrorCode == SocketError.AddressAlreadyInUse) {
-                Console.WriteLine("UDP port " + port + " is already in use by another program, often Voicemeeter's VBAN or");
-                Console.WriteLine("VBAN-Receptor. Close it or turn its VBAN off, or run setup-microphone.ps1 -Port <another>");
-                Console.WriteLine("and set the same VBAN port in Starwire.");
-            }
-            else {
-                Console.WriteLine("Couldn't listen on UDP port " + port + ": " + e.Message);
-            }
-            // Keep the (usually minimized) window open so the reason can be read
-            Console.WriteLine("Press Enter to close.");
-            Console.ReadLine();
+            Fail(console, e.SocketErrorCode == SocketError.AddressAlreadyInUse
+                ? "UDP port " + port + " is already in use by another program, often Voicemeeter's VBAN or VBAN-Receptor. "
+                    + "Close it or turn its VBAN off, or run the setup with -Port <another> and set the same VBAN port in Starwire."
+                : "Couldn't listen on UDP port " + port + ": " + e.Message);
             return 4;
         }
-        Console.WriteLine("  Listening for \"" + streamName + "\" on UDP port " + port);
-        Console.WriteLine("  Playing into " + WaveOut.DeviceName(deviceId));
-        // Kept short so the lines fit a small console window
-        Console.WriteLine("  In Starwire: Settings > Sound & vibration > Send my microphone,");
-        Console.WriteLine("  sent to \"A VBAN receiver on the PC\"");
-        Console.WriteLine("Close this window to stop.");
 
+        if (console) {
+            Console.WriteLine("Starwire microphone receiver");
+            Console.WriteLine("  Listening for \"" + streamName + "\" on UDP port " + port);
+            Console.WriteLine("  Playing into " + (deviceId >= 0 ? WaveOut.DeviceName(deviceId) : device));
+            // Kept short so the lines fit a small console window
+            Console.WriteLine("  In Starwire: Settings > Sound & vibration > Send my microphone,");
+            Console.WriteLine("  sent to \"A VBAN receiver on the PC\"");
+            Console.WriteLine("Close this window to stop.");
+            Receive(socket, device, streamName, loopback);
+            return 0;
+        }
+
+        Application.EnableVisualStyles();
+        tray = new Tray(device, streamName, port);
+        Thread receiver = new Thread(() => Receive(socket, device, streamName, loopback));
+        receiver.IsBackground = true;
+        receiver.Start();
+        Application.Run();
+        GC.KeepAlive(single);
+        return 0;
+    }
+
+    // A problem that stops the receiver: in its window with --console, otherwise in a message box
+    static void Fail(bool console, string reason)
+    {
+        if (console) {
+            Console.WriteLine(reason);
+            Console.WriteLine("Press Enter to close.");
+            Console.ReadLine();
+        }
+        else {
+            MessageBox.Show(reason, "Starwire microphone", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    // What the receiver has to say: printed when there's no tray icon (--console and the tools),
+    // otherwise shown on the icon, the important ones as a notification
+    public static void Report(string text, bool important)
+    {
+        if (tray == null) {
+            Console.WriteLine(text);
+        }
+        else {
+            tray.Show(text, important);
+        }
+    }
+
+    static void Receive(Socket socket, string device, string streamName, bool loopback)
+    {
+        byte[] wantedName = StreamNameBytes(streamName);
         Player player = new Player(device);
         byte[] buffer = new byte[2048];
         string currentSender = null;
@@ -158,7 +232,7 @@ static class StarwireMicReceiver
             }
             if (!IsHomeNetwork(source)) {
                 if (refused.Add(source.ToString())) {
-                    Console.WriteLine("Ignoring audio from " + source + ": not on the home network.");
+                    Report("Ignoring audio from " + source + ": not on the home network.", true);
                 }
                 continue;
             }
@@ -176,16 +250,17 @@ static class StarwireMicReceiver
                     || channels > 2 || length != HeaderSize + samples * channels * 2) {
                 if (!warnedFormat) {
                     warnedFormat = true;
-                    Console.WriteLine("Ignoring a VBAN stream that isn't 16-bit PCM in one or two channels.");
+                    Report("Ignoring a VBAN stream that isn't 16-bit PCM in one or two channels.", true);
                 }
                 continue;
             }
 
             string sender = source.ToString();
-            if (sender != currentSender) {
+            if (sender != currentSender || Idle) {
                 currentSender = sender;
-                Console.WriteLine("Receiving the microphone from " + sender);
+                Report("Receiving the microphone from " + sender, false);
             }
+            lastPacket = Environment.TickCount;
             player.Play(buffer, HeaderSize, samples, channels, VbanSampleRates[rateIndex]);
         }
     }
@@ -228,42 +303,52 @@ static class StarwireMicReceiver
 
     // Plays a tone into the output for a moment while recording from the microphone it should
     // come out of. A virtual cable that works passes it straight through.
-    static bool CheckCable(string outputName, string inputName)
+    public static bool CheckCable(string outputName, string inputName, Action<string> say)
     {
         int inputId = WaveIn.FindDevice(inputName);
-        if (inputId < 0) {
-            Console.WriteLine("No microphone named like \"" + inputName + "\".");
+        int outputId = WaveOut.FindDevice(outputName);
+        if (inputId < 0 || outputId < 0) {
+            say("No " + (inputId < 0 ? "microphone named like \"" + inputName : "output named like \"" + outputName)
+                + "\". If VB-Cable was just installed, restart Windows and check again.");
             return false;
         }
-        Console.WriteLine("Checking " + WaveOut.DeviceName(WaveOut.FindDevice(outputName)) + " -> "
-                + WaveIn.DeviceName(inputId) + "...");
+        say("Checking " + WaveOut.DeviceName(outputId) + " -> " + WaveIn.DeviceName(inputId) + "...");
 
+        WaveIn recorder = new WaveIn(inputId, 48000, 48000 * 2);   // two seconds
+        PlayTone(outputName, 150, 1000);                            // 1.5 seconds of tone
+        int peak = recorder.Finish();
+        // The tone is 8000; anything over a tenth of that means it came through
+        if (peak > 800) {
+            say("Works: the microphone heard the test tone.");
+            return true;
+        }
+        say("No sound came through (loudest sample " + peak + "). If VB-Cable was just installed, restart Windows and check again.");
+        return false;
+    }
+
+    // Plays a tone straight into an output, in 10 ms blocks
+    public static void PlayTone(string outputName, int blocks, int frequency)
+    {
         const int rate = 48000;
-        WaveIn recorder = new WaveIn(inputId, rate, rate * 2);   // two seconds
         Player player = new Player(outputName);
         byte[] packet = new byte[HeaderSize + 480 * 2];
         double phase = 0;
         System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
-        for (int block = 0; block < 150; block++) {              // 1.5 seconds of tone
+        for (int block = 0; block < blocks; block++) {
             while (clock.ElapsedMilliseconds < block * 10L) {
-                System.Threading.Thread.Sleep(1);
+                Thread.Sleep(1);
             }
             for (int i = 0; i < 480; i++) {
                 short value = (short) (Math.Sin(phase) * 8000);
                 packet[HeaderSize + i * 2] = (byte) value;
                 packet[HeaderSize + i * 2 + 1] = (byte) (value >> 8);
-                phase += 2 * Math.PI * 1000 / rate;
+                phase += 2 * Math.PI * frequency / rate;
             }
             player.Play(packet, HeaderSize, 480, 1, rate);
         }
-        int peak = recorder.Finish();
-        // The tone is 8000; anything over a tenth of that means it came through
-        if (peak > 800) {
-            Console.WriteLine("Works: the microphone heard the test tone.");
-            return true;
-        }
-        Console.WriteLine("No sound came through (loudest sample " + peak + "). If VB-Cable was just installed, restart Windows and check again.");
-        return false;
+        // Let the last blocks play out before letting go of the output
+        Thread.Sleep(200);
+        player.Close();
     }
 
     // A 440 Hz tone in the same format Starwire sends, to check the receiver and microphone
@@ -307,6 +392,104 @@ static class StarwireMicReceiver
         int count = WaveOut.waveOutGetNumDevs();
         for (int i = 0; i < count; i++) {
             Console.WriteLine("  " + WaveOut.DeviceName(i));
+        }
+    }
+}
+
+// The notification-area icon: hover for what the receiver is doing, right-click for its menu
+sealed class Tray
+{
+    const string Guide = "https://github.com/SicarioGaming/Starwire/tree/main/windows#readme";
+
+    readonly NotifyIcon icon = new NotifyIcon();
+    readonly ToolStripMenuItem status = new ToolStripMenuItem();
+    readonly SynchronizationContext ui = new WindowsFormsSynchronizationContext();
+    readonly string device;
+    readonly string waiting;
+    bool receiving;
+
+    public Tray(string device, string streamName, int port)
+    {
+        this.device = device;
+        waiting = "Waiting for Starwire (" + streamName + ", UDP " + port + ")";
+        status.Enabled = false;
+        ContextMenuStrip menu = new ContextMenuStrip();
+        menu.Items.Add(status);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("Check the virtual microphone", null, delegate { Check(); });
+        menu.Items.Add("Play a test tone (for Discord's mic test)", null, delegate { Tone(); });
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("Setup guide", null, delegate { System.Diagnostics.Process.Start(Guide); });
+        menu.Items.Add("Quit", null, delegate { icon.Visible = false; Environment.Exit(0); });
+        icon.ContextMenuStrip = menu;
+        icon.Icon = LoadIcon();
+        SetStatus(waiting);
+        icon.Visible = true;
+
+        // Back to "waiting" a few seconds after the phone stops sending
+        System.Windows.Forms.Timer idle = new System.Windows.Forms.Timer();
+        idle.Interval = 1000;
+        idle.Tick += delegate {
+            if (receiving && StarwireMicReceiver.Idle) {
+                receiving = false;
+                SetStatus(waiting);
+            }
+        };
+        idle.Start();
+    }
+
+    // Called from the receive thread
+    public void Show(string text, bool important)
+    {
+        ui.Post(delegate {
+            if (important) {
+                icon.ShowBalloonTip(8000, "Starwire microphone", text, ToolTipIcon.Warning);
+            }
+            else {
+                receiving = text.StartsWith("Receiving");
+                SetStatus(text);
+            }
+        }, null);
+    }
+
+    void SetStatus(string text)
+    {
+        status.Text = text;
+        // Windows cuts the hover text at 63 characters
+        string tip = "Starwire microphone: " + text;
+        icon.Text = tip.Length > 63 ? tip.Substring(0, 60) + "..." : tip;
+    }
+
+    void Check()
+    {
+        ThreadPool.QueueUserWorkItem(delegate {
+            List<string> lines = new List<string>();
+            bool works = StarwireMicReceiver.CheckCable(device, device.Replace("Input", "Output"), lines.Add);
+            ui.Post(delegate {
+                MessageBox.Show(string.Join(Environment.NewLine, lines.ToArray()), "Starwire microphone",
+                    MessageBoxButtons.OK, works ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            }, null);
+        });
+    }
+
+    void Tone()
+    {
+        icon.ShowBalloonTip(3000, "Starwire microphone", "Playing a 3 second tone into the virtual microphone.", ToolTipIcon.Info);
+        ThreadPool.QueueUserWorkItem(delegate { StarwireMicReceiver.PlayTone(device, 300, 440); });
+    }
+
+    // The Starwire icon the setup puts next to the receiver, else the one built into it
+    static Icon LoadIcon()
+    {
+        try {
+            string ico = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "starwire-mic.ico");
+            if (System.IO.File.Exists(ico)) {
+                return new Icon(ico, SystemInformation.SmallIconSize);
+            }
+            return Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        }
+        catch (Exception) {
+            return SystemIcons.Application;
         }
     }
 }
@@ -392,15 +575,15 @@ sealed class Player
             nextOpenAttempt = clock.ElapsedMilliseconds + RetryMs;
             if (!openFailed) {
                 openFailed = true;
-                Console.WriteLine(deviceId < 0
-                        ? "Can't find \"" + deviceName + "\" right now; trying again every second."
-                        : "Couldn't open " + WaveOut.DeviceName(deviceId) + " (waveOut error " + result + "); trying again every second.");
+                StarwireMicReceiver.Report(deviceId < 0
+                        ? "Can't find \"" + deviceName + "\" right now; trying again every second. Is VB-Cable installed?"
+                        : "Couldn't open " + WaveOut.DeviceName(deviceId) + " (waveOut error " + result + "); trying again every second.", true);
             }
             return false;
         }
         if (openFailed) {
             openFailed = false;
-            Console.WriteLine("Playing into " + WaveOut.DeviceName(deviceId) + " again.");
+            StarwireMicReceiver.Report("Playing into " + WaveOut.DeviceName(deviceId) + " again.", true);
         }
         sampleRate = rate;
         block = new short[rate * BlockMs / 1000];
@@ -411,7 +594,7 @@ sealed class Player
         return true;
     }
 
-    void Close()
+    public void Close()
     {
         if (handle == IntPtr.Zero) {
             return;
@@ -431,7 +614,7 @@ sealed class Player
         if (queued.Count > 0 && !starting && now - lastProgress > StallMs) {
             // Nothing has finished playing for a second: the device stopped (unplugged, driver
             // restarted). Open it again with the next packet.
-            Console.WriteLine("The audio output stopped responding; reopening it.");
+            StarwireMicReceiver.Report("The audio output stopped responding; reopening it.", false);
             Close();
             return false;
         }
@@ -471,7 +654,7 @@ sealed class Player
         if (result != 0) {
             Marshal.FreeHGlobal(data);
             Marshal.FreeHGlobal(headerPtr);
-            Console.WriteLine("The audio output refused audio (waveOut error " + result + "); reopening it.");
+            StarwireMicReceiver.Report("The audio output refused audio (waveOut error " + result + "); reopening it.", false);
             Close();
             return false;
         }

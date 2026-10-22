@@ -24,7 +24,8 @@ You need two things on the PC, and the setup below installs both:
    - builds and installs the receiver in `Program Files\Starwire`;
    - lets the receiver through Windows Firewall for local-network and private VPN (like
      Tailscale) addresses only;
-   - starts the receiver now and whenever you sign in (minimized in the taskbar);
+   - starts the receiver now and whenever you sign in. It has no window, just an icon in the
+     notification area by the clock (it may be under the ^ arrow);
    - plays a test tone through VB-Cable to check the virtual microphone works.
 3. If the setup says VB-Cable isn't showing up yet, **restart Windows** to finish installing it.
 4. In Discord or the game, choose **CABLE Output (VB-Audio Virtual Cable)** as the microphone.
@@ -55,13 +56,15 @@ changing if you changed them on the PC too.
   your game, or you hear yourself in the stream. The setup warns about this and opens Sound
   settings: set the output you used before as the default (your speakers, the monitor's HDMI
   audio, or Steam Streaming Speakers).
-- **Check it any time:** in Terminal (PowerShell), run
-  `& "C:\Program Files\Starwire\StarwireMicReceiver.exe" --check` to test VB-Cable. While the
-  receiver runs, `& "C:\Program Files\Starwire\StarwireMicReceiver.exe" --test-tone` plays a beep
-  into the microphone, for Discord's mic test.
+- **The receiver's icon:** hover over it to see whether it's receiving your phone. Right-click it
+  to **Check the virtual microphone** (tests VB-Cable), **Play a test tone** (for Discord's mic
+  test), open this guide, or **Quit**. Problems show up as Windows notifications.
+- **Troubleshooting:** `& "C:\Program Files\Starwire\StarwireMicReceiver.exe" --console` in
+  Terminal (PowerShell) runs the receiver in a window that prints everything it does. Quit the
+  icon first.
 - **Port already in use?** Voicemeeter's VBAN and VBAN-Receptor also use port 6980. The
-  receiver's window says so; close the other one, or run the setup with `-Port 6990` and set the
-  same port in Starwire.
+  receiver tells you when it starts; close the other one, or run the setup with `-Port 6990` and
+  set the same port in Starwire.
 - **Smart App Control** (Windows 11) blocks programs built on the PC, like the receiver. The setup
   notices and points you to VB-Audio's signed
   [VBAN-Receptor](https://vb-audio.com/Voicemeeter/vban.htm) instead: set its stream to

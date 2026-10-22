@@ -4,18 +4,18 @@ Sets up this PC to receive Starwire's microphone, whatever streaming host it run
 
 .DESCRIPTION
 - Installs VB-Cable, the virtual microphone, from VB-Audio's site if it isn't there yet. Its setup
-  window opens: click "Install Driver". Restart Windows afterwards when it's new.
+  window opens: click "Install Driver". Restart Windows afterwards if it doesn't show up.
 - Builds Starwire's microphone receiver (StarwireMicReceiver.cs, next to this script) with the
   C# compiler that comes with Windows, and installs it in Program Files\Starwire.
 - Lets the receiver through Windows Firewall for local-network and private VPN addresses only.
-- Starts the receiver now and whenever you sign in (minimized), and checks the virtual
-  microphone works.
+- Starts the receiver now and whenever you sign in (no window, just an icon by the clock), and
+  checks the virtual microphone works.
 
 Then choose "CABLE Output (VB-Audio Virtual Cable)" as the microphone in Discord or the game, and
 in Starwire: Settings > Sound & vibration > Send my microphone > A VBAN receiver on the PC.
 
-Run it from the folder you unzipped: right-click setup-microphone.ps1 > Run with PowerShell. It
-asks for administrator rights once, for the driver and the firewall rule.
+Run it from the folder you unzipped: double-click setup-microphone.cmd. It asks for administrator
+rights once, for the driver and the firewall rule.
 
 .PARAMETER StreamName
 Must match Starwire's "VBAN stream name". Default Stream1.
@@ -95,11 +95,17 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     exit
 }
 
-# A buffer wider than the window scrolls it sideways on long lines, cutting the others off
+# Fit the window on screen (it can open wider than a small or streamed display), and keep the
+# buffer no wider than the window: a wider one scrolls sideways on long lines, cutting others off
 try {
     $raw = $Host.UI.RawUI
-    if ($raw.BufferSize.Width -gt $raw.WindowSize.Width) {
-        $raw.BufferSize = New-Object Management.Automation.Host.Size($raw.WindowSize.Width, $raw.BufferSize.Height)
+    $max = $raw.MaxPhysicalWindowSize
+    $width = [Math]::Min($raw.WindowSize.Width, $max.Width)
+    if ($raw.WindowSize.Width -gt $width -or $raw.WindowSize.Height -gt $max.Height) {
+        $raw.WindowSize = New-Object Management.Automation.Host.Size($width, [Math]::Min($raw.WindowSize.Height, $max.Height))
+    }
+    if ($raw.BufferSize.Width -gt $width) {
+        $raw.BufferSize = New-Object Management.Automation.Host.Size($width, $raw.BufferSize.Height)
     }
 }
 catch { }
@@ -142,7 +148,14 @@ if (-not (Test-Path $csc)) {
     Finish 1
 }
 New-Item -ItemType Directory -Force $installDir | Out-Null
-& $csc /nologo /optimize /target:exe "/out:$exe" $source
+# A Windows app rather than a console one, so it runs as a notification-area icon with no window
+$icon = Join-Path $here 'starwire-mic.ico'
+$iconArgs = @()
+if (Test-Path $icon) {
+    Copy-Item $icon $installDir -Force
+    $iconArgs = @("/win32icon:$icon")
+}
+& $csc /nologo /optimize /target:winexe $iconArgs /r:System.Windows.Forms.dll /r:System.Drawing.dll "/out:$exe" $source
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $exe)) {
     Note 'Building the receiver failed (see above).'
     Finish 1
@@ -153,7 +166,7 @@ Done "Installed $exe"
 Step 'Checking for VB-Cable'
 $restartNeeded = $false
 try {
-    $outputs = & $exe --list
+    $outputs = & $exe --list | ForEach-Object { $_ }
 }
 catch {
     # Antivirus or an app-control policy refused the freshly built program
@@ -187,7 +200,7 @@ else {
     Start-Process -FilePath $setup -WorkingDirectory $work -Wait
     Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue
 
-    $outputs = & $exe --list
+    $outputs = & $exe --list | ForEach-Object { $_ }
     if ($outputs -match 'CABLE Input') {
         Done 'VB-Cable is installed.'
     }
@@ -214,7 +227,6 @@ $link = $shell.CreateShortcut($shortcut)
 $link.TargetPath = $exe
 $link.Arguments = "--name `"$StreamName`" --port $Port"
 $link.WorkingDirectory = $installDir
-$link.WindowStyle = 7   # minimized
 $link.Description = "Receives Starwire's microphone"
 $link.Save()
 if ($NoStartup) {
@@ -222,16 +234,17 @@ if ($NoStartup) {
 }
 else {
     Copy-Item $shortcut $startupShortcut -Force
-    Done 'It starts by itself, minimized, when you sign in.'
+    Done 'It starts by itself when you sign in.'
 }
 
 if ($outputs -match 'CABLE Input') {
     # Started through Explorer so it runs as you, not as administrator
     Start-Process explorer.exe -ArgumentList "`"$shortcut`""
-    Done 'Running (minimized in the taskbar).'
+    Done "Running, with no window: its icon is in the notification area, by the clock. Right-click it for a test tone or to quit."
 
     Step 'Checking the virtual microphone'
-    & $exe --check
+    # The receiver has no window of its own, so its output has to be piped to be waited for
+    & $exe --check | ForEach-Object { Write-Host $_ }
 }
 
 # --- VB-Cable can take over the default speakers when it installs ---
