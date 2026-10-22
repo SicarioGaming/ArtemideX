@@ -22,7 +22,7 @@ body:
     attributes:
       label: Starwire version
       description: Check the release you installed.
-      placeholder: "0.1.0"
+      placeholder: "0.1.2"
     validations:
       required: true
   - type: input
