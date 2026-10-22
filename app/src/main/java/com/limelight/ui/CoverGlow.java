@@ -3,6 +3,7 @@ package com.limelight.ui;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.os.Build;
 
 /**
  * Colours for the Cover Glow look: the screen takes its colour from the selected game's cover.
@@ -21,13 +22,27 @@ public final class CoverGlow {
         if (bitmap == null) {
             return DEFAULT_TINT;
         }
-        Bitmap small = Bitmap.createScaledBitmap(bitmap, 24, 32, true);
-        int[] pixels = new int[small.getWidth() * small.getHeight()];
-        small.getPixels(pixels, 0, small.getWidth(), 0, 0, small.getWidth(), small.getHeight());
-        if (small != bitmap) {
-            small.recycle();
+        try {
+            Bitmap small = Bitmap.createScaledBitmap(bitmap, 24, 32, true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && small.getConfig() == Bitmap.Config.HARDWARE) {
+                // Box art is decoded to GPU memory, which can't be read; copy the small version out
+                Bitmap readable = small.copy(Bitmap.Config.ARGB_8888, false);
+                if (small != bitmap) {
+                    small.recycle();
+                }
+                small = readable;
+            }
+            int[] pixels = new int[small.getWidth() * small.getHeight()];
+            small.getPixels(pixels, 0, small.getWidth(), 0, 0, small.getWidth(), small.getHeight());
+            if (small != bitmap) {
+                small.recycle();
+            }
+            return tintFromPixels(pixels);
         }
-        return tintFromPixels(pixels);
+        catch (RuntimeException e) {
+            // The colour is decoration; never let a cover close the app
+            return DEFAULT_TINT;
+        }
     }
 
     public static int tintFromPixels(int[] pixels) {
