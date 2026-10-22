@@ -147,7 +147,10 @@ public class OverlayMenuView extends LinearLayout {
     private LinearLayout barContainer;
     private int columns = MAIN_COLUMNS;
 
-    // The bar: Close (index 0) on its own row, then Quit and Disconnect side by side
+    // The bar: Close (index 0) on its own row, then Quit and Disconnect side by side; or all
+    // three in one row on short screens
+    private static final int COMPACT_HEIGHT_DP = 480;
+    private boolean compactBar;
     private List<OverlayMenuButton> barButtons;
     private List<Integer> barActions;
     private List<OverlayMenuButton> gridButtons;
@@ -409,7 +412,25 @@ public class OverlayMenuView extends LinearLayout {
         }
         finishGridRow();
 
-        // The bar: back to the game, then the two ways out
+        // The bar: back to the game, then the two ways out. On short screens (a phone held
+        // sideways for a stream) all three share one row, leaving room for more tools.
+        compactBar = getResources().getConfiguration().screenHeightDp < COMPACT_HEIGHT_DP;
+        if (compactBar) {
+            LinearLayout row = new LinearLayout(getContext());
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            barContainer.addView(row, new LinearLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            addBarButton(OverlayMenuButton.STYLE_PRIMARY, 0,
+                getContext().getString(R.string.overlay_menu_close), ACTION_CLOSE, row, dp(BUTTON_SPACING_DP));
+            // Without icons, so the full words fit a third of the row
+            addBarButton(OverlayMenuButton.STYLE_PILL, 0,
+                getContext().getString(R.string.overlay_menu_quit_session), ACTION_QUIT, row, dp(BUTTON_SPACING_DP));
+            addBarButton(OverlayMenuButton.STYLE_PILL, 0,
+                getContext().getString(R.string.overlay_menu_disconnect), ACTION_DISCONNECT, row, 0);
+            gridContainer.requestLayout();
+            barContainer.requestLayout();
+            return;
+        }
         addBarButton(OverlayMenuButton.STYLE_PRIMARY, 0,
             getContext().getString(R.string.overlay_menu_close), ACTION_CLOSE, barContainer, 0);
         LinearLayout exits = new LinearLayout(getContext());
@@ -677,7 +698,7 @@ public class OverlayMenuView extends LinearLayout {
             if (gridIndex >= columns) {
                 setGridIndex(gridIndex - columns);
             }
-        } else if (barIndex > 0) {
+        } else if (barIndex > 0 && !compactBar) {
             setBarIndex(0);
         } else if (!gridButtons.isEmpty()) {
             // From Close up into the last tile
@@ -697,7 +718,7 @@ public class OverlayMenuView extends LinearLayout {
                 activeRegion = Region.BAR;
                 setBarIndex(0);
             }
-        } else if (barIndex == 0 && barButtons.size() > 1) {
+        } else if (!compactBar && barIndex == 0 && barButtons.size() > 1) {
             setBarIndex(1);
         }
     }
@@ -707,8 +728,8 @@ public class OverlayMenuView extends LinearLayout {
             if (gridIndex % columns > 0) {
                 setGridIndex(gridIndex - 1);
             }
-        } else if (barIndex == 2) {
-            setBarIndex(1);
+        } else if (compactBar ? barIndex > 0 : barIndex == 2) {
+            setBarIndex(barIndex - 1);
         }
     }
 
@@ -717,8 +738,8 @@ public class OverlayMenuView extends LinearLayout {
             if (gridIndex % columns < columns - 1 && gridIndex + 1 < gridButtons.size()) {
                 setGridIndex(gridIndex + 1);
             }
-        } else if (barIndex == 1 && barButtons.size() > 2) {
-            setBarIndex(2);
+        } else if (compactBar ? barIndex < barButtons.size() - 1 : (barIndex == 1 && barButtons.size() > 2)) {
+            setBarIndex(barIndex + 1);
         }
     }
 
