@@ -1,0 +1,48 @@
+name: Bug report
+description: Something in Starwire doesn't work as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      placeholder: |
+        1. Open …
+        2. Tap …
+        3. …
+  - type: input
+    id: version
+    attributes:
+      label: Starwire version
+      description: Check the release you installed.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: "e.g. Pixel 8, Android 15"
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host on the PC
+      placeholder: "e.g. Vibepollo, Apollo, Sunshine"
+  - type: input
+    id: controller
+    attributes:
+      label: Controller (if it's involved)
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Settings you changed, screenshots, or whether other Moonlight apps do the same.
