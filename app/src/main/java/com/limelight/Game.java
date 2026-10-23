@@ -203,13 +203,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private PanZoomHandler panZoomHandler;
     private boolean isPanZoomMode;
 
-    // Touch modes from Artemide's mouse mode picker, in its order
-    private static final int MOUSE_MODE_MULTI_TOUCH = 0;
-    private static final int MOUSE_MODE_DIRECT_TOUCH = 1;
-    private static final int MOUSE_MODE_TRACKPAD_NATURAL = 2;
-    private static final int MOUSE_MODE_TRACKPAD_GAMING = 3;
-    private static final int MOUSE_MODE_DISABLED = 4;
-    private static final int MOUSE_MODE_DIRECT_TOUCH_SWAPPED = 5;
+    // Touch modes from Artemide's mouse mode picker, in its order (not private, for the JVM tests)
+    static final int MOUSE_MODE_MULTI_TOUCH = 0;
+    static final int MOUSE_MODE_DIRECT_TOUCH = 1;
+    static final int MOUSE_MODE_TRACKPAD_NATURAL = 2;
+    static final int MOUSE_MODE_TRACKPAD_GAMING = 3;
+    static final int MOUSE_MODE_DISABLED = 4;
+    static final int MOUSE_MODE_DIRECT_TOUCH_SWAPPED = 5;
     private int mouseMode;
 
     // Whether the trackpad modes use the custom sensitivity from settings
@@ -784,51 +784,69 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     private void setPreferredOrientationForCurrentDisplay() {
         Display display = getWindowManager().getDefaultDisplay();
+        boolean squarish = PreferenceConfiguration.isSquarishScreen(display);
+        boolean hinge = squarish && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE);
+        setRequestedOrientation(streamOrientation(squarish, hinge, prefConfig.onscreenController,
+                prefConfig.width, prefConfig.height));
+    }
+
+    // Starwire: the orientation the stream asks for, kept apart from the activity so the JVM
+    // tests can check it (GameRulesTest)
+    static int streamOrientation(boolean squarishScreen, boolean hingeSensor, boolean onscreenController,
+                                 int width, int height) {
+        // For regular displays, we always request landscape. That includes a foldable's cover
+        // screen, which is a tall phone screen even though the device has a hinge.
+        if (!squarishScreen) {
+            return ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
+        }
+
+        // A foldable's inner screen: forcing landscape there can hand the stream a rotated
+        // surface, shrunk with black borders (seen on Galaxy Z Folds). Let it follow the
+        // device instead. Idea from Moonlight Fold (sblocktechnologies) and
+        // moonlight-stream/moonlight-android#1613.
+        if (hingeSensor) {
+            return ActivityInfo.SCREEN_ORIENTATION_FULL_USER;
+        }
 
         // For semi-square displays, we use more complex logic to determine which orientation to use (if any)
-        if (PreferenceConfiguration.isSquarishScreen(display)) {
-            // A foldable's inner screen: forcing landscape there can hand the stream a rotated
-            // surface, shrunk with black borders (seen on Galaxy Z Folds). Let it follow the
-            // device instead. Idea from Moonlight Fold (sblocktechnologies) and
-            // moonlight-stream/moonlight-android#1613; the cover screen keeps landscape.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-                    getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE)) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
-                return;
-            }
+        int desiredOrientation = Configuration.ORIENTATION_UNDEFINED;
 
-            int desiredOrientation = Configuration.ORIENTATION_UNDEFINED;
+        // OSC doesn't properly support portrait displays, so don't use it in portrait mode by default
+        if (onscreenController) {
+            desiredOrientation = Configuration.ORIENTATION_LANDSCAPE;
+        }
 
-            // OSC doesn't properly support portrait displays, so don't use it in portrait mode by default
-            if (prefConfig.onscreenController) {
+        // For native resolution, we will lock the orientation to the one that matches the specified resolution
+        if (PreferenceConfiguration.isNativeResolution(width, height)) {
+            if (width > height) {
                 desiredOrientation = Configuration.ORIENTATION_LANDSCAPE;
             }
-
-            // For native resolution, we will lock the orientation to the one that matches the specified resolution
-            if (PreferenceConfiguration.isNativeResolution(prefConfig.width, prefConfig.height)) {
-                if (prefConfig.width > prefConfig.height) {
-                    desiredOrientation = Configuration.ORIENTATION_LANDSCAPE;
-                }
-                else {
-                    desiredOrientation = Configuration.ORIENTATION_PORTRAIT;
-                }
-            }
-
-            if (desiredOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
-            }
-            else if (desiredOrientation == Configuration.ORIENTATION_PORTRAIT) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
-            }
             else {
-                // If we don't have a reason to lock to portrait or landscape, allow any orientation
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
+                desiredOrientation = Configuration.ORIENTATION_PORTRAIT;
             }
+        }
+
+        if (desiredOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            return ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
+        }
+        else if (desiredOrientation == Configuration.ORIENTATION_PORTRAIT) {
+            return ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT;
         }
         else {
-            // For regular displays, we always request landscape
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+            // If we don't have a reason to lock to portrait or landscape, allow any orientation
+            return ActivityInfo.SCREEN_ORIENTATION_FULL_USER;
         }
+    }
+
+    // Starwire: pan/zoom and the touch-disabled mode skip the normal touch handling, so they
+    // open the overlay menu on a three-finger touch before it; otherwise there could be no way
+    // back to the menu when the floating button is hidden and no controller is connected.
+    // (The other modes open it from their own three-finger tap.) Checked by GameRulesTest.
+    static boolean opensMenuBeforeTouchHandling(boolean panZoomMode, int mouseMode, int actionMasked,
+                                                int pointerCount) {
+        return (panZoomMode || mouseMode == MOUSE_MODE_DISABLED) &&
+                actionMasked == MotionEvent.ACTION_POINTER_DOWN && pointerCount == 3;
     }
 
 
@@ -2398,12 +2416,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 // First, so it sees every finger down and up, whatever handles the touch below
                 updateHostCursorForTouch(event);
 
-                if ((isPanZoomMode || mouseMode == MOUSE_MODE_DISABLED) &&
-                        event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN &&
-                        event.getPointerCount() == 3) {
-                    // These modes skip the normal touch handling, so open the overlay menu on a
-                    // three-finger touch here; otherwise there could be no way back to the menu
-                    // when the floating button is hidden and no controller is connected
+                if (opensMenuBeforeTouchHandling(isPanZoomMode, mouseMode,
+                        event.getActionMasked(), event.getPointerCount())) {
                     overlayMenuView.show();
                     return true;
                 }
