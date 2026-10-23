@@ -7,21 +7,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import android.content.Context;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.limelight.nvstream.input.KeyboardPacket;
 import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.utils.HostCursorLedger;
 
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +25,6 @@ import java.util.List;
  * Checks when "Hide PC cursor" sends Vibepollo's toggle, and that a cursor left hidden by a
  * killed app or a dropped connection is put right at the next connection, without a stream.
  */
-@RunWith(AndroidJUnit4.class)
 public class HostCursorControllerTest {
     private static final int NEVER = PreferenceConfiguration.HIDE_CURSOR_NEVER;
     private static final int TOUCHING = PreferenceConfiguration.HIDE_CURSOR_WHILE_TOUCHING;
@@ -90,28 +85,14 @@ public class HostCursorControllerTest {
         }
     }
 
+    @Rule public TemporaryFolder tmp = new TemporaryFolder();
+
     @Before
-    public void setUp() {
-        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        dir = new File(context.getCacheDir(), "host_cursor_controller_test_" + System.nanoTime());
+    public void setUp() throws IOException {
+        dir = tmp.newFolder();
         ledger = new HostCursorLedger(dir, "pc-a");
         toggle = new FakeToggle();
         scheduler = new ManualScheduler();
-    }
-
-    @After
-    public void tearDown() {
-        deleteAll(dir);
-    }
-
-    private static void deleteAll(File file) {
-        File[] children = file.listFiles();
-        if (children != null) {
-            for (File child : children) {
-                deleteAll(child);
-            }
-        }
-        file.delete();
     }
 
     private HostCursorController controller(int mode) {

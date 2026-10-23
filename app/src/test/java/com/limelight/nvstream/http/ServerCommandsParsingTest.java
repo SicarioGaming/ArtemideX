@@ -3,10 +3,7 @@ package com.limelight.nvstream.http;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.util.List;
 
@@ -14,7 +11,6 @@ import java.util.List;
  * Parses serverinfo responses shaped like Vibepollo's (nvhttp.cpp puts one ServerCommand
  * element per configured command directly under root).
  */
-@RunWith(AndroidJUnit4.class)
 public class ServerCommandsParsingTest {
     private static final String WITH_COMMANDS =
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +

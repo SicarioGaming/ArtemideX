@@ -2,18 +2,16 @@ package com.limelight.nvstream.http;
 
 import static org.junit.Assert.assertEquals;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
 import com.limelight.nvstream.StreamConfiguration;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * The virtualDisplay launch argument Vibepollo reads (nvhttp.cpp: any non-zero value asks for
- * a virtual display, 0 turns virtual display mode off for the session).
+ * a virtual display, 0 turns virtual display mode off for the session). That the stream's
+ * default is "host default" is checked on the device (VirtualDisplayDefaultTest), since building
+ * a StreamConfiguration loads the native library.
  */
-@RunWith(AndroidJUnit4.class)
 public class VirtualDisplayLaunchTest {
     @Test
     public void hostDefaultSendsNothing() {
@@ -29,11 +27,5 @@ public class VirtualDisplayLaunchTest {
     @Test
     public void neverSentToGeForceExperience() {
         assertEquals("", NvHTTP.virtualDisplayLaunchArgument(true, StreamConfiguration.VIRTUAL_DISPLAY_ON));
-    }
-
-    @Test
-    public void streamDefaultsToHostDefault() {
-        StreamConfiguration config = new StreamConfiguration.Builder().build();
-        assertEquals(StreamConfiguration.VIRTUAL_DISPLAY_HOST_DEFAULT, config.getVirtualDisplay());
     }
 }

@@ -85,6 +85,17 @@ android {
         lintConfig file('lint.xml')
     }
 
+    testOptions {
+        unitTests {
+            // Plain JVM tests (app/src/test): any call into android.* fails loudly, so they stay pure
+            returnDefaultValues = false
+            all {
+                // For the tests that check the code against README.md, build files and resources
+                systemProperty 'repo.root', rootProject.projectDir.absolutePath
+            }
+        }
+    }
+
     bundle {
         language {
             // Avoid splitting by language, since we allow users
@@ -215,6 +226,12 @@ dependencies {
     implementation 'com.github.cgutman:ShieldControllerExtensions:1.0.1'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+
+    // JVM tests (Starwire), no device needed: gradlew testNonRootDebugUnitTest
+    testImplementation 'junit:junit:4.13.2'
+    // android.jar only has stubs of these, so the JVM tests get the real ones
+    testImplementation 'org.json:json:20250517'
+    testImplementation 'net.sf.kxml:kxml2:2.3.0'
 
     // On-device tests (Starwire): gradlew connectedNonRootDebugAndroidTest
     androidTestImplementation 'androidx.test:runner:1.6.2'

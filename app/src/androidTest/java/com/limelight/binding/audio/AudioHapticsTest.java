@@ -16,7 +16,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Audio haptics: bass in the audio becomes vibration, other sounds don't.
+ * Audio haptics: bass in the audio becomes vibration, other sounds don't. The level curve on its
+ * own is a JVM test (AudioHapticsLevelTest).
  */
 @RunWith(AndroidJUnit4.class)
 public class AudioHapticsTest {
@@ -37,14 +38,6 @@ public class AudioHapticsTest {
         AudioHaptics haptics = new AudioHaptics(context, outputs, 100, sink);
         haptics.setup(SAMPLE_RATE, 2);
         return haptics;
-    }
-
-    @Test
-    public void levelIsZeroBelowTheNoiseGateAndCappedAtOne() {
-        assertEquals(0f, AudioHaptics.levelFor(0f, 1f), 0f);
-        assertEquals(0f, AudioHaptics.levelFor(0.004f, 1f), 0f);
-        assertEquals(1f, AudioHaptics.levelFor(0.9f, 1f), 0f);
-        assertTrue(AudioHaptics.levelFor(0.1f, 2f) > AudioHaptics.levelFor(0.1f, 1f));
     }
 
     @Test
