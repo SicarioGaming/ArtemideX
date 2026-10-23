@@ -118,12 +118,16 @@ public class ClaimsTest {
         assertTrue(warning, warning.contains("hasn\\'t been tried with a real Turnip driver"));
     }
 
-    // Phrases that only made sense while the 0.2.0 microphone, with no encryption, was the current one
+    // Phrases that only made sense while the 0.2.0 microphone, with no encryption, was the current
+    // one. Each is worded as the old docs had it, so an unrelated known issue that says "until the
+    // fix ships" doesn't trip a microphone test.
     private static final String[] OLD_MIC_WARNINGS = {
             "In 0.2.0 the microphone audio isn't encrypted",
-            "Until the fix ships",
-            "working on a fix",
-            "fix is being worked on",
+            "Until the fix ships: - Use it only on a network you trust",
+            "Until the fix ships: - Use the microphone only on a network you trust",
+            "I'm working on a fix. [SECURITY.md](SECURITY.md) has the details",
+            "I'm working on a fix, [coming in 0.2.1]",
+            "(`SECURITY.md` has the details); a fix is being worked on",
             "it isn't secure yet",
             "Not encrypted or authenticated in 0.2.0, so only for networks you trust",
             "Local network only, but not secure",
@@ -143,9 +147,11 @@ public class ClaimsTest {
     @Test
     public void theDocsDescribeTheEncryptedMicrophone() throws Exception {
         String readme = flat(RepoFiles.read("README.md"));
-        assertTrue(readme.contains("**Please read this before you use it.** From 0.2.1 the microphone is"
+        assertTrue("the README's Please read this doesn't say the mic is encrypted and paired",
+                readme.contains("**Please read this before you use it.** From 0.2.1 the microphone is"
                 + " encrypted, and the receiver only plays audio from devices you've paired with that PC."));
-        assertTrue(readme.contains("**Encrypted, and only from paired devices.** You pair each Android device"
+        assertTrue("the README doesn't describe pairing as how the mic works now",
+                readme.contains("**Encrypted, and only from paired devices.** You pair each Android device"
                 + " with the PC once"));
         Matcher row = Pattern.compile("(?m)^\\| Send your microphone to the PC with any host.*$")
                 .matcher(RepoFiles.read("README.md"));
@@ -154,7 +160,8 @@ public class ClaimsTest {
                 + " with the PC"));
 
         String guide = flat(RepoFiles.read("windows/README.md"));
-        assertTrue(guide.contains("From 0.2.1 the audio is encrypted on the way, and the receiver only plays it"
+        assertTrue("the guide's Please read first doesn't say the mic is encrypted and paired",
+                guide.contains("From 0.2.1 the audio is encrypted on the way, and the receiver only plays it"
                 + " from devices you've paired with that PC."));
         // Pairing and updating are part of the guide now, before its details, not a section after them
         List<String> sections = new ArrayList<>();
@@ -188,12 +195,72 @@ public class ClaimsTest {
         String strings = RepoFiles.read("app/src/main/res/values/strings.xml");
         assertEquals("Pair with the PC", string(strings, "title_mic_pairing"));
         assertEquals("Send my microphone", string(strings, "title_checkbox_enable_microphone"));
-        assertTrue(string(strings, "microphone_target_vban").startsWith("Not encrypted"));
+        assertTrue("the app's VBAN option isn't labelled Not encrypted",
+                string(strings, "microphone_target_vban").startsWith("Not encrypted"));
         String receiver = RepoFiles.read("windows/StarwireMicReceiver.cs");
-        assertTrue(receiver.contains("menu.Items.Add(\"Pair a device...\""));
-        assertTrue(receiver.contains("showCode.Text = \"Show the code\";"));
+        assertTrue("the receiver's menu has no Pair a device...",
+                receiver.contains("menu.Items.Add(\"Pair a device...\""));
+        assertTrue("the receiver's pairing window has no Show the code",
+                receiver.contains("showCode.Text = \"Show the code\";"));
 
         // What 0.2.0 shipped with stays in its release notes
-        assertTrue(RepoFiles.read(".github/release-notes/v0.2.0-notes.md").contains("The audio isn't encrypted"));
+        assertTrue("the 0.2.0 release notes no longer say the audio isn't encrypted",
+                RepoFiles.read(".github/release-notes/v0.2.0-notes.md").contains("The audio isn't encrypted"));
+    }
+
+    // Two pictures in the README still show 0.2.0's unencrypted path and its receiver's rules, so
+    // their alt text and captions say they're 0.2.0's
+    @Test
+    public void theOldMicrophonePicturesSayTheyreFrom020() throws Exception {
+        String raw = RepoFiles.read("README.md");
+        for (String picture : new String[] {"mic-signal-path.png", "mic-packet.png"}) {
+            Matcher img = Pattern.compile("<img src=\"docs/images/" + Pattern.quote(picture)
+                    + "\"[^>]*alt=\"([^\"]*)\"").matcher(raw);
+            assertTrue(picture + " isn't in the README", img.find());
+            assertTrue(picture + "'s alt text doesn't say it's from 0.2.0", img.group(1).contains("0.2.0"));
+        }
+        String readme = flat(raw);
+        assertTrue("the microphone path picture has no caption saying it's 0.2.0's",
+                readme.contains("<sub>This is 0.2.0's path. From 0.2.1 each VBAN packet travels encrypted"));
+        assertTrue("the packet picture's caption doesn't say its receiver rules are 0.2.0's",
+                readme.contains("<sub>The packet, the receiver's rules and the chart are from 0.2.0"));
+    }
+
+    // Plain VBAN has two separate risks: anyone can listen whenever the device sends "Not
+    // encrypted", and anyone can send sound into the PC whenever Starwire's receiver is set up to
+    // play plain VBAN, whichever option the device uses. The firewall rule covers every type of
+    // network, so SECURITY.md says that too.
+    @Test
+    public void theUnencryptedRisksAreKeptApart() throws Exception {
+        String security = flat(RepoFiles.read("SECURITY.md"));
+        assertTrue("SECURITY.md doesn't say Not encrypted can be listened to",
+                security.contains("sends plain VBAN, so anyone on the same network can listen to the microphone."));
+        assertTrue("SECURITY.md ties sound sent into the PC to the device's option",
+                security.contains("whichever option your device uses"));
+        String setup = RepoFiles.read("windows/setup-microphone.ps1");
+        assertTrue("the setup's firewall rule no longer applies on every network type", setup.contains("-Profile Any"));
+        assertTrue("SECURITY.md doesn't say the firewall rule applies on public Wi-Fi",
+                security.contains("firewall rule applies on every type of network Windows knows about, public Wi-Fi included"));
+
+        String allow = "Starwire's receiver only plays plain VBAN if you set it up with `-AllowUnencrypted`";
+        assertTrue("the setup has no -AllowUnencrypted", setup.contains("[switch]$AllowUnencrypted"));
+        assertTrue("the receiver has no --allow-unencrypted",
+                RepoFiles.read("windows/StarwireMicReceiver.cs").contains("--allow-unencrypted"));
+        for (String path : new String[] {"README.md", "SECURITY.md"}) {
+            assertTrue(path + " doesn't say when the receiver plays plain VBAN", flat(RepoFiles.read(path)).contains(allow));
+        }
+    }
+
+    // The guide's upload figure is worked out from the protocol's packet size, not measured, and
+    // says so
+    @Test
+    public void theEncryptedUploadFigureIsWorkedOut() throws Exception {
+        assertTrue("mic-protocol.md no longer gives the 584-byte packet",
+                RepoFiles.read("docs/dev/mic-protocol.md").contains("584 for Starwire's 540-byte packets"));
+        double mbps = (584 + 8 + 20) * 187.5 * 8 / 1e6; // with UDP and IPv4 headers, 187.5 a second
+        String guide = flat(RepoFiles.read("windows/README.md"));
+        String figure = String.format(Locale.ROOT, "**About %.2f Mbps**", mbps);
+        assertTrue("the guide doesn't give " + figure, guide.contains(figure));
+        assertTrue("the guide doesn't say the figure isn't measured", guide.contains("That's worked out, not measured yet."));
     }
 }
