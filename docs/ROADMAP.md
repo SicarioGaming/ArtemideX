@@ -196,8 +196,8 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       account name and the PC's name were taken out of the maintainer's commits first. Also:
       every prebuilt library is traced to its source and rebuilt byte for byte on GitHub
       (`docs/PROVENANCE.md`, `prebuilts.yml`), the 0.2.0 mic measurements are published with
-      their raw data and a script that recomputes them (`docs/measurements/`), untested claims
-      came out of the README and the release pages, `SECURITY.md` (with private vulnerability
+      their raw data and a script that recomputes them (`docs/measurements/`), the README and the
+      release pages say plainly which features are experimental, `SECURITY.md` (with private vulnerability
       reporting) and `CONTRIBUTING.md` were added, and `.github/tools/check-publish.sh` keeps
       secrets and personal details out of anything pushed to the public repo. This part is
       already live; it didn't need a release
