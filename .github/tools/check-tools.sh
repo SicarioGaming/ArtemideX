@@ -258,6 +258,22 @@ if grep -q uninstall "$work/all-calls"; then fail "device-test.sh uninstalled so
 rm -rf "$work"
 ok "device-test.sh refuses listed devices, checks before it installs, guards monkey, and filters tests"
 
+# 9. Every action the workflows use is pinned to a full commit hash with its release in a
+# comment, and each action to the same commit in every workflow
+begin
+while IFS= read -r line; do
+    use=$(sed -E 's/^[^:]*:[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]*//' <<< "$line")
+    case "$use" in ./*) continue ;; esac   # a workflow in this repo
+    if ! [[ "$use" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_./-]+@[0-9a-f]{40}\ \#\ v[0-9]+(\.[0-9]+)*$ ]]; then
+        fail "${line%%:*}: $use isn't pinned to a full commit hash with its version in a comment"
+    fi
+done < <(grep -HE '^[[:space:]]*(-[[:space:]]+)?uses:' .github/workflows/*.yml)
+for action in $(grep -hoE 'uses:[[:space:]]*[^ ]+@[0-9a-f]{40}' .github/workflows/*.yml | sed -E 's/uses:[[:space:]]*//' |
+        sort -u | cut -d@ -f1 | uniq -d); do
+    fail "$action is pinned to different commits in different workflows"
+done
+ok "the workflows' actions are pinned to commits"
+
 if [ $failures -ne 0 ]; then
     echo "$failures problem(s)" >&2
     exit 1
