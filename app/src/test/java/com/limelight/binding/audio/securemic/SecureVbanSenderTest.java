@@ -4,24 +4,33 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * The encrypted microphone sender on a pretend network and clock: when HELLOs go out, that no
  * audio goes before the receiver answers, which answers count, what the user is told, that
  * counters only go up and never wrap, that the receiver gets back exactly the VBAN stream of what
- * was recorded, and that it recovers when the receiver restarts.
+ * was recorded, that it recovers when the receiver restarts, and that answers recorded earlier
+ * never make it use a key and nonce twice.
  */
 public class SecureVbanSenderTest {
     private final FakeNetwork net = new FakeNetwork();
     private final List<long[]> statuses = new ArrayList<>();
+    // The receiver's HELLO_ACKs, in order, as someone on the network could record them
+    private final List<byte[]> answers = new ArrayList<>();
     private SwmcTestReceiver receiver;
     private SecureVbanSender sender;
 
@@ -48,7 +57,76 @@ public class SecureVbanSenderTest {
     // A receiver that answers what the sender sends
     private void connectReceiver() throws Exception {
         receiver = new SwmcTestReceiver(SwmcVectors.PAIR_KEY, SwmcVectors.DEVICE_ID, 99);
-        net.responder = (sent, now) -> receiver.handle(sent, sent.length);
+        net.responder = (sent, now) -> {
+            byte[] answer = receiver.handle(sent, sent.length);
+            if (answer != null && SwmcCodec.typeOf(answer, answer.length) == SwmcCodec.TYPE_HELLO_ACK) {
+                answers.add(answer);
+            }
+            return answer;
+        };
+    }
+
+    // Someone on the network sends the sender a packet they recorded
+    private void replay(byte[] recorded) {
+        net.deliver(net.now + 1, recorded);
+        runUntil(net.now + 5);
+    }
+
+    // The key each audio packet was sealed with, in order, named clientRandom/sessionId: found by
+    // opening the packet with the key of each HELLO the sender sent
+    private List<String> audioKeys() throws Exception {
+        Map<String, byte[]> clientRandoms = new LinkedHashMap<>();
+        for (FakeNetwork.Sent s : net.ofType(SwmcCodec.TYPE_HELLO)) {
+            clientRandoms.put(SwmcVectors.hex(s.bytes, 16, 8), Arrays.copyOfRange(s.bytes, 16, 24));
+        }
+        Map<String, Aead> aeads = new HashMap<>();
+        byte[] vban = new byte[2048];
+        List<String> keys = new ArrayList<>();
+        for (FakeNetwork.Sent s : net.ofType(SwmcCodec.TYPE_AUDIO)) {
+            byte[] sessionId = Arrays.copyOfRange(s.bytes, 16, 24);
+            String key = null;
+            for (Map.Entry<String, byte[]> c : clientRandoms.entrySet()) {
+                String name = c.getKey() + "/" + SwmcVectors.hex(sessionId);
+                Aead aead = aeads.get(name);
+                if (aead == null) {
+                    aead = new Aead(SwmcCodec.audioKey(SwmcVectors.PAIR_KEY, SwmcVectors.DEVICE_ID, c.getValue(), sessionId));
+                    aeads.put(name, aead);
+                }
+                if (SwmcCodec.openAudio(aead, s.bytes, s.bytes.length, vban) >= 0) {
+                    key = name;
+                }
+            }
+            assertNotNull("sealed with the key of one of the sender's HELLOs", key);
+            keys.add(key);
+        }
+        return keys;
+    }
+
+    // Across everything the sender sent, no key and nonce were used twice, and once audio moved
+    // on to a new key it never went back to an old one. Returns the keys in the order used.
+    private List<String> assertNoKeyAndNonceUsedTwice() throws Exception {
+        List<FakeNetwork.Sent> audio = net.ofType(SwmcCodec.TYPE_AUDIO);
+        List<String> keys = audioKeys();
+        Set<String> used = new HashSet<>();
+        List<String> order = new ArrayList<>();
+        for (int i = 0; i < audio.size(); i++) {
+            String key = keys.get(i);
+            String nonce = SwmcVectors.hex(audio.get(i).bytes, 16, 12);
+            assertTrue("key " + key + " and nonce " + nonce + " used twice, at " + audio.get(i).at, used.add(key + " " + nonce));
+            if (order.isEmpty() || !order.get(order.size() - 1).equals(key)) {
+                assertFalse("went back to key " + key + " at " + audio.get(i).at, order.contains(key));
+                order.add(key);
+            }
+        }
+        return order;
+    }
+
+    private static List<Long> counters(long... values) {
+        List<Long> out = new ArrayList<>();
+        for (long v : values) {
+            out.add(v);
+        }
+        return out;
     }
 
     // What the sender's own thread does, with the pretend clock
@@ -358,6 +436,137 @@ public class SecureVbanSenderTest {
         }
         assertEquals(Arrays.asList(0L, 100L, 350L, 600L, 850L, 1100L, 1350L, 1600L, 1850L, 2100L, 4100L, 6100L, 8100L),
                 helloTimes());
+    }
+
+    // The receiver restarts while it says "no output", so the HELLO the sender repeats gets a
+    // second session. Someone who recorded the first answer sends it back, then the second one.
+    // Neither may start its key again at counter 0: the sender asks with a new HELLO instead
+    @Test
+    public void aSecondAnswerToTheSameHelloNeverReusesAKey() throws Exception {
+        secondAnswerToTheFirstHello(SwmcCodec.STATUS_NO_OUTPUT);
+    }
+
+    // The same with the PC ready, so the sender doesn't repeat its HELLO: someone who recorded it
+    // sends it to the restarted receiver themselves, and gives the sender the answer
+    @Test
+    public void aReplayedHelloAndItsOldAnswersNeverReuseAKey() throws Exception {
+        secondAnswerToTheFirstHello(SwmcCodec.STATUS_READY);
+    }
+
+    private void secondAnswerToTheFirstHello(int status) throws Exception {
+        sender(12);
+        connectReceiver();
+        receiver.status = status;
+        assertEquals(0, sender.open());
+        runUntil(10);
+        writePackets(3);
+        byte[] hello1 = net.ofType(SwmcCodec.TYPE_HELLO).get(0).bytes;
+        byte[] answerA = answers.get(0);
+
+        // The receiver restarts before any REHELLO gets through (the microphone was quiet, or
+        // someone used them up), and the first HELLO is answered again with a new session
+        receiver.restart();
+        if (status == SwmcCodec.STATUS_READY) {
+            byte[] stolen = receiver.handle(hello1, hello1.length);
+            answers.add(stolen);
+            net.deliver(net.now + 1, stolen);
+        }
+        runUntil(2010);
+        byte[] answerB = answers.get(1);
+        assertArrayEquals("an answer to the first HELLO", Arrays.copyOfRange(answerA, 16, 24), Arrays.copyOfRange(answerB, 16, 24));
+        assertFalse("with another session", Arrays.equals(Arrays.copyOfRange(answerA, 24, 32), Arrays.copyOfRange(answerB, 24, 32)));
+        writePackets(3);
+
+        // The recorded answers come back in turn: the first, the second (after the session that
+        // came next), and the current one again
+        replay(answerA);
+        writePackets(3);
+        replay(answerB);
+        writePackets(3);
+        replay(answers.get(answers.size() - 1));
+        writePackets(3);
+
+        List<String> keys = assertNoKeyAndNonceUsedTwice();
+        assertEquals("the first session, then the new HELLO's", 2, keys.size());
+        // And it got going again by itself: everything since the restart played, in one session
+        // that the restarted receiver knows, its counter carrying on through the replays
+        assertEquals(counters(0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), receiver.playedCounters);
+        assertEquals(0, receiver.unknownSession + receiver.replayedOrLate + receiver.forged);
+        List<FakeNetwork.Sent> audio = net.ofType(SwmcCodec.TYPE_AUDIO);
+        byte[] current = answers.get(answers.size() - 1);
+        assertArrayEquals(Arrays.copyOfRange(current, 24, 32), Arrays.copyOfRange(audio.get(audio.size() - 1).bytes, 16, 24));
+        int want = status == SwmcCodec.STATUS_READY ? SecureVbanSender.STATUS_SENDING : SecureVbanSender.STATUS_NO_OUTPUT;
+        assertEquals(want, statuses.get(statuses.size() - 1)[1]);
+    }
+
+    // After real restarts (REHELLO, then a new HELLO), answers to earlier HELLOs change nothing,
+    // whenever they come: before the new answer, after a later session, or the current one again
+    @Test
+    public void oldAnswersAfterARestartChangeNothing() throws Exception {
+        sender(13);
+        connectReceiver();
+        assertEquals(0, sender.open());
+        runUntil(10);
+        writePackets(3);
+        byte[] answerA = answers.get(0);
+
+        // The first answer comes back between the new HELLO and its answer
+        receiver.restart();
+        net.latencyMs = 20;
+        long t = net.now;
+        writePackets(2);
+        net.deliver(t + 30, answerA);
+        runUntil(t + 50);
+        net.latencyMs = 1;
+        assertEquals(2, helloTimes().size());
+        assertEquals(2, answers.size());
+        byte[] answerB = answers.get(1);
+        writePackets(3);
+
+        // Another restart, more than 2 s later; then the older answers, and the current one again
+        runUntil(3000);
+        receiver.restart();
+        writePackets(2);
+        runUntil(3010);
+        assertEquals(3, helloTimes().size());
+        byte[] answerC = answers.get(2);
+        writePackets(3);
+        replay(answerB);
+        writePackets(3);
+        replay(answerA);
+        writePackets(3);
+        replay(answerC);
+        writePackets(3);
+
+        assertEquals(3, assertNoKeyAndNonceUsedTwice().size());
+        assertEquals(counters(0, 1, 2, 0, 1, 2, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), receiver.playedCounters);
+        assertEquals(3, receiver.playedSessions.stream().distinct().count());
+        assertEquals(SecureVbanSender.STATUS_SENDING, statuses.get(statuses.size() - 1)[1]);
+    }
+
+    // A used-up counter ends the session. If its answer comes again before the receive thread has
+    // made the new HELLO, that key mustn't start again
+    @Test
+    public void anOldAnswerAfterTheCounterRanOutDoesntStartItsKeyAgain() throws Exception {
+        sender(14);
+        connectReceiver();
+        sender.setFirstCounter(0xFFFFFFFEL);
+        assertEquals(0, sender.open());
+        runUntil(10);
+        writePackets(3);
+        assertEquals(2, net.ofType(SwmcCodec.TYPE_AUDIO).size());
+
+        byte[] answer = answers.get(0);
+        sender.onDatagram(answer.clone(), answer.length);
+        writePackets(1);
+        runUntil(20);
+        writePackets(1);
+
+        assertEquals(2, assertNoKeyAndNonceUsedTwice().size());
+        assertEquals(2, helloTimes().size());
+        assertEquals(3, net.ofType(SwmcCodec.TYPE_AUDIO).size());
+        assertEquals(2, sender.droppedPackets());
+        assertEquals(3, receiver.played.size());
     }
 
     @Test
