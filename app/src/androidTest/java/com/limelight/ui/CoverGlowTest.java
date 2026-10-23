@@ -313,7 +313,9 @@ public class CoverGlowTest {
                     android.view.KeyEvent.KEYCODE_DPAD_DOWN));
             save(root, target, "menu_overlay.png");
 
-            // Every row of tools is laid out and inside the visible part of the grid
+            // Every row of tools is laid out. Where they don't all fit (a phone, a Fold's cover
+            // screen), the grid fades out at the bottom to show there's more, and scrolls far
+            // enough to show the last row whole.
             android.widget.ScrollView grid = findFirst(menu, android.widget.ScrollView.class);
             ViewGroup rows = (ViewGroup) grid.getChildAt(0);
             StringBuilder layout = new StringBuilder("scroll h=" + grid.getHeight() + " content h=" + rows.getHeight() + ";");
@@ -324,7 +326,16 @@ public class CoverGlowTest {
                         .append(" first h=").append(((ViewGroup) row).getChildAt(0).getHeight()).append(';');
             }
             View last = rows.getChildAt(rows.getChildCount() - 1);
-            assertTrue(layout.toString(), last.getHeight() > 0 && last.getBottom() <= grid.getHeight());
+            assertTrue(layout.toString(), last.getHeight() > 0);
+            if (rows.getHeight() <= grid.getHeight()) {
+                assertTrue(layout.toString(), last.getBottom() <= grid.getHeight());
+            }
+            else {
+                assertTrue("nothing shows there are more tools; " + layout, grid.getVerticalFadingEdgeLength() > 0);
+                grid.scrollTo(0, rows.getHeight());
+                assertTrue("can't scroll to the last row; " + layout, last.getTop() >= grid.getScrollY()
+                        && last.getBottom() <= grid.getScrollY() + grid.getHeight());
+            }
         });
     }
 

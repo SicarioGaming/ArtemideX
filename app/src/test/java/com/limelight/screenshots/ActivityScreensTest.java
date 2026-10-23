@@ -207,6 +207,29 @@ public class ActivityScreensTest {
             }
         }
         capture(frame, "streamMenu");
+        for (int i = 0; i < menu.getChildCount(); i++) {
+            if (menu.getChildAt(i) instanceof ScrollView) {
+                assertScrollsToEveryRow((ScrollView) menu.getChildAt(i));
+            }
+        }
+    }
+
+    // On a short screen the tools take more room than the sheet has (the emulator matrix found it
+    // on a small phone and a Fold's cover screen). The grid then fades out at the bottom, so the
+    // cut-off row reads as more to scroll to, and it scrolls far enough to show its last row.
+    private static void assertScrollsToEveryRow(ScrollView grid) {
+        ViewGroup rows = (ViewGroup) grid.getChildAt(0);
+        View last = rows.getChildAt(rows.getChildCount() - 1);
+        assertTrue("the last row of tools isn't laid out", last.getHeight() > 0);
+        if (rows.getHeight() <= grid.getHeight()) {
+            assertTrue("the last row of tools is cut off", last.getBottom() <= grid.getHeight());
+            return;
+        }
+        assertTrue("nothing shows there are more tools below", grid.getVerticalFadingEdgeLength() > 0);
+        grid.scrollTo(0, rows.getHeight());
+        assertTrue("the last row of tools can't be scrolled into view", last.getTop() >= grid.getScrollY()
+                && last.getBottom() <= grid.getScrollY() + grid.getHeight());
+        grid.scrollTo(0, 0);
     }
 
     // Every label breaks only between words (or after "-" or "/") and shows whole

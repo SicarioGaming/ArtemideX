@@ -44,6 +44,9 @@ public class OverlayMenuView extends LinearLayout {
     private static final int MIN_COLUMNS = 2;
     // Shortcut and monitor names are longer, so their pages use wider tiles
     private static final int PAGE_COLUMNS = 2;
+    // How far the grid fades out where it has more to scroll to. A small handheld's grid still
+    // has room for a whole row between a fade at each end.
+    private static final int GRID_FADE_DP = 32;
     private static final float ANALOG_STICK_THRESHOLD = 0.5f;
     private static final long ANALOG_NAV_THROTTLE_MS = 200;
 
@@ -274,9 +277,13 @@ public class OverlayMenuView extends LinearLayout {
         header.addView(texts, textParams);
         addView(header, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        // The tools grid scrolls when it doesn't fit
+        // The tools grid scrolls when it doesn't fit (on a phone, a Fold's cover screen, or with
+        // custom commands). It fades out at an edge with more tools beyond, so the cut-off row
+        // reads as more to scroll to.
         gridScroll = new ScrollView(context);
         gridScroll.setVerticalScrollBarEnabled(false);
+        gridScroll.setVerticalFadingEdgeEnabled(true);
+        gridScroll.setFadingEdgeLength(dp(GRID_FADE_DP));
         gridScroll.setFocusable(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             gridScroll.setDefaultFocusHighlightEnabled(false);
@@ -810,14 +817,31 @@ public class OverlayMenuView extends LinearLayout {
         // Focus doesn't scroll in touch mode (after the screen was touched), so bring the tile's
         // row into view explicitly
         View row = (View) tile.getParent();
-        int top = row.getTop(), bottom = row.getBottom();
-        int visibleTop = gridScroll.getScrollY(), visibleBottom = visibleTop + gridScroll.getHeight();
-        if (bottom > visibleBottom) {
-            gridScroll.smoothScrollTo(0, bottom - gridScroll.getHeight());
+        int scrollY = scrollToShow(row.getTop(), row.getBottom(), gridScroll.getScrollY(),
+            gridScroll.getHeight(), gridContainer.getHeight(), gridScroll.getVerticalFadingEdgeLength());
+        if (scrollY != gridScroll.getScrollY()) {
+            gridScroll.smoothScrollTo(0, scrollY);
         }
-        else if (top < visibleTop) {
-            gridScroll.smoothScrollTo(0, top);
+    }
+
+    // Where the grid scrolls to show the row from top to bottom: clear of the fade at an edge
+    // with more tools beyond, as ScrollView keeps a focused view clear of it. scrollY when the
+    // row already shows that way.
+    static int scrollToShow(int top, int bottom, int scrollY, int height, int contentHeight, int fade) {
+        if (top > 0) {
+            top -= fade;
         }
+        if (bottom < contentHeight) {
+            bottom += fade;
+        }
+        int target = scrollY;
+        if (bottom > scrollY + height) {
+            target = bottom - height;
+        }
+        else if (top < scrollY) {
+            target = top;
+        }
+        return Math.max(0, Math.min(target, contentHeight - height));
     }
 
     private void clearBarSelection() {
