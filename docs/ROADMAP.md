@@ -198,6 +198,21 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       JVM tests in `CustomVulkanDriverImportTest`, device tests in `CustomVulkanDriverTest`. A
       driver imported by 0.2.0 has no recorded SHA-256, so it has to be chosen again. Still not
       tried with a real Turnip driver
+- [x] Async decode's flush recovery never hands out a buffer from before the flush. One the
+      codec offered just before `flush()` was handed out after `start()` once, on the small
+      phone emulator, and failed with "index 0 is not owned by client". JVM tests in
+      `AsyncCodecFlushTest`; `AsyncDecodeTest` passed its flush recovery 25 times in a row on
+      the RedMagic tablet
+- [x] With animations off, the game screen's endless animations (the glow, the floating
+      cover, the rainbow, the ring round the chosen game, the stars) stay still. Android 5 to
+      7.1 ran them every frame, so the screen never stopped redrawing and the Android 6
+      emulator's tests hung. Before Android 8 they also stop, not pause, while the screen is out
+      of sight, since a paused one there still wakes the CPU every frame. JVM tests in
+      `LoopsTest`. Not yet tried on a real Android 5 to 7.1 device or rerun on the emulator
+- [x] The in-stream menu's tools grid fades out at an edge with more tools to scroll to (a
+      phone, a Fold's cover screen, a small handheld), and the controller's selection stops
+      clear of the fade. Checked at every screen size in `ActivityScreensTest`, and in
+      `GridScrollTest`
 
 ## Open questions
 
