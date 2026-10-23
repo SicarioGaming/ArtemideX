@@ -38,10 +38,10 @@ like WO Mic or AudioRelay to open on your Android device each time.
 
 1. On the PC, download **Starwire-Microphone-for-Windows.zip** from the
    [latest release](https://github.com/SicarioGaming/Starwire/releases/latest), unzip it and
-   double-click `setup-microphone.cmd`. It needs nothing installed first: it downloads VB-Cable
-   from VB-Audio (and checks VB-Audio signed it), builds the receiver with the compiler that comes
-   with Windows, lets it through the firewall for local and private VPN addresses only, starts it
-   when you sign in and checks the virtual mic works. The receiver has no window, just an icon by
+   double-click `setup-microphone.cmd`. It needs nothing installed first: it builds the receiver
+   with the compiler that comes with Windows, downloads VB-Cable from VB-Audio if you don't have it
+   (and checks VB-Audio signed it), lets the receiver through the firewall for local and private VPN
+   addresses only, starts it when you sign in and checks the virtual mic works. The receiver has no window, just an icon by
    the clock. [Full guide](windows/README.md).
 2. In Discord or the game, choose **CABLE Output** as the microphone.
 3. In Starwire: **Settings → Sound & vibration → Send my microphone**.
@@ -57,11 +57,21 @@ tone for Discord's mic test or quit (or end it in Task Manager). Measured on my 
 16,880 packets in 90 seconds with none lost, the receiver's buffer holding at 30 to 50 ms, and
 about 0.85 Mbps of upload.
 
-The audio isn't encrypted, so Starwire only sends it to a PC on your local network or over a
-private VPN. If you want the mic encrypted, use [Tailscale](https://tailscale.com/) or something
-like it, which many of us already use to stream away from home. If your PC runs
-[logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can send it
-over the stream itself instead.
+**Please read this before you use it.** In 0.2.0 the microphone audio isn't encrypted or
+authenticated. Someone on the same network could listen to it, or send their own audio that
+plays into your PC's virtual mic. Starwire and the receiver only check that addresses are private
+(local network or VPN), and that isn't a security boundary: everyone on your network has a
+private address, and the sender's address is easy to fake. Until the fix ships:
+
+- Use it only on a network you trust, like your own home network, or over
+  [Tailscale](https://tailscale.com/) or a VPN like it, which encrypts the audio on the way.
+- On a shared network (a dorm, office, hotel or LAN party), quit the receiver, even if you use
+  Tailscale: right-click its icon by the clock, then **Quit**. It starts again the next time you
+  sign in to Windows; the [guide](windows/README.md) says how to stop that.
+
+I'm working on a fix. [SECURITY.md](SECURITY.md) has the details. If your PC runs
+[logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can send the
+mic over the stream itself instead.
 
 <details>
 <summary><b>How it works and what I measured</b></summary>
@@ -75,8 +85,8 @@ and 256 samples per packet, 187.5 packets a second. It sends to the PC you're st
 there's nothing to type in, and it doesn't ask the host for a mic channel.
 
 On the PC, `StarwireMicReceiver` (one C# file, built on your PC from the source in the zip)
-accepts packets only from local-network or private VPN addresses with the right stream name, and
-plays them into CABLE Input in 10 ms blocks. Playback starts once 40 ms is queued and never falls
+accepts packets from local-network or private VPN addresses with the right stream name (a filter,
+not a security check, as above), and plays them into CABLE Input in 10 ms blocks. Playback starts once 40 ms is queued and never falls
 more than 120 ms behind. The device's and the PC's clocks drift apart (60 ppm in my test), so when the buffer
 stays above 60 ms for 2 seconds it skips a block to keep the delay down.
 
@@ -87,8 +97,7 @@ stays above 60 ms for 2 seconds it skips a block to keep the delay down.
 </p>
 
 - On the PC alone, a packet takes about 107 to 119 ms to be heard on CABLE Output: 40 ms of
-  buffer, the rest Windows' audio path. I haven't measured the Android side yet. Swapping waveOut for
-  WASAPI should take a chunk off the PC side, and it's planned for the next release.
+  buffer, the rest Windows' audio path. I haven't measured the Android side yet.
 - Echo cancelling is whatever the device provides, and some Android devices only apply it to
   calls; headphones get around that.
 - The setup and receiver are Windows only for now. On Linux, PipeWire's VBAN receive module should
@@ -138,9 +147,10 @@ controller. Keyboard, full on-screen keyboard, mouse modes, zoom, key shortcuts,
 switching, bitrate, clipboard: it's all in one grid, and works with a controller too. Anything
 that turns on and off has a small switch, so you can see what's on at a glance.
 
-### ⚡ Fast and smooth
-A Vulkan renderer, the PyroWave codec, and low-latency options like Warp Drive, Fast V-Sync and
-async decoding for when every millisecond counts.
+### ⚡ Video options from other forks
+Moonlight X's Vulkan renderer and PyroWave codec, and the low-latency options from Artemis and
+Artemide: Warp Drive, Fast V-Sync and async decoding. I ported them, but I haven't measured how
+much each one saves in Starwire yet.
 
 </td>
 <td width="50%" valign="top">
@@ -190,18 +200,20 @@ set it up.
 
 ## Get started
 
-1. **Set up your PC.** I use [Vibepollo](https://github.com/Nonary/Vibepollo); it enables every
-   feature. [Apollo](https://github.com/ClassicOldSong/Apollo) works too, and
-   [Sunshine](https://github.com/LizardByte/Sunshine) works for everything except a few extras
-   (clipboard sharing, PC commands, Virtual Display and changing the bitrate mid-stream).
+1. **Set up your PC.** I use [Vibepollo](https://github.com/Nonary/Vibepollo), and it's the only
+   host I test with; it supports every feature. [Apollo](https://github.com/ClassicOldSong/Apollo)
+   and [Sunshine](https://github.com/LizardByte/Sunshine) should work too, since Vibepollo is built
+   on them, but I haven't tried them myself. Some extras need Vibepollo or an Apollo-based host,
+   and the feature tables below mark them. On Sunshine that means no clipboard sharing, PC
+   commands, Virtual Display, changing the bitrate mid-stream or hiding the PC cursor.
 2. **Install Starwire.** Download the latest `Starwire-…apk` from the
    [Releases page](https://github.com/SicarioGaming/Starwire/releases) and open it.
 3. **Pair.** Tap your PC, then type the PIN Starwire shows into your host's PIN page (usually
    `https://localhost:47990`). You only do this once.
 4. **Play.** Tap a game, then **Play**.
 
-Android 5.0+. PyroWave and the custom Turnip driver need a 64-bit ARM device. Updates from the
-Releases page install over the top and keep your settings, and
+Android 5.0+. PyroWave and the experimental custom Turnip driver option need a 64-bit ARM device.
+Updates from the Releases page install over the top and keep your settings, and
 [Obtainium](https://github.com/ImranR98/Obtainium) can keep it updated for you.
 
 ## Development
@@ -210,8 +222,11 @@ I made Starwire as a vibecoding exercise after experiencing the wonderful softwa
 Vibepollo. I decided what the app should do and how it should look, and
 [Claude Code](https://claude.com/claude-code) wrote the code. I also
 used [REA](https://github.com/morluto/rea) by morluto to look inside the other apps and see how
-their features work. Every feature is tested on my RedMagic Astra with a GameSir G8+ and on my
-Galaxy Z Fold 6 before it goes in.
+their features work. I test on my RedMagic Astra (Snapdragon 8 Elite, Android 16) with a GameSir
+G8+, streaming from Vibepollo, and on my Galaxy Z Fold 6. There are 111 on-device tests in
+`app/src/androidTest` that run on the tablet. Some things haven't been tried yet: the custom
+Turnip driver option with a real Turnip driver, and hosts other than Vibepollo.
+[CONTRIBUTING.md](CONTRIBUTING.md) says how to build Starwire and run the tests.
 
 ## Changelog
 
@@ -307,7 +322,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Feature | Source |
 | --- | --- |
 | Vulkan renderer with host frame timing, PyroWave codec | From Moonlight X (MoreOrLessSoftware) |
-| Custom Vulkan driver (Turnip) for PyroWave | Ported from Moonlight X Turnip (ncpt / NoCrypt), uses libadrenotools (Billy Laws / bylaws). Starwire rebuilds libadrenotools from source, refuses files that aren't 64-bit ARM libraries, and falls back to the system driver if the custom one can't run PyroWave |
+| Custom Vulkan driver (Turnip) for PyroWave: experimental and off by default, and not yet tried with a real Turnip driver | Ported from Moonlight X Turnip (ncpt / NoCrypt), uses libadrenotools (Billy Laws / bylaws). The libadrenotools libraries in the repo were built from the upstream commit in `SOURCE`, not copied from the fork. Starwire refuses files that aren't 64-bit ARM libraries, and goes back to the system driver when one can't load or can't run PyroWave (tested with a broken file, not a real driver) |
 | Warp Drive / Warp 2 frame pacing (2x / 4x FPS from the PC, newest frame shown) | Ported from Artemis (Yukino Song), via Artemide |
 | Fast V-Sync (Artemide's Nano Pacer) | Ported from Artemide (derflacco) |
 | V-Sync (one setting: Off, V-Sync, Fast V-Sync) | V-Sync for the direct renderer is new in Starwire; Fast V-Sync as above |
@@ -331,10 +346,10 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Audio haptics: the game's bass becomes vibration on the device and/or the controller | Idea from Moonlight V+ (qiin2333); written new for Starwire |
 | Hide PC cursor (never / while touching / always) **(Vibepollo)** | New in Starwire |
 | Long-press to right-click in gaming trackpad mode | New in Starwire |
-| Settings, the game screen and the stream menu fit every Android device, down to narrow screens like a Galaxy Z Fold's cover screen; the game screen's header scrolls away with the covers | New in Starwire |
+| Settings, the game screen and the stream menu fit more Android devices, down to narrow screens like a Galaxy Z Fold's cover screen; the game screen's header scrolls away with the covers | New in Starwire |
 | An "Impact:" line under settings that change latency, smoothness, picture quality or battery | New in Starwire |
 | On a foldable's inner screen, the stream follows the device instead of forcing landscape | Idea from [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) (sblocktechnologies) and [moonlight-android#1613](https://github.com/moonlight-stream/moonlight-android/pull/1613) |
-| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable (local network or private VPN only). The receiver has no window, just an icon by the clock with a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
+| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable. Not encrypted or authenticated in 0.2.0, so only for networks you trust ([see above](#new-in-020-your-microphone-on-the-pc-with-any-host)). The receiver has no window, just an icon by the clock with a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
 | Or send it over the stream itself, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)); echo-cancelled capture is new in Starwire |
 | Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
 
@@ -382,15 +397,18 @@ If I've credited something wrongly or missed you, please let me know.
 
 Bug reports and ideas are very welcome as a
 [GitHub issue](https://github.com/SicarioGaming/Starwire/issues) or in
-[Discussions](https://github.com/SicarioGaming/Starwire/discussions).
+[Discussions](https://github.com/SicarioGaming/Starwire/discussions). For a security problem, see
+[SECURITY.md](SECURITY.md) first.
 
 ## More details
 
 <details>
 <summary><b>Device support</b></summary>
 
-Android 5.0 or newer, on any CPU type. Some features need a recent device (async decoding, the
-Vulkan renderer), and PyroWave and the custom Turnip driver need a 64-bit ARM device
+Starwire is built for Android 5.0 or newer, on any CPU type (64-bit and 32-bit ARM, and x86),
+but the devices I test on run recent Android, so older versions haven't been tried. If something
+breaks on yours, please open an issue. Some features need a recent device (async decoding, the
+Vulkan renderer), and PyroWave and the custom Turnip driver option need a 64-bit ARM device
 (`arm64-v8a`), since their libraries are only built for that. Updates install over the top with
 your settings kept, as long as they come from these releases. Tools such as
 [Obtainium](https://github.com/ImranR98/Obtainium) can keep it updated straight from the
@@ -402,10 +420,39 @@ stream instead needs logabell's Apollo build on the PC.
 </details>
 
 <details>
+<summary><b>Check your download</b></summary>
+
+Every Starwire release is signed with the same certificate. To check an APK before you install
+it, use [AppVerifier](https://github.com/soupslurpr/AppVerifier) with:
+
+```
+com.starwire
+B6:04:1D:43:9F:28:4F:17:16:64:6F:C0:F9:80:F1:9A:76:17:8F:A7:04:D5:6F:50:34:D4:06:2A:D3:C1:3F:97
+```
+
+Or on a computer, with `apksigner` from the Android SDK's build tools:
+
+```bash
+apksigner verify --print-certs Starwire-0.2.0.apk
+```
+
+The `certificate SHA-256 digest` line should read
+`b6041d439f284f1716646fc0f980f19a76178fa704d56f5034d4062ad3c13f97`. That's the same
+fingerprint as above, in lower case without the colons.
+
+The Windows microphone zip isn't signed. GitHub lists each file's SHA-256 next to it on the
+release page; in PowerShell, `Get-FileHash .\Starwire-Microphone-for-Windows.zip` should print
+the same value.
+
+</details>
+
+<details>
 <summary><b>Building from source</b></summary>
 
-1. Install Android Studio, the Android NDK (the version in `app/build.gradle`) and a JDK 17 or
-   newer.
+1. Install Android Studio (or just the Android SDK), a JDK 17 or newer (Android Studio comes with
+   one), and the exact NDK version in `app/build.gradle`, currently 29.0.14206865. In Android
+   Studio that's **SDK Manager → SDK Tools → NDK (Side by side)** with **Show Package Details**
+   ticked; on the command line, `sdkmanager "ndk;29.0.14206865"`.
 2. Clone with the submodules:
    ```bash
    git clone --recursive https://github.com/SicarioGaming/Starwire.git
@@ -414,10 +461,13 @@ stream instead needs logabell's Apollo build on the PC.
    [moonlight-common-c](https://github.com/SicarioGaming/moonlight-common-c) (branch `main`),
    which adds the calls for PC commands and Prevent Packet Loss, and logabell's in-stream
    microphone.
-3. Create `local.properties` in the project folder with `ndk.dir=` set to your NDK folder.
+3. Tell Gradle where the Android SDK is: Android Studio writes `local.properties` with `sdk.dir=`
+   when you open the project, or you can set `ANDROID_HOME`. Gradle finds the NDK inside the SDK
+   folder.
 4. Build a debug APK with `./gradlew assembleNonRootDebug`. It installs as "Starwire (Debug)"
-   (`com.starwire.debug`).
-5. On-device tests: `./gradlew connectedNonRootDebugAndroidTest`.
+   (`com.starwire.debug`), next to the release app.
+5. On-device tests: `./gradlew connectedNonRootDebugAndroidTest`, with one Android device
+   connected over adb. [CONTRIBUTING.md](CONTRIBUTING.md) has more on the tests.
 
 **Signed release builds** use a key that's never committed. Put its details in
 `keystore.properties` in the project folder (it's in `.gitignore`):
@@ -433,8 +483,23 @@ or set `STARWIRE_KEYSTORE`, `STARWIRE_KEYSTORE_PASSWORD`, `STARWIRE_KEY_ALIAS` a
 `STARWIRE_KEY_PASSWORD`. Then run `./gradlew assembleNonRootRelease`. Without a key, release
 builds come out unsigned.
 
-The libadrenotools and PyroWave libraries are included prebuilt, with the scripts that build
-them from their upstream source next to them.
+**Prebuilt libraries.** Gradle builds moonlight-common-c, the Vulkan renderer and the rest of
+Starwire's native code from source. A few parts are committed already built instead:
+
+- `app/src/main/jni/pyrowave/lib`: PyroWave, 64-bit ARM only. This is Moonlight X's file,
+  unchanged. `SOURCE` names the upstream commit Moonlight X recorded for it.
+  `build_libpyrowave.sh` builds that commit, but with the newer NDK this repo uses, so the
+  result isn't byte-for-byte the same file.
+- `app/src/main/jni/adrenotools/lib`: libadrenotools and its four hook libraries, 64-bit ARM
+  only, used only by the custom driver option. They were built with `build_libadrenotools.sh`
+  from the upstream commits in `SOURCE`. Rebuilt in a different folder, `libadrenotools.so`
+  comes out the same and the four hooks differ only in their 20-byte build ID, because the build
+  ID depends on the folder they were built in.
+- `app/src/main/jni/moonlight-core/opus` and `openssl`: static Opus and OpenSSL libraries, kept
+  as they are from Moonlight.
+
+The two scripts need CMake and Ninja, and `PYROWAVE_DIR` or `ADRENOTOOLS_DIR` set to your
+checkout of the upstream source.
 
 The microphone receiver for Windows and its setup script are in [`windows/`](windows). There's
 nothing to build there by hand: the setup compiles the receiver on the PC.
