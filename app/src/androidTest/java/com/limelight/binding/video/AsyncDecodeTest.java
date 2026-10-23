@@ -281,9 +281,13 @@ public class AsyncDecodeTest {
         try {
             assertDecodes(decoder, adapter, 0, 20);
 
-            // MediaCodecDecoderRenderer's flush recovery in async mode
+            // MediaCodecDecoderRenderer's flush recovery in async mode. Without resumeAfterFlush(),
+            // a buffer offered just before flush() was handed out after it once, and
+            // getInputBuffer() threw "index 0 is not owned by client" (AsyncCodecFlushTest
+            // plays that order every time).
             adapter.quiesceAndRelease(decoder, release);
             decoder.flush();
+            adapter.resumeAfterFlush();
             decoder.start();
 
             assertDecodes(decoder, adapter, 20, 40);

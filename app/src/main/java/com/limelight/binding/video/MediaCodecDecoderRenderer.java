@@ -996,8 +996,11 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
                     try {
                         videoDecoder.flush();
 
-                        // In async mode the codec only resumes its callbacks after start()
+                        // In async mode the codec only resumes its callbacks after start(). The
+                        // adapter takes buffers again only from then, so none from before the
+                        // flush is handed out.
                         if (useAsyncCodec) {
+                            asyncCodec.resumeAfterFlush();
                             videoDecoder.start();
                         }
                         codecRecoveryType.set(CR_RECOVERY_TYPE_NONE);

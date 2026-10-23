@@ -66,6 +66,17 @@ public final class AsyncCodecAdapter {
     private HandlerThread callbackThread;
     private volatile boolean callbackInstalled = false;
     private MediaCodec attachedCodec;
+
+    // Codec recovery shuts this between quiesceAndRelease() and the codec's next start(): a
+    // buffer index the callbacks deliver then belongs to the codec's session before the flush,
+    // stop or reset, which takes every buffer back, so it's dropped. Handing one out later fails
+    // with "index is not owned by client", or hands the same buffer out twice. Each attach and
+    // detach also starts a new generation, so a callback still running from before counts for
+    // nothing.
+    private final Object gate = new Object();
+    private boolean acceptingBuffers = true; // guarded by gate
+    private int generation; // guarded by gate
+    private volatile Handler callbackHandler;
     // ---- BufferInfo pool (avoid per-frame allocations) ----
     private final ArrayDeque<MediaCodec.BufferInfo> infoPool =
             new ArrayDeque<>(32);
@@ -219,8 +230,14 @@ public final class AsyncCodecAdapter {
     }
 
     // Quiescence cleanup used by codec recovery: release outstanding async-owned buffers and clear state.
-    // Does NOT detach callbacks or stop the callback thread.
+    // Does NOT detach callbacks or stop the callback thread. From here until resumeAfterFlush() or
+    // the next attach, the callbacks' buffers are dropped, so call it only right before flush(),
+    // stop(), reset() or release(), which take them all back.
     public void quiesceAndRelease(MediaCodec codec, OutputRelease release) {
+        // Shut first, then empty: a callback that got in before this has finished queueing
+        synchronized (gate) {
+            acceptingBuffers = false;
+        }
         try { inputQueue.clear(); } catch (Throwable ignored) { }
 
         try {
@@ -255,6 +272,33 @@ public final class AsyncCodecAdapter {
         lastOutputReadyNs = 0L;
     }
 
+    // Codec recovery's flush: call after flush() and before start(). Callbacks the codec sent
+    // before the flush can still be waiting on the callback thread when flush() returns, so the
+    // buffers are let in again from that thread, behind them. What start() delivers comes after.
+    public void resumeAfterFlush() {
+        final int flushed;
+        synchronized (gate) {
+            flushed = generation;
+        }
+        // Unless a detach or attach came in between: then that one decides
+        final Runnable accept = () -> {
+            synchronized (gate) {
+                if (generation == flushed) {
+                    acceptingBuffers = true;
+                }
+            }
+        };
+        final Handler handler = callbackHandler;
+        if (handler == null || !handler.post(accept)) {
+            accept.run();
+        }
+    }
+
+    // Called with gate held
+    private boolean accepts(int callbackGeneration) {
+        return acceptingBuffers && callbackGeneration == generation;
+    }
+
     public void attachIfNeeded(final MediaCodec codec,
                                final int callbackOsPriority,
                                final Callbacks callbacks,
@@ -272,6 +316,16 @@ public final class AsyncCodecAdapter {
             try { detach(attachedCodec, release); } catch (Throwable ignored) { }
         }
 
+        // Ensure callback thread exists and is alive
+        if (callbackThread == null || !callbackThread.isAlive()) {
+            callbackThread = new HandlerThread("CodecAsync", callbackOsPriority);
+            callbackThread.start();
+        }
+
+        final Handler cb = new Handler(callbackThread.getLooper());
+        // A new generation before the reset, so the last attach's callbacks add nothing after it
+        final MediaCodec.Callback callback = newCallback(cb, callbacks, release);
+
         // Reset state before attaching
         try { inputQueue.clear(); } catch (Throwable ignored) { }
         try { outputQueue.clear(); } catch (Throwable ignored) { }
@@ -282,111 +336,13 @@ public final class AsyncCodecAdapter {
         }
         lastOutputReadyNs = 0L;
 
-        // Ensure callback thread exists and is alive
-        if (callbackThread == null || !callbackThread.isAlive()) {
-            callbackThread = new HandlerThread("CodecAsync", callbackOsPriority);
-            callbackThread.start();
-        }
-
-        final Handler cb = new Handler(callbackThread.getLooper());
-
         try {
-            codec.setCallback(new MediaCodec.Callback() {
-
-                @Override
-                public void onInputBufferAvailable(MediaCodec mc, int index) {
-                    try {
-                        // Never block the MediaCodec callback thread.
-                        if (!inputQueue.offer(index)) {
-                            inputQueue.poll();
-                            inputQueue.offer(index);
-                        }
-                    } catch (Throwable ignored) { }
-                }
-
-                @Override
-                public void onOutputBufferAvailable(MediaCodec mc, int index, MediaCodec.BufferInfo info) {
-                    final MediaCodec.BufferInfo copy = obtainInfo();
-                    copy.set(info.offset, info.size, info.presentationTimeUs, info.flags);
-
-                    boolean stored = false;
-                    try {
-                        final long readyNs = System.nanoTime();
-                        synchronized (outInfo) {
-                            // Defensive: recycle previous BufferInfo if the same index is reused.
-                            final MediaCodec.BufferInfo old = outInfo.get(index);
-                            if (old != null && old != copy) {
-                                recycleInfo(old);
-                            }
-
-                            outInfo.put(index, copy);
-                            outReadyNs.put(index, readyNs);
-                            stored = true;
-                        }
-
-                        // Prefer-lower-delays: keep only latest buffer for minimal latency.
-                        if (preferLowerDelays) {
-                            Integer oldIdx;
-                            while ((oldIdx = outputQueue.poll()) != null) {
-                                enqueueNoRenderReleaseOrReleaseNow(mc, oldIdx, release);
-                            }
-                            if (!outputQueue.offer(index)) {
-                                enqueueNoRenderReleaseOrReleaseNow(mc, index, release);
-                            }
-                            return;
-                        }
-
-                        // Managed profiles: bounded queue with drop-oldest policy.
-                        if (!outputQueue.offer(index)) {
-                            final Integer oldIdx = outputQueue.poll();
-                            if (oldIdx != null) {
-                                enqueueNoRenderReleaseOrReleaseNow(mc, oldIdx, release);
-                            }
-                            if (!outputQueue.offer(index)) {
-                                enqueueNoRenderReleaseOrReleaseNow(mc, index, release);
-                            }
-                        }
-                    } catch (Throwable t) {
-                        // Make sure we don't leak output buffers or BufferInfo objects.
-                        try {
-                            if (stored) {
-                                enqueueNoRenderReleaseOrReleaseNow(mc, index, release);
-                            } else {
-                                recycleInfo(copy);
-                                try {
-                                    if (release != null) {
-                                        release.releaseNoRender(mc, index);
-                                    } else {
-                                        mc.releaseOutputBuffer(index, false);
-                                    }
-                                } catch (Throwable ignored) { }
-                            }
-                        } catch (Throwable ignored) { }
-                    }
-                }
-
-                @Override
-                public void onOutputFormatChanged(MediaCodec mc, MediaFormat format) {
-                    try {
-                        if (callbacks != null) {
-                            callbacks.onOutputFormatChanged(mc, format);
-                        }
-                    } catch (Throwable ignored) { }
-                }
-
-                @Override
-                public void onError(MediaCodec mc, MediaCodec.CodecException e) {
-                    try {
-                        if (callbacks != null) {
-                            callbacks.onCodecError(mc, e);
-                        }
-                    } catch (Throwable ignored) { }
-                }
-            }, cb);
+            codec.setCallback(callback, cb);
         } catch (Throwable t) {
             // Failed to install callback: shut down thread to avoid leaks.
             try { callbackThread.quitSafely(); } catch (Throwable ignored) { }
             callbackThread = null;
+            callbackHandler = null;
             attachedCodec = null;
             callbackInstalled = false;
             return;
@@ -397,7 +353,132 @@ public final class AsyncCodecAdapter {
         callbackInstalled = true;
     }
 
+    // The codec callback for a new attach, delivering on handler; it lets buffers in again. Tests
+    // call it directly to play callbacks in a chosen order without a codec.
+    MediaCodec.Callback newCallback(Handler handler, final Callbacks callbacks, final OutputRelease release) {
+        final int callbackGeneration;
+        synchronized (gate) {
+            callbackGeneration = ++generation;
+            acceptingBuffers = true;
+        }
+        callbackHandler = handler;
+
+        return new MediaCodec.Callback() {
+
+            @Override
+            public void onInputBufferAvailable(MediaCodec mc, int index) {
+                synchronized (gate) {
+                    if (!accepts(callbackGeneration)) {
+                        return;
+                    }
+                    try {
+                        // Never block the MediaCodec callback thread.
+                        if (!inputQueue.offer(index)) {
+                            inputQueue.poll();
+                            inputQueue.offer(index);
+                        }
+                    } catch (Throwable ignored) { }
+                }
+            }
+
+            @Override
+            public void onOutputBufferAvailable(MediaCodec mc, int index, MediaCodec.BufferInfo info) {
+                synchronized (gate) {
+                    // The flush, stop or reset to come takes this buffer back
+                    if (accepts(callbackGeneration)) {
+                        queueOutput(mc, index, info, release);
+                    }
+                }
+            }
+
+            @Override
+            public void onOutputFormatChanged(MediaCodec mc, MediaFormat format) {
+                try {
+                    if (callbacks != null) {
+                        callbacks.onOutputFormatChanged(mc, format);
+                    }
+                } catch (Throwable ignored) { }
+            }
+
+            @Override
+            public void onError(MediaCodec mc, MediaCodec.CodecException e) {
+                try {
+                    if (callbacks != null) {
+                        callbacks.onCodecError(mc, e);
+                    }
+                } catch (Throwable ignored) { }
+            }
+        };
+    }
+
+    // The output callback's work: keep the buffer's info and queue its index for the renderer
+    private void queueOutput(MediaCodec mc, int index, MediaCodec.BufferInfo info, OutputRelease release) {
+        final MediaCodec.BufferInfo copy = obtainInfo();
+        copy.set(info.offset, info.size, info.presentationTimeUs, info.flags);
+
+        boolean stored = false;
+        try {
+            final long readyNs = System.nanoTime();
+            synchronized (outInfo) {
+                // Defensive: recycle previous BufferInfo if the same index is reused.
+                final MediaCodec.BufferInfo old = outInfo.get(index);
+                if (old != null && old != copy) {
+                    recycleInfo(old);
+                }
+
+                outInfo.put(index, copy);
+                outReadyNs.put(index, readyNs);
+                stored = true;
+            }
+
+            // Prefer-lower-delays: keep only latest buffer for minimal latency.
+            if (preferLowerDelays) {
+                Integer oldIdx;
+                while ((oldIdx = outputQueue.poll()) != null) {
+                    enqueueNoRenderReleaseOrReleaseNow(mc, oldIdx, release);
+                }
+                if (!outputQueue.offer(index)) {
+                    enqueueNoRenderReleaseOrReleaseNow(mc, index, release);
+                }
+                return;
+            }
+
+            // Managed profiles: bounded queue with drop-oldest policy.
+            if (!outputQueue.offer(index)) {
+                final Integer oldIdx = outputQueue.poll();
+                if (oldIdx != null) {
+                    enqueueNoRenderReleaseOrReleaseNow(mc, oldIdx, release);
+                }
+                if (!outputQueue.offer(index)) {
+                    enqueueNoRenderReleaseOrReleaseNow(mc, index, release);
+                }
+            }
+        } catch (Throwable t) {
+            // Make sure we don't leak output buffers or BufferInfo objects.
+            try {
+                if (stored) {
+                    enqueueNoRenderReleaseOrReleaseNow(mc, index, release);
+                } else {
+                    recycleInfo(copy);
+                    try {
+                        if (release != null) {
+                            release.releaseNoRender(mc, index);
+                        } else {
+                            mc.releaseOutputBuffer(index, false);
+                        }
+                    } catch (Throwable ignored) { }
+                }
+            } catch (Throwable ignored) { }
+        }
+    }
+
     public void detach(MediaCodec codec, OutputRelease release) {
+        // Nothing gets in after the queues are emptied below, until the next attach
+        synchronized (gate) {
+            generation++;
+            acceptingBuffers = false;
+        }
+
         // Avoid join deadlock if detach is accidentally called on the callback thread.
         final HandlerThread cbThread = callbackThread;
         if (cbThread != null && Thread.currentThread() == cbThread) {
