@@ -39,9 +39,11 @@ public class OverlayMenuButton extends LinearLayout {
     private static final int PADDING_DP = 12;
     private static final int TEXT_SIZE_SP = 12;
     private static final int CORNER_RADIUS_DP = 8;
-    // A tile's label: its size, the padding beside it and how many lines it may take
+    // A tile's label: its size, the padding beside it and how many lines it may take. With 4 dp
+    // a side (it was 8), "PC Commands" fits whole in a row of five on a tablet, so the tools still
+    // fit there without scrolling.
     static final int TILE_TEXT_SIZE_SP = 12;
-    static final int TILE_SIDE_PADDING_DP = 8;
+    static final int TILE_SIDE_PADDING_DP = 4;
     static final int TILE_LABEL_LINES = 2;
 
     private static final int DARK = 0xFF0B0F14;
