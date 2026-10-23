@@ -54,7 +54,8 @@ name.
 ### 🎮 Everything during a stream, one tap away
 Open the menu with the floating button, a three-finger tap or by holding Select on a
 controller. Keyboard, full on-screen keyboard, mouse modes, zoom, key shortcuts, monitor
-switching, bitrate, clipboard: it's all in one grid, and works with a controller too.
+switching, bitrate, clipboard: it's all in one grid, and works with a controller too. Anything
+that turns on and off has a small switch, so you can see what's on at a glance.
 
 ### ⚡ Fast and smooth
 A Vulkan renderer, the PyroWave codec, and low-latency options like Warp Drive, Fast V-Sync and
@@ -64,7 +65,7 @@ async decoding for when every millisecond counts.
 <td width="50%" valign="top">
 
 <img src="docs/images/stream_menu_aniimo.jpg" alt="The in-stream menu open over a game: the game's name, a grid of tools such as Keyboard, Full Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
-<sub>The in-stream menu over Aniimo on my tablet. Aniimo © Pawprint Studio.</sub>
+<sub>The in-stream menu over Aniimo on my tablet. Stats and the menu button are switched on. Aniimo © Pawprint Studio.</sub>
 
 </td>
 </tr>
@@ -89,6 +90,24 @@ every key, and the option to hide the PC's mouse pointer while you play.
 
 ### 📳 Feel the bass
 Audio haptics turns a game's bass into vibration on your device or controller.
+
+### 🎙 Your microphone on the PC
+Talk in game chat or Discord through your device's microphone, **with Vibepollo, Sunshine or
+Apollo as they are**. Starwire sends your voice to a small receiver on the PC, which plays it into
+VB-Cable, a free virtual microphone.
+
+1. On the PC, download **Starwire-Microphone-for-Windows.zip** from the
+   [latest release](https://github.com/SicarioGaming/Starwire/releases/latest), unzip it, and
+   double-click `setup-microphone.cmd`. It installs VB-Cable and the receiver (no window, just an
+   icon by the clock), starts it when you sign in and checks it works. [Full guide](windows/README.md).
+2. In Discord or the game, choose **CABLE Output** as the microphone.
+3. In Starwire: **Settings → Sound & vibration → Send my microphone**.
+
+Starwire turns on the device's echo cancelling and noise reduction where it has them. The audio
+isn't encrypted, so Starwire only sends it to a PC on your local network or over a private VPN
+like Tailscale. If your PC runs
+[logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can send it
+over the stream itself instead.
 
 </td>
 </tr>
@@ -126,6 +145,16 @@ their features work. Every feature is tested on my RedMagic Astra with a GameSir
 goes in.
 
 ## Changelog
+
+**2026/10/22:** [Version 0.2.0](https://github.com/SicarioGaming/Starwire/releases/tag/v0.2.0)
+sends your microphone to the PC with any host (Vibepollo, Sunshine, Apollo), through a small
+receiver and VB-Cable that one setup script installs. It also works on phones and foldables
+(settings were blank on narrow screens like a Galaxy Z Fold's cover screen, and the game screen's
+header now scrolls away), adds a short "Impact:" line to the settings that affect latency and
+performance, tidies the stream menu with on/off switches and a smaller floating button that
+also closes it, puts a Quit button beside Resume, gives each game without cover art its own
+Starwire tile, and fixes a crash when tapping a running Desktop tile. The release page has the full
+list.
 
 **2026/10/22:** [Version 0.1.2](https://github.com/SicarioGaming/Starwire/releases/tag/v0.1.2)
 has been released, and fixes an error that caused the client to crash upon loading the list of
@@ -224,6 +253,11 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Audio haptics: the game's bass becomes vibration on the device and/or the controller | Idea from Moonlight V+ (qiin2333); written new for Starwire |
 | Hide PC cursor (never / while touching / always) **(Vibepollo)** | New in Starwire |
 | Long-press to right-click in gaming trackpad mode | New in Starwire |
+| Settings, the game screen and the stream menu fit phones and foldables (a Galaxy Z Fold's cover screen); the game screen's header scrolls away with the covers | New in Starwire |
+| An "Impact:" line under settings that change latency, smoothness, picture quality or battery | New in Starwire |
+| On a foldable's inner screen, the stream follows the device instead of forcing landscape | Idea from [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) (sblocktechnologies) and [moonlight-android#1613](https://github.com/moonlight-stream/moonlight-android/pull/1613) |
+| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable (home network or private VPN only) | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
+| Or send it over the stream itself, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)); echo-cancelled capture is new in Starwire |
 | Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
 
 </details>
@@ -256,6 +290,7 @@ repos a star:
 | [Moonlight X Turnip](https://github.com/NoCrypt/moonlight-x-turnip) | ncpt (NoCrypt) | Custom Turnip Vulkan driver for PyroWave |
 | [Moonlight V+](https://github.com/qiin2333/moonlight-vplus) | qiin2333 | Ideas: bitrate mid-stream, audio haptics, 1% lows |
 | [Moonlit Artemis](https://github.com/4had45/moonlit-artemis) | Mohammad Forhad (4had45) | Ideas: monitor switcher, pinch to zoom anytime |
+| [Apollo microphone](https://github.com/logabell/apollo-microphone) | logabell | Microphone streaming: the Android capture and the protocol, and the Apollo build that receives it |
 | [PyroWave](https://github.com/Themaister/pyrowave) | Hans-Kristian Arntzen (Themaister) | The PyroWave codec (MIT) |
 | [libadrenotools](https://github.com/bylaws/libadrenotools) | Billy Laws (bylaws) | Loading a custom Adreno Vulkan driver (BSD-2-Clause) |
 | [Vibepollo](https://github.com/Nonary/Vibepollo) | Chase Payne (Nonary) | The host Starwire is developed with (fork of Apollo) |
