@@ -130,8 +130,9 @@ doesn't understand the new app, which says the receiver isn't answering.
   To stop it starting at sign-in, run the setup again with `-NoStartup` (see **Options and
   removal** below). That run still starts the receiver once if VB-Cable is ready, so quit it
   afterwards. `-Uninstall` removes it completely.
-- **Just under 1 Mbps** of upload while you stream, uncompressed: each encrypted packet is 584
-  bytes, 187.5 a second. 0.2.0's plain VBAN measured about 0.85 Mbps.
+- **About 0.92 Mbps** of upload while you stream, uncompressed, counting UDP and IPv4 headers:
+  each encrypted packet is 584 bytes, 187.5 a second. That's worked out, not measured yet. With
+  0.2.0's plain VBAN, the measured packets came to about 0.85 Mbps.
 - **If teammates hear the game,** wear headphones. Starwire turns on the device's echo
   cancelling and noise reduction where it has them, but some phones only cancel echo on calls.
 - **CABLE Input must never be your default speakers.** VB-Cable sometimes takes over when it

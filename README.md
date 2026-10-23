@@ -92,7 +92,9 @@ stay exactly as they are, and the mic starts and stops with the stream, with no 
 like WO Mic or AudioRelay to open on your Android device each time.
 
 <p align="center">
-<img src="docs/images/mic-signal-path.png" width="820" alt="Diagram of the microphone path: on Android, AudioRecord with echo cancelling and noise suppression feeds VbanSender, which sends 48 kHz 16-bit mono packets over UDP port 6980 to StarwireMicReceiver on the Windows PC, which plays them into VB-Cable's CABLE Input; Discord or the game records from CABLE Output. The Moonlight stream between Starwire and the host is unchanged.">
+<img src="docs/images/mic-signal-path.png" width="820" alt="Starwire 0.2.0's microphone path: on Android, AudioRecord with echo cancelling and noise suppression feeds VbanSender, which sends 48 kHz 16-bit mono packets over UDP port 6980 to StarwireMicReceiver on the Windows PC, which plays them into VB-Cable's CABLE Input; Discord or the game records from CABLE Output. The Moonlight stream between Starwire and the host is unchanged.">
+<br>
+<sub>This is 0.2.0's path. From 0.2.1 each VBAN packet travels encrypted inside Starwire's SWMC format, and the receiver only plays audio from devices you've paired, through WASAPI. How it works, below, has the details.</sub>
 </p>
 
 1. On the PC, download **Starwire-Microphone-for-Windows.zip** from the
@@ -132,7 +134,8 @@ need Tailscale or a VPN like it. Three things to know:
   typed it could pair instead of you.
 - **"Not encrypted"**, the option for Voicemeeter and other VBAN apps, sends plain VBAN, like 0.2.0
   did. Anyone on the same network can listen to that or send sound into it, so use it only on a
-  network you trust.
+  network you trust. Starwire's receiver only plays plain VBAN if you set it up with
+  `-AllowUnencrypted`, and then anyone on the network can send sound into it too.
 
 [SECURITY.md](SECURITY.md) says what the encryption protects against and what it doesn't. If your
 PC runs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can
@@ -163,7 +166,7 @@ On the Android device, Starwire records with `AudioRecord` using the `VOICE_COMM
 on the platform echo canceller and noise suppressor where the device has them. It reads 20 ms at a
 time and makes 48 kHz 16-bit mono PCM into VBAN packets: a 28-byte header and 256 samples per
 packet, 187.5 packets a second. Each one is encrypted inside Starwire's SWMC format (584 bytes
-with its header and tag) and sent over UDP (port 6980 by default); the Not encrypted option sends
+with its header and tag) and sent over UDP (port 6980 by default); the "Not encrypted" option sends
 the plain VBAN packets instead. It sends to the PC you're streaming from, so there's no address to
 type in, and it doesn't ask the host for a mic channel.
 
@@ -179,21 +182,21 @@ seconds, it skips 10 ms to keep the delay down (with waveOut, when it stays abov
 seconds).
 
 <p align="center">
-<img src="docs/images/mic-packet.png" width="820" alt="A real VBAN packet from the tablet's microphone as a hexdump, with each header field decoded: the VBAN marker, 48 kHz, 256 samples, mono, 16-bit PCM, the stream name Stream1 and the frame counter, followed by the receiver's rules for accepting and buffering packets.">
+<img src="docs/images/mic-packet.png" width="820" alt="A real VBAN packet from the tablet's microphone as a hexdump, with each header field decoded: the VBAN marker, 48 kHz, 256 samples, mono, 16-bit PCM, the stream name Stream1 and the frame counter, followed by the 0.2.0 receiver's rules for accepting and buffering packets.">
 <br>
 <img src="docs/images/mic-measured.png" width="820" alt="Measurements over 90 seconds of Wi-Fi: packet arrival against the ideal schedule (p50 10.9 ms, p99 21 ms, max 38 ms), the receiver's buffer replayed from those arrivals (no underruns, nothing dropped), CABLE Output's level with no dropouts, and the PC-side delay with and without the clock-drift fix.">
 <br>
-<sub>The packet and the chart are from 0.2.0, before the encryption. Two notes on the chart are rounded. Checked packet by packet, the network's own spread was 6.4 ms at p99 and 21.6 ms at worst, and the buffer dipped to 20 ms a few times but never ran dry. <a href="docs/measurements/2026-10-22-mic/">The data and the script</a> give every exact number.</sub>
+<sub>The packet, the receiver's rules and the chart are from 0.2.0, before the encryption. In 0.2.1 this VBAN packet travels encrypted inside SWMC. Two notes on the chart are rounded. Checked packet by packet, the network's own spread was 6.4 ms at p99 and 21.6 ms at worst, and the buffer dipped to 20 ms a few times but never ran dry. <a href="docs/measurements/2026-10-22-mic/">The data and the script</a> give every exact number.</sub>
 </p>
 
 - With 0.2.0's waveOut playback, on the PC alone, a packet took about 107 to 119 ms to be heard
   on CABLE Output: 40 ms of buffer, the rest Windows' audio path. With WASAPI in 0.2.1, in my
-  tests the median delay dropped from about 114 to 98 ms. I haven't measured the Android side
-  yet.
+  tests on the PC with recorded Wi-Fi timing, the median delay dropped from about 114 to 98 ms
+  (about 7 ms less with a steady clock). I haven't measured the Android side yet.
 - Echo cancelling is whatever the device provides, and some Android devices only apply it to
   calls; headphones get around that.
 - The setup and receiver are Windows only for now. On Linux, PipeWire's VBAN receive module should
-  take the Not encrypted option's stream (Stream1, UDP 6980), but I haven't tried it.
+  take the "Not encrypted" option's stream (Stream1, UDP 6980), but I haven't tried it.
 - The receiver starts when you sign in, not as a service, so it doesn't run on a PC sitting at the
   sign-in screen.
 

@@ -43,10 +43,13 @@ What it doesn't protect against:
 - The packet sizes and timing are visible, as with any encrypted stream.
 
 **Not encrypted**, another choice under **Send my microphone to** (for Voicemeeter and other
-VBAN apps), sends plain VBAN, which the receiver only plays if you set it up with
-`-AllowUnencrypted`. Then anyone on the same network can listen to the microphone, or send their
-own audio into the PC's virtual mic so Discord or the game hears it as you. Use it only on a
-network you trust.
+VBAN apps), sends plain VBAN, so anyone on the same network can listen to the microphone.
+
+Starwire's receiver only plays plain VBAN if you set it up with `-AllowUnencrypted`. Then, as with
+Voicemeeter or VBAN-Receptor, anyone on the network can send their own audio into the PC's virtual
+mic so Discord or the game hears it as you, whichever option your device uses. The receiver's
+firewall rule applies on every type of network Windows knows about, public Wi-Fi included. Use
+the "Not encrypted" option and `-AllowUnencrypted` only on a network you trust.
 
 Starwire 0.2.0 sent the microphone as plain VBAN, with no encryption or authentication. If you
 still use 0.2.0, update both the app and the PC setup, then pair once. The
