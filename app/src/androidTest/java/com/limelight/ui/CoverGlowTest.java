@@ -505,7 +505,8 @@ public class CoverGlowTest {
             // The cover row, with the icon tiles Starwire draws for these kinds of app
             FrameLayout container = root.findViewById(R.id.appFragmentContainer);
             LinearLayout row = new LinearLayout(context);
-            String[] names = {"Desktop", "Steam Big Picture", "Playnite", "RetroArch", "Netflix", "PowerShell"};
+            // Desktop, an app with its own icon, then games without cover art (each its own take)
+            String[] names = {"Desktop", "Steam Big Picture", "Hades II", "Celeste", "Balatro", "Hollow Knight", "Dredge", "Tunic"};
             for (int i = 0; i < names.length; i++) {
                 View item = inflater.inflate(R.layout.app_grid_item, row, false);
                 ((ImageView) item.findViewById(R.id.grid_image)).setImageDrawable(AppIcons.tile(context, names[i]));
@@ -513,7 +514,7 @@ public class CoverGlowTest {
                 label.setText(names[i]);
                 label.setGravity(android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
                 if (i == 0) {
-                    item.setForeground(new Rainbow.Ring(18 * d, 3 * d));
+                    item.setForeground(new Rainbow.Ring(26 * d, 3 * d));
                 }
                 else {
                     item.setAlpha(0.82f);

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow: each cover fades in and rises into place when the list first appears
+     (staggered from AppView, so they arrive one after another) -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="320"
+    android:interpolator="@android:anim/decelerate_interpolator">
+    <alpha
+        android:fromAlpha="0"
+        android:toAlpha="1" />
+    <translate
+        android:fromYDelta="12%"
+        android:toYDelta="0" />
+</set>

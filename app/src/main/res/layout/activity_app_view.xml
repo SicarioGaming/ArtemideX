@@ -147,21 +147,46 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="18dp">
 
-                        <Button
-                            android:id="@+id/heroPlay"
+                        <!-- Quit sits beside Play/Resume, so showing it never changes the
+                             header's height (CollapsingHeader relies on that) -->
+                        <LinearLayout
                             android:layout_width="wrap_content"
-                            android:layout_height="@dimen/cg_hero_button_height"
-                            android:background="@drawable/cg_pill_white"
-                            android:drawableStart="@drawable/cg_ic_play"
-                            android:drawablePadding="10dp"
-                            android:paddingStart="26dp"
-                            android:paddingEnd="30dp"
-                            android:stateListAnimator="@null"
-                            android:text="@string/cg_play"
-                            android:textAllCaps="false"
-                            android:textColor="#FF0B0F14"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/heroPlay"
+                                android:layout_width="wrap_content"
+                                android:layout_height="@dimen/cg_hero_button_height"
+                                android:background="@drawable/cg_pill_white"
+                                android:drawableStart="@drawable/cg_ic_play"
+                                android:drawablePadding="10dp"
+                                android:paddingStart="26dp"
+                                android:paddingEnd="30dp"
+                                android:stateListAnimator="@null"
+                                android:text="@string/cg_play"
+                                android:textAllCaps="false"
+                                android:textColor="#FF0B0F14"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <Button
+                                android:id="@+id/heroQuit"
+                                android:layout_width="wrap_content"
+                                android:layout_height="@dimen/cg_hero_button_height"
+                                android:layout_marginStart="10dp"
+                                android:background="@drawable/cg_pill_frosted"
+                                android:drawableStart="@drawable/ic_overlay_stop"
+                                android:drawablePadding="8dp"
+                                android:paddingStart="20dp"
+                                android:paddingEnd="24dp"
+                                android:stateListAnimator="@null"
+                                android:text="@string/cg_quit"
+                                android:textAllCaps="false"
+                                android:textColor="#FFFFFFFF"
+                                android:textSize="16sp"
+                                android:visibility="gone" />
+                        </LinearLayout>
 
                         <Button
                             android:id="@+id/heroSettings"

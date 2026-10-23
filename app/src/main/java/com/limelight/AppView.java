@@ -96,12 +96,13 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     private CoverImageView heroCover;
     private TextView heroLoaderText, heroLabel, heroTitle, miniTitle;
     private LinearLayout heroChips;
-    private Button heroPlay, miniPlay;
+    private Button heroPlay, heroQuit, miniPlay;
     private CollapsingHeader collapsingHeader;
     private AppObject selectedApp;
     private int currentTint = CoverGlow.DEFAULT_TINT;
     private ValueAnimator tintAnimator;
     private AnimatorSet glowAnimator;
+    private ObjectAnimator coverFloat;
     private ValueAnimator wordmarkRainbow;
 
     private final static int START_OR_RESUME_ID = 1;
@@ -426,6 +427,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         if (glowAnimator != null) {
             glowAnimator.cancel();
         }
+        if (coverFloat != null) {
+            coverFloat.cancel();
+        }
         if (wordmarkRainbow != null) {
             wordmarkRainbow.cancel();
         }
@@ -444,6 +448,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         inForeground = true;
         startComputerUpdates();
+        setLoopsRunning(true);
     }
 
     @Override
@@ -452,6 +457,23 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         inForeground = false;
         stopComputerUpdates();
+        setLoopsRunning(false);
+    }
+
+    // The screen's endless animations stop while it's out of sight (during a stream, say), so they
+    // don't keep waking the CPU every frame
+    private void setLoopsRunning(boolean running) {
+        for (android.animation.Animator loop : new android.animation.Animator[] {glowAnimator, coverFloat, wordmarkRainbow}) {
+            if (loop == null) {
+                continue;
+            }
+            if (running) {
+                loop.resume();
+            }
+            else {
+                loop.pause();
+            }
+        }
     }
 
     @Override
@@ -595,24 +617,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 return true;
 
             case QUIT_ID:
-                // Display a confirmation dialog first
-                UiHelper.displayQuitConfirmationDialog(this, new Runnable() {
-                    @Override
-                    public void run() {
-                        suspendGridUpdates = true;
-                        ServerHelper.doQuit(AppView.this, computer,
-                                app.app, managerBinder, new Runnable() {
-                            @Override
-                            public void run() {
-                                // Trigger a poll immediately
-                                suspendGridUpdates = false;
-                                if (poller != null) {
-                                    poller.pollNow();
-                                }
-                            }
-                        });
-                    }
-                }, null);
+                quitApp(app);
                 return true;
 
             case VIEW_DETAILS_ID:
@@ -649,6 +654,27 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             default:
                 return super.onContextItemSelected(item);
         }
+    }
+
+    // Ends the running game on the PC, after asking (from the tile's menu or the hero's Quit)
+    private void quitApp(final AppObject app) {
+        UiHelper.displayQuitConfirmationDialog(this, new Runnable() {
+            @Override
+            public void run() {
+                suspendGridUpdates = true;
+                ServerHelper.doQuit(AppView.this, computer,
+                        app.app, managerBinder, new Runnable() {
+                    @Override
+                    public void run() {
+                        // Trigger a poll immediately
+                        suspendGridUpdates = false;
+                        if (poller != null) {
+                            poller.pollNow();
+                        }
+                    }
+                });
+            }
+        }, null);
     }
 
     private void updateUiWithServerinfo(final ComputerDetails details) {
@@ -777,6 +803,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     @Override
     public void receiveAbsListView(AbsListView listView) {
         listView.setAdapter(appGridAdapter);
+        // The covers arrive one after another the first time the list lays out
+        listView.setLayoutAnimation(new android.view.animation.LayoutAnimationController(
+                android.view.animation.AnimationUtils.loadAnimation(this, R.anim.cg_tile_in), 0.07f));
         listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
@@ -815,11 +844,19 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         heroTitle = findViewById(R.id.heroTitle);
         heroChips = findViewById(R.id.heroChips);
         heroPlay = findViewById(R.id.heroPlay);
+        heroQuit = findViewById(R.id.heroQuit);
+        // Rounded corners before Android 12, which ignores the XML attribute
+        heroCover.setClipToOutline(true);
         miniTitle = findViewById(R.id.miniTitle);
         miniPlay = findViewById(R.id.miniPlay);
         collapsingHeader = new CollapsingHeader(findViewById(R.id.appHeader),
                 findViewById(R.id.heroSection), findViewById(R.id.miniBar));
-        collapsingHeader.expandOnFocus(heroPlay, findViewById(R.id.heroSettings), findViewById(R.id.appListText));
+        collapsingHeader.expandOnFocus(heroPlay, heroQuit, findViewById(R.id.heroSettings), findViewById(R.id.appListText));
+        heroQuit.setOnClickListener(v -> {
+            if (selectedApp != null && computer != null) {
+                quitApp(selectedApp);
+            }
+        });
         miniPlay.setOnClickListener(v -> playSelectedApp());
 
         TextView coverRowLabel = findViewById(R.id.coverRowLabel);
@@ -867,6 +904,14 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         glowAnimator.playTogether(driftX, driftY, grow, growY);
         glowAnimator.setDuration(4500);
         glowAnimator.start();
+
+        // The hero's cover floats gently (moving a view redraws nothing, so it costs little)
+        coverFloat = ObjectAnimator.ofFloat(heroCover, View.TRANSLATION_Y, 0, -dp(5));
+        coverFloat.setDuration(3200);
+        coverFloat.setRepeatCount(ValueAnimator.INFINITE);
+        coverFloat.setRepeatMode(ValueAnimator.REVERSE);
+        coverFloat.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        coverFloat.start();
 
         // The wordmark slowly flows through the rainbow
         wordmarkRainbow = Rainbow.applyTo((TextView) findViewById(R.id.cgWordmark));
@@ -940,6 +985,18 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         heroTitle.setText(selectedApp.app.getAppName());
         heroPlay.setText(running ? R.string.cg_resume : R.string.cg_play);
+        // Quit right beside Resume, instead of only in the tile's long-press menu
+        if (running && heroQuit.getVisibility() != View.VISIBLE) {
+            heroQuit.setVisibility(View.VISIBLE);
+            heroQuit.setAlpha(0f);
+            heroQuit.setTranslationX(-dp(10));
+            heroQuit.animate().alpha(1f).translationX(0).setDuration(260)
+                    .setInterpolator(new DecelerateInterpolator(2f)).start();
+        }
+        else if (!running) {
+            heroQuit.animate().cancel();
+            heroQuit.setVisibility(View.GONE);
+        }
         miniTitle.setText(selectedApp.app.getAppName());
         miniPlay.setText(running ? R.string.cg_resume : R.string.cg_play);
         if (running) {

@@ -550,6 +550,7 @@
     <string name="cg_wordmark" translatable="false">Starwire</string>
     <string name="cg_play">Play</string>
     <string name="cg_resume">Resume</string>
+    <string name="cg_quit">Quit</string>
     <string name="cg_game_settings">This game\'s settings</string>
     <string name="cg_last_played">Last played</string>
     <string name="cg_running">Running now</string>

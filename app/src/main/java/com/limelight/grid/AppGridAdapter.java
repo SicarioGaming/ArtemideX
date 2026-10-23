@@ -113,8 +113,7 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
         this.loader = new CachedAppAssetLoader(computer, scalingDivisor,
                 new NetworkAssetLoader(context, uniqueId),
                 new MemoryAssetLoader(),
-                new DiskAssetLoader(context),
-                AppIcons.missingCoverBitmap());
+                new DiskAssetLoader(context));
 
         // This will trigger the view to reload with the new layout
         setLayoutId(getLayoutIdForPreferences(prefs));
@@ -197,6 +196,11 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
 
     @Override
     public void populateView(View parentView, ImageView imgView, ProgressBar prgView, TextView txtView, ImageView overlayView, ImageView settingsIndicator, AppView.AppObject obj) {
+        // Rounded corners: the XML attribute only works from Android 12, so set it here too
+        if (imgView.getBackground() == null) {
+            imgView.setBackgroundResource(R.drawable.cg_cover);
+        }
+        imgView.setClipToOutline(true);
         if (AppIcons.useIcon(context, obj.app.getAppName())) {
             showIconTile(obj, imgView, txtView);
         }
@@ -231,7 +235,7 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // The selected game's ring slowly turns through the rainbow
             float density = context.getResources().getDisplayMetrics().density;
-            parentView.setForeground(selected ? new Rainbow.Ring(18 * density, 3 * density) : null);
+            parentView.setForeground(selected ? new Rainbow.Ring(26 * density, 3 * density) : null);
         }
 
         if (obj.isHidden) {

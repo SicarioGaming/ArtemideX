@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.limelight.R;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.nvstream.http.NvApp;
+import com.limelight.ui.AppIcons;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,17 +56,15 @@ public class CachedAppAssetLoader {
     private final MemoryAssetLoader memoryLoader;
     private final DiskAssetLoader diskLoader;
     private final Bitmap placeholderBitmap;
-    private final Bitmap noAppImageBitmap;
 
     public CachedAppAssetLoader(ComputerDetails computer, double scalingDivider,
                                 NetworkAssetLoader networkLoader, MemoryAssetLoader memoryLoader,
-                                DiskAssetLoader diskLoader, Bitmap noAppImageBitmap) {
+                                DiskAssetLoader diskLoader) {
         this.computer = computer;
         this.scalingDivider = scalingDivider;
         this.networkLoader = networkLoader;
         this.memoryLoader = memoryLoader;
         this.diskLoader = diskLoader;
-        this.noAppImageBitmap = noAppImageBitmap;
         this.placeholderBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
     }
 
@@ -198,7 +197,8 @@ public class CachedAppAssetLoader {
                 // Set off another loader task on the network executor. This time our AsyncDrawable
                 // will use the app image placeholder bitmap, rather than an empty bitmap.
                 LoaderTask task = new LoaderTask(imageView, textView, false);
-                AsyncDrawable asyncDrawable = new AsyncDrawable(imageView.getResources(), noAppImageBitmap, task);
+                AsyncDrawable asyncDrawable = new AsyncDrawable(imageView.getResources(),
+                        AppIcons.missingCoverBitmap(tuple.app.getAppName()), task);
                 imageView.setImageDrawable(asyncDrawable);
                 imageView.startAnimation(AnimationUtils.loadAnimation(imageView.getContext(), R.anim.boxart_fadein));
                 imageView.setVisibility(View.VISIBLE);
@@ -232,7 +232,7 @@ public class CachedAppAssetLoader {
                             @Override
                             public void onAnimationEnd(Animation animation) {
                                 // Fade in the new box art
-                                imageView.setImageBitmap(shownBitmap(bitmap));
+                                imageView.setImageBitmap(shownBitmap(bitmap, tuple.app));
                                 imageView.startAnimation(AnimationUtils.loadAnimation(imageView.getContext(), R.anim.boxart_fadein));
                             }
 
@@ -243,7 +243,7 @@ public class CachedAppAssetLoader {
                     }
                     else {
                         // View is invisible already, so just fade in the new art
-                        imageView.setImageBitmap(shownBitmap(bitmap));
+                        imageView.setImageBitmap(shownBitmap(bitmap, tuple.app));
                         imageView.startAnimation(AnimationUtils.loadAnimation(imageView.getContext(), R.anim.boxart_fadein));
                         imageView.setVisibility(View.VISIBLE);
                     }
@@ -325,9 +325,9 @@ public class CachedAppAssetLoader {
         });
     }
 
-    // Starwire: the host's plain default box art is swapped for the missing-cover tile
-    private Bitmap shownBitmap(ScaledBitmap bitmap) {
-        return isBitmapPlaceholder(bitmap) ? noAppImageBitmap : bitmap.bitmap;
+    // Starwire: the host's plain default box art is swapped for the app's own missing-cover tile
+    private Bitmap shownBitmap(ScaledBitmap bitmap, NvApp app) {
+        return isBitmapPlaceholder(bitmap) ? AppIcons.missingCoverBitmap(app.getAppName()) : bitmap.bitmap;
     }
 
     private boolean isBitmapPlaceholder(ScaledBitmap bitmap) {
@@ -354,7 +354,7 @@ public class CachedAppAssetLoader {
         if (bmp != null) {
             // Show the bitmap immediately
             imgView.setVisibility(View.VISIBLE);
-            imgView.setImageBitmap(shownBitmap(bmp));
+            imgView.setImageBitmap(shownBitmap(bmp, app));
 
             // Show the text if it's a placeholder bitmap
             textView.setVisibility(isBitmapPlaceholder(bmp) ? View.VISIBLE : View.GONE);
