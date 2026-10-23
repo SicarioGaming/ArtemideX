@@ -288,6 +288,9 @@ check_tag() {
     problem "can't tell if this is a shallow clone, which would leave out earlier releases and commits"
   elif [ "$shallow" = true ]; then
     problem "this is a shallow clone, so earlier releases and commits can't be compared: fetch with full history and tags (git fetch --unshallow --tags, or fetch-depth: 0 in actions/checkout)"
+  elif [ "$shallow" != false ]; then
+    # Before git 2.15, rev-parse printed the option back instead of true or false
+    problem "can't tell if this is a shallow clone: git answered \"$shallow\" (it needs git 2.15 or later)"
   fi
   if [ $tags_ok = 0 ]; then
     problem "can't list the tags, so the previous release isn't known"
@@ -658,7 +661,9 @@ self_test() {
   # A git that fails when its arguments have $FAIL_GIT in them, and works as git otherwise
   real_git=$(command -v git)
   mkdir "$tmp/bin"
+  # FAIL_GIT=echo:<option> plays a git too old to know the option: it prints it back and exits 0
   printf '%s\n' '#!/bin/sh' \
+    'case $FAIL_GIT in echo:*) case " $* " in *" ${FAIL_GIT#echo:} "*) echo "${FAIL_GIT#echo:}"; exit 0 ;; esac ;; esac' \
     'case " $* " in *" $FAIL_GIT "*) echo "fatal: planted failure" >&2; exit 128 ;; esac' \
     "exec '$real_git' \"\$@\"" > "$tmp/bin/git"
   chmod +x "$tmp/bin/git"
@@ -689,6 +694,8 @@ self_test() {
   check -f 1 v0.1.1 "--first-release after a release" "--first-release was given, but v0.1.0 is an earlier release"
   check -g --is-shallow-repository 1 v0.1.1 "fixes only, when git can't say if it's a shallow clone" \
     "can't tell if this is a shallow clone"
+  check -g echo:--is-shallow-repository 1 v0.1.1 "fixes only, with a git too old to say if it's a shallow clone" \
+    "git answered \"--is-shallow-repository\""
   check -g log 1 v0.1.1 "fixes only, when the commits can't be listed" "can't list the commits since v0.1.0"
 
   # What's checked is the commit, not the working tree
@@ -698,6 +705,9 @@ self_test() {
   check 1 v0.1.1 "versionName right only in the working tree" 'versionName in app/build.gradle is "0.1.0", not "0.1.1"'
   check 1 v0.1.1 "a changelog heading only in the working tree" 'no "## [0.1.1] - YYYY-MM-DD" heading'
   check 1 v0.1.1 "release notes only in the working tree" "v0.1.1-notes.md doesn't exist at HEAD"
+  files 0.1.1 2 empty-notes
+  echo "What's new." > "$root/$NOTES_DIR/v0.1.1-notes.md"
+  check 1 v0.1.1 "release notes empty at HEAD, filled in only in the working tree" "v0.1.1-notes.md is empty at HEAD"
   files 0.1.1 2
 
   # Commits with no type, like upstream Moonlight X ones: a PATCH release lists the first 5
