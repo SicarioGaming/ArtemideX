@@ -1,0 +1,3 @@
+# sh cannot run a script with CRLF line endings, so these stay LF on every checkout,
+# Windows included.
+* text eol=lf

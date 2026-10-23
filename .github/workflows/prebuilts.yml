@@ -1,0 +1,149 @@
+name: Prebuilt files
+
+# Builds the prebuilt native libraries again from their pinned upstream source and checks the
+# bytes against the committed files, with .github/tools/prebuilts/verify.sh. Also checks
+# SHA256SUMS, the Gradle wrapper and shaders_spv.h. docs/PROVENANCE.md explains all of it.
+#
+# It runs when a change touches a prebuilt file or these checks, and every Monday, so a pinned
+# upstream commit that disappears gets noticed. The two path lists below must stay the same.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.so'
+      - '**.a'
+      - '**.jar'
+      - '**.aar'
+      - '**.dll'
+      - '**.exe'
+      - '**.dylib'
+      - '**.bin'
+      - '**.o'
+      - 'app/src/main/jni/adrenotools/**'
+      - 'app/src/main/jni/pyrowave/**'
+      - 'app/src/main/jni/moonlight-core/openssl/**'
+      - 'app/src/main/jni/moonlight-core/opus/**'
+      - 'app/src/main/jni/vulkan/shaders/**'
+      - 'app/src/main/jni/vulkan/shaders_spv.h'
+      - 'gradle/wrapper/**'
+      - '.github/tools/prebuilts/**'
+      - '.github/workflows/prebuilts.yml'
+  pull_request:
+    paths:
+      - '**.so'
+      - '**.a'
+      - '**.jar'
+      - '**.aar'
+      - '**.dll'
+      - '**.exe'
+      - '**.dylib'
+      - '**.bin'
+      - '**.o'
+      - 'app/src/main/jni/adrenotools/**'
+      - 'app/src/main/jni/pyrowave/**'
+      - 'app/src/main/jni/moonlight-core/openssl/**'
+      - 'app/src/main/jni/moonlight-core/opus/**'
+      - 'app/src/main/jni/vulkan/shaders/**'
+      - 'app/src/main/jni/vulkan/shaders_spv.h'
+      - 'gradle/wrapper/**'
+      - '.github/tools/prebuilts/**'
+      - '.github/workflows/prebuilts.yml'
+  schedule:
+    - cron: '23 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prebuilts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  starwire:
+    name: libadrenotools, shaders and checksums
+    # The libraries were built on Windows. The Windows and Linux NDKs write a different compiler
+    # name into every library, so only a Windows rebuild can match them byte for byte.
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: The Gradle wrapper is an official Gradle release
+        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Install NDK 29.0.14206865 and CMake 3.31.6
+        shell: pwsh
+        run: |
+          $sdkmanager = "$env:ANDROID_HOME\cmdline-tools\latest\bin\sdkmanager.bat"
+          ("y`n" * 10) | & $sdkmanager "ndk;29.0.14206865" "cmake;3.31.6" | Select-Object -Last 3
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: The committed files match SHA256SUMS, and the wrapper matches Gradle's checksum
+        run: sh .github/tools/prebuilts/verify.sh --work "$RUNNER_TEMP/starwire-prebuilts" sums wrapper
+
+      - name: libadrenotools and its hooks rebuild byte for byte
+        if: ${{ !cancelled() }}
+        run: sh .github/tools/prebuilts/verify.sh --exact --work "$RUNNER_TEMP/starwire-prebuilts" adrenotools
+
+      - name: shaders_spv.h regenerates the same
+        if: ${{ !cancelled() }}
+        run: sh .github/tools/prebuilts/verify.sh --work "$RUNNER_TEMP/starwire-prebuilts" shaders
+
+      - name: Keep the rebuilt files and logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rebuilt-libadrenotools
+          path: |
+            ${{ runner.temp }}/starwire-prebuilts/out/
+            ${{ runner.temp }}/starwire-prebuilts/logs/
+          if-no-files-found: ignore
+          retention-days: 30
+
+  pyrowave:
+    name: PyroWave
+    runs-on: windows-2025
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install NDK 27.0.12077973 and CMake 3.31.6
+        shell: pwsh
+        run: |
+          $sdkmanager = "$env:ANDROID_HOME\cmdline-tools\latest\bin\sdkmanager.bat"
+          ("y`n" * 10) | & $sdkmanager "ndk;27.0.12077973" "cmake;3.31.6" | Select-Object -Last 3
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # Moonlight X built this library, with NDK r27 in folders nobody recorded, so the best a
+      # rebuild can show is MATCH EXCEPT BUILD ID or SAME CODE. Until a run has shown that, a
+      # mismatch only warns. Once it passes, remove continue-on-error so it guards like the rest.
+      - name: PyroWave rebuilds to the same code
+        id: pyrowave
+        continue-on-error: true
+        run: sh .github/tools/prebuilts/verify.sh --work "$RUNNER_TEMP/starwire-prebuilts" pyrowave
+
+      - name: Say so when PyroWave isn't proven
+        if: steps.pyrowave.outcome == 'failure'
+        run: echo "::warning title=PyroWave not proven::libpyrowave-shared.so did not rebuild to the committed code. See this run's summary and docs/PROVENANCE.md."
+
+      - name: Keep the rebuilt file and logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: rebuilt-pyrowave
+          path: |
+            ${{ runner.temp }}/starwire-prebuilts/out/
+            ${{ runner.temp }}/starwire-prebuilts/logs/
+          if-no-files-found: ignore
+          retention-days: 30

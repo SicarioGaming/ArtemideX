@@ -1,0 +1,15 @@
+418635f3a7b4514b04c6b36f91ae6d0ba9918cf50aef51deffc868ca7d42a4f2  app/src/main/jni/adrenotools/lib/arm64-v8a/libadrenotools.so
+23ed2ae2fb4d640f5d2ce00f126122dd6f4d12084b341589d51d970a3f541670  app/src/main/jni/adrenotools/lib/arm64-v8a/libfile_redirect_hook.so
+3ac23869e8c20757d30108e4613147d67749c21ad71c0f4e30af4c4d2b2ef15d  app/src/main/jni/adrenotools/lib/arm64-v8a/libgsl_alloc_hook.so
+45f9bc7e66967df974ec18b108ba835d71fd563a3c203581d233eea97140ce9a  app/src/main/jni/adrenotools/lib/arm64-v8a/libhook_impl.so
+26caf83da45c170887379572946c94986023462b2bbc968cce2b979543e7b5af  app/src/main/jni/adrenotools/lib/arm64-v8a/libmain_hook.so
+d593ba8f576db9ff20d058bee7f0f154b4e000b447548533bc8f16eb95290b54  app/src/main/jni/moonlight-core/openssl/arm64-v8a/libcrypto.a
+76abf9210207bb74d19c758e898090f5b4c45fdf1c9a9e8613431c7d9455d904  app/src/main/jni/moonlight-core/openssl/armeabi-v7a/libcrypto.a
+88699686084a5cf6068be378b86b7e90f9ea646f6aca09b17303d8cdbe933aff  app/src/main/jni/moonlight-core/openssl/x86/libcrypto.a
+8502529fe9992e4f67962a5c5d98139ec37cd9ccacac341622500bf399ad52ca  app/src/main/jni/moonlight-core/openssl/x86_64/libcrypto.a
+d6c39b9135017ab76a42e364569f18622e6e3df691ac2d1d9d36ee4a02eb2e13  app/src/main/jni/moonlight-core/opus/arm64-v8a/libopus.a
+3925fecb62e4a75095d658bcc1c4e309712a330699825b7790880cf21497719e  app/src/main/jni/moonlight-core/opus/armeabi-v7a/libopus.a
+ed39b86eee0868d911516c4034e8395af31aaa7bfb8ac7e4415846b59ee28d1f  app/src/main/jni/moonlight-core/opus/x86/libopus.a
+7d8214860fdab5a8bf0d15125a2ae7baf80169dc4e6ee1ffa2633bb2e7de7a8b  app/src/main/jni/moonlight-core/opus/x86_64/libopus.a
+a0796c3c34307511d96e8d1f6cd4116040ce1bf85c28a284e1cb213603558815  app/src/main/jni/pyrowave/lib/arm64-v8a/libpyrowave-shared.so
+575098db54a998ff1c6770b352c3b16766c09848bee7555dab09afc34e8cf590  gradle/wrapper/gradle-wrapper.jar
