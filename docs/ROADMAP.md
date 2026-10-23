@@ -175,8 +175,8 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 - [ ] Microphone receiver for macOS and Linux (the Windows one is in `windows/`)
 - [ ] Microphone over the stream itself with Vibepollo or regular Apollo: waiting for either to
       accept logabell's design
-- [x] Phones and foldables: the settings list kept no width on narrow screens (a Galaxy Z Fold's
-      cover screen); the game screen and the stream menu now fit phones too, with tests at phone
+- [x] Android devices of every size: the settings list kept no width on narrow screens (a Galaxy Z Fold's
+      cover screen); the game screen and the stream menu now fit small screens too, with tests at phone
       and foldable sizes
 
 ## Open questions
