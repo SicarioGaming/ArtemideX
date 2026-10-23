@@ -3,4 +3,8 @@
     <issue id="InvalidPackage">
         <ignore path="**/bcpkix-jdk15on-*.jar"/>
     </issue>
+    <!-- Inside BouncyCastle's own jar, not this app's code, and its path differs on every PC -->
+    <issue id="TrustAllX509TrustManager">
+        <ignore path="**/bcpkix-jdk18on-*.jar"/>
+    </issue>
 </lint>

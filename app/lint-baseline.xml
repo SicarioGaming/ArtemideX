@@ -1,0 +1,4151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 9.4.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.0)" variant="all" version="9.4.0">
+
+    <issue
+        id="ApplySharedPref"
+        message="Consider using `apply()` instead; `commit` writes its data to persistent storage immediately, whereas `apply` will handle it in the background"
+        errorLine1="                        tombstonePrefs.edit().putInt(&quot;CrashCount&quot;, tombstonePrefs.getInt(&quot;CrashCount&quot;, 0) + 1).commit();"
+        errorLine2="                                                                                                               ~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/Game.java"
+            line="568"
+            column="112"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                return lhs.app.getAppName().toLowerCase().compareTo(rhs.app.getAppName().toLowerCase());"
+        errorLine2="                                            ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/grid/AppGridAdapter.java"
+            line="162"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                return lhs.app.getAppName().toLowerCase().compareTo(rhs.app.getAppName().toLowerCase());"
+        errorLine2="                                                                                         ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/grid/AppGridAdapter.java"
+            line="162"
+            column="90"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="        if (!hasJoystickAxes(dev) &amp;&amp; devName.toLowerCase().contains(&quot;remote&quot;)) {"
+        errorLine2="                                             ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/ControllerHandler.java"
+            line="782"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                &amp;&amp; name.toLowerCase().endsWith(suffix)) {"
+        errorLine2="                        ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/CoverGlowSettings.java"
+            line="321"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="        return glRenderer.toLowerCase().contains(&quot;powervr&quot;);"
+        errorLine2="                          ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/video/MediaCodecHelper.java"
+            line="273"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="        glRenderer = glRenderer.toLowerCase().trim();"
+        errorLine2="                                ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/video/MediaCodecHelper.java"
+            line="277"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            mediaFormatLog.append(String.format(&quot;✓ OK  [try %d]: %s = %d&quot;, tryNumber, key, value) + System.lineSeparator());"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/video/MediaCodecHelper.java"
+            line="1140"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            mediaFormatLog.append(String.format(&quot;✗ ERR [try %d]: %s = %d&quot;, tryNumber, key, value) + System.lineSeparator());"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/video/MediaCodecHelper.java"
+            line="1143"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            bitrateOverrideValue.setText(String.format(&quot;Bitrate: %d Mbps&quot;, bitrateMbps));"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/OverridesView.java"
+            line="254"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                bitrateOverrideValue.setText(String.format(&quot;Bitrate: %d Mbps&quot;, bitrateKbps / 1000));"
+        errorLine2="                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/OverridesView.java"
+            line="447"
+            column="46"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                return lhs.details.name.toLowerCase().compareTo(rhs.details.name.toLowerCase());"
+        errorLine2="                                        ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/grid/PcGridAdapter.java"
+            line="42"
+            column="41"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `toLowerCase(Locale)` instead. For strings meant to be internal use `Locale.ROOT`, otherwise `Locale.getDefault()`."
+        errorLine1="                return lhs.details.name.toLowerCase().compareTo(rhs.details.name.toLowerCase());"
+        errorLine2="                                                                                 ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/grid/PcGridAdapter.java"
+            line="42"
+            column="82"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            return String.format(&quot;%d%s&quot;, (int)rounded, unit);"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/UiHelper.java"
+            line="279"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            String formatted = String.format(&quot;%.3f&quot;, rounded);"
+        errorLine2="                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/UiHelper.java"
+            line="282"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="InlinedApi"
+        message="Field requires API level 24 (current min is 21): `android.media.AudioAttributes#FLAG_LOW_LATENCY`"
+        errorLine1="                attributesBuilder.setFlags(AudioAttributes.FLAG_LOW_LATENCY);"
+        errorLine2="                                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/audio/AndroidAudioRenderer.java"
+            line="48"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="OldTargetApi"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
+        errorLine1="        targetSdk 36"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="23"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `networkSecurityConfig` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="        android:networkSecurityConfig=&quot;@xml/network_security_config&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="53"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `appCategory` is only used in API level 26 and higher (current min is 21)"
+        errorLine1="        android:appCategory=&quot;game&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="56"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `gwpAsanMode` is only used in API level 30 and higher (current min is 21)"
+        errorLine1="        android:gwpAsanMode=&quot;always&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="59"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `localeConfig` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:localeConfig=&quot;@xml/locales_config&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="60"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:enableOnBackInvokedCallback=&quot;false&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="61"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="96"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="97"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="117"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="118"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="138"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="139"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="147"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="148"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="157"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="158"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="168"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="169"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="177"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="179"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="187"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="188"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `supportsPictureInPicture` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:supportsPictureInPicture=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="198"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="199"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;false&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="200"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferMinimalPostProcessing` is only used in API level 30 and higher (current min is 21)"
+        errorLine1="            android:preferMinimalPostProcessing=&quot;true&quot;>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="204"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `resizeableActivity` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="            android:resizeableActivity=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="253"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="            android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="254"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_computer_manually.xml"
+            line="16"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_computer_manually.xml"
+            line="33"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_computer_manually.xml"
+            line="48"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="                    android:preferKeepClear=&quot;true&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_app_view.xml"
+            line="62"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `clipToOutline` is only used in API level 31 and higher (current min is 21)"
+        errorLine1="                    android:clipToOutline=&quot;true&quot;"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_app_view.xml"
+            line="94"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `focusedByDefault` is only used in API level 26 and higher (current min is 21)"
+        errorLine1="        android:focusedByDefault=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="20"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `defaultFocusHighlightEnabled` is only used in API level 26 and higher (current min is 21)"
+        errorLine1="        android:defaultFocusHighlightEnabled=&quot;false&quot;>"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="21"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="39"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="54"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `defaultFocusHighlightEnabled` is only used in API level 26 and higher (current min is 21)"
+        errorLine1="        android:defaultFocusHighlightEnabled=&quot;false&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="67"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="68"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="103"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="116"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="130"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="145"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `preferKeepClear` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="        android:preferKeepClear=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="159"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `clipToOutline` is only used in API level 31 and higher (current min is 21)"
+        errorLine1="        android:clipToOutline=&quot;true&quot;>"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/app_grid_item.xml"
+            line="16"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `min` is only used in API level 26 and higher (current min is 21)"
+        errorLine1="            android:min=&quot;0&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/brightness_slider.xml"
+            line="24"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `fillType` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="        android:fillType=&quot;evenOdd&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/drawable/cg_app_retro.xml"
+            line="19"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `fillType` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="        android:fillType=&quot;evenOdd&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/drawable/cg_app_terminal.xml"
+            line="10"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `supportsBatteryGameMode` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="    android:supportsBatteryGameMode=&quot;false&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/game_mode_config.xml"
+            line="4"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `supportsPerformanceGameMode` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="    android:supportsPerformanceGameMode=&quot;false&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/game_mode_config.xml"
+            line="5"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `allowGameDownscaling` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="    android:allowGameDownscaling=&quot;false&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/game_mode_config.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `allowGameFpsOverride` is only used in API level 33 and higher (current min is 21)"
+        errorLine1="    android:allowGameFpsOverride=&quot;false&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/xml/game_mode_config.xml"
+            line="7"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `fillType` is only used in API level 24 and higher (current min is 21)"
+        errorLine1="        android:fillType=&quot;evenOdd&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/drawable/ic_overlay_guide.xml"
+            line="9"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `width` is only used in API level 23 and higher (current min is 21)"
+        errorLine1="        android:width=&quot;48dp&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/drawable/ic_shortcut_foreground.xml"
+            line="7"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `height` is only used in API level 23 and higher (current min is 21)"
+        errorLine1="        android:height=&quot;48dp&quot;>"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/drawable/ic_shortcut_foreground.xml"
+            line="8"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="WifiManagerPotentialLeak"
+        message="The WIFI_SERVICE must be looked up on the Application context or memory will leak on devices &lt; Android N. Try changing `context` to `context.getApplicationContext()`"
+        errorLine1="        WifiManager wifiMgr = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);"
+        errorLine2="                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/nvstream/mdns/JmDNSDiscoveryAgent.java"
+            line="146"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        this.keyboardView = (LinearLayout) LayoutInflater.from(context).inflate(R.layout.layout_axixi_keyboard, null);"
+        errorLine2="                                                                                                                ~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/virtual_controller/keyboard/KeyBoardLayoutController.java"
+            line="110"
+            column="113"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;256dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_add.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;512dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_computer.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;256dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_help.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;256dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_overrides.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;256dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_overrides_enabled.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;256dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_perf_overlay.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;256dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_perf_overlay_default.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;256dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_perf_overlay_enabled.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="VectorRaster"
+        message="Limit vector icons sizes to 200×200 to keep icon drawing fast; see https://developer.android.com/studio/write/vector-asset-studio#when for more"
+        errorLine1="    android:width=&quot;256dp&quot;"
+        errorLine2="                   ~~~~~">
+        <location
+            file="src/main/res/drawable/ic_settings.xml"
+            line="2"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test:runner than 1.6.2 is available: 1.7.0"
+        errorLine1="    androidTestImplementation &apos;androidx.test:runner:1.6.2&apos;"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="244"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.test.ext:junit than 1.2.1 is available: 1.3.0"
+        errorLine1="    androidTestImplementation &apos;androidx.test.ext:junit:1.2.1&apos;"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="245"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.bouncycastle:bcprov-jdk18on than 1.85.2 is available: 1.86"
+        errorLine1="    implementation &apos;org.bouncycastle:bcprov-jdk18on:1.85.2&apos;"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="228"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.bouncycastle:bcpkix-jdk18on than 1.85 is available: 1.86"
+        errorLine1="    implementation &apos;org.bouncycastle:bcpkix-jdk18on:1.85&apos;"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="229"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.okhttp3:okhttp than 5.5.0 is available: 5.5.1"
+        errorLine1="    implementation &apos;com.squareup.okhttp3:okhttp:5.5.0&apos;"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="231"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jmdns:jmdns than 3.6.3 is available: 3.6.4"
+        errorLine1="    implementation &apos;org.jmdns:jmdns:3.6.3&apos;"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="232"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.json:json than 20250517 is available: 20260814"
+        errorLine1="    testImplementation &apos;org.json:json:20250517&apos;"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="240"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="SourceLockedOrientationActivity"
+        message="You should not lock orientation of your activities, so that you can support a good user experience for any device or orientation"
+        errorLine1="                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/Game.java"
+            line="821"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="SourceLockedOrientationActivity"
+        message="You should not lock orientation of your activities, so that you can support a good user experience for any device or orientation"
+        errorLine1="            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/Game.java"
+            line="4156"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to users of `AndroidNativePointerCaptureProvider`"
+        errorLine1="@TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/capture/AndroidNativePointerCaptureProvider.java"
+            line="16"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.N)` instead of `@TargetApi` to propagate the requirement to users of `AndroidPointerIconCaptureProvider`"
+        errorLine1="@TargetApi(Build.VERSION_CODES.N)"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/capture/AndroidPointerIconCaptureProvider.java"
+            line="10"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(31)` instead of `@TargetApi` to propagate the requirement to callers of `hasDualAmplitudeControlledRumbleVibrators`"
+        errorLine1="    @TargetApi(31)"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/ControllerHandler.java"
+            line="1991"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(31)` instead of `@TargetApi` to propagate the requirement to callers of `rumbleDualVibrators`"
+        errorLine1="    @TargetApi(31)"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/ControllerHandler.java"
+            line="2011"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(31)` instead of `@TargetApi` to propagate the requirement to callers of `hasQuadAmplitudeControlledRumbleVibrators`"
+        errorLine1="    @TargetApi(31)"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/ControllerHandler.java"
+            line="2048"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(31)` instead of `@TargetApi` to propagate the requirement to callers of `rumbleQuadVibrators`"
+        errorLine1="    @TargetApi(31)"
+        errorLine2="    ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/ControllerHandler.java"
+            line="2068"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.S)` instead of `@TargetApi` to propagate the requirement to callers of `run`"
+        errorLine1="            @TargetApi(Build.VERSION_CODES.S)"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/ControllerHandler.java"
+            line="3387"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to callers of `getPictureInPictureParams`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/Game.java"
+            line="903"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.R)` instead of `@TargetApi` to propagate the requirement to callers of `onPictureInPictureRequested`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.R)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/Game.java"
+            line="1004"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.N)` instead of `@TargetApi` to propagate the requirement to callers of `onMultiWindowModeChanged`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.N)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/Game.java"
+            line="1309"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(33)` instead of `@TargetApi` to propagate the requirement to callers of `KeyboardMapping`"
+        errorLine1="        @TargetApi(33)"
+        errorLine2="        ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/KeyboardTranslator.java"
+            line="64"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(33)` instead of `@TargetApi` to propagate the requirement to callers of `getDeviceKeyCodeForQwertyKeyCode`"
+        errorLine1="        @TargetApi(33)"
+        errorLine2="        ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/KeyboardTranslator.java"
+            line="82"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)` instead of `@TargetApi` to propagate the requirement to users of `NsdManagerDiscoveryAgent`"
+        errorLine1="@TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)"
+        errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/nvstream/mdns/NsdManagerDiscoveryAgent.java"
+            line="20"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.N_MR1)` instead of `@TargetApi` to propagate the requirement to callers of `reapShortcutsForDynamicAdd`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.N_MR1)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/ShortcutHelper.java"
+            line="36"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.N_MR1)` instead of `@TargetApi` to propagate the requirement to callers of `getAllShortcuts`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.N_MR1)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/ShortcutHelper.java"
+            line="50"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.N_MR1)` instead of `@TargetApi` to propagate the requirement to callers of `getInfoForId`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.N_MR1)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/ShortcutHelper.java"
+            line="58"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.N_MR1)` instead of `@TargetApi` to propagate the requirement to callers of `isExistingDynamicShortcut`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.N_MR1)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/ShortcutHelper.java"
+            line="71"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to callers of `createPinnedGameShortcut`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/ShortcutHelper.java"
+            line="148"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to callers of `updateChannelIcon`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/TvChannelHelper.java"
+            line="103"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to callers of `getChannelId`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/TvChannelHelper.java"
+            line="211"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to callers of `getProgramId`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/TvChannelHelper.java"
+            line="233"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to callers of `isAndroidTV`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/TvChannelHelper.java"
+            line="274"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to users of `PreviewProgramBuilder`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/TvChannelHelper.java"
+            line="279"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseRequiresApi"
+        message="Use `@RequiresApi(Build.VERSION_CODES.O)` instead of `@TargetApi` to propagate the requirement to users of `ChannelBuilder`"
+        errorLine1="    @TargetApi(Build.VERSION_CODES.O)"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/utils/TvChannelHelper.java"
+            line="336"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="&quot;yada&quot; is a common misspelling; did you mean &quot;ya da&quot;?"
+        errorLine1="    &lt;string name=&quot;summary_audio_config_list&quot;>Ev-sinema sistemleri için 5.1 yada 7.1 surround sesi etkinleştir&lt;/string>"
+        errorLine2="                                                                           ~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="13"
+            column="76"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="&quot;bir kaç&quot; is a common misspelling; did you mean &quot;birkaç&quot;?"
+        errorLine1="\nBu bir kaç saniye sürebilir…&lt;/string>"
+        errorLine2="     ~~~~~~~">
+        <location
+            file="src/main/res/values-tr/strings.xml"
+            line="43"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="&quot;video&quot; is a common misspelling; did you mean &quot;vídeo&quot;?"
+        errorLine1="    &lt;string name=&quot;summary_checkbox_reduce_refresh_rate&quot;>Taxas menores de atualização do display podem gravar energia ao custo de latência de video adicional&lt;/string>"
+        errorLine2="                                                                                                                                             ~~~~~">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="112"
+            column="142"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="&quot;video&quot; is a common misspelling; did you mean &quot;vídeo&quot;?"
+        errorLine1="    &lt;string name=&quot;summary_checkbox_reduce_refresh_rate&quot;>Taxas menores de atualização do display podem salvar energia ao custo de latência de video adicional&lt;/string>"
+        errorLine2="                                                                                                                                             ~~~~~">
+        <location
+            file="src/main/res/values-pt-rBR/strings.xml"
+            line="236"
+            column="142"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="Did you mean &quot;AV! &quot; instead of &quot;AV1 &quot;?"
+        errorLine1="    &lt;string name=&quot;videoformat_av1always&quot;>Preferisci AV1 (Sperimentale)&lt;/string>"
+        errorLine2="                                                    ~~~~">
+        <location
+            file="src/main/res/values-it/strings.xml"
+            line="266"
+            column="53"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="Did you mean &quot;AV! &quot; instead of &quot;AV1 &quot;?"
+        errorLine1="    &lt;string name=&quot;videoformat_av1always&quot;>Preferir AV1 (Experimental)&lt;/string>"
+        errorLine2="                                                  ~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="268"
+            column="51"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="Did you mean &quot;AV! &quot; instead of &quot;AV1 &quot;?"
+        errorLine1="    &lt;string name=&quot;videoformat_av1always&quot;>Prefer AV1 (Experimental)&lt;/string>"
+        errorLine2="                                                ~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="312"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="Typos"
+        message="Did you mean &quot;AV!&quot; instead of &quot;AV1&quot;?"
+        errorLine1="    &lt;string name=&quot;cg_chip_av1&quot;>AV1&lt;/string>"
+        errorLine2="                               ~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="570"
+            column="32"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;imported&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;summary_imported_shortcuts&quot;>%1$d imported: %2$s. Tap to import a different file.&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="422"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;shortcuts&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;imported_shortcuts_done&quot;>Imported %1$d shortcuts&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="425"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedTranslation"
+        message="The language `bg (Bulgarian)` is present in this project, but not declared in the `localeConfig` resource"
+        errorLine1="        android:localeConfig=&quot;@xml/locales_config&quot;"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="60"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UnusedTranslation"
+        message="The language `pl (Polish)` is present in this project, but not declared in the `localeConfig` resource"
+        errorLine1="        android:localeConfig=&quot;@xml/locales_config&quot;"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="60"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="UnusedTranslation"
+        message="The language `tr (Turkish)` is present in this project, but not declared in the `localeConfig` resource"
+        errorLine1="        android:localeConfig=&quot;@xml/locales_config&quot;"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="60"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="SetJavaScriptEnabled"
+        message="Using `setJavaScriptEnabled` can introduce XSS vulnerabilities into your application, review carefully"
+        errorLine1="        webView.getSettings().setJavaScriptEnabled(true);"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/HelpActivity.java"
+            line="51"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="CustomX509TrustManager"
+        message="Implementing a custom `X509TrustManager` is error-prone and likely to be insecure. It is likely to disable certificate validation altogether, and is non-trivial to implement correctly without calling Android&apos;s default implementation."
+        errorLine1="        trustManager = new X509TrustManager() {"
+        errorLine2="                           ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/nvstream/http/NvHTTP.java"
+            line="134"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="ExportedContentProvider"
+        message="Exported content providers can provide access to potentially sensitive data"
+        errorLine1="        &lt;provider"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="64"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedReceiver"
+        message="Exported receiver does not require permission"
+        errorLine1="        &lt;receiver"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="230"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="InsecureBaseConfiguration"
+        message="Insecure Base Configuration"
+        errorLine1="    &lt;base-config cleartextTrafficPermitted=&quot;true&quot;>"
+        errorLine2="                                            ~~~~">
+        <location
+            file="src/main/res/xml/network_security_config.xml"
+            line="3"
+            column="45"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 26"
+        errorLine1="        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/capture/AndroidNativePointerCaptureProvider.java"
+            line="28"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 24"
+        errorLine1="        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/capture/AndroidPointerIconCaptureProvider.java"
+            line="21"
+            column="16"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is always >= 21"
+        errorLine1="        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/Game.java"
+            line="329"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v14`) is unnecessary; `minSdkVersion` is 21. Merge all the resources in this folder into `values`.">
+        <location
+            file="src/main/res/values-v14"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v21`) is unnecessary; `minSdkVersion` is 21. Merge all the resources in this folder into `values`.">
+        <location
+            file="src/main/res/values-v21"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="This `AsyncTask` class should be static or leaks might occur (com.limelight.grid.assets.CachedAppAssetLoader.LoaderTask)"
+        errorLine1="    private class LoaderTask extends AsyncTask&lt;LoaderTuple, Void, ScaledBitmap> {"
+        errorLine2="                  ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/grid/assets/CachedAppAssetLoader.java"
+            line="144"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="DisableBaselineAlignment"
+        message="Set `android:baselineAligned=&quot;false&quot;` on this element for better performance"
+        errorLine1="        &lt;LinearLayout"
+        errorLine2="         ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_stream_settings.xml"
+            line="78"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="                android:layout_weight=&quot;1&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_stream_settings.xml"
+            line="88"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="            android:layout_weight=&quot;150&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="18"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="            android:layout_weight=&quot;90&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="177"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="            android:layout_weight=&quot;140&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="324"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="            android:layout_weight=&quot;160&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="471"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="            android:layout_weight=&quot;160&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="608"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NestedWeights"
+        message="Nested weights are bad for performance"
+        errorLine1="            android:layout_weight=&quot;105&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="745"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#FF0A0918` with a theme that also paints a background (inferred theme is `@style/AppTheme`)"
+        errorLine1="    android:background=&quot;#FF0A0918&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_app_view.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#121212` with a theme that also paints a background (inferred theme is `@style/AppTheme`)"
+        errorLine1="    android:background=&quot;#121212&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_custom_commands.xml"
+            line="5"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#FF0A0918` with a theme that also paints a background (inferred theme is `@style/AppTheme`)"
+        errorLine1="    android:background=&quot;#FF0A0918&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#FF0A0918` with a theme that also paints a background (inferred theme is `@style/AppTheme`)"
+        errorLine1="    android:background=&quot;#FF0A0918&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="8"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?android:attr/colorBackground` with a theme that also paints a background (inferred theme is `@android_style/Theme_Material_Light_Dialog`)"
+        errorLine1="    android:background=&quot;?android:attr/colorBackground&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_shortcut_picker.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#FF0A0918` with a theme that also paints a background (inferred theme is `@style/CoverGlowSettingsTheme`)"
+        errorLine1="    android:background=&quot;#FF0A0918&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_stream_settings.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `#212121` with a theme that also paints a background (inferred theme is `@style/AppTheme`)"
+        errorLine1="    android:background=&quot;#212121&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?android:attr/selectableItemBackground` with a theme that also paints a background (inferred theme is `@style/AppTheme`)"
+        errorLine1="    android:background=&quot;?android:attr/selectableItemBackground&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/overrides_section.xml"
+            line="10"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="Overdraw"
+        message="Possible overdraw: Root element paints background `?android:attr/selectableItemBackground` with a theme that also paints a background (inferred theme is `@style/AppTheme`)"
+        errorLine1="    android:background=&quot;?android:attr/selectableItemBackground&quot;>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/overrides_section.xml"
+            line="10"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.layout.activity_configure_virtual_controller` appears to be unused"
+        errorLine1="&lt;FrameLayout xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/layout/activity_configure_virtual_controller.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.app_icon` appears to be unused">
+        <location
+            file="src/main/res/drawable/app_icon.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.app_label_root` appears to be unused">
+        <location
+            file="build.gradle"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.app_label_root` appears to be unused">
+        <location
+            file="build.gradle"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.app_label_root` appears to be unused">
+        <location
+            file="build.gradle"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.dimen.tv_channel_logo_height` appears to be unused"
+        errorLine1="    &lt;dimen name=&quot;tv_channel_logo_height&quot;>80dp&lt;/dimen>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/dimens.xml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.list_view_unselected` appears to be unused"
+        errorLine1="&lt;shape xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/list_view_unselected.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.no_app_image` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/no_app_image.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ouya_icon` appears to be unused">
+        <location
+            file="src/main/res/drawable-xhdpi/ouya_icon.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.rounded_image_mask` appears to be unused"
+        errorLine1="&lt;layer-list xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/rounded_image_mask.xml"
+            line="2"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pcview_menu_unpair_pc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pcview_menu_unpair_pc&quot;>Unpair&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="20"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.wol_waking_pc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;wol_waking_pc&quot;>Waking PC…&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="50"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.slow_connection_msg` appears to be unused"
+        errorLine1="    &lt;string name=&quot;slow_connection_msg&quot;>Slow connection to PC\nReduce your bitrate&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="106"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.poor_connection_msg` appears to be unused"
+        errorLine1="    &lt;string name=&quot;poor_connection_msg&quot;>Poor connection to PC&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="107"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.applist_menu_cancel` appears to be unused"
+        errorLine1="    &lt;string name=&quot;applist_menu_cancel&quot;>Cancel&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="125"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.applist_menu_tv_channel` appears to be unused"
+        errorLine1="    &lt;string name=&quot;applist_menu_tv_channel&quot;>Add to Channel&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="128"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.applist_refresh_error_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;applist_refresh_error_title&quot;>Error&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="133"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.applist_refresh_error_msg` appears to be unused"
+        errorLine1="    &lt;string name=&quot;applist_refresh_error_msg&quot;>Failed to get app list&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="134"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.applist_details_id` appears to be unused"
+        errorLine1="    &lt;string name=&quot;applist_details_id&quot;>App ID:&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="139"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_checkbox_mouse_emulation` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_checkbox_mouse_emulation&quot;>Mouse emulation via gamepad&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="195"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.summary_checkbox_mouse_emulation` appears to be unused"
+        errorLine1="    &lt;string name=&quot;summary_checkbox_mouse_emulation&quot;>Long pressing the Start button will switch the gamepad into mouse mode&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="196"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_osc_opacity` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_osc_opacity&quot;>Change opacity of on-screen controls&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="234"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_disable_frame_drop` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_disable_frame_drop&quot;>Never drop frames&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="260"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.summary_disable_frame_drop` appears to be unused"
+        errorLine1="    &lt;string name=&quot;summary_disable_frame_drop&quot;>May reduce micro-stuttering on some devices, but can increase latency&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="261"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.category_help` appears to be unused"
+        errorLine1="    &lt;string name=&quot;category_help&quot;>Help&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="280"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_setup_guide` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_setup_guide&quot;>Setup guide&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="281"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.summary_setup_guide` appears to be unused"
+        errorLine1="    &lt;string name=&quot;summary_setup_guide&quot;>View instructions on how to set up your gaming PC for streaming&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="282"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_troubleshooting` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_troubleshooting&quot;>Troubleshooting guide&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="283"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.summary_troubleshooting` appears to be unused"
+        errorLine1="    &lt;string name=&quot;summary_troubleshooting&quot;>View tips for diagnosing and fixing common streaming issues&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="284"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_privacy_policy` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_privacy_policy&quot;>Privacy policy&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="285"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.summary_privacy_policy` appears to be unused"
+        errorLine1="    &lt;string name=&quot;summary_privacy_policy&quot;>View Moonlight\&apos;s privacy policy&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="286"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.local_network_rationale` appears to be unused"
+        errorLine1="    &lt;string name=&quot;local_network_rationale&quot;>Starwire requires local network permissions to communicate with nearby hosts&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="292"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.quick_launch_error` appears to be unused"
+        errorLine1="    &lt;string name=&quot;quick_launch_error&quot;>Error with Quick Launch&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="384"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.quick_launch_rename_message` appears to be unused"
+        errorLine1="    &lt;string name=&quot;quick_launch_rename_message&quot;>Enter a new name for this Quick Launch item:&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="391"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.overrides_section_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;overrides_section_title&quot;>Overrides&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="395"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_bitrate_override` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_bitrate_override&quot;>Bitrate Override&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="396"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.summary_bitrate_override` appears to be unused"
+        errorLine1="    &lt;string name=&quot;summary_bitrate_override&quot;>Override all bitrate settings. Set to left for default behavior.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="397"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.feel_vsync` appears to be unused"
+        errorLine1="    &lt;string name=&quot;feel_vsync&quot;>V-Sync stops tearing but can add up to one frame of delay.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="619"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.feel_fast_vsync` appears to be unused"
+        errorLine1="    &lt;string name=&quot;feel_fast_vsync&quot;>Fast V-Sync spaces frames evenly when the stream matches the screen.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="620"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.feel_async_lfr` appears to be unused"
+        errorLine1="    &lt;string name=&quot;feel_async_lfr&quot;>Async LFR keeps only the newest decoded frame waiting.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="621"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.custom_commands_add` appears to be unused"
+        errorLine1="    &lt;string name=&quot;custom_commands_add&quot;>Add Command&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="645"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.custom_commands_edit` appears to be unused"
+        errorLine1="    &lt;string name=&quot;custom_commands_edit&quot;>Edit Command&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="646"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.editor_error_name_empty` appears to be unused"
+        errorLine1="    &lt;string name=&quot;editor_error_name_empty&quot;>Please enter a command name&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="671"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_overlay_menu` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_overlay_menu&quot;>Overlay menu&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="685"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.summary_overlay_menu` appears to be unused"
+        errorLine1="    &lt;string name=&quot;summary_overlay_menu&quot;>Configure custom commands for the in-game overlay menu&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="686"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.title_enable_overlay_menu` appears to be unused"
+        errorLine1="    &lt;string name=&quot;title_enable_overlay_menu&quot;>Enable overlay menu&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="687"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.summary_enable_overlay_menu` appears to be unused"
+        errorLine1="    &lt;string name=&quot;summary_enable_overlay_menu&quot;>Hold select button for 5 seconds during streaming to open the overlay menu&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="688"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="NotShrinkingResources"
+        message="If enabling minification, also set shrinkResources = true"
+        errorLine1="            minifyEnabled true"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle"
+            line="198"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UselessParent"
+        message="This `RelativeLayout` layout or its `RelativeLayout` parent is possibly unnecessary"
+        errorLine1="        &lt;RelativeLayout"
+        errorLine2="         ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="61"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="UselessParent"
+        message="This `RelativeLayout` layout or its `RelativeLayout` parent is possibly unnecessary"
+        errorLine1="        &lt;RelativeLayout"
+        errorLine2="         ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="63"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="UselessParent"
+        message="This `LinearLayout` layout or its `LinearLayout` parent is unnecessary; transfer the `background` attribute to the other view"
+        errorLine1="    &lt;LinearLayout"
+        errorLine2="     ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/overrides_section.xml"
+            line="13"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="UselessParent"
+        message="This `LinearLayout` layout or its `LinearLayout` parent is unnecessary; transfer the `background` attribute to the other view"
+        errorLine1="    &lt;LinearLayout"
+        errorLine2="     ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/overrides_section.xml"
+            line="13"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="TooManyViews"
+        message="`layout_axixi_keyboard.xml` has more than 80 views, bad for performance"
+        errorLine1="        &lt;TextView"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="772"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Wyszukiwanie komputerów-hostów w sieci lokalnej..."
+        errorLine2="                                ^">
+        <location
+            file="src/main/res/values-pl/strings.xml"
+            line="11"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Procurando por PCs rodando o GameStream..."
+        errorLine2="                                ^">
+        <location
+            file="src/main/res/values-pt-rBR/strings.xml"
+            line="24"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Hledání PC, na kterých běží GameStream..."
+        errorLine2="                                ^">
+        <location
+            file="src/main/res/values-cs/strings.xml"
+            line="43"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Buscando anfitriones en tu red local...\n\n Asegúrate de que Sunshine se está ejecutando en el PC anfitrión o de que GameStream está activado en los ajustes de GeForce Experience SHIELD.&lt;/string>"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-es/strings.xml"
+            line="51"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Zoeken naar host-PC\&apos;s in uw lokale netwerk...\n\nZorg ervoor dat Sunshine draait op uw host-PC of dat GameStream is ingeschakeld in de GeForce Experience SHIELD-instellingen.&lt;/string>"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-nl/strings.xml"
+            line="51"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Procurando por PCs a executar o GameStream..."
+        errorLine2="                                ^">
+        <location
+            file="src/main/res/values-pt/strings.xml"
+            line="59"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Mencari host PC di jaringan lokal Anda...\n\nPastikan Sunshine berjalan di PC host Anda atau GameStream diaktifkan dalam pengaturan SHIELD Pengalaman GeForce.&lt;/string>"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-in/strings.xml"
+            line="60"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>在你的本地网络中搜索串流主机PC..."
+        errorLine2="                                ^">
+        <location
+            file="src/main/res/values-zh-rCN/strings.xml"
+            line="64"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>מחפש מחשבים ברשת המקומית שלך..."
+        errorLine2="                                ^">
+        <location
+            file="src/main/res/values-iw/strings.xml"
+            line="109"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>A helyi hálózaton lévő számítógépek keresése...\n\nGyőződj meg róla, hogy a Sunshine fut a gazdagépen, vagy a GameStream engedélyezve van a GeForce Experience SHIELD beállításaiban.&lt;/string>"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values-hu/strings.xml"
+            line="118"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Αναζήτηση για υπολογιστές με GameStream σε λειτουργία..."
+        errorLine2="                                ^">
+        <location
+            file="src/main/res/values-el/strings.xml"
+            line="159"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;searching_pc&quot;>Söker efter värddatorer i det lokala nätverket..."
+        errorLine2="                                ^">
+        <location
+            file="src/main/res/values-sv/strings.xml"
+            line="213"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="IconLocation"
+        message="Found bitmap drawable `res/drawable/app_icon.png` in densityless folder">
+        <location
+            file="src/main/res/drawable/app_icon.png"/>
+    </issue>
+
+    <issue
+        id="IconMissingDensityFolder"
+        message="Missing density variation folders in `src\main\res`: drawable-hdpi, drawable-mdpi, drawable-xxhdpi">
+        <location
+            file="src/main/res"/>
+    </issue>
+
+    <issue
+        id="ButtonStyle"
+        message="Buttons in button bars should be borderless; use `style=&quot;?android:attr/buttonBarButtonStyle&quot;` (and `?android:attr/buttonBarStyle` on the parent)"
+        errorLine1="                            &lt;Button"
+        errorLine2="                             ~~~~~~">
+        <location
+            file="src/main/res/layout/activity_app_view.xml"
+            line="157"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="ButtonStyle"
+        message="Buttons in button bars should be borderless; use `style=&quot;?android:attr/buttonBarButtonStyle&quot;` (and `?android:attr/buttonBarStyle` on the parent)"
+        errorLine1="                            &lt;Button"
+        errorLine2="                             ~~~~~~">
+        <location
+            file="src/main/res/layout/activity_app_view.xml"
+            line="173"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="        android:textSize=&quot;10sp&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="34"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `8sp`"
+        errorLine1="            android:textSize=&quot;8sp&quot; />"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="733"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="            android:textSize=&quot;10sp&quot; />"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="812"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="            android:textSize=&quot;10sp&quot; />"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="822"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="            android:textSize=&quot;10sp&quot; />"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="832"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="SmallSp"
+        message="Avoid using sizes smaller than `11sp`: `10sp`"
+        errorLine1="            android:textSize=&quot;10sp&quot; />"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="842"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="Autofill"
+        message="Missing `autofillHints` attribute"
+        errorLine1="    &lt;EditText"
+        errorLine2="     ~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_computer_manually.xml"
+            line="21"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="Autofill"
+        message="Missing `autofillHints` attribute"
+        errorLine1="        &lt;EditText"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_custom_command_editor.xml"
+            line="21"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `AnalogStick` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class AnalogStick extends VirtualControllerElement {"
+        errorLine2="             ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/virtual_controller/AnalogStick.java"
+            line="19"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `DigitalButton` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class DigitalButton extends VirtualControllerElement {"
+        errorLine2="             ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/virtual_controller/DigitalButton.java"
+            line="21"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `DigitalPad` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class DigitalPad extends VirtualControllerElement {"
+        errorLine2="             ~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/virtual_controller/DigitalPad.java"
+            line="16"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `LeftAnalogStick` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class LeftAnalogStick extends AnalogStick {"
+        errorLine2="             ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/virtual_controller/LeftAnalogStick.java"
+            line="11"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `LeftTrigger` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class LeftTrigger extends DigitalButton {"
+        errorLine2="             ~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/virtual_controller/LeftTrigger.java"
+            line="9"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `RightAnalogStick` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class RightAnalogStick extends AnalogStick {"
+        errorLine2="             ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/virtual_controller/RightAnalogStick.java"
+            line="11"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="ViewConstructor"
+        message="Custom view `RightTrigger` is missing constructor used by tools: `(Context)` or `(Context,AttributeSet)` or `(Context,AttributeSet,int)`"
+        errorLine1="public class RightTrigger extends DigitalButton {"
+        errorLine2="             ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/binding/input/virtual_controller/RightTrigger.java"
+            line="9"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="KeyboardInaccessibleWidget"
+        message="&apos;clickable&apos; attribute found, please also add &apos;focusable&apos;"
+        errorLine1="            android:clickable=&quot;true&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_app_view.xml"
+            line="225"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="                    brightnessValueText.setText(&quot;Auto&quot;);"
+        errorLine2="                                                ~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/BrightnessSliderView.java"
+            line="91"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="                    brightnessValueText.setText(progress + &quot;%&quot;);"
+        errorLine2="                                                ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/BrightnessSliderView.java"
+            line="93"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="        credit.setText(preference.getTitle() + &quot; · &quot; + source);"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/CoverGlowSettings.java"
+            line="310"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            perfOverlayLabel.setText(&quot;Stats overlay: Enabled&quot;);"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/OverridesView.java"
+            line="373"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            perfOverlayLabel.setText(&quot;Stats overlay: Disabled&quot;);"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/OverridesView.java"
+            line="377"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="            perfOverlayLabel.setText(&quot;Stats overlay: Default&quot;);"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/OverridesView.java"
+            line="381"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="        codecLabel.setText(&quot;Codec: &quot; + CODEC_LABELS[override]);"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/OverridesView.java"
+            line="427"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="String literal in `setText` can not be translated. Use Android resources instead."
+        errorLine1="        codecLabel.setText(&quot;Codec: &quot; + CODEC_LABELS[override]);"
+        errorLine2="                           ~~~~~~~~~">
+        <location
+            file="src/main/java/com/limelight/ui/OverridesView.java"
+            line="427"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;+&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;+&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_custom_commands.xml"
+            line="49"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;...&quot;, should use `@string` resource"
+        errorLine1="        android:text=&quot;...&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="41"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Selected icon&quot;, should use `@string` resource"
+        errorLine1="                android:contentDescription=&quot;Selected icon&quot; />"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_custom_command_editor.xml"
+            line="56"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;ESC&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;ESC&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="23"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F1&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F1&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="33"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F2&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F2&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="43"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F3&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F3&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F4&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F4&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="63"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F5&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F5&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="73"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F6&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F6&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="83"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F7&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F7&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="93"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F8&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F8&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="103"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F9&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F9&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="113"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F10&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F10&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="123"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F11&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F11&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="133"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F12&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F12&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="143"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Ins&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Ins&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="154"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Del&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Del&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="164"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;~`&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;~`&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="181"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;1&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;1&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="191"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;2&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;2&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="201"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;3&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;3&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="211"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;4&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;4&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="221"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;5&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;5&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="231"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;6&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;6&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="241"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;7&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;7&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="251"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;8&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;8&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="261"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;9&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;9&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="271"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;0&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;0&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="281"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;_-&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;_-&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="291"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;+=&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;+=&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="301"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Back&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Back&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="311"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Tab&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Tab&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="328"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Q&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Q&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="338"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;W&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;W&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="348"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;E&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;E&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="358"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;R&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;R&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="368"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;T&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;T&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="378"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Y&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Y&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="388"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;U&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;U&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="398"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;I&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;I&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="408"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;O&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;O&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="418"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;P&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;P&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="428"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;{[&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;{[&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="438"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;}]&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;}]&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="448"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;|\\&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;|\\&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="458"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Caps&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Caps&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="475"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;A&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;A&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="485"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;S&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;S&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="495"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;D&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;D&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="505"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;F&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;F&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="515"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;G&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;G&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="525"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;H&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;H&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="535"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;J&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;J&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="545"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;K&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;K&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="555"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;L&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;L&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="565"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;:;&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;:;&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="575"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;&quot;&apos;&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;&amp;quot;&apos;&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="585"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Enter&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Enter&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="595"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Shift&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Shift&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="612"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Z&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Z&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="622"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;X&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;X&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="632"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;C&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;C&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="642"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;V&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;V&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="652"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;B&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;B&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="662"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;N&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;N&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="672"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;M&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;M&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="682"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;&lt;,&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;&amp;lt;,&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="692"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;>.&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;>.&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="702"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;↑&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;↑&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="722"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Ctrl&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Ctrl&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="749"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Win&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Win&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="759"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Alt&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Alt&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="769"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;___&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;___&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="781"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Home&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;Home&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="811"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;End&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;End&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="821"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;PgUp&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;PgUp&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="831"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;PgDn&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;PgDn&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="841"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;←&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;←&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="852"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;↓&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;↓&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="862"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;→&quot;, should use `@string` resource"
+        errorLine1="            android:text=&quot;→&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="872"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Command icon&quot;, should use `@string` resource"
+        errorLine1="        android:contentDescription=&quot;Command icon&quot; />"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/list_item_custom_command.xml"
+            line="17"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Performance Overlay Override&quot;, should use `@string` resource"
+        errorLine1="                android:contentDescription=&quot;Performance Overlay Override&quot; />"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/overrides_section.xml"
+            line="41"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Performance Overlay Override&quot;, should use `@string` resource"
+        errorLine1="                android:contentDescription=&quot;Performance Overlay Override&quot; />"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/overrides_section.xml"
+            line="47"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Stats overlay: Default&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;Stats overlay: Default&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/overrides_section.xml"
+            line="47"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Stats overlay: Default&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;Stats overlay: Default&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/overrides_section.xml"
+            line="54"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Codec: Default&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;Codec: Default&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/overrides_section.xml"
+            line="79"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="HardcodedText"
+        message="Hardcoded string &quot;Codec: Default&quot;, should use `@string` resource"
+        errorLine1="                android:text=&quot;Codec: Default&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/overrides_section.xml"
+            line="85"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toLeftOf`; already defining `layout_toStartOf` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_toLeftOf=&quot;@+id/addPcButton&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_computer_manually.xml"
+            line="26"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_computer_manually.xml"
+            line="29"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentRight`; already defining `layout_alignParentEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentRight=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_add_computer_manually.xml"
+            line="46"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentRight`; already defining `layout_alignParentEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentRight=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_custom_commands.xml"
+            line="36"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginRight`; already defining `layout_marginEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_marginRight=&quot;16dp&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_custom_commands.xml"
+            line="38"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginLeft`; already defining `layout_marginStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_marginLeft=&quot;5dp&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="29"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Use &quot;`start`&quot; instead of &quot;`left`&quot; to ensure correct behavior in right-to-left locales"
+        errorLine1="        android:layout_gravity=&quot;left&quot;"
+        errorLine2="                                ~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="32"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Use &quot;`start`&quot; instead of &quot;`left`&quot; to ensure correct behavior in right-to-left locales"
+        errorLine1="        android:gravity=&quot;left&quot;"
+        errorLine2="                         ~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="37"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginRight`; already defining `layout_marginEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_marginRight=&quot;10dp&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="47"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Use &quot;`end`&quot; instead of &quot;`right`&quot; to ensure correct behavior in right-to-left locales"
+        errorLine1="        android:layout_gravity=&quot;right&quot;"
+        errorLine2="                                ~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="50"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Use &quot;`end`&quot; instead of &quot;`right`&quot; to ensure correct behavior in right-to-left locales"
+        errorLine1="        android:gravity=&quot;right&quot;"
+        errorLine2="                         ~~~~~">
+        <location
+            file="src/main/res/layout/activity_game.xml"
+            line="52"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="33"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentRight`; already defining `layout_alignParentEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentRight=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="35"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toRightOf`; already defining `layout_toEndOf` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_toRightOf=&quot;@+id/settingsButton&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="36"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentRight`; already defining `layout_alignParentEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentRight=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="38"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="44"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentRight`; already defining `layout_alignParentEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentRight=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="46"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toRightOf`; already defining `layout_toEndOf` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_toRightOf=&quot;@+id/settingsButton&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="46"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentRight`; already defining `layout_alignParentEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentRight=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="48"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="56"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentRight`; already defining `layout_alignParentEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentRight=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="58"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toRightOf`; already defining `layout_toEndOf` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_toRightOf=&quot;@+id/settingsButton&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="58"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toRightOf`; already defining `layout_toEndOf` with `targetSdkVersion` 36"
+        errorLine1="                android:layout_toRightOf=&quot;@+id/pcs_loading&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="75"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginLeft`; already defining `layout_marginStart` with `targetSdkVersion` 36"
+        errorLine1="                android:layout_marginLeft=&quot;10dp&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="77"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toRightOf`; already defining `layout_toEndOf` with `targetSdkVersion` 36"
+        errorLine1="                android:layout_toRightOf=&quot;@+id/pcs_loading&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="80"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginLeft`; already defining `layout_marginStart` with `targetSdkVersion` 36"
+        errorLine1="                android:layout_marginLeft=&quot;10dp&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="82"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="96"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="99"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="109"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toRightOf`; already defining `layout_toEndOf` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_toRightOf=&quot;@+id/settingsButton&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="113"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="123"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toRightOf`; already defining `layout_toEndOf` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_toRightOf=&quot;@+id/overridesToggleButton&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="127"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="138"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_toRightOf`; already defining `layout_toEndOf` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_toRightOf=&quot;@+id/autoResumeToggleButton&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="142"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentLeft`; already defining `layout_alignParentStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentLeft=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout-land/activity_pc_view.xml"
+            line="151"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_alignParentRight`; already defining `layout_alignParentEnd` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_alignParentRight=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/activity_pc_view.xml"
+            line="157"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginLeft`; already defining `layout_marginStart` with `targetSdkVersion` 36"
+        errorLine1="    android:layout_marginLeft=&quot;10dp&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/brightness_slider.xml"
+            line="6"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Use &quot;`start`&quot; instead of &quot;`left`&quot; to ensure correct behavior in right-to-left locales"
+        errorLine1="    android:layout_gravity=&quot;left&quot;"
+        errorLine2="                            ~~~~">
+        <location
+            file="src/main/res/layout/brightness_slider.xml"
+            line="10"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginLeft`; already defining `layout_marginStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_marginLeft=&quot;60dp&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/brightness_slider.xml"
+            line="38"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginLeft`; already defining `layout_marginStart` with `targetSdkVersion` 36"
+        errorLine1="                android:layout_marginLeft=&quot;16dp&quot;"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/dialog_custom_command_editor.xml"
+            line="63"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Consider replacing `android:layout_marginRight` with `android:layout_marginEnd=&quot;5dp&quot;` to better support right-to-left layouts"
+        errorLine1="            android:layout_marginRight=&quot;5dp&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="19"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Consider replacing `android:layout_marginLeft` with `android:layout_marginStart=&quot;5dp&quot;` to better support right-to-left layouts"
+        errorLine1="            android:layout_marginLeft=&quot;5dp&quot;"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/layout_axixi_keyboard.xml"
+            line="150"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="RtlHardcoded"
+        message="Redundant attribute `layout_marginLeft`; already defining `layout_marginStart` with `targetSdkVersion` 36"
+        errorLine1="        android:layout_marginLeft=&quot;16dp&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/layout/list_item_custom_command.xml"
+            line="25"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="RtlEnabled"
+        message="The project references RTL attributes, but does not explicitly enable or disable RTL support with `android:supportsRtl` in the manifest">
+        <location
+            file="src/main/AndroidManifest.xml"/>
+    </issue>
+
+</issues>

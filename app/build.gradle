@@ -83,6 +83,13 @@ android {
     lint {
         disable 'MissingTranslation'
         lintConfig file('lint.xml')
+        // Starwire: the warnings already in the code are listed in lint-baseline.xml, and any new
+        // warning or error fails gradlew lintNonRootDebug. After fixing some of the listed ones,
+        // refresh the list with gradlew updateLintBaselineNonRootDebug.
+        baseline = file('lint-baseline.xml')
+        warningsAsErrors = true
+        // These change with what's been released since, not with the code, so they never fail it
+        informational 'NewerVersionAvailable', 'GradleDependency', 'AndroidGradlePluginVersion'
     }
 
     testOptions {
