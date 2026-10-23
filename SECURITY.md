@@ -30,6 +30,11 @@ Both sides still only talk to private addresses (local network or VPN), but that
 filter, not what keeps it safe: a UDP packet's sender address is easy to fake. The format, and
 how it's tested, is in [docs/dev/mic-protocol.md](docs/dev/mic-protocol.md).
 
+Before 0.2.1 shipped, the encryption had two separate security reviews. The first found three
+medium problems. The second found one more: if the receiver restarted mid-stream, someone who had
+recorded an earlier reply could send it again and make the app reuse an encryption key. All four
+were fixed before the release, each with a test that fails without the fix.
+
 What it doesn't protect against:
 
 - Someone who sees the pairing code before you've typed it could pair instead of you, so don't

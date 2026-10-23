@@ -26,10 +26,10 @@ After [u/rambo3349](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5
 
 In the longer-term pipeline (0.4.0), I noticed a lot of users are connecting from an Ayn Thor or similar DS device. I'm actually super jealous, my Thor should arrive in the next month and on that front I'm wondering what you guys would like to see in terms of "DS features" in future Starwire releases.
 
-Aside from that, here are the draft release notes for 0.2.1 which should go live tonight:
+Aside from that, here are the release notes for 0.2.1, which is out now ([download](https://github.com/SicarioGaming/Starwire/releases/tag/v0.2.1)):
 
 <details open>
-<summary><b>Draft release notes for 0.2.1</b></summary>
+<summary><b>Release notes for 0.2.1</b></summary>
 
 **Following u/rambo3349's code review (already live on GitHub):**
 
@@ -47,6 +47,7 @@ Aside from that, here are the draft release notes for 0.2.1 which should go live
 - **The mic setup window** fits small screens, like a 1280x720 stream.
 - **Custom resolutions and frame rates,** in the main settings and per game. These come from Moonlight X, credited to them.
 - **An about page** with credits and the full open-source licences.
+- **The floating menu button stays where you put it,** for each orientation.
 - **The custom driver option** is marked experimental, with a plain warning before you turn it on.
 - Various other small cleanups to the Github repo and changes to wording for transparency.
 
@@ -62,7 +63,7 @@ Aside from that, here are the draft release notes for 0.2.1 which should go live
 
 **Testing and Development**
 
-- 292 unit tests (from none), about 135 on-device tests and 32 screenshot tests.
+- 314 unit tests (from none), 32 of them screenshot tests, and 138 on-device tests.
 - The same tests also run on 5 virtual devices, including a Fold shape folded, half-open and unfolded. (Thank you to u/MickeyBronson)
 - Checks run automatically on every change.
 
@@ -74,7 +75,7 @@ Aside from that, here are the draft release notes for 0.2.1 which should go live
 
 </details>
 
-Thank you all for your continued trust and engagement. Please keep an eye out for announcements re: 0.2.1. Cheers!
+Thank you all for your continued trust and engagement. Please keep an eye out for announcements re: 0.3.0. Cheers!
 
 ---
 ## New in 0.2.0: your microphone on the PC, with any host

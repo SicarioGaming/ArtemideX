@@ -32,7 +32,7 @@ The repo changes that followed u/rambo3349's code review went live on GitHub bef
 - **Security and contributing:** a [SECURITY.md](SECURITY.md) with private vulnerability
   reporting, and a [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Checksums** are on the release pages, so you can check your download.
-- **Tests:** 292 unit tests (from none), about 135 on-device tests and 32 screenshot tests. The
+- **Tests:** 314 unit tests (from none), 32 of them screenshot tests, and 138 on-device tests. The
   same tests also run on 5 virtual devices, including a Fold shape folded, half-open and unfolded
   (thank you to u/MickeyBronson). Checks run automatically on every change.
 - **This changelog,** and rules for commit messages
