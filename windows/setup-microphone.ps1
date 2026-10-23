@@ -52,7 +52,7 @@ $vbCableUrl = 'https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack4
 # Messages wrap at the window's width instead of running off the edge; later lines get $rest
 function Say($text, $color, $first = '   ', $rest = '   ') {
     $width = 80
-    try { $width = [Math]::Max(40, $Host.UI.RawUI.WindowSize.Width - 1) } catch { }
+    try { $width = [Math]::Max(20, $Host.UI.RawUI.WindowSize.Width - 1) } catch { }
     $lines = @()
     $line = $first
     foreach ($word in ($text -split ' ')) {
@@ -95,17 +95,48 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     exit
 }
 
-# Fit the window on screen (it can open wider than a small or streamed display), and keep the
-# buffer no wider than the window: a wider one scrolls sideways on long lines, cutting others off
+# Fit the window on the screen. Run as administrator, PowerShell opens in the classic console at
+# 120x50 wherever Windows places it, which can run past the bottom of a 720p or streamed display,
+# and the newest lines are at the bottom. So shrink the window to the work area (the screen minus
+# the taskbar) if it's bigger and slide it up and left onto it; the console fits its rows and
+# columns to the new size. Windows Terminal sizes its own window, so this leaves it alone.
+try {
+    Add-Type -Namespace Starwire -Name ConsoleWindow -MemberDefinition @'
+[DllImport("kernel32.dll")] public static extern IntPtr GetConsoleWindow();
+[DllImport("user32.dll", CharSet = CharSet.Unicode)] public static extern int GetClassName(IntPtr window, System.Text.StringBuilder name, int size);
+[DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr window);
+[DllImport("user32.dll")] public static extern bool IsIconic(IntPtr window);
+[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, [In, Out] int[] rect);
+[DllImport("user32.dll")] public static extern IntPtr MonitorFromWindow(IntPtr window, int flags);
+[DllImport("user32.dll")] public static extern bool GetMonitorInfo(IntPtr monitor, [In, Out] int[] info);
+[DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, int flags);
+'@
+    $window = [Starwire.ConsoleWindow]::GetConsoleWindow()
+    $class = New-Object Text.StringBuilder 64
+    [void][Starwire.ConsoleWindow]::GetClassName($window, $class, $class.Capacity)
+    $rect = New-Object int[] 4
+    $info = New-Object int[] 10
+    $info[0] = 40 # MONITORINFO's size; the work area comes back in info[5..8]: left, top, right, bottom
+    if ($class.ToString() -eq 'ConsoleWindowClass' -and
+        -not [Starwire.ConsoleWindow]::IsZoomed($window) -and -not [Starwire.ConsoleWindow]::IsIconic($window) -and
+        [Starwire.ConsoleWindow]::GetWindowRect($window, $rect) -and
+        [Starwire.ConsoleWindow]::GetMonitorInfo([Starwire.ConsoleWindow]::MonitorFromWindow($window, 2), $info)) {
+        $width = [Math]::Min($rect[2] - $rect[0], $info[7] - $info[5])
+        $height = [Math]::Min($rect[3] - $rect[1], $info[8] - $info[6])
+        $left = [Math]::Max($info[5], [Math]::Min($rect[0], $info[7] - $width))
+        $top = [Math]::Max($info[6], [Math]::Min($rect[1], $info[8] - $height))
+        if ($left -ne $rect[0] -or $top -ne $rect[1] -or $width -ne $rect[2] - $rect[0] -or $height -ne $rect[3] - $rect[1]) {
+            # SWP_NOZORDER | SWP_NOACTIVATE
+            [void][Starwire.ConsoleWindow]::SetWindowPos($window, [IntPtr]::Zero, $left, $top, $width, $height, 0x14)
+        }
+    }
+}
+catch { }
+# A buffer wider than the window scrolls sideways on long lines, cutting others off
 try {
     $raw = $Host.UI.RawUI
-    $max = $raw.MaxPhysicalWindowSize
-    $width = [Math]::Min($raw.WindowSize.Width, $max.Width)
-    if ($raw.WindowSize.Width -gt $width -or $raw.WindowSize.Height -gt $max.Height) {
-        $raw.WindowSize = New-Object Management.Automation.Host.Size($width, [Math]::Min($raw.WindowSize.Height, $max.Height))
-    }
-    if ($raw.BufferSize.Width -gt $width) {
-        $raw.BufferSize = New-Object Management.Automation.Host.Size($width, $raw.BufferSize.Height)
+    if ($raw.BufferSize.Width -gt $raw.WindowSize.Width) {
+        $raw.BufferSize = New-Object Management.Automation.Host.Size($raw.WindowSize.Width, $raw.BufferSize.Height)
     }
 }
 catch { }
@@ -243,8 +274,9 @@ if ($outputs -match 'CABLE Input') {
     Done "Running, with no window: its icon is in the notification area, by the clock. Right-click it for a test tone or to quit."
 
     Step 'Checking the virtual microphone'
-    # The receiver has no window of its own, so its output has to be piped to be waited for
-    & $exe --check | ForEach-Object { Write-Host $_ }
+    # The receiver has no window of its own, so its output has to be piped to be waited for.
+    # Its lines go through Say so they wrap on whole words too.
+    & $exe --check | ForEach-Object { Say $_ $null '' '   ' }
 }
 
 # --- VB-Cable can take over the default speakers when it installs ---
