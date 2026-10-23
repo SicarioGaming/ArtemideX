@@ -983,22 +983,11 @@
     <issue
         id="SourceLockedOrientationActivity"
         message="You should not lock orientation of your activities, so that you can support a good user experience for any device or orientation"
-        errorLine1="                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/com/limelight/Game.java"
-            line="821"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="SourceLockedOrientationActivity"
-        message="You should not lock orientation of your activities, so that you can support a good user experience for any device or orientation"
         errorLine1="            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);"
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/limelight/Game.java"
-            line="4156"
+            line="4170"
             column="13"/>
     </issue>
 
@@ -1086,7 +1075,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/limelight/Game.java"
-            line="903"
+            line="921"
             column="5"/>
     </issue>
 
@@ -1097,7 +1086,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/limelight/Game.java"
-            line="1004"
+            line="1022"
             column="5"/>
     </issue>
 
@@ -1108,7 +1097,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/limelight/Game.java"
-            line="1309"
+            line="1327"
             column="5"/>
     </issue>
 
