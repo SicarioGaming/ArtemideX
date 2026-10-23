@@ -1,0 +1,2 @@
+# sh can't run a CRLF script, so these stay LF on every checkout (as .github/tools/prebuilts does)
+*.sh text eol=lf
