@@ -52,9 +52,11 @@ like WO Mic or AudioRelay to open on your Android device each time.
 <sub>All of this is automatic: one double-click runs the PowerShell setup, which builds and starts the receiver, installs VB-Cable if it's missing, adds the firewall rule and checks the virtual mic. This is it finishing on my PC.</sub>
 </p>
 
-<!-- TODO (encrypted mic): when it ships, update "Please read this before you use it" below, the
-receiver line under "How it works", the microphone row under "Input and feel", docs/ROADMAP.md,
-SECURITY.md and ClaimsTest.theMicrophoneSaysItIsntEncrypted. -->
+<!-- TODO (encrypted mic): when 0.2.1 ships, turn "Coming in 0.2.1" below into the description,
+and update "Please read this before you use it", the receiver line under "How it works", the
+microphone row under "Input and feel", docs/ROADMAP.md, SECURITY.md, the "Coming in 0.2.1"
+section of windows/README.md and ClaimsTest.theMicrophoneSaysItIsntEncrypted. Only claim what
+the real phone-to-PC test passed. -->
 The receiver has no window: right-click its icon by the clock to check the virtual mic, play a test
 tone for Discord's mic test or quit (or end it in Task Manager). Measured on my tablet over Wi-Fi:
 16,880 packets in 90 seconds with none lost, no gaps in the receiver's buffer (usually 30 to 50
@@ -76,6 +78,24 @@ private address, and the sender's address is easy to fake. Until the fix ships:
 I'm working on a fix. [SECURITY.md](SECURITY.md) has the details. If your PC runs
 [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can send the
 mic over the stream itself instead.
+
+**Coming in 0.2.1: the microphone encrypted, and only from paired devices.** You pair each Android
+device with the PC once: the receiver shows a 16-character code and you type it into Starwire
+(**Settings → Sound & vibration → Send my microphone → Pair with the PC**). The code
+authenticates a key exchange, so the device and the PC end up with a key nobody else on the
+network has. Each stream then gets its own AES-256-GCM key, every packet is encrypted and
+authenticated with a counter that only goes up, and the receiver refuses anything it can't
+check: devices it hasn't paired, recorded packets sent again, and plain VBAN. Sending plain VBAN
+stays possible for Voicemeeter and other VBAN apps, as an option labelled "Not encrypted".
+Updating needs both sides: the app and the PC setup, then pairing once; a 0.2.0 receiver won't
+understand the new app, and the new receiver refuses 0.2.0's unencrypted audio.
+
+What's tested so far: the app and the receiver give the same bytes for a shared set of test
+vectors, the app's pairing and sender work against the receiver on one PC's loopback (every packet
+played in order, a replayed, a late, two forged and one plain VBAN packet refused), and the app's
+side runs on my tablet, where encrypting took about 6.5 microseconds per packet in a benchmark. Sending
+from a real phone to a real PC over Wi-Fi hasn't been tested yet. The format is in
+[docs/dev/mic-protocol.md](docs/dev/mic-protocol.md).
 
 <details>
 <summary><b>How it works and what I measured</b></summary>
