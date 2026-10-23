@@ -245,6 +245,8 @@ public class OverlayMenuView extends LinearLayout {
         coverSwatch = new ImageView(context);
         coverSwatch.setScaleType(ImageView.ScaleType.CENTER_CROP);
         coverSwatch.setClipToOutline(true);
+        // The game's name sits right beside it, so TalkBack skips the picture
+        coverSwatch.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         header.addView(coverSwatch, new LinearLayout.LayoutParams(dp(42), dp(56)));
 
         LinearLayout texts = new LinearLayout(context);

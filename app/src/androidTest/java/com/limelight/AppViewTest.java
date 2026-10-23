@@ -3,6 +3,7 @@ package com.limelight;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.Intent;
@@ -136,6 +137,57 @@ public class AppViewTest {
                     refresh.invoke(activity, false);
                     assertEquals(android.view.View.GONE, quit.getVisibility());
                     assertEquals(activity.getString(R.string.cg_play), play.getText().toString());
+                }
+                catch (ReflectiveOperationException e) {
+                    throw new AssertionError(e);
+                }
+            });
+        }
+    }
+
+    @Test
+    public void tilesAndButtonsSayWhichGame() throws Exception {
+        // Once a cover loads the tile shows no name, so TalkBack needs it spelled out
+        try (ActivityScenario<AppView> scenario = ActivityScenario.launch(cachedPc())) {
+            for (int i = 0; i < 3; i++) {
+                SystemClock.sleep(1000);
+                scenario.onActivity(AppViewTest::drawOffscreen);
+            }
+            scenario.onActivity(activity -> {
+                android.widget.AbsListView grid = findGrid(activity.getWindow().getDecorView());
+                assertNotNull("no game grid", grid);
+                assertEquals("all four tiles laid out", 4, grid.getChildCount());
+                String selectedSuffix = ", " + activity.getString(R.string.cg_a11y_selected);
+                int selected = 0;
+                for (int i = 0; i < grid.getChildCount(); i++) {
+                    android.view.View tile = grid.getChildAt(i);
+                    Object item = grid.getItemAtPosition(grid.getFirstVisiblePosition() + i);
+                    String name = ((AppView.AppObject) item).app.getAppName();
+                    CharSequence label = tile.getContentDescription();
+                    assertNotNull(name + " tile has no label", label);
+                    assertTrue(label.toString(), label.toString().startsWith(name));
+                    if (label.toString().endsWith(selectedSuffix)) {
+                        selected++;
+                    }
+                    // The picture and the name under it are left out, so the tile is read once
+                    assertEquals(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO,
+                            tile.findViewById(R.id.grid_image).getImportantForAccessibility());
+                    assertEquals(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO,
+                            tile.findViewById(R.id.grid_text).getImportantForAccessibility());
+                }
+                assertEquals("tiles read as selected", 1, selected);
+
+                try {
+                    java.lang.reflect.Field field = AppView.class.getDeclaredField("selectedApp");
+                    field.setAccessible(true);
+                    String name = ((AppView.AppObject) field.get(activity)).app.getAppName();
+                    // Nothing runs on the unreachable test PC, so it's Play
+                    assertEquals(activity.getString(R.string.cg_a11y_play_game, name),
+                            activity.findViewById(R.id.heroPlay).getContentDescription().toString());
+                    assertEquals(activity.getString(R.string.cg_a11y_play_game, name),
+                            activity.findViewById(R.id.miniPlay).getContentDescription().toString());
+                    assertEquals(activity.getString(R.string.cg_a11y_quit_game, name),
+                            activity.findViewById(R.id.heroQuit).getContentDescription().toString());
                 }
                 catch (ReflectiveOperationException e) {
                     throw new AssertionError(e);

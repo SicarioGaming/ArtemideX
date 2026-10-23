@@ -999,6 +999,12 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         }
         miniTitle.setText(selectedApp.app.getAppName());
         miniPlay.setText(running ? R.string.cg_resume : R.string.cg_play);
+        // TalkBack says which game the buttons are for ("Resume Cyberpunk 2077")
+        String playLabel = getString(running ? R.string.cg_a11y_resume_game : R.string.cg_a11y_play_game,
+                selectedApp.app.getAppName());
+        heroPlay.setContentDescription(playLabel);
+        miniPlay.setContentDescription(playLabel);
+        heroQuit.setContentDescription(getString(R.string.cg_a11y_quit_game, selectedApp.app.getAppName()));
         if (running) {
             heroLabel.setText(R.string.cg_running);
             heroLabel.setVisibility(View.VISIBLE);

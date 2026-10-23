@@ -117,6 +117,14 @@ public class OverlayMenuViewTest {
     }
 
     @Test
+    public void talkBackSkipsTheCoverBesideTheGameName() {
+        // The header: the cover, then the game's name and stream line
+        ViewGroup header = (ViewGroup) menu.getChildAt(0);
+        assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO, header.getChildAt(0).getImportantForAccessibility());
+        assertTrue(header.getChildAt(1) instanceof ViewGroup);
+    }
+
+    @Test
     public void fullKeyboardSitsInTheTopRowNextToKeyboard() {
         View keyboard = findButton(menu, str(com.limelight.R.string.overlay_menu_keyboard));
         View fullKeyboard = findButton(menu, str(com.limelight.R.string.overlay_menu_full_keyboard));

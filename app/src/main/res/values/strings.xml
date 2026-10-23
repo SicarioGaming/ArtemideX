@@ -753,6 +753,15 @@
     <!-- Game screen: the slim bar that takes over once the header has scrolled away -->
     <string name="cg_back_to_top">Show the selected game</string>
 
+    <!-- What TalkBack says for game covers, the Play/Resume/Quit buttons and the PC screen's toolbar -->
+    <string name="cg_a11y_hidden">Hidden</string>
+    <string name="cg_a11y_selected">Selected</string>
+    <string name="cg_a11y_play_game">Play %1$s</string>
+    <string name="cg_a11y_resume_game">Resume %1$s</string>
+    <string name="cg_a11y_quit_game">Quit %1$s</string>
+    <string name="cg_a11y_overrides">Turn overrides on or off</string>
+    <string name="cg_a11y_auto_resume">Turn auto-resume on or off</string>
+
     <!-- Settings > About, and its Credits and Open-source licences pages -->
     <string name="category_about">About</string>
     <string name="title_about_version">Version</string>

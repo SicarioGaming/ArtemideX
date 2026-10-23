@@ -6,6 +6,7 @@
     android:stateListAnimator="@animator/cg_tile_press">
     <ImageView
         android:id="@+id/grid_image"
+        android:importantForAccessibility="no"
         android:cropToPadding="false"
         android:scaleType="fitXY"
         android:layout_width="match_parent"
@@ -13,6 +14,7 @@
     </ImageView>
     <ImageView
         android:id="@+id/grid_overlay"
+        android:importantForAccessibility="no"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
         android:layout_width="33dp"
@@ -20,6 +22,7 @@
     </ImageView>
     <TextView
         android:id="@+id/grid_text"
+        android:importantForAccessibility="no"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/grid_overlay"
@@ -29,6 +32,7 @@
     </TextView>
     <ImageView
         android:id="@+id/settings_indicator"
+        android:importantForAccessibility="no"
         android:layout_width="16dp"
         android:layout_height="16dp"
         android:layout_alignParentTop="true"

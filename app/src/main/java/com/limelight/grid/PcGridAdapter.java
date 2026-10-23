@@ -94,5 +94,19 @@ public class PcGridAdapter extends GenericGridAdapter<PcView.ComputerObject> {
         if (settingsIndicator != null) {
             settingsIndicator.setVisibility(View.GONE);
         }
+
+        // For TalkBack: the PC's state is only shown by icons and dimming
+        int state;
+        if (obj.details.state == ComputerDetails.State.ONLINE) {
+            state = obj.details.pairState == PairingManager.PairState.NOT_PAIRED ?
+                    R.string.scut_not_paired : R.string.pcview_menu_header_online;
+        }
+        else if (obj.details.state == ComputerDetails.State.OFFLINE) {
+            state = R.string.pcview_menu_header_offline;
+        }
+        else {
+            state = R.string.pcview_menu_header_unknown;
+        }
+        parentView.setContentDescription(obj.details.name + ", " + context.getString(state));
     }
 }

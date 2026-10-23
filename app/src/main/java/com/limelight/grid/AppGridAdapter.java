@@ -245,5 +245,23 @@ public class AppGridAdapter extends GenericGridAdapter<AppView.AppObject> {
             // Cover Glow: the other covers sit back a little behind the selected one
             parentView.setAlpha(selected || selectedAppId == -1 ? 1.0f : 0.82f);
         }
+
+        // For TalkBack: once a cover loads the name is no longer on screen as text, and the
+        // rest is only icons and dimming, so the tile says it all (tiles are reused, so every time)
+        StringBuilder label = new StringBuilder(obj.app.getAppName());
+        if (obj.isRunning) {
+            label.append(", ").append(context.getString(R.string.cg_running));
+        }
+        if (obj.isHidden) {
+            label.append(", ").append(context.getString(R.string.cg_a11y_hidden));
+        }
+        if (settingsIndicator != null && settingsIndicator.getVisibility() == View.VISIBLE) {
+            label.append(", ").append(context.getString(R.string.cg_chip_custom));
+        }
+        if (selected) {
+            // The next tap plays it
+            label.append(", ").append(context.getString(R.string.cg_a11y_selected));
+        }
+        parentView.setContentDescription(label);
     }
 }
