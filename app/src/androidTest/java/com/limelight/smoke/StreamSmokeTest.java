@@ -8,8 +8,10 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -37,11 +39,13 @@ import java.util.regex.Pattern;
 
 /**
  * A real stream, only when asked for (device-test.sh --allow-stream, which passes
- * -e starwire.allowStream true): starts Desktop on the paired PC, opens and closes the in-stream
- * menu, and leaves with Disconnect. It never presses Quit and never starts another app: it goes
- * ahead only when the PC is running nothing or Desktop. For the stream it turns off what sends
- * the PC anything besides the stream itself (Hide PC cursor's key presses, the microphone,
- * clipboard sync, audio haptics), and afterwards every setting is put back as it was.
+ * -e starwire.allowStream true): starts Desktop on the paired PC, checks the floating menu button
+ * starts in its saved spot and saves the spot it's dragged to, opens and closes the in-stream
+ * menu with it, and leaves with Disconnect. It never presses Quit and never starts another app:
+ * it goes ahead only when the PC is running nothing or Desktop. For the stream it turns off what
+ * sends the PC anything besides the stream itself (Hide PC cursor's key presses, the microphone,
+ * clipboard sync, audio haptics), and afterwards every setting is put back as it was, the menu
+ * button's saved spot among them.
  */
 @RunWith(AndroidJUnit4.class)
 public class StreamSmokeTest {
@@ -97,6 +101,10 @@ public class StreamSmokeTest {
                 .putString("list_audio_haptics", "off")
                 .putBoolean("checkbox_enable_floating_button", true)
                 .commit());
+        // The menu button starts in the middle, saved as if dragged there: well away from the
+        // edges, where a drag could be taken for the system's back or home gesture
+        PreferenceConfiguration.saveFloatingButtonSpot(prefs, false, 0.5f, 0.5f);
+        PreferenceConfiguration.saveFloatingButtonSpot(prefs, true, 0.5f, 0.5f);
         // What Game will use, Desktop's own settings included
         PreferenceConfiguration stream = AppPreferences.getEffectivePreferences(smoke.target,
                 pc.uuid + ":" + desktopId, null, true);
@@ -120,8 +128,16 @@ public class StreamSmokeTest {
         SystemClock.sleep(3000);
         smoke.shot("06-stream");
 
-        // Open the menu and close it again, and the stream carries on
+        // The stream screen starts the menu button in its saved spot, the button goes where it's
+        // dragged, and the stream screen saves the new spot
+        float[] start = menuButton(game);
+        assertEquals("the menu button didn't start in its saved spot", 0.5f * start[2], start[0], 1);
+        assertEquals("the menu button didn't start in its saved spot", 0.5f * start[3], start[1], 1);
         String disconnect = smoke.target.getString(R.string.overlay_menu_disconnect);
+        float[] spot = dragMenuButton(game, disconnect);
+
+        // Open the menu with a tap on the button where it is now, close it again, and the stream
+        // carries on
         openMenu();
         smoke.shot("07-stream-menu");
         UiObject2 close = smoke.device.findObject(By.text(smoke.target.getString(R.string.overlay_menu_close)));
@@ -130,6 +146,9 @@ public class StreamSmokeTest {
         assertTrue("the menu didn't close", smoke.device.wait(Until.gone(By.text(disconnect)), Smoke.WAIT_MS));
         SystemClock.sleep(1000);
         assertTrue("the stream stopped when the menu closed", isConnected(game));
+        float[] afterMenu = menuButton(game);
+        assertEquals("the menu moved the button from its spot", spot[0] * afterMenu[2], afterMenu[0], 1);
+        assertEquals("the menu moved the button from its spot", spot[1] * afterMenu[3], afterMenu[1], 1);
 
         // Leave with Disconnect: Quit sits right beside it and is never pressed
         openMenu();
@@ -244,6 +263,56 @@ public class StreamSmokeTest {
         button.click();
         assertTrue("the menu didn't open", smoke.device.wait(Until.hasObject(
                 By.text(smoke.target.getString(R.string.overlay_menu_disconnect))), Smoke.WAIT_MS));
+    }
+
+    // Drags the floating menu button by its middle a quarter of the screen each way, then checks
+    // the spot it was left in is saved (FloatingButton): as shares of the room it moves in within
+    // Game's window, for that window's orientation. Returns the saved spot.
+    private float[] dragMenuButton(Game game, String disconnect) {
+        UiObject2 button = smoke.device.wait(Until.findObject(smoke.id("floatingMenuButton")), Smoke.WAIT_MS);
+        assertNotNull("the stream has no menu button", button);
+        Rect from = button.getVisibleBounds();
+        int width = smoke.device.getDisplayWidth();
+        int height = smoke.device.getDisplayHeight();
+        // Far enough to be a drag and not a tap, and from the middle, still away from the edges
+        int toX = from.centerX() < width / 2 ? width * 3 / 4 : width / 4;
+        int toY = from.centerY() < height / 2 ? height * 3 / 4 : height / 4;
+        // The button takes the whole touch, so none of it reaches the PC
+        assertTrue("the drag wasn't sent", smoke.device.swipe(from.centerX(), from.centerY(), toX, toY, 20));
+        smoke.device.waitForIdle();
+        assertFalse("the drag opened the menu", smoke.device.hasObject(By.text(disconnect)));
+
+        UiObject2 moved = smoke.device.findObject(smoke.id("floatingMenuButton"));
+        assertNotNull("the menu button went away after the drag", moved);
+        Rect to = moved.getVisibleBounds();
+        assertTrue("the button didn't follow the finger: " + from + " to " + to,
+                Math.abs(to.centerX() - from.centerX()) > Math.abs(toX - from.centerX()) / 2 &&
+                        Math.abs(to.centerY() - from.centerY()) > Math.abs(toY - from.centerY()) / 2);
+
+        float[] left = menuButton(game);
+        float[] spot = PreferenceConfiguration.readFloatingButtonSpot(
+                PreferenceManager.getDefaultSharedPreferences(smoke.target), left[4] == 1);
+        assertEquals("the saved spot isn't where the button was left", left[0] / left[2], spot[0], 0.001f);
+        assertEquals("the saved spot isn't where the button was left", left[1] / left[3], spot[1], 0.001f);
+        smoke.record("stream.txt", "Menu button dragged to " + spot[0] + ", " + spot[1] +
+                (left[4] == 1 ? " (portrait)" : " (landscape)"));
+        return spot;
+    }
+
+    // The menu button's place in Game's window, the room it moves in there, and whether the window
+    // counts as portrait: {x, y, room across, room down, 1 for portrait or 0}
+    private static float[] menuButton(Game game) {
+        float[] at = new float[5];
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            View window = game.getWindow().getDecorView();
+            View button = game.findViewById(R.id.floatingMenuButton);
+            at[0] = button.getX();
+            at[1] = button.getY();
+            at[2] = window.getWidth() - button.getWidth();
+            at[3] = window.getHeight() - button.getHeight();
+            at[4] = window.getHeight() > window.getWidth() ? 1 : 0;
+        });
+        return at;
     }
 
     private static boolean isConnected(Game game) {

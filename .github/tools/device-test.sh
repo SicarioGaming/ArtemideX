@@ -14,9 +14,10 @@
 #   --smoke-only      skip the instrumented suite, run only the smoke tests
 #   --only CLASSES    the instrumented suite runs only these test classes, separated by commas
 #                     (the emulator matrix reruns the layout tests this way after each change)
-#   --allow-stream    also run the stream smoke test: it starts Desktop on the paired PC, opens
-#                     and closes the in-stream menu, and disconnects. It never quits the session
-#                     and never starts another app. Without this flag nothing is streamed.
+#   --allow-stream    also run the stream smoke test: it starts Desktop on the paired PC, drags
+#                     the menu button, opens and closes the in-stream menu, and disconnects. It
+#                     never quits the session and never starts another app. Without this flag
+#                     nothing is streamed.
 #   --monkey N        afterwards, N random taps and keys (adb shell monkey) with a fixed seed. Only
 #                     on a device where the app knows no PC at all, which MonkeyPreconditionTest
 #                     checks first; an emulator is also put in airplane mode for it. A real device
