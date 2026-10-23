@@ -221,6 +221,11 @@ android {
             jniLibs.srcDirs += 'src/main/jni/pyrowave/lib'
             jniLibs.srcDirs += 'src/main/jni/adrenotools/lib'
         }
+        // The encrypted microphone's shared vectors, so the device's own crypto is checked too
+        // (SecureMicDeviceTest)
+        androidTest {
+            resources.srcDirs += 'src/test/resources'
+        }
     }
 }
 

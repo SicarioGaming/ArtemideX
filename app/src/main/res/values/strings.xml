@@ -709,6 +709,7 @@
     <string name="summary_vban_port">%1$s. VBAN normally uses 6980.</string>
     <string name="microphone_vban_not_home">The microphone wasn\'t sent. VBAN isn\'t encrypted, so Starwire only sends it to a PC on your home network or a private VPN.</string>
     <string name="microphone_vban_failed">Couldn\'t start sending the microphone over VBAN</string>
+    <string name="microphone_secure_failed">Couldn\'t start sending the microphone to the PC\'s receiver</string>
     <string name="title_microphone_host_info">Get the Apollo build for microphone</string>
     <string name="summary_microphone_host_info">Opens logabell\'s Apollo on GitHub. Install it on the PC in place of your current host.</string>
     <string name="title_microphone_device_list">Microphone</string>

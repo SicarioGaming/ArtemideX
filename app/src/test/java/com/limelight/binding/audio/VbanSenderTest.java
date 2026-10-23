@@ -8,7 +8,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import java.lang.reflect.Field;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -121,9 +120,7 @@ public class VbanSenderTest {
         try (DatagramSocket receiver = receiver()) {
             VbanSender sender = senderTo(receiver, "Mic");
             assertEquals(0, sender.open());
-            Field counter = VbanSender.class.getDeclaredField("frameNumber");
-            counter.setAccessible(true);
-            counter.setInt(sender, 0xFFFFFFFF);
+            sender.packetizer.setFrameNumber(0xFFFFFFFF);
 
             sender.write(ramp(512), 512);
             byte[] buffer = new byte[2048];
@@ -172,9 +169,10 @@ public class VbanSenderTest {
         assertFalse(VbanSender.isHomeNetworkAddress(null));
     }
 
-    // Pins today's policy so a change to it is deliberate: 100.64.0.0/10 is accepted for
-    // Tailscale, but the same range is also carrier-grade NAT space shared with other customers
-    // of a mobile or internet provider. Flip this when the mic security work changes the policy.
+    // Pins the policy so a change to it is deliberate: 100.64.0.0/10 is accepted for Tailscale,
+    // but the same range is also carrier-grade NAT space shared with other customers of a mobile
+    // or internet provider. In 0.2.1 the encrypted microphone keeps this filter as an extra layer
+    // (the maintainer's call): its security comes from pairing, not from the address.
     @Test
     public void carrierGradeNatRangeIsAcceptedToday() throws Exception {
         assertTrue(VbanSender.isHomeNetworkAddress(InetAddress.getByName("100.64.0.1")));
