@@ -127,9 +127,10 @@ any Moonlight you already have, so you can try it without giving anything up.
 <td width="50%" valign="top">
 
 ### 🎨 A look that follows your game
-The screens take their colour from the game you've picked, and apps without cover art get their
-own icons. Your last game is ready to go with one tap, with its stream settings right under its
-name.
+The screens take their colour from the game you've picked. Games without cover art each get
+their own take on the Starwire tile, and apps like Steam Big Picture get their own icons. Your
+last game is ready to go with one tap, with its stream settings right under its name, and a Quit
+button sits beside Resume while it runs.
 
 ### 🎮 Everything during a stream, one tap away
 Open the menu with the floating button, a three-finger tap or by holding Select on a
@@ -250,14 +251,20 @@ Artemide), both are named. Features marked **(Apollo / Vibepollo)** need an Apol
 
 - **Game screen:** the selected game shown large with its cover, name, Play/Resume and its
   stream settings as small tags. It starts on the game running on the PC, otherwise the one you
-  played last.
+  played last. While a game runs, Quit sits beside Resume. The top scrolls away with your games,
+  leaving a slim bar with the selected game and its Play button.
 - **Colours from the cover:** the background and glow take the game's cover colour and fade
   between games. White text stays readable on every colour.
 - **Icons for apps without cover art:** Desktop, Steam Big Picture, Playnite and similar apps get
   an icon tile in their own colour instead of the host's plain default image. **Settings → App →
   App covers** can also use icons for every app, or only ever the PC's covers.
+- **Starwire tiles for games without cover art:** each game gets its own take on the tile,
+  worked out from its name (colour, ring angle, moon, glow and stars), so a row of them doesn't
+  look the same.
 - **A little flair:** the Starwire wordmark and the ring around the selected game slowly flow
-  through a rainbow, and a faint dot grid sits behind the screens.
+  through a rainbow, and a starfield with a few twinkling stars sits behind the screens. Covers
+  have soft rounded corners, arrive one after another and give a little when you press them, and
+  the selected cover floats gently. The looping animations pause while you stream.
 - **PC list:** frosted cards and a frosted quick-settings bar.
 - **Settings:** section buttons that jump to each section and follow you as you scroll, plain
   section names (in English), and the Predicted impact panel on wide screens. It compares the
@@ -276,6 +283,9 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Feature | Source |
 | --- | --- |
 | Floating menu button (tap to open, drag to move) | Ported from Artemis (Yukino Song / ClassicOldSong), via Artemide |
+| A smaller floating button that stays see-through until you touch it, and closes the menu too | New in Starwire, on the Artemis button |
+| On/off switches on the items that toggle something, and the menu stays open when you tap them | New in Starwire |
+| The menu header shows the game's cover art, or a Starwire tile for Desktop and games without art | New in Starwire |
 | Shortcuts page: Esc, F11, Alt+F4, Alt+Enter, Ctrl+V, Win, Win+D, Win+G, Ctrl+Alt+Tab, Shift+Tab, Win+Shift+Left, Ctrl+Alt+Shift+F1/F12, Win+Alt+B | Ported from Axixi2233's Moonlight fork (axi), via Artemis and Artemide |
 | Custom shortcuts imported from a file (same JSON format) | Format from Axixi2233's fork (axi) and Artemis (Yukino Song); importer written new for Starwire |
 | Task Manager (Ctrl+Shift+Esc) | Ported from Artemis (Yukino Song), via Artemide |
@@ -306,7 +316,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Ultra Low Latency: MediaTek's own ultra-low-latency mode follows the setting, and low latency is set again after the decoder starts | Ported from Artemide (derflacco). The base option and its Snapdragon/Exynos/Amlogic flags are from Moonlight X (MoreOrLessSoftware) and Artemis |
 | Virtual Display: "Display on the PC" setting, "Start in Virtual/Primary Display" **(Apollo / Vibepollo)** | Ported from Artemis (Yukino Song), via Artemide |
 | Prevent Packet Loss (keeps Wi-Fi awake during streams) | Option from Artemis (Yukino Song), via Artemide; rewritten for Starwire as a small keep-alive packet |
-| Lite performance overlay (one compact line) | Ported from Axixi2233's fork (axi), via Artemis and Artemide |
+| Lite performance overlay (one compact line: data rate, ping, decode time, dropped frames, FPS) | Ported from Axixi2233's fork (axi), via Artemis and Artemide; the plain wording is new in Starwire |
 | 1% low FPS in the stats | Idea from Moonlight V+ (qiin2333) and Moonlight X Turnip (NoCrypt) |
 
 </details>
@@ -324,7 +334,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Settings, the game screen and the stream menu fit phones and foldables (a Galaxy Z Fold's cover screen); the game screen's header scrolls away with the covers | New in Starwire |
 | An "Impact:" line under settings that change latency, smoothness, picture quality or battery | New in Starwire |
 | On a foldable's inner screen, the stream follows the device instead of forcing landscape | Idea from [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) (sblocktechnologies) and [moonlight-android#1613](https://github.com/moonlight-stream/moonlight-android/pull/1613) |
-| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable (home network or private VPN only) | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
+| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable (local network or private VPN only). The receiver has no window, just an icon by the clock with a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
 | Or send it over the stream itself, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)); echo-cancelled capture is new in Starwire |
 | Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
 
@@ -358,7 +368,8 @@ repos a star:
 | [Moonlight X Turnip](https://github.com/NoCrypt/moonlight-x-turnip) | ncpt (NoCrypt) | Custom Turnip Vulkan driver for PyroWave |
 | [Moonlight V+](https://github.com/qiin2333/moonlight-vplus) | qiin2333 | Ideas: bitrate mid-stream, audio haptics, 1% lows |
 | [Moonlit Artemis](https://github.com/4had45/moonlit-artemis) | Mohammad Forhad (4had45) | Ideas: monitor switcher, pinch to zoom anytime |
-| [Apollo microphone](https://github.com/logabell/apollo-microphone) | logabell | Microphone streaming: the Android capture and the protocol, and the Apollo build that receives it |
+| [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) | sblocktechnologies | Idea: letting the stream follow a foldable's inner screen |
+| [Apollo microphone](https://github.com/logabell/apollo-microphone) | logabell | The in-stream microphone: the Android capture, the moonlight-common-c changes, and the Apollo build that receives it |
 | [VBAN and VB-Cable](https://vb-audio.com/Cable/) | VB-Audio (Vincent Burel) | VBAN, the network audio format Starwire's microphone uses, and VB-Cable, the virtual microphone the receiver plays into (donationware) |
 | [PyroWave](https://github.com/Themaister/pyrowave) | Hans-Kristian Arntzen (Themaister) | The PyroWave codec (MIT) |
 | [libadrenotools](https://github.com/bylaws/libadrenotools) | Billy Laws (bylaws) | Loading a custom Adreno Vulkan driver (BSD-2-Clause) |
@@ -370,7 +381,8 @@ repos a star:
 If I've credited something wrongly or missed you, please let me know.
 
 Bug reports and ideas are very welcome as a
-[GitHub issue](https://github.com/SicarioGaming/Starwire/issues).
+[GitHub issue](https://github.com/SicarioGaming/Starwire/issues) or in
+[Discussions](https://github.com/SicarioGaming/Starwire/discussions).
 
 ## More details
 
@@ -383,6 +395,9 @@ Vulkan renderer), and PyroWave and the custom Turnip driver need a 64-bit ARM de
 your settings kept, as long as they come from these releases. Tools such as
 [Obtainium](https://github.com/ImranR98/Obtainium) can keep it updated straight from the
 Releases page.
+
+The microphone's PC side (the receiver and its setup) needs Windows 10 or 11. Sending over the
+stream instead needs logabell's Apollo build on the PC.
 
 </details>
 
@@ -397,7 +412,8 @@ Releases page.
    ```
    Starwire uses its own fork of
    [moonlight-common-c](https://github.com/SicarioGaming/moonlight-common-c) (branch `main`),
-   which adds the calls for PC commands and Prevent Packet Loss.
+   which adds the calls for PC commands and Prevent Packet Loss, and logabell's in-stream
+   microphone.
 3. Create `local.properties` in the project folder with `ndk.dir=` set to your NDK folder.
 4. Build a debug APK with `./gradlew assembleNonRootDebug`. It installs as "Starwire (Debug)"
    (`com.starwire.debug`).
@@ -419,6 +435,9 @@ builds come out unsigned.
 
 The libadrenotools and PyroWave libraries are included prebuilt, with the scripts that build
 them from their upstream source next to them.
+
+The microphone receiver for Windows and its setup script are in [`windows/`](windows). There's
+nothing to build there by hand: the setup compiles the receiver on the PC.
 
 </details>
 
