@@ -100,6 +100,50 @@ public class AppViewTest {
         }
     }
 
+    @Test
+    public void quitSitsBesideResumeWhileAGameRuns() throws Exception {
+        try (ActivityScenario<AppView> scenario = ActivityScenario.launch(cachedPc())) {
+            for (int i = 0; i < 3; i++) {
+                SystemClock.sleep(1000);
+                scenario.onActivity(AppViewTest::drawOffscreen);
+            }
+            scenario.onActivity(activity -> {
+                try {
+                    java.lang.reflect.Field selected = AppView.class.getDeclaredField("selectedApp");
+                    selected.setAccessible(true);
+                    AppView.AppObject app = (AppView.AppObject) selected.get(activity);
+                    assertNotNull("hero picked no game", app);
+                    java.lang.reflect.Field running = AppView.class.getDeclaredField("lastRunningAppId");
+                    running.setAccessible(true);
+                    java.lang.reflect.Method refresh = AppView.class.getDeclaredMethod("refreshHero", boolean.class);
+                    refresh.setAccessible(true);
+                    android.widget.Button quit = activity.findViewById(R.id.heroQuit);
+                    android.widget.Button play = activity.findViewById(R.id.heroPlay);
+
+                    // The PC reports the selected game running, as the poller would
+                    running.setInt(activity, app.app.getAppId());
+                    refresh.invoke(activity, false);
+                    assertEquals(android.view.View.VISIBLE, quit.getVisibility());
+                    assertEquals(activity.getString(R.string.cg_resume), play.getText().toString());
+                    assertEquals(activity.getString(R.string.cg_quit), quit.getText().toString());
+                    quit.animate().cancel();
+                    quit.setAlpha(1f);
+                    quit.setTranslationX(0);
+                    drawOffscreen(activity, "app_view_running.png");
+
+                    // And it goes once nothing runs
+                    running.setInt(activity, 0);
+                    refresh.invoke(activity, false);
+                    assertEquals(android.view.View.GONE, quit.getVisibility());
+                    assertEquals(activity.getString(R.string.cg_play), play.getText().toString());
+                }
+                catch (ReflectiveOperationException e) {
+                    throw new AssertionError(e);
+                }
+            });
+        }
+    }
+
     private static android.widget.AbsListView findGrid(android.view.View view) {
         if (view instanceof android.widget.AbsListView && ((android.widget.AbsListView) view).getAdapter() != null) {
             return (android.widget.AbsListView) view;
@@ -154,6 +198,10 @@ public class AppViewTest {
     }
 
     private static void drawOffscreen(AppView activity) {
+        drawOffscreen(activity, "app_view.png");
+    }
+
+    private static void drawOffscreen(AppView activity, String fileName) {
         android.view.View root = activity.getWindow().getDecorView();
         int width = 2400, height = 1504;
         root.measure(android.view.View.MeasureSpec.makeMeasureSpec(width, android.view.View.MeasureSpec.EXACTLY),
@@ -162,7 +210,7 @@ public class AppViewTest {
         android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888);
         root.draw(new android.graphics.Canvas(bitmap));
         try (java.io.FileOutputStream out = new java.io.FileOutputStream(
-                new java.io.File(activity.getExternalFilesDir(null), "app_view.png"))) {
+                new java.io.File(activity.getExternalFilesDir(null), fileName))) {
             bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
         }
         catch (java.io.IOException e) {
