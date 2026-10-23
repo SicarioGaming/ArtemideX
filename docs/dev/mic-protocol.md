@@ -211,8 +211,13 @@ Rules for the receiver:
   pending session (or finds the one it already made for the same clientRandom); it becomes current
   on its first authentic audio, so a recorded HELLO sent again can't push the real session off.
   Pending sessions are forgotten after 30 s.
-- At most 10 HELLO_ACKs per device per second, 1 REHELLO per device per second, and 20 pairing
-  answers per second.
+- A HELLO's MAC checks out for as long as the pairing lasts, so a recorded one could be sent
+  again and again. The receiver remembers the clientRandoms a device has used. A HELLO it has seen
+  before only takes a free pending place; a new one can push out a pending session made by such a
+  HELLO, or else the oldest pending one once it's 2 s old. Otherwise nothing is made and the
+  device's next HELLO tries again.
+- At most 8 HELLO_ACKs per session per second (Starwire repeats a HELLO 4 times a second), 1
+  REHELLO per device per second, and 20 pairing answers per second.
 - One device plays at a time: the one playing keeps the microphone until it has been quiet for 3
   s. Another device's HELLO gets status 2 meanwhile, and its audio is checked but not played.
 
