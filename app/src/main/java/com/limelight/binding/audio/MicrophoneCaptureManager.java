@@ -1,5 +1,6 @@
 package com.limelight.binding.audio;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
@@ -406,6 +407,8 @@ public class MicrophoneCaptureManager {
         }
     }
 
+    // startCapture() checks RECORD_AUDIO before it gets here, which lint can't follow
+    @SuppressLint("MissingPermission")
     private AudioRecord buildAudioRecord(int audioSource, int bufferSizeBytes) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return new AudioRecord.Builder()
@@ -499,6 +502,10 @@ public class MicrophoneCaptureManager {
     }
 
     private static String describeDevice(AudioDeviceInfo deviceInfo) {
+        // Callers only have devices on Android 6 and up; this says so for lint
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return "Input device";
+        }
         switch (deviceInfo.getType()) {
             case AudioDeviceInfo.TYPE_BUILTIN_MIC:
                 return "Built-in microphone";

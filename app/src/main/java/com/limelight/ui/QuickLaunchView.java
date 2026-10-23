@@ -158,10 +158,12 @@ public class QuickLaunchView {
         if (!receiverRegistered) {
             IntentFilter filter = new IntentFilter(QuickLaunchManager.QUICK_LAUNCH_UPDATE_ACTION);
             
-            // For API 34+, we need to specify RECEIVER_NOT_EXPORTED for internal broadcasts
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            // Internal broadcasts: RECEIVER_NOT_EXPORTED from Android 13, where the flag arrived
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 activity.registerReceiver(quickLaunchUpdateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
             } else {
+                // There is no flag to pass before Android 13 (lint doesn't see the version check)
+                //noinspection UnspecifiedRegisterReceiverFlag
                 activity.registerReceiver(quickLaunchUpdateReceiver, filter);
             }
             receiverRegistered = true;

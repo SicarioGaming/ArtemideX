@@ -773,6 +773,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(quitAppReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
+            // There is no flag to pass before Android 13 (lint doesn't see the version check)
+            //noinspection UnspecifiedRegisterReceiverFlag
             registerReceiver(quitAppReceiver, filter);
         }
 
