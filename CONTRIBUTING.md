@@ -43,6 +43,19 @@ you ask for it.
 
   Lint runs the same way (`./gradlew lintNonRootDebug`). The warnings it already had are listed
   in `app/lint-baseline.xml`, so only a new one fails it.
+- **Screenshot tests** draw the settings, game, in-stream menu and PC list screens on the
+  computer (Robolectric and Roborazzi) at 8 sizes, from a Fold5 cover screen to a tablet, and
+  compare them pixel for pixel with the pictures in `app/src/test/screenshots`:
+
+  ```bash
+  ./gradlew verifyRoborazziNonRootDebug   # every JVM test, and fails on any changed pixel
+  ./gradlew recordRoborazziNonRootDebug   # after changing a screen on purpose
+  ```
+
+  A failed check leaves each changed screen in `app/build/outputs/roborazzi` as the old picture,
+  the difference and the new one. After recording, look at every picture that changed and commit
+  them with the change. The pictures were recorded on Windows; whether Linux draws exactly the
+  same pixels hasn't been checked yet.
 - **Native tests:** a few C++ simulations of the frame pacer under
   `app/src/main/jni/vulkan/tests`, inherited from Moonlight X, and `partial_frame_test.sh` under
   `app/src/main/jni/moonlight-core/tests`, which checks moonlight-common-c's partial frames. The
