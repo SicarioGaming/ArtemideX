@@ -18,6 +18,14 @@
 
 ---
 
+> **Latest (23 Oct):** after a [code review on Reddit](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5/starwire_020_mic_passthrough_wo_needing_to_modify/19rigium2zrt0/),
+> this repo now has its real commit history, every prebuilt library is
+> [traced to its source](docs/PROVENANCE.md), the 0.2.0 mic measurements are published with
+> [their data](docs/measurements/2026-10-22-mic/), and there's a [SECURITY.md](SECURITY.md).
+> **Coming in 0.2.1:** an encrypted microphone (pair once, no VPN needed for the encryption), less mic
+> delay, custom resolutions and frame rates, and a lot of fixes and new tests.
+> [The full notes are on Reddit](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5/starwire_020_mic_passthrough_wo_needing_to_modify/19rjkz6wv9xms/).
+
 ## New in 0.2.0: your microphone on the PC, with any host
 
 Mic passthrough was a highly requested feature after the 0.1.0 launch, and one of the last things
