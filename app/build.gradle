@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+// Screenshot tests on the JVM (Robolectric): gradlew recordRoborazziNonRootDebug / verifyRoborazziNonRootDebug
+apply plugin: 'io.github.takahirom.roborazzi'
 
 // The commit this build comes from, for Settings > About. A copy of the source without its .git
 // folder says "unknown". (The git.properties inside the APK belongs to JmDNS, not Starwire.)
@@ -96,9 +98,15 @@ android {
         unitTests {
             // Plain JVM tests (app/src/test): any call into android.* fails loudly, so they stay pure
             returnDefaultValues = false
+            // Robolectric screenshot tests (com.limelight.screenshots) read the merged resources
+            includeAndroidResources = true
             all {
                 // For the tests that check the code against README.md, build files and resources
                 systemProperty 'repo.root', rootProject.projectDir.absolutePath
+                // Robolectric's SDK 36 sandbox reaches into FileDescriptor internals on JDK 17+
+                jvmArgs '--add-opens=java.base/jdk.internal.access=ALL-UNNAMED'
+                // Half-size screenshots: a quarter of the repo space, still clear enough to review
+                systemProperty 'roborazzi.record.resizeScale', '0.5'
             }
         }
     }
@@ -244,6 +252,10 @@ dependencies {
     // android.jar only has stubs of these, so the JVM tests get the real ones
     testImplementation 'org.json:json:20250517'
     testImplementation 'net.sf.kxml:kxml2:2.3.0'
+    // Screenshot tests: Robolectric runs the real framework (only for tests that ask for it),
+    // Roborazzi saves and compares the pictures
+    testImplementation 'org.robolectric:robolectric:4.17'
+    testImplementation 'io.github.takahirom.roborazzi:roborazzi:1.77.0'
 
     // On-device tests (Starwire): .github/tools/device-test.sh, which installs over the app with
     // adb install -r and never uninstalls (connectedAndroidTest may, and the pairing would go too)
@@ -251,4 +263,9 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     // The smoke tests drive the app the way a person would (com.limelight.smoke)
     androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+}
+
+// Golden images live beside the tests, so a change to them shows up in review
+roborazzi {
+    outputDir = file('src/test/screenshots')
 }
