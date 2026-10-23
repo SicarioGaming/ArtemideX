@@ -91,6 +91,12 @@ public class PreferenceConfiguration {
     private static final String OVERLAY_TRIGGER_BUTTON_PREF_STRING = "overlay_trigger_button";
     private static final String OVERLAY_HOLD_DURATION_PREF_STRING = "overlay_hold_duration";
     private static final String ENABLE_FLOATING_BUTTON_PREF_STRING = "checkbox_enable_floating_button";
+    // Where the floating button was dragged to, one spot for landscape screens and one for
+    // portrait (FloatingButton). Saved by the drag; they aren't on the settings screen.
+    private static final String FLOATING_BUTTON_LANDSCAPE_X_PREF_STRING = "floating_button_landscape_x";
+    private static final String FLOATING_BUTTON_LANDSCAPE_Y_PREF_STRING = "floating_button_landscape_y";
+    private static final String FLOATING_BUTTON_PORTRAIT_X_PREF_STRING = "floating_button_portrait_x";
+    private static final String FLOATING_BUTTON_PORTRAIT_Y_PREF_STRING = "floating_button_portrait_y";
     private static final String TOUCH_SENSITIVITY_PREF_STRING = "seekbar_touch_sensitivity";
     private static final String PERF_OVERLAY_LITE_PREF_STRING = "checkbox_enable_perf_overlay_lite";
     private static final String PREVENT_PACKET_LOSS_PREF_STRING = "checkbox_prevent_packet_loss";
@@ -750,6 +756,35 @@ public class PreferenceConfiguration {
             editor.putString(MICROPHONE_TARGET_PREF_STRING, MICROPHONE_TARGET_STARWIRE);
         }
         editor.apply();
+    }
+
+    /**
+     * The floating menu button's saved spot for screens of this orientation, as {x, y}: each a
+     * share (0 to 1) of the room the button moves in. A value that isn't saved, or was saved as
+     * another type, comes back as NaN; FloatingButton checks both before using them.
+     */
+    public static float[] readFloatingButtonSpot(SharedPreferences prefs, boolean portrait) {
+        return new float[] {
+                readFloat(prefs, portrait ? FLOATING_BUTTON_PORTRAIT_X_PREF_STRING : FLOATING_BUTTON_LANDSCAPE_X_PREF_STRING),
+                readFloat(prefs, portrait ? FLOATING_BUTTON_PORTRAIT_Y_PREF_STRING : FLOATING_BUTTON_LANDSCAPE_Y_PREF_STRING)
+        };
+    }
+
+    public static void saveFloatingButtonSpot(SharedPreferences prefs, boolean portrait, float x, float y) {
+        prefs.edit()
+                .putFloat(portrait ? FLOATING_BUTTON_PORTRAIT_X_PREF_STRING : FLOATING_BUTTON_LANDSCAPE_X_PREF_STRING, x)
+                .putFloat(portrait ? FLOATING_BUTTON_PORTRAIT_Y_PREF_STRING : FLOATING_BUTTON_LANDSCAPE_Y_PREF_STRING, y)
+                .apply();
+    }
+
+    private static float readFloat(SharedPreferences prefs, String key) {
+        try {
+            return prefs.getFloat(key, Float.NaN);
+        }
+        catch (ClassCastException e) {
+            // Saved as something other than a float
+            return Float.NaN;
+        }
     }
 
     public static PreferenceConfiguration readPreferences(Context context) {

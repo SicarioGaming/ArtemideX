@@ -87,6 +87,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.text.Html;
 import android.util.Rational;
 import android.util.TypedValue;
@@ -191,7 +192,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private BrightnessSliderView brightnessSliderView;
     private OverlayMenuView overlayMenuView;
 
-    // Floating menu button (from Artemide): tap opens the overlay menu, drag moves it
+    // Floating menu button (from Artemide): tap opens the overlay menu, drag moves it, and
+    // FloatingButton remembers where it was dragged
     private ImageButton floatingMenuButton;
     private FloatingButton floatingButton;
     private boolean floatingButtonShown;
@@ -445,7 +447,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         floatingMenuButton = findViewById(R.id.floatingMenuButton);
         // Kept within the window, as the drag always was
         floatingButton = new FloatingButton(floatingMenuButton, getWindow().getDecorView(),
-                this::toggleOverlayMenu);
+                PreferenceManager.getDefaultSharedPreferences(this), this::toggleOverlayMenu);
         setFloatingButtonShown(prefConfig.enableFloatingButton);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
@@ -4141,6 +4143,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private void setFloatingButtonShown(boolean shown) {
         floatingButtonShown = shown;
         floatingMenuButton.setVisibility(shown && !isHidingOverlays ? View.VISIBLE : View.GONE);
+        if (shown) {
+            // The screen may have turned or been resized while the button was hidden
+            floatingButton.placeOnNextLayout();
+        }
     }
 
     private void toggleOnscreenController() {

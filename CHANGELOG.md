@@ -21,6 +21,8 @@ already live on GitHub.
 - **Custom resolutions and frame rates,** in the main settings and per game. These come from
   Moonlight X, credited to them.
 - **A jitter buffer per game,** also from Moonlight X. It's used with host frame timing pacing.
+- **The floating menu button stays where you put it:** Starwire remembers its spot for each
+  orientation.
 - **An about page** with credits and the full open-source licences.
 - **Prebuilt libraries:** every one is traced back to its source and rebuilt byte for byte by
   GitHub ([PROVENANCE.md](docs/PROVENANCE.md)).
