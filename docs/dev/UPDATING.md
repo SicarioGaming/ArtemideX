@@ -35,11 +35,14 @@ The sources and the last commit reviewed for each are in `.github/tools/upstream
 
 1. Raise `versionName` and `versionCode` in `app/build.gradle`.
 2. Write the notes in `.github/release-notes/v<version>-notes.md` (plain, first person). Leave
-   `APK_SHA256` and `CERT_SHA256` where the checksums go; the release fills them in.
+   `APK_SHA256`, `ZIP_SHA256` and `CERT_SHA256` where the checksums go; the release fills them
+   in. If the notes have no `CERT_SHA256`, the release adds a **Check your download** part above
+   the closing `GPL-3.0.` line by itself.
 3. Tag and push: `git tag v<version> && git push origin v<version>`.
 
 The **Release** workflow builds the signed APK, checks its signature, and publishes the GitHub
-release with the notes and checksums. It needs these repository secrets (Settings → Secrets and
+release with the notes and checksums. It stops if the APK isn't signed with Starwire's release
+certificate (`B6:04:1D:…:3F:97`, written out in the README's **Check your download**). It needs these repository secrets (Settings → Secrets and
 variables → Actions), set once:
 
 | Secret | Value |

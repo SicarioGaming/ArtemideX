@@ -51,15 +51,49 @@ jobs:
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           "$APKSIGNER" verify "$APK"
           CERT=$("$APKSIGNER" verify --print-certs "$APK" | grep -m1 'SHA-256 digest' | awk '{print $NF}' | sed 's/../&:/g; s/:$//' | tr a-f A-F)
+          # Every Starwire release is signed with this one certificate (the README shows it too)
+          EXPECTED_CERT="B6:04:1D:43:9F:28:4F:17:16:64:6F:C0:F9:80:F1:9A:76:17:8F:A7:04:D5:6F:50:34:D4:06:2A:D3:C1:3F:97"
+          if [ "$CERT" != "$EXPECTED_CERT" ]; then
+            echo "::error::The APK is signed with $CERT, not Starwire's release certificate $EXPECTED_CERT"
+            exit 1
+          fi
+          APK_SHA256=$(sha256sum "$APK" | cut -d' ' -f1)
+          echo "apk=$APK" >> "$GITHUB_OUTPUT"
+
+          # The PC side of the VBAN microphone: setup script, receiver source, its icon and guide
+          ZIP_SHA256=""
+          if [ -d windows ]; then
+            ZIP=Starwire-Microphone-for-Windows.zip
+            (cd windows && zip -q "../$ZIP" setup-microphone.cmd setup-microphone.ps1 StarwireMicReceiver.cs starwire-mic.ico README.md)
+            ZIP_SHA256=$(sha256sum "$ZIP" | cut -d' ' -f1)
+            echo "extras=$ZIP" >> "$GITHUB_OUTPUT"
+          fi
+
           NOTES=".github/release-notes/$GITHUB_REF_NAME-notes.md"
           [ -f "$NOTES" ] || { echo "::error::Write $NOTES first"; exit 1; }
-          sed -e "s/APK_SHA256/$(sha256sum "$APK" | cut -d' ' -f1)/" -e "s/CERT_SHA256/$CERT/" "$NOTES" > notes.md
-          echo "apk=$APK" >> "$GITHUB_OUTPUT"
-          # The PC side of the VBAN microphone: setup script, receiver source, its icon and guide
-          if [ -d windows ]; then
-            (cd windows && zip -q ../Starwire-Microphone-for-Windows.zip setup-microphone.cmd setup-microphone.ps1 StarwireMicReceiver.cs starwire-mic.ico README.md)
-            echo "extras=Starwire-Microphone-for-Windows.zip" >> "$GITHUB_OUTPUT"
+          cp "$NOTES" notes.in
+          # Notes written without the checksums get them anyway, above the closing licence line
+          if ! grep -q CERT_SHA256 notes.in; then
+            echo "::warning::$NOTES has no CERT_SHA256, so the release adds the 'Check your download' part"
+            {
+              echo '### Check your download'
+              echo '- APK SHA-256: `APK_SHA256`'
+              echo '- Windows microphone zip SHA-256: `ZIP_SHA256`'
+              echo '- Signing certificate SHA-256: `CERT_SHA256` (the same certificate as every Starwire release)'
+              echo
+            } > check.md
+            if [ "$(tail -n 1 notes.in)" = "GPL-3.0." ]; then
+              { head -n -1 notes.in; cat check.md; tail -n 1 notes.in; } > notes.tmp
+            else
+              { cat notes.in; echo; cat check.md; } > notes.tmp
+            fi
+            mv notes.tmp notes.in
           fi
+          if [ -z "$ZIP_SHA256" ]; then
+            sed -i '/ZIP_SHA256/d' notes.in
+          fi
+          sed -e "s/APK_SHA256/$APK_SHA256/g" -e "s/CERT_SHA256/$CERT/g" -e "s/ZIP_SHA256/$ZIP_SHA256/g" notes.in > notes.md
+          rm -f notes.in check.md
 
       - name: Publish the release
         env:
