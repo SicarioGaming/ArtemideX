@@ -1,8 +1,10 @@
 package com.limelight.screenshots;
 
+import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
 
 import android.app.Activity;
+import android.text.Layout;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +13,7 @@ import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.GridView;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.github.takahirom.roborazzi.RoborazziKt;
@@ -159,7 +162,42 @@ public class ActivityScreensTest {
         menu.setCover(AppIcons.tile(activity, GAMES[0]));
         menu.buildMenu();
         menu.setVisibility(View.VISIBLE);
+        shadowOf(Looper.getMainLooper()).idle();
+        // The tiles (the sheet's scrolling part). The bar's pills aren't checked: on narrow
+        // screens they still cut long labels short
+        for (int i = 0; i < menu.getChildCount(); i++) {
+            if (menu.getChildAt(i) instanceof ScrollView) {
+                assertNoWordBroken(menu.getChildAt(i));
+            }
+        }
         capture(frame, "streamMenu");
+    }
+
+    // Every label breaks only between words (or after "-" or "/") and shows whole
+    private static void assertNoWordBroken(View view) {
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                assertNoWordBroken(group.getChildAt(i));
+            }
+            return;
+        }
+        if (!(view instanceof TextView) || view.getVisibility() != View.VISIBLE || view.getWidth() == 0) {
+            return;
+        }
+        TextView text = (TextView) view;
+        Layout layout = text.getLayout();
+        CharSequence label = text.getText();
+        if (layout == null || label.length() == 0) {
+            return;
+        }
+        assertTrue("\"" + label + "\" needs " + layout.getLineCount() + " lines, more than it shows",
+                layout.getLineCount() <= text.getMaxLines());
+        for (int line = 0; line < layout.getLineCount() - 1; line++) {
+            char before = label.charAt(layout.getLineEnd(line) - 1);
+            assertTrue("\"" + label + "\" breaks inside a word",
+                    Character.isWhitespace(before) || before == '-' || before == '/');
+        }
     }
 
     private static final class CoverAdapter extends BaseAdapter {
