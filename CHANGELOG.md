@@ -13,8 +13,9 @@ steps and the checksums for each version.
 
 ## [Unreleased]
 
-These changes are planned for 0.2.1. The repo changes that followed u/rambo3349's code review are
-already live on GitHub.
+## [0.2.1] - 2026-10-23
+
+The repo changes that followed u/rambo3349's code review went live on GitHub before this release.
 
 ### Added
 
@@ -187,7 +188,8 @@ same app renamed; it installs separately, so you can uninstall Voidlink afterwar
 - **Extras:** monitor switching, pinch to zoom anytime, changing the bitrate mid-stream, audio
   haptics and shortcuts imported from a file.
 
-[Unreleased]: https://github.com/SicarioGaming/Starwire/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SicarioGaming/Starwire/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/SicarioGaming/Starwire/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/SicarioGaming/Starwire/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/SicarioGaming/Starwire/compare/v0.1.0...v0.1.2
 [0.1.0]: https://github.com/SicarioGaming/Starwire/releases/tag/v0.1.0
