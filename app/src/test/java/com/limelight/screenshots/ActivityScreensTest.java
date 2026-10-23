@@ -44,7 +44,20 @@ import java.util.List;
 /**
  * Starwire's screens run by Robolectric (the real framework on the JVM, no device or emulator)
  * at every size in RoboDevices, and saved as pictures by Roborazzi.
- * Record: gradlew recordRoborazziNonRootDebug. Check: gradlew verifyRoborazziNonRootDebug.
+ *
+ * <ul>
+ * <li>Check: gradlew verifyRoborazziNonRootDebug. It runs every JVM test and fails on any pixel
+ * that differs from src/test/screenshots. app/build/outputs/roborazzi then has each changed
+ * screen as reference, difference and new picture side by side.
+ * <li>Look without failing: gradlew compareRoborazziNonRootDebug.
+ * <li>After changing a screen on purpose: gradlew recordRoborazziNonRootDebug, look at every
+ * picture that changed, and commit them with the change.
+ * <li>A plain gradlew testNonRootDebugUnitTest runs these tests and their layout checks but saves
+ * and compares no pictures.
+ * </ul>
+ *
+ * The comparison stays exact: a settings screen with an empty list differed by less than 5% of
+ * its pixels. Another screen size is another RoboDevices entry; another screen is another @Test.
  */
 @RunWith(ParameterizedRobolectricTestRunner.class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
