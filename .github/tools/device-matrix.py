@@ -238,12 +238,51 @@ def cmd_plan(a):
                    "legs": ",".join(l["id"] for l in chosen)}, a.github_output)
 
 
+ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+LIST_HEADING = re.compile(r"^(installed|available)( obsolete)? (packages|updates):$", re.I)
+PACKAGE_PATH = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*([;/][A-Za-z0-9._-]+)*$")
+
+
+def listed_packages(listing):
+    """The package paths in the output of sdkmanager --list, with ; between their parts.
+
+    Command-line tools 22.0 and older print a table: "  system-images;android-35;google_apis;x86_64 | 9 | ...".
+    From 23.0 sdkmanager is a shell script that runs the Android CLI's "android sdk list --all", which
+    prints "  system-images/android-35/google_apis/x86_64     9.0.0     ...": / instead of ;, no | between
+    the columns, and colour codes around the installed packages. Only indented lines under a heading
+    like "Installed packages:" or "Available Packages:" count, not the progress bar, warnings or terms."""
+    packages, listed = set(), False
+    for line in listing.splitlines():
+        line = ANSI.sub("", line).rstrip()
+        if not line.strip():
+            continue
+        if not line[0].isspace():
+            listed = bool(LIST_HEADING.match(line))
+            continue
+        first = line.split("|")[0].split()
+        if listed and first and PACKAGE_PATH.match(first[0]) and first[0] not in ("Path", "ID"):
+            packages.add(first[0].replace("/", ";"))
+    return packages
+
+
+def tool(bin_dir, name):
+    """A command-line tool in the SDK; on Windows it's the .bat."""
+    path = os.path.join(bin_dir, name)
+    return path + ".bat" if os.name == "nt" and os.path.exists(path + ".bat") else path
+
+
 def check_sdk(sdk, legs):
     """Fails before any emulator starts when a leg names a profile or image that doesn't exist."""
     bin_dir = os.path.join(sdk, "cmdline-tools", "latest", "bin")
-    devices = {d.strip() for d in run([os.path.join(bin_dir, "avdmanager"), "list", "device", "-c"]).split("\n")}
-    listing = run([os.path.join(bin_dir, "sdkmanager"), "--list"])
-    packages = {line.split("|")[0].strip() for line in listing.split("\n") if "|" in line}
+    devices = {d.strip() for d in run([tool(bin_dir, "avdmanager"), "list", "device", "-c"]).splitlines()}
+    listing = run([tool(bin_dir, "sdkmanager"), "--list"])
+    packages = listed_packages(listing)
+    if not any(p.startswith("system-images;") for p in packages):
+        # Output this can't read mustn't look like a matrix full of missing images
+        shown = [l for l in (ANSI.sub("", l).rstrip() for l in listing.splitlines()) if l.strip() and l[0] != "["]
+        print("sdkmanager --list printed:\n" + "\n".join(shown[:40]), file=sys.stderr)
+        die(f"sdkmanager --list named no system images ({len(packages)} other packages): has its output changed?")
+    print(f"sdkmanager --list named {len(packages)} packages", file=sys.stderr)
     bad = []
     for leg in legs:
         if leg["profile"] not in devices:
@@ -258,7 +297,8 @@ def check_sdk(sdk, legs):
 
 def run(argv):
     try:
-        return subprocess.run(argv, check=True, capture_output=True, text=True, timeout=300).stdout
+        return subprocess.run(argv, check=True, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                              timeout=300).stdout
     except (OSError, subprocess.SubprocessError) as e:
         die(f"{' '.join(argv)} failed: {e}")
 
