@@ -471,6 +471,92 @@ if grep -q uninstall "$work/all-calls"; then fail "device-test.sh or device-run.
 rm -rf "$work"
 ok "device-run.sh runs a leg's passes on emulators only, and reports them"
 
+# 13. check-publish.sh, in a made-up repo: an upstream commit brought in with git cherry-pick -x keeps
+# its author, which passes only when the commit its last line names is on an upstream ref and has the
+# same author and date, and the committer is still the publishing identity in UTC. What it adds is
+# still checked, and the output never shows what matched.
+begin
+work="$(mktemp -d)"
+repo="$work/repo"
+git init -q "$repo"
+me="Pub Lisher <publisher@example.com>"
+pub="Pub Lisher|publisher@example.com|1700000100 +0000"
+up="Up Stream|upstream@example.org|1700000000 -0700"
+echo 'planted-private-word' > "$work/patterns.txt"
+mk() {  # parent (or ""), author and committer as "name|email|raw date", a line for notes.txt, message
+    local a c blob tree
+    IFS='|' read -r -a a <<< "$2"
+    IFS='|' read -r -a c <<< "$3"
+    blob=$(printf '%s\n' "$4" | git -C "$repo" hash-object -w --stdin)
+    tree=$(printf '100644 blob %s\tnotes.txt\n' "$blob" | git -C "$repo" mktree)
+    GIT_AUTHOR_NAME=${a[0]} GIT_AUTHOR_EMAIL=${a[1]} GIT_AUTHOR_DATE=${a[2]} \
+    GIT_COMMITTER_NAME=${c[0]} GIT_COMMITTER_EMAIL=${c[1]} GIT_COMMITTER_DATE=${c[2]} \
+        git -C "$repo" -c commit.gpgsign=false commit-tree "$tree" ${1:+-p "$1"} -m "$5"
+}
+upstream=$(mk "" "$up" "$up" "an upstream change" "Change something upstream")
+git -C "$repo" update-ref refs/remotes/moonlightx/main "$upstream"
+base=$(mk "" "$pub" "$pub" "the public tip" "Start")
+git -C "$repo" update-ref refs/heads/main "$base"
+# The upstream author and date on a commit that isn't upstream's
+lookalike=$(mk "" "$up" "$up" "not upstream" "Only this repo has it")
+picked="(cherry picked from commit $upstream)"
+publish() {  # expected exit code, a line the output must have (COMMIT for the new commit), then mk's
+             # arguments after the parent
+    local expected=$1 want=$2 tip status
+    shift 2
+    tip=$(mk "$base" "$@")
+    want=${want//COMMIT/${tip:0:10}}
+    set +e
+    published=$(cd "$repo" && PUBLISH_IDENTITY="$me" UPSTREAM_REMOTES=moonlightx \
+        bash "$HERE/check-publish.sh" main "$tip" "$work/patterns.txt" 2>&1)
+    status=$?
+    set -e
+    if [ $status -ne "$expected" ] || ! grep -qxF -- "$want" <<< "$published"; then
+        printf '%s\n' "$published" >&2
+        fail "check-publish.sh on \"${4%%$'\n'*}\": exit $status (expected $expected), or no line \"$want\""
+    fi
+}
+publish 0 "clean" "$up" "$pub" "the upstream change" "Change something upstream
+
+$picked"
+publish 1 "identity: COMMIT author is not $me, and its cherry-pick line names no upstream commit" \
+    "$up" "$pub" "x" "A cherry-pick line naming a commit that isn't upstream's
+
+(cherry picked from commit $lookalike)"
+publish 1 "identity: COMMIT author is not $me, and its cherry-pick line names no upstream commit" \
+    "$up" "$pub" "x" "A cherry-pick line naming a commit this repo doesn't have
+
+(cherry picked from commit 0123456789abcdef0123456789abcdef01234567)"
+for author in "Up Streamer|upstream@example.org|1700000000 -0700" "Up Stream|someone@example.org|1700000000 -0700" \
+              "Up Stream|upstream@example.org|1700000001 -0700" "Up Stream|upstream@example.org|1700000000 +0000"; do
+    publish 1 "identity: COMMIT author is not $me, nor the author and date of the upstream commit it names" \
+        "$author" "$pub" "x" "A cherry-pick with a changed author or date
+
+$picked"
+done
+publish 1 "identity: COMMIT committer is not $me" "$up" "Some One|someone@example.org|1700000100 +0000" "x" \
+    "A cherry-pick committed by someone else
+
+$picked"
+if grep -q 'author' <<< "$published"; then fail "check-publish.sh didn't accept the author of a real cherry-pick"; fi
+publish 1 "timezone: COMMIT committer date is not +0000" "$up" "Pub Lisher|publisher@example.com|1700000100 -0700" \
+    "x" "A cherry-pick committed outside UTC
+
+$picked"
+publish 1 "identity: COMMIT author is not $me" "$up" "$pub" "x" "A cherry-pick line that isn't the last line
+
+$picked
+
+More text"
+publish 1 "personal: COMMIT notes.txt:1 [private pattern on line 1]" "$up" "$pub" "a planted-private-word here" \
+    "A cherry-pick that adds a private word
+
+$picked"
+if grep -q 'planted-private-word' <<< "$published"; then fail "check-publish.sh showed the private word it found"; fi
+if grep -q 'identity\|timezone' <<< "$published"; then fail "check-publish.sh failed a real cherry-pick's identity"; fi
+rm -rf "$work"
+ok "check-publish.sh accepts real upstream cherry-picks and nothing that only looks like one"
+
 if [ $failures -ne 0 ]; then
     echo "$failures problem(s)" >&2
     exit 1
