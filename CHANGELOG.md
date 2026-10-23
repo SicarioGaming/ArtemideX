@@ -2,8 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and from 0.2.1 on
+the version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+[RELEASING.md](docs/dev/RELEASING.md#version-numbers) explains what that means for an app, and the
+few places Starwire can't follow it exactly.
 
 The release pages on [GitHub](https://github.com/SicarioGaming/Starwire/releases) have the install
 steps and the checksums for each version.
@@ -32,7 +34,7 @@ already live on GitHub.
 - **This changelog,** and rules for commit messages
   ([Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)) and branch names
   ([Conventional Branch](https://conventionalbranch.org)), checked on every pull request.
-  CONTRIBUTING.md explains them.
+  CONTRIBUTING.md explains them. Thank you to u/stiky21 for suggesting these.
 
 ### Changed
 
@@ -52,6 +54,11 @@ already live on GitHub.
 - **Real commit history:** every commit now has its own description, and the repo shares history
   with Moonlight X again, so upstream updates can be merged properly.
 - Various other small cleanups to the GitHub repo and changes to wording for transparency.
+- **Version numbers** follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from now
+  on, also at u/stiky21's suggestion: fixes raise the last number, new features or anything that
+  needs care when you update raise the middle one. Earlier releases keep their numbers and links.
+  [RELEASING.md](docs/dev/RELEASING.md#version-numbers) has the details, including why this
+  release is still 0.2.1.
 
 ### Removed
 

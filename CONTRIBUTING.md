@@ -153,6 +153,12 @@ the same pull request, under Added, Changed, Deprecated, Removed, Fixed or Secur
 moves the `[Unreleased]` lines under a new version heading with its date, like
 `## [0.2.1] - YYYY-MM-DD`, and updates the compare links at the bottom.
 
+**Version numbers** follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from 0.2.1
+on: a release with only fixes raises the last number, and any `feat` or breaking commit raises the
+middle one while Starwire is below 1.0. There are no beta versions like `0.3.0-beta.1`: test builds
+are shared as debug builds, not releases. [RELEASING.md](docs/dev/RELEASING.md#version-numbers) says
+what counts as breaking for an app.
+
 **The check:** `.github/workflows/commits.yml` runs `.github/tools/check-commits.sh` on the
 commits and branch name of every pull request, and on every push to `main`. It skips merge
 commits, commits cherry-picked from upstream with `git cherry-pick -x`, and commits from before the
