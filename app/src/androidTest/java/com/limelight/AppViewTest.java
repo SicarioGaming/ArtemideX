@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,10 +15,14 @@ import android.os.SystemClock;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.lifecycle.ActivityLifecycleCallback;
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import androidx.test.runner.lifecycle.Stage;
 import com.limelight.computers.ComputerDatabaseManager;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.utils.CacheHelper;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import java.io.OutputStream;
@@ -37,8 +42,32 @@ public class AppViewTest {
 
     private final Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
+    // The test PC's address never answers, so after three failed polls the screen closes itself
+    // with "lost connection": 12.5 s after launch on the RedMagic tablet. A test that slept and
+    // drew full-size screenshots for a few seconds could run into that, and failed 1 run in 3.
+    // The screen ignores the PC's updates from the moment it's created (as it does while a game
+    // quits), so the tests don't race the network.
+    private final ActivityLifecycleCallback ignorePolls = (activity, stage) -> {
+        if (activity instanceof AppView && stage == Stage.PRE_ON_CREATE) {
+            try {
+                java.lang.reflect.Field suspend = AppView.class.getDeclaredField("suspendGridUpdates");
+                suspend.setAccessible(true);
+                suspend.setBoolean(activity, true);
+            }
+            catch (ReflectiveOperationException e) {
+                throw new AssertionError(e);
+            }
+        }
+    };
+
+    @Before
+    public void ignoreThePcsUpdates() {
+        ActivityLifecycleMonitorRegistry.getInstance().addLifecycleCallback(ignorePolls);
+    }
+
     @After
     public void removeTestPc() {
+        ActivityLifecycleMonitorRegistry.getInstance().removeLifecycleCallback(ignorePolls);
         ComputerDatabaseManager db = new ComputerDatabaseManager(target);
         ComputerDetails details = db.getComputerByUUID(UUID);
         if (details != null) {
@@ -109,10 +138,7 @@ public class AppViewTest {
     @Test
     public void quitSitsBesideResumeWhileAGameRuns() throws Exception {
         try (ActivityScenario<AppView> scenario = ActivityScenario.launch(cachedPc())) {
-            for (int i = 0; i < 3; i++) {
-                SystemClock.sleep(1000);
-                scenario.onActivity(AppViewTest::drawOffscreen);
-            }
+            waitForHero(scenario);
             scenario.onActivity(activity -> {
                 try {
                     java.lang.reflect.Field selected = AppView.class.getDeclaredField("selectedApp");
@@ -198,6 +224,24 @@ public class AppViewTest {
                     throw new AssertionError(e);
                 }
             });
+        }
+    }
+
+    // Lays out and draws the screen (the tablet's screen may be off) until the hero has picked a
+    // game from the cached list, instead of sleeping a set time
+    private static void waitForHero(ActivityScenario<AppView> scenario) {
+        boolean[] picked = new boolean[1];
+        for (int i = 0; i < 100 && !picked[0]; i++) {
+            if (i > 0) {
+                SystemClock.sleep(100);
+            }
+            scenario.onActivity(activity -> {
+                drawOffscreen(activity);
+                picked[0] = field(activity, "selectedApp") != null;
+            });
+        }
+        if (!picked[0]) {
+            fail("the hero picked no game in 10 s");
         }
     }
 

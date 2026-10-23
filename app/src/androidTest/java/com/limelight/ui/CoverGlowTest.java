@@ -144,9 +144,16 @@ public class CoverGlowTest {
                 assertEquals("Stream", ((TextView) pills.getChildAt(0)).getText().toString());
                 assertEquals("Sound & vibration", ((TextView) pills.getChildAt(1)).getText().toString());
 
-                // The "Predicted impact" panel fits on the tablet's wide screen
-                assertEquals(View.VISIBLE, activity.findViewById(R.id.feelPanel).getVisibility());
-                assertTrue(((TextView) activity.findViewById(R.id.feelText)).getText().length() > 0);
+                // The "Predicted impact" panel shows when the screen is wide enough for it (a
+                // tablet held sideways), and its whole column goes on narrower ones (the tablet
+                // held upright), so the settings keep their room
+                if (activity.getResources().getConfiguration().screenWidthDp >= CoverGlowSettings.FEEL_PANEL_MIN_WIDTH_DP) {
+                    assertEquals(View.VISIBLE, activity.findViewById(R.id.feelPanel).getVisibility());
+                    assertTrue(((TextView) activity.findViewById(R.id.feelText)).getText().length() > 0);
+                }
+                else {
+                    assertEquals(View.GONE, activity.findViewById(R.id.feelColumn).getVisibility());
+                }
                 assertTrue(pills.getChildAt(0).isSelected());
 
                 // Tapping a section moves the highlight to it

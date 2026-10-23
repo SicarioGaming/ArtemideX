@@ -145,6 +145,9 @@ public final class CoverGlowSettings {
     }
 
     // The settings the "Predicted impact" panel describes
+    // The "Predicted impact" panel shows on screens at least this wide
+    static final int FEEL_PANEL_MIN_WIDTH_DP = 840;
+
     private static final List<String> FEEL_KEYS = Arrays.asList(
             "frame_pacing", "vsync_mode", "checkbox_async_decode", "checkbox_async_lfr");
 
@@ -158,7 +161,7 @@ public final class CoverGlowSettings {
         if (panel == null || column == null) {
             return null;
         }
-        if (activity.getResources().getConfiguration().screenWidthDp < 840) {
+        if (activity.getResources().getConfiguration().screenWidthDp < FEEL_PANEL_MIN_WIDTH_DP) {
             // Hide the whole column, not just the panel: its fixed width would otherwise squeeze
             // the settings list to nothing on narrow screens (Galaxy Z Fold cover screen)
             column.setVisibility(View.GONE);
