@@ -27,9 +27,11 @@ import java.util.regex.Pattern;
 /**
  * Version numbers follow Semantic Versioning 2.0.0 (https://semver.org/spec/v2.0.0.html). These
  * checks keep app/build.gradle, the CHANGELOG.md headings and the release notes in step. Build
- * metadata (+...) isn't used. They don't check whether a release's changes make it a PATCH or a
- * MINOR bump. The parsing and comparing take plain strings, so each check is also run on planted
- * mistakes.
+ * metadata (+...) isn't used. Starwire doesn't use pre-release labels (like -beta.1) either, but
+ * they're accepted, since SemVer allows them. These checks don't look at the previous release:
+ * whether a release's changes make it a PATCH or a MINOR bump, and whether versionCode went up,
+ * are checked by .github/tools/check-version.sh at release time, not here. The parsing and
+ * comparing take plain strings, so each check is also run on planted mistakes.
  */
 public class VersionNumbersTest {
     private static final String REPO = "https://github.com/SicarioGaming/Starwire/";
@@ -48,11 +50,10 @@ public class VersionNumbersTest {
         Matcher m = SEMVER.matcher(v);
         if (!m.matches()) {
             return "\"" + v + "\" isn't a SemVer 2.0.0 version: write MAJOR.MINOR.PATCH with no leading zeros,"
-                    + " like 0.3.0, and add a pre-release label like 0.3.0-beta.1 only for a test build";
+                    + " like 0.3.0";
         }
         if (m.group(5) != null) {
-            return v + " has build metadata (+" + m.group(5) + "), which Starwire doesn't use: take it off,"
-                    + " and use a pre-release label like -beta.1 if this is a test build";
+            return v + " has build metadata (+" + m.group(5) + "), which Starwire doesn't use: take it off";
         }
         return null;
     }
@@ -240,12 +241,13 @@ public class VersionNumbersTest {
             problems.add("CHANGELOG.md has no released version to compare versionName " + versionName + " with");
             return problems;
         }
-        // A test build needs no notes, and is numbered after the newest release
+        // A pre-release is numbered after the newest release. It needs no notes here, but
+        // check-version.sh wants them before it's tagged.
         if (isPreRelease(versionName)) {
             if (compare(versionName, newest) <= 0) {
-                problems.add("versionName is " + versionName + ", a test build, but CHANGELOG.md already has "
-                        + newest + ": a test build's number has to be higher than the newest release,"
-                        + " like 0.3.0-beta.1 after 0.2.1");
+                problems.add("versionName is " + versionName + ", a pre-release, but CHANGELOG.md already has "
+                        + newest + ": its number has to be higher than the newest release. Starwire doesn't use"
+                        + " pre-release labels, so write MAJOR.MINOR.PATCH, higher than " + newest);
             }
             return problems;
         }
@@ -306,7 +308,7 @@ public class VersionNumbersTest {
                 // Numbers are compared as numbers, not as text, however long they are
                 {"0.9.0", "0.10.0"},
                 {"9.0.0", "10.0.0", "99999999999999999999.0.0"},
-                // A test build of 0.3.0 comes between 0.2.1 and 0.3.0
+                // A pre-release of 0.3.0 comes between 0.2.1 and 0.3.0
                 {"0.2.1", "0.3.0-beta.1", "0.3.0"},
                 // Numbers come before words, and words are in ASCII order, so capitals come first
                 {"1.0.0-1", "1.0.0-Beta", "1.0.0-alpha", "1.0.0-beta"},
@@ -355,11 +357,14 @@ public class VersionNumbersTest {
             String problem = versionProblem(v);
             assertNotNull("\"" + v + "\" should be rejected", problem);
             assertTrue(problem, problem.contains("isn't a SemVer 2.0.0 version"));
+            // Starwire uses no pre-release labels, so the advice doesn't suggest one
+            assertTrue(problem, problem.endsWith("write MAJOR.MINOR.PATCH with no leading zeros, like 0.3.0"));
         }
         for (String v : new String[] {"1.0.0+build.1", "0.3.0-beta.1+exp.sha.5114f85"}) {
             String problem = versionProblem(v);
             assertNotNull(v + " should be rejected", problem);
             assertTrue(problem, problem.contains("has build metadata"));
+            assertTrue(problem, problem.endsWith("which Starwire doesn't use: take it off"));
         }
         // The comparison refuses them too, so a bad version can't be put in order by accident
         try {
@@ -474,7 +479,8 @@ public class VersionNumbersTest {
         List<String> none = Collections.emptyList();
         List<String> notes = Arrays.asList("v0.2.0-notes.md", "v0.2.1-notes.md");
         assertEquals(none, bumpProblems("0.2.1", "0.2.1", notes));
-        // A test build is numbered after the newest release and needs no notes
+        // Starwire uses no pre-release labels, but one is accepted if it's numbered after the newest
+        // release. It needs no notes here.
         assertEquals(none, bumpProblems("0.3.0-beta.1", "0.2.1", none));
 
         assertOneProblem(bumpProblems("0.2.1", "0.2.0", notes), "versionName is 0.2.1 but CHANGELOG.md's newest"
@@ -482,7 +488,8 @@ public class VersionNumbersTest {
         assertOneProblem(bumpProblems("0.2.0", "0.2.1", notes), "raise versionName and versionCode");
         assertOneProblem(bumpProblems("0.2.1", "0.2.1", Collections.singletonList("v0.2.0-notes.md")),
                 "there's no .github/release-notes/v0.2.1-notes.md");
-        assertOneProblem(bumpProblems("0.2.1-beta.1", "0.2.1", notes), "has to be higher than the newest release");
+        assertOneProblem(bumpProblems("0.2.1-beta.1", "0.2.1", notes), "has to be higher than the newest release."
+                + " Starwire doesn't use pre-release labels, so write MAJOR.MINOR.PATCH, higher than 0.2.1");
         assertOneProblem(bumpProblems("0.3.0-rc.1", "0.3.0", notes), "has to be higher than the newest release");
         assertOneProblem(bumpProblems("0.3", "0.2.1", notes), "isn't a SemVer 2.0.0 version");
         assertOneProblem(bumpProblems("0.2.1+build.1", "0.2.1", notes), "has build metadata");

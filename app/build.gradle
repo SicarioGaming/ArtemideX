@@ -103,6 +103,15 @@ android {
             all {
                 // For the tests that check the code against README.md, build files and resources
                 systemProperty 'repo.root', rootProject.projectDir.absolutePath
+                // The docs those tests read are inputs too, so a docs-only edit runs them again
+                // instead of leaving the task UP-TO-DATE. Only the files that exist are listed.
+                inputs.files(
+                        rootProject.files('README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md',
+                                'AGENTS.md', 'windows/README.md').filter { it.isFile() },
+                        rootProject.fileTree('docs') { include '**/*.md' },
+                        rootProject.fileTree('.github/release-notes'))
+                        .withPropertyName('repoDocs')
+                        .withPathSensitivity(PathSensitivity.RELATIVE)
                 // Robolectric's SDK 36 sandbox reaches into FileDescriptor internals on JDK 17+
                 jvmArgs '--add-opens=java.base/jdk.internal.access=ALL-UNNAMED'
                 // Half-size screenshots: a quarter of the repo space, still clear enough to review
