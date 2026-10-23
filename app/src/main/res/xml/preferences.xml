@@ -100,9 +100,9 @@
             android:title="@string/title_checkbox_enable_microphone"
             android:summary="@string/summary_checkbox_enable_microphone"
             android:defaultValue="false" />
-        <!-- Where the microphone goes: over the stream (logabell's Apollo build) or to a VBAN
-             receiver on the PC, which works with any host. Only the rows for the chosen one show
-             (StreamSettings.showMicrophoneTarget). -->
+        <!-- Where the microphone goes: to Starwire's receiver on the PC (encrypted, any host), to
+             another VBAN receiver (not encrypted), or over the stream (logabell's Apollo build).
+             Only the rows for the chosen one show (StreamSettings.showMicrophoneTarget). -->
         <ListPreference
             android:key="list_microphone_target"
             android:dependency="checkbox_enable_microphone"
@@ -110,7 +110,7 @@
             android:summary="%s"
             android:entries="@array/microphone_target_names"
             android:entryValues="@array/microphone_target_values"
-            android:defaultValue="vban" />
+            android:defaultValue="starwire" />
         <ListPreference
             android:key="list_microphone_device"
             android:dependency="checkbox_enable_microphone"
@@ -128,6 +128,12 @@
             android:dependency="checkbox_enable_microphone"
             android:title="@string/title_vban_setup"
             url="https://github.com/SicarioGaming/Starwire/tree/main/windows#readme" />
+        <!-- Opens MicPairingDialog -->
+        <Preference
+            android:key="mic_pairing"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_mic_pairing"
+            android:summary="@string/summary_mic_pairing_none" />
         <EditTextPreference
             android:key="text_vban_stream_name"
             android:dependency="checkbox_enable_microphone"

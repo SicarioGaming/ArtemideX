@@ -4,7 +4,11 @@ package com.limelight;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.AndroidAudioRenderer;
 import com.limelight.binding.audio.MicrophoneCaptureManager;
+import com.limelight.binding.audio.MicrophoneSink;
 import com.limelight.binding.audio.VbanSender;
+import com.limelight.binding.audio.securemic.MicPairing;
+import com.limelight.binding.audio.securemic.MicPairingStore;
+import com.limelight.binding.audio.securemic.SecureVbanSender;
 import com.limelight.binding.audio.AudioHaptics;
 import com.limelight.binding.input.ControllerHandler;
 import com.limelight.binding.input.KeyboardTranslator;
@@ -241,6 +245,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     private MediaCodecDecoderRenderer decoderRenderer;
     private MicrophoneCaptureManager microphoneCaptureManager;
+    // The encrypted microphone's problems already told this stream
+    private final java.util.Set<Integer> micStatusesShown = new java.util.HashSet<>();
     private boolean reportedCrash;
 
     private WifiManager.WifiLock highPerfWifiLock;
@@ -691,8 +697,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setSupportedVideoFormats(supportedVideoFormats)
                 .setAttachedGamepadMask(gamepadMask)
                 .setAudioConfiguration(prefConfig.audioConfiguration)
-                // With VBAN the microphone goes straight to the PC, not over the stream
-                .setEnableMicrophone(prefConfig.enableMicrophone && !prefConfig.microphoneToVban)
+                // Only ask the host for a mic channel when the microphone goes over the stream; to
+                // a receiver on the PC it goes straight there
+                .setEnableMicrophone(prefConfig.enableMicrophone
+                        && PreferenceConfiguration.MICROPHONE_TARGET_HOST.equals(prefConfig.microphoneTarget))
                 .setColorSpace(decoderRenderer.getPreferredColorSpace())
                 .setColorRange(decoderRenderer.getPreferredColorRange())
                 .setPersistGamepadsAfterDisconnect(!prefConfig.multiController);
@@ -2693,8 +2701,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     }
 
     // Microphone streaming over the stream only works with hosts that accept it (logabell's Apollo
-    // build); other hosts never negotiate it, so the stream carries on without the mic. With VBAN
-    // the microphone goes to a receiver on the PC instead, whatever the host.
+    // build); other hosts never negotiate it, so the stream carries on without the mic. Otherwise
+    // the microphone goes to a receiver on the PC, whatever the host: Starwire's own, encrypted
+    // (the default), or another VBAN receiver, not encrypted.
     private void startMicrophoneCapture() {
         if (!prefConfig.enableMicrophone) {
             return;
@@ -2706,20 +2715,25 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             return;
         }
 
-        if (prefConfig.microphoneToVban) {
-            // The PC's address can be a name, and looking it up isn't allowed on this thread
+        micStatusesShown.clear();
+        if (!PreferenceConfiguration.MICROPHONE_TARGET_HOST.equals(prefConfig.microphoneTarget)) {
+            final boolean encrypted = PreferenceConfiguration.MICROPHONE_TARGET_STARWIRE.equals(prefConfig.microphoneTarget);
+            // The PC's address can be a name, and looking it up isn't allowed on this thread; the
+            // pairing comes from Keystore, which can be slow too
             String host = getIntent().getStringExtra(EXTRA_HOST);
+            String computerUuid = getIntent().getStringExtra(EXTRA_PC_UUID);
             new Thread(() -> {
                 InetAddress address = null;
                 try {
                     address = InetAddress.getByName(host);
                 }
                 catch (UnknownHostException | SecurityException e) {
-                    LimeLog.warning("Couldn't look up the PC for VBAN: " + e.getMessage());
+                    LimeLog.warning("Couldn't look up the PC for the microphone: " + e.getMessage());
                 }
                 final InetAddress resolved = address;
-                runOnUiThread(() -> startVbanMicrophone(resolved));
-            }, "MicVbanLookup").start();
+                final MicPairing pairing = encrypted ? new MicPairingStore(Game.this).forComputer(computerUuid) : null;
+                runOnUiThread(() -> startPcMicrophone(resolved, encrypted, pairing));
+            }, "MicLookup").start();
             return;
         }
 
@@ -2742,7 +2756,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
     }
 
-    private void startVbanMicrophone(InetAddress address) {
+    private void startPcMicrophone(InetAddress address, boolean encrypted, MicPairing pairing) {
         // The stream may have ended while the PC's address was looked up
         if (!connected || isFinishing()) {
             return;
@@ -2751,20 +2765,50 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
             return;
         }
-        // VBAN isn't encrypted, so the audio only goes to a PC on the home network or a private VPN
+        // Only to a PC on the home network or a private VPN, encrypted or not. That's a filter, not
+        // the security: the encryption and pairing are.
         if (!VbanSender.isHomeNetworkAddress(address)) {
-            LimeLog.info("Not sending the microphone over VBAN to " + address.getHostAddress());
-            Toast.makeText(this, R.string.microphone_vban_not_home, Toast.LENGTH_LONG).show();
+            LimeLog.info("Not sending the microphone to " + address.getHostAddress() + ": not a home-network address");
+            Toast.makeText(this, encrypted ? R.string.microphone_secure_not_home : R.string.microphone_vban_not_home,
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (encrypted && pairing == null) {
+            LimeLog.info("Not sending the microphone: Starwire isn't paired with this PC's receiver");
+            Toast.makeText(this, R.string.microphone_secure_not_paired, Toast.LENGTH_LONG).show();
             return;
         }
 
         if (microphoneCaptureManager == null) {
             microphoneCaptureManager = new MicrophoneCaptureManager(this);
         }
-        VbanSender sender = new VbanSender(address, prefConfig.vbanPort, prefConfig.vbanStreamName);
-        if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null, sender)) {
-            LimeLog.warning("Unable to start the microphone for VBAN");
+        MicrophoneSink sink = encrypted
+                ? new SecureVbanSender(address, prefConfig.vbanPort, pairing, status -> runOnUiThread(() -> onMicrophoneStatus(status)))
+                : new VbanSender(address, prefConfig.vbanPort, prefConfig.vbanStreamName);
+        if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null, sink)) {
+            LimeLog.warning("Unable to start the microphone for the PC's receiver");
             Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // What the PC's receiver said, told once per stream for each problem
+    private void onMicrophoneStatus(int status) {
+        int message;
+        switch (status) {
+            case SecureVbanSender.STATUS_NO_ANSWER:
+                message = R.string.microphone_secure_no_answer;
+                break;
+            case SecureVbanSender.STATUS_BUSY:
+                message = R.string.microphone_secure_busy;
+                break;
+            case SecureVbanSender.STATUS_NO_OUTPUT:
+                message = R.string.microphone_secure_no_output;
+                break;
+            default:
+                return;
+        }
+        if (connected && !isFinishing() && micStatusesShown.add(status)) {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
         }
     }
 

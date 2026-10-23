@@ -27,6 +27,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.provider.OpenableColumns;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Range;
 import android.view.Display;
@@ -43,6 +44,8 @@ import com.limelight.PcView;
 import com.limelight.R;
 import com.limelight.binding.audio.MicrophoneCaptureManager;
 import com.limelight.binding.audio.VbanSender;
+import com.limelight.binding.audio.securemic.MicPairing;
+import com.limelight.binding.audio.securemic.MicPairingStore;
 import com.limelight.ui.CoverGlowSettings;
 import com.limelight.ui.overlay.ImportedShortcuts;
 import com.limelight.binding.video.CustomVulkanDriver;
@@ -60,6 +63,7 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -1022,25 +1026,34 @@ public class StreamSettings extends Activity {
 
         // The rows that only apply to one microphone destination, kept while they're hidden
         private PreferenceCategory audioCategory;
-        private Preference micHostInfoPref, vbanSetupPref;
+        private Preference micHostInfoPref, vbanSetupPref, micPairingPref;
         private EditTextPreference vbanNamePref, vbanPortPref;
 
-        // Only the rows for the chosen destination show: the Apollo link for the host, the setup
-        // steps, stream name and port for VBAN. (Disabled rows look like live ones in this theme.)
+        // Only the rows for the chosen destination show: for Starwire's receiver the setup guide,
+        // pairing and the port; for another VBAN receiver the guide with its warning, the stream
+        // name and the port; for the host the Apollo link. (Disabled rows look like live ones in
+        // this theme.)
         private void initializeMicrophoneTargetPreferences() {
             ListPreference targetPref =
                     (ListPreference) findPreference(PreferenceConfiguration.MICROPHONE_TARGET_PREF_STRING);
             audioCategory = (PreferenceCategory) findPreference("category_audio_settings");
             micHostInfoPref = findPreference("microphone_host_info");
             vbanSetupPref = findPreference("vban_setup_info");
+            micPairingPref = findPreference("mic_pairing");
             vbanNamePref = (EditTextPreference) findPreference(PreferenceConfiguration.VBAN_STREAM_NAME_PREF_STRING);
             vbanPortPref = (EditTextPreference) findPreference(PreferenceConfiguration.VBAN_PORT_PREF_STRING);
             if (targetPref == null || audioCategory == null || micHostInfoPref == null || vbanSetupPref == null
-                    || vbanNamePref == null || vbanPortPref == null) {
+                    || micPairingPref == null || vbanNamePref == null || vbanPortPref == null) {
                 return;
             }
             final EditTextPreference namePref = vbanNamePref;
             final EditTextPreference portPref = vbanPortPref;
+
+            micPairingPref.setOnPreferenceClickListener(preference -> {
+                MicPairingDialog.show(getActivity(), PreferenceConfiguration.readPreferences(getActivity()).vbanPort,
+                        this::showMicrophonePairing);
+                return true;
+            });
 
             targetPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 showMicrophoneTarget((String) newValue, namePref.getText(), portPref.getText());
@@ -1069,6 +1082,8 @@ public class StreamSettings extends Activity {
 
         private void showMicrophoneTarget(String target, String streamName, String port) {
             boolean vban = PreferenceConfiguration.MICROPHONE_TARGET_VBAN.equals(target);
+            boolean host = PreferenceConfiguration.MICROPHONE_TARGET_HOST.equals(target);
+            boolean starwire = !vban && !host;
             if (streamName == null || streamName.trim().isEmpty()) {
                 streamName = VbanSender.DEFAULT_STREAM_NAME;
             }
@@ -1076,27 +1091,47 @@ public class StreamSettings extends Activity {
                 port = Integer.toString(VbanSender.DEFAULT_PORT);
             }
 
-            setShown(micHostInfoPref, !vban);
-            setShown(vbanSetupPref, vban);
+            setShown(micHostInfoPref, host);
+            setShown(vbanSetupPref, !host);
+            setShown(micPairingPref, starwire);
             setShown(vbanNamePref, vban);
-            setShown(vbanPortPref, vban);
+            setShown(vbanPortPref, !host);
             Preference setupPref = vbanSetupPref;
             Preference namePref = vbanNamePref;
             Preference portPref = vbanPortPref;
 
-            String deviceAddress = localNetworkAddress();
-            int portNumber;
-            try {
-                portNumber = Integer.parseInt(port.trim());
+            if (vban) {
+                String deviceAddress = localNetworkAddress();
+                int portNumber;
+                try {
+                    portNumber = Integer.parseInt(port.trim());
+                }
+                catch (NumberFormatException e) {
+                    portNumber = VbanSender.DEFAULT_PORT;
+                }
+                setupPref.setSummary(getString(R.string.summary_vban_setup,
+                        deviceAddress != null ? deviceAddress : getString(R.string.vban_this_device),
+                        streamName.trim(), portNumber));
             }
-            catch (NumberFormatException e) {
-                portNumber = VbanSender.DEFAULT_PORT;
+            else {
+                setupPref.setSummary(R.string.summary_mic_setup_encrypted);
             }
-            setupPref.setSummary(getString(R.string.summary_vban_setup,
-                    deviceAddress != null ? deviceAddress : getString(R.string.vban_this_device),
-                    streamName.trim(), portNumber));
             namePref.setSummary(getString(R.string.summary_vban_stream_name, streamName.trim()));
             portPref.setSummary(getString(R.string.summary_vban_port, port.trim()));
+            showMicrophonePairing();
+        }
+
+        // Which PCs the microphone is paired with, or "Not paired yet"
+        private void showMicrophonePairing() {
+            if (micPairingPref == null || getActivity() == null) {
+                return;
+            }
+            List<String> names = new ArrayList<>();
+            for (MicPairing pairing : new MicPairingStore(getActivity()).all()) {
+                names.add(pairing.displayName());
+            }
+            micPairingPref.setSummary(names.isEmpty() ? getString(R.string.summary_mic_pairing_none)
+                    : getString(R.string.summary_mic_pairing_done, TextUtils.join(", ", names)));
         }
 
         // A removed row keeps its place (its order from the XML) when it's added back

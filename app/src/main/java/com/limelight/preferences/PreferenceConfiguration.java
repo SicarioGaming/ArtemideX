@@ -165,10 +165,14 @@ public class PreferenceConfiguration {
     private static final String DEFAULT_AUDIO_CONFIG = "2"; // Stereo
     private static final boolean DEFAULT_ENABLE_MICROPHONE = false;
     private static final String DEFAULT_MICROPHONE_DEVICE = "0";
-    static final String MICROPHONE_TARGET_HOST = "host";
-    static final String MICROPHONE_TARGET_VBAN = "vban";
-    // A VBAN receiver works with every host; over the stream only works with logabell's Apollo build
-    private static final String DEFAULT_MICROPHONE_TARGET = MICROPHONE_TARGET_VBAN;
+    // Where the microphone goes: Starwire's receiver on the PC, encrypted (works with every host);
+    // another VBAN receiver, not encrypted; or over the stream (only logabell's Apollo build)
+    public static final String MICROPHONE_TARGET_STARWIRE = "starwire";
+    public static final String MICROPHONE_TARGET_VBAN = "vban";
+    public static final String MICROPHONE_TARGET_HOST = "host";
+    private static final String DEFAULT_MICROPHONE_TARGET = MICROPHONE_TARGET_STARWIRE;
+    // Set once 0.2.1 has moved 0.2.0's "vban" (its default, unencrypted) to the encrypted target
+    static final String MICROPHONE_TARGET_MIGRATED_PREF_STRING = "mic_target_migrated_021";
     private static final boolean DEFAULT_LATENCY_TOAST = false;
     private static final String DEFAULT_FRAME_PACING = "balanced";
     private static final boolean DEFAULT_ABSOLUTE_MOUSE_MODE = false;
@@ -244,8 +248,8 @@ public class PreferenceConfiguration {
     public MoonBridge.AudioConfiguration audioConfiguration;
     public boolean enableMicrophone;
     public int microphoneDeviceId;
-    // Send the microphone to a VBAN receiver on the PC instead of over the stream
-    public boolean microphoneToVban;
+    // MICROPHONE_TARGET_STARWIRE, _VBAN or _HOST
+    public String microphoneTarget;
     public String vbanStreamName;
     public int vbanPort;
     public int framePacing;
@@ -729,6 +733,22 @@ public class PreferenceConfiguration {
                 Build.FINGERPRINT.contains("PPR1.180610.011/4079208_2235.1395");
     }
 
+    /**
+     * Once, on the first start of 0.2.1: a saved "vban" (0.2.0's default, which wasn't encrypted)
+     * becomes Starwire's encrypted receiver. Someone who really sends to Voicemeeter or another VBAN
+     * app picks the "Not encrypted" option again, and that choice then stays.
+     */
+    static void migrateMicrophoneTarget(SharedPreferences prefs) {
+        if (prefs.getBoolean(MICROPHONE_TARGET_MIGRATED_PREF_STRING, false)) {
+            return;
+        }
+        SharedPreferences.Editor editor = prefs.edit().putBoolean(MICROPHONE_TARGET_MIGRATED_PREF_STRING, true);
+        if (MICROPHONE_TARGET_VBAN.equals(prefs.getString(MICROPHONE_TARGET_PREF_STRING, null))) {
+            editor.putString(MICROPHONE_TARGET_PREF_STRING, MICROPHONE_TARGET_STARWIRE);
+        }
+        editor.apply();
+    }
+
     public static PreferenceConfiguration readPreferences(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         PreferenceConfiguration config = new PreferenceConfiguration();
@@ -852,8 +872,11 @@ public class PreferenceConfiguration {
         catch (NumberFormatException e) {
             config.microphoneDeviceId = 0;
         }
-        config.microphoneToVban = MICROPHONE_TARGET_VBAN.equals(
-                prefs.getString(MICROPHONE_TARGET_PREF_STRING, DEFAULT_MICROPHONE_TARGET));
+        migrateMicrophoneTarget(prefs);
+        config.microphoneTarget = prefs.getString(MICROPHONE_TARGET_PREF_STRING, DEFAULT_MICROPHONE_TARGET);
+        if (!MICROPHONE_TARGET_VBAN.equals(config.microphoneTarget) && !MICROPHONE_TARGET_HOST.equals(config.microphoneTarget)) {
+            config.microphoneTarget = MICROPHONE_TARGET_STARWIRE;
+        }
         config.vbanStreamName = prefs.getString(VBAN_STREAM_NAME_PREF_STRING, VbanSender.DEFAULT_STREAM_NAME);
         try {
             config.vbanPort = Integer.parseInt(prefs.getString(VBAN_PORT_PREF_STRING,
