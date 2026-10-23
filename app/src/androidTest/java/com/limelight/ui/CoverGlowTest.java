@@ -140,9 +140,14 @@ public class CoverGlowTest {
             scenario.onActivity(activity -> {
                 LinearLayout pills = activity.findViewById(R.id.settingsSections);
                 assertTrue("only " + pills.getChildCount() + " sections", pills.getChildCount() >= 5);
-                // Plain-language names (the tablet runs in English)
-                assertEquals("Stream", ((TextView) pills.getChildAt(0)).getText().toString());
-                assertEquals("Sound & vibration", ((TextView) pills.getChildAt(1)).getText().toString());
+                // Plain-language names in English; other languages keep their section headings
+                // (the device matrix runs this in Hebrew too)
+                @SuppressWarnings("deprecation")
+                boolean english = "en".equals(activity.getResources().getConfiguration().locale.getLanguage());
+                assertEquals(activity.getString(english ? R.string.cg_section_stream : R.string.category_basic_settings),
+                        ((TextView) pills.getChildAt(0)).getText().toString());
+                assertEquals(activity.getString(english ? R.string.cg_section_sound : R.string.category_audio_settings),
+                        ((TextView) pills.getChildAt(1)).getText().toString());
 
                 // The "Predicted impact" panel shows when the screen is wide enough for it (a
                 // tablet held sideways), and its whole column goes on narrower ones (the tablet
