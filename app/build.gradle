@@ -1,5 +1,16 @@
 apply plugin: 'com.android.application'
 
+// The commit this build comes from, for Settings > About. A copy of the source without its .git
+// folder says "unknown". (The git.properties inside the APK belongs to JmDNS, not Starwire.)
+def gitCommit = 'unknown'
+try {
+    gitCommit = providers.exec {
+        commandLine 'git', 'rev-parse', '--short=12', 'HEAD'
+    }.standardOutput.asText.get().trim()
+}
+catch (Exception ignored) {
+}
+
 android {
     ndkVersion "29.0.14206865"
 
@@ -15,6 +26,7 @@ android {
         // installed during development can be upgraded in place.
         versionName "0.2.0"
         versionCode = 318
+        buildConfigField "String", "GIT_COMMIT", "\"${gitCommit}\""
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
@@ -178,7 +190,8 @@ android {
 
     packaging {
         resources {
-            // BouncyCastle includes duplicate LICENSE.md files
+            // BouncyCastle includes duplicate LICENSE.md files. Its licence is in
+            // assets/licenses with the others, shown in Settings > About.
             excludes += '/META-INF/*.md'
         }
     }

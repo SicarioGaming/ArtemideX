@@ -23,7 +23,11 @@ The sources and the last commit reviewed for each are in `.github/tools/upstream
 - Add an on-device test for it (`app/src/androidTest`) and run them all:
   `./gradlew connectedNonRootDebugAndroidTest`.
 - Credit it in the README's **Where every feature comes from** table (project, author, and
-  whether it was ported or an idea).
+  whether it was ported or an idea). A new project in the README's **Credits** table goes in
+  `AboutCredits.java` too, which is the Credits page in Settings → About.
+- A new or updated library, prebuilt or submodule goes in `OpenSourceNotices.java` (name,
+  version, licence) with its licence text in `app/src/main/assets/licenses`. The on-device test
+  `OpenSourceNoticesTest` fails if a native library has no entry.
 - Move that source's last-reviewed commit forward in `.github/tools/upstream/sources.txt`, even for
   commits you decided to skip.
 

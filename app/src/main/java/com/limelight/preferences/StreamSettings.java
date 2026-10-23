@@ -2,6 +2,8 @@ package com.limelight.preferences;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -34,6 +36,7 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.widget.Toast;
 
+import com.limelight.BuildConfig;
 import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
@@ -43,6 +46,7 @@ import com.limelight.ui.CoverGlowSettings;
 import com.limelight.ui.overlay.ImportedShortcuts;
 import com.limelight.binding.video.MediaCodecHelper;
 import com.limelight.utils.Dialog;
+import com.limelight.utils.HelpLauncher;
 import com.limelight.utils.UiHelper;
 
 import java.io.File;
@@ -331,6 +335,7 @@ public class StreamSettings extends Activity {
             addPreferencesFromResource(R.xml.preferences);
             PreferenceScreen screen = getPreferenceScreen();
             initializeMicrophonePreferences();
+            initializeAboutPreferences();
 
             // hide on-screen controls category on non touch screen devices
             if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
@@ -870,6 +875,59 @@ public class StreamSettings extends Activity {
             else {
                 pref.setSummary(new File(path).getName());
             }
+        }
+
+        // The About section: the version (a tap copies it for a bug report), the code for this
+        // version, and the Credits and Open-source licences pages
+        private void initializeAboutPreferences() {
+            Preference versionPref = findPreference("about_version");
+            Preference sourcePref = findPreference("about_source");
+            Preference creditsPref = findPreference("about_credits");
+            Preference licencesPref = findPreference("about_licences");
+            if (versionPref == null || sourcePref == null || creditsPref == null || licencesPref == null) {
+                return;
+            }
+
+            versionPref.setSummary(getString(R.string.summary_about_version,
+                    BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.GIT_COMMIT));
+            versionPref.setOnPreferenceClickListener(preference -> {
+                ClipboardManager clipboard =
+                        (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                clipboard.setPrimaryClip(ClipData.newPlainText("Starwire version", versionDetails()));
+                // Android 13 and newer show their own "Copied" message
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(getActivity(), R.string.about_copied, Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+
+            // The source offer GPL-3.0 asks for: the tagged code this release was built from
+            sourcePref.setSummary(getString(R.string.summary_about_source, BuildConfig.VERSION_NAME));
+            sourcePref.setOnPreferenceClickListener(preference -> {
+                HelpLauncher.launchUrl(getActivity(),
+                        "https://github.com/SicarioGaming/Starwire/tree/v" + BuildConfig.VERSION_NAME);
+                return true;
+            });
+
+            creditsPref.setOnPreferenceClickListener(preference -> {
+                startActivity(new Intent(getActivity(), OpenSourceActivity.class)
+                        .putExtra(OpenSourceActivity.EXTRA_PAGE, OpenSourceActivity.PAGE_CREDITS));
+                return true;
+            });
+            licencesPref.setOnPreferenceClickListener(preference -> {
+                startActivity(new Intent(getActivity(), OpenSourceActivity.class)
+                        .putExtra(OpenSourceActivity.EXTRA_PAGE, OpenSourceActivity.PAGE_LICENCES));
+                return true;
+            });
+        }
+
+        /** What a tap on Version copies: enough to tell builds and devices apart in a bug report. */
+        static String versionDetails() {
+            return "Starwire " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ") "
+                    + BuildConfig.FLAVOR + " " + BuildConfig.BUILD_TYPE
+                    + ", commit " + BuildConfig.GIT_COMMIT
+                    + ", Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")"
+                    + ", " + Build.MANUFACTURER + " " + Build.MODEL;
         }
 
         // Microphone streaming needs logabell's Apollo build on the PC; the summary says so.

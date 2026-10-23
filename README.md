@@ -513,5 +513,7 @@ nothing to build there by hand: the setup compiles the receiver on the PC.
 
 ## Licence
 
-GPL-3.0, like Moonlight and every version it builds on. See [LICENSE.txt](LICENSE.txt). PyroWave
-(MIT) and libadrenotools (BSD-2-Clause) keep their own licences.
+GPL-3.0, like Moonlight and every version it builds on. See [LICENSE.txt](LICENSE.txt). The
+libraries inside Starwire keep their own licences, like PyroWave (MIT) and libadrenotools
+(BSD-2-Clause). **Settings → About → Open-source licences** lists every one with its full text,
+and the same texts are in [`app/src/main/assets/licenses`](app/src/main/assets/licenses).

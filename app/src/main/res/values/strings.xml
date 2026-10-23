@@ -752,4 +752,48 @@
 
     <!-- Game screen: the slim bar that takes over once the header has scrolled away -->
     <string name="cg_back_to_top">Show the selected game</string>
+
+    <!-- Settings > About, and its Credits and Open-source licences pages -->
+    <string name="category_about">About</string>
+    <string name="title_about_version">Version</string>
+    <string name="summary_about_version">%1$s (%2$d) · commit %3$s. Tap to copy it for a bug report.</string>
+    <string name="about_copied">Version details copied for a bug report</string>
+    <string name="title_about_github">Starwire on GitHub</string>
+    <string name="summary_about_github">Releases, the full feature list and discussions</string>
+    <string name="title_about_issues">Report a problem or suggest an idea</string>
+    <string name="summary_about_issues">Opens a new issue on GitHub. Pasting in the version details above helps.</string>
+    <string name="title_about_source">Source code</string>
+    <string name="summary_about_source">Starwire is free software under the GPL-3.0. This opens the code for version %1$s on GitHub.</string>
+    <string name="title_about_credits">Credits</string>
+    <string name="summary_about_credits">The Moonlight versions, people and tools Starwire is built on</string>
+    <string name="title_about_licences">Open-source licences</string>
+    <string name="summary_about_licences">The code from other projects inside Starwire, and its licences</string>
+    <string name="oss_section_app">Starwire</string>
+    <string name="oss_section_java">Libraries</string>
+    <string name="oss_section_native">Native code</string>
+    <string name="oss_section_other">Icons and data</string>
+    <string name="oss_project_page">Project page</string>
+    <string name="oss_licence_missing">This licence text is missing from the app. The project page has it.</string>
+    <string name="credits_section_moonlight">Moonlight versions</string>
+    <string name="credits_section_microphone">Microphone</string>
+    <string name="credits_section_video">Video and drivers</string>
+    <string name="credits_section_hosts">Hosts</string>
+    <string name="credits_section_tools">Tools</string>
+    <string name="credit_moonlight">The original client everything here is built on</string>
+    <string name="credit_moonlight_x">The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch</string>
+    <string name="credit_artemis">Pan/zoom, touch modes, clipboard, server commands, Virtual Display, Warp pacing, floating button, and more (via Artemide)</string>
+    <string name="credit_artemide">Nano Pacer / Fast V-Sync, Sync and Async LFR, async decode, MediaTek low-latency work, and the version of the Artemis features that Starwire ported</string>
+    <string name="credit_axixi">Full keyboard, shortcuts list, Lite overlay, shortcut file format (via Artemis)</string>
+    <string name="credit_turnip">Custom Turnip Vulkan driver for PyroWave</string>
+    <string name="credit_vplus">Ideas: bitrate mid-stream, audio haptics, 1% lows</string>
+    <string name="credit_moonlit">Ideas: monitor switcher, pinch to zoom anytime</string>
+    <string name="credit_fold">Idea: letting the stream follow a foldable\'s inner screen</string>
+    <string name="credit_apollo_microphone">The in-stream microphone: the Android capture, the moonlight-common-c changes, and the Apollo build that receives it</string>
+    <string name="credit_vban">VBAN, the network audio format Starwire\'s microphone uses, and VB-Cable, the virtual microphone the receiver plays into (donationware)</string>
+    <string name="credit_pyrowave">The PyroWave codec</string>
+    <string name="credit_adrenotools">Loading a custom Adreno Vulkan driver</string>
+    <string name="credit_vibepollo">The host Starwire is developed with (fork of Apollo)</string>
+    <string name="credit_apollo_sunshine">The hosts Vibepollo is built on</string>
+    <string name="credit_claude_code">Writing the Starwire code, ports, redesign and tests</string>
+    <string name="credit_rea">Reverse-engineering and analysis</string>
 </resources>

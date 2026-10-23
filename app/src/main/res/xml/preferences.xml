@@ -530,6 +530,38 @@
             android:summary="@string/summary_enable_post_stream_toast"
             android:defaultValue="false"/>
     </PreferenceCategory>
+    <!-- Starwire: the version, links, credits and licences (StreamSettings fills in the version) -->
+    <PreferenceCategory android:title="@string/category_about"
+        android:key="category_about">
+        <Preference
+            android:key="about_version"
+            android:title="@string/title_about_version"
+            android:persistent="false" />
+        <com.limelight.preferences.WebLauncherPreference
+            android:key="about_github"
+            android:title="@string/title_about_github"
+            android:summary="@string/summary_about_github"
+            url="https://github.com/SicarioGaming/Starwire" />
+        <com.limelight.preferences.WebLauncherPreference
+            android:key="about_issues"
+            android:title="@string/title_about_issues"
+            android:summary="@string/summary_about_issues"
+            url="https://github.com/SicarioGaming/Starwire/issues/new/choose" />
+        <Preference
+            android:key="about_source"
+            android:title="@string/title_about_source"
+            android:persistent="false" />
+        <Preference
+            android:key="about_credits"
+            android:title="@string/title_about_credits"
+            android:summary="@string/summary_about_credits"
+            android:persistent="false" />
+        <Preference
+            android:key="about_licences"
+            android:title="@string/title_about_licences"
+            android:summary="@string/summary_about_licences"
+            android:persistent="false" />
+    </PreferenceCategory>
     <!--PreferenceCategory android:title="@string/category_help"
         android:key="category_help">
         <com.limelight.preferences.WebLauncherPreference
