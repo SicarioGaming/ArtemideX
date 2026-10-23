@@ -72,6 +72,7 @@ jobs:
         with:
           name: screenshot-diffs
           path: app/build/outputs/roborazzi/
+          retention-days: 7
           if-no-files-found: ignore
 
       # Each exits 1 if a check fails. (pyrowave_partial_test needs a GPU, so it isn't here.)
@@ -96,11 +97,13 @@ jobs:
         with:
           name: starwire-debug
           path: app/build/outputs/apk/nonRoot/debug/*.apk
+          retention-days: 7
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: starwire-debug-tests
           path: app/build/outputs/apk/androidTest/nonRoot/debug/*.apk
+          retention-days: 7
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
@@ -110,6 +113,7 @@ jobs:
             app/build/reports/tests/
             app/build/reports/lint-results-nonRootDebug.*
           if-no-files-found: ignore
+          retention-days: 7
 
   # devices.yml puts in the command-line tools that know pixel_fold and the other newer profiles
   # (the runner's own 12.0 don't) and checks every leg's profile and system image first

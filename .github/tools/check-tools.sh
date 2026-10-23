@@ -291,6 +291,26 @@ for action in $(grep -hoE 'uses:[[:space:]]*[^ ]+@[0-9a-f]{40}' .github/workflow
 done
 ok "the workflows' actions are pinned to commits"
 
+# 9b. Every artifact upload says how long GitHub keeps it. The default is 90 days, and old uploads
+# had filled the private repo's storage past its free allowance.
+begin
+uploads_without_retention() {  # prints file:line of each upload-artifact step with no retention-days
+    awk '
+        FNR == 1 { if (step != "" && !kept) print step; step = ""; kept = 0 }
+        /^[[:space:]]*-[[:space:]]/ { if (step != "" && !kept) print step; step = ""; kept = 0 }
+        /uses:[[:space:]]*actions\/upload-artifact@/ { step = FILENAME ":" FNR }
+        /^[[:space:]]*retention-days:[[:space:]]*[0-9]+/ { kept = 1 }
+        END { if (step != "" && !kept) print step }' "$@"
+}
+for m in $(uploads_without_retention .github/workflows/*.yml); do
+    fail "$m: this upload-artifact step has no retention-days"
+done
+printf '%s\n' 'jobs:' '  a:' '    steps:' '      - uses: actions/upload-artifact@x' '        with:' \
+    '          name: n' '      - run: true' > "$work/no-retention.yml"
+[ -n "$(uploads_without_retention "$work/no-retention.yml")" ] ||
+    fail "the retention-days check missed a planted upload without one"
+ok "every artifact upload says how long it's kept"
+
 # 10. device-matrix.py: the matrix is valid, the tiers nest, and each event gets the tier it should
 begin
 py=""
