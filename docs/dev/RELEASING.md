@@ -1,9 +1,8 @@
-# Releasing Starwire (proposal)
+# Releasing Starwire
 
-**Status: a proposal, not in use yet.** Nothing here changes how 0.2.0 or anything before it was
-published. It needs my go-ahead first, mainly for the one-time history switch below, because that
-puts about 3,500 commits on the public repo and can't really be taken back. Until then
-`private/publish-history.sh` stays where it is.
+**Status:** the one-time history switch below was done on 23 Oct 2026, so the public repo now
+carries the real history, shared with Moonlight X. The release steps are still a proposal until
+the next release uses them.
 
 ## Why change
 

@@ -54,8 +54,9 @@ like WO Mic or AudioRelay to open on your Android device each time.
 
 The receiver has no window: right-click its icon by the clock to check the virtual mic, play a test
 tone for Discord's mic test or quit (or end it in Task Manager). Measured on my tablet over Wi-Fi:
-16,880 packets in 90 seconds with none lost, the receiver's buffer holding at 30 to 50 ms, and
-about 0.85 Mbps of upload.
+16,880 packets in 90 seconds with none lost, no gaps in the receiver's buffer (usually 30 to 50
+ms queued) and about 0.85 Mbps of upload. The raw data and a script that recomputes every number
+are in [docs/measurements](docs/measurements/2026-10-22-mic/).
 
 **Please read this before you use it.** In 0.2.0 the microphone audio isn't encrypted or
 authenticated. Someone on the same network could listen to it, or send their own audio that
@@ -87,13 +88,13 @@ there's nothing to type in, and it doesn't ask the host for a mic channel.
 On the PC, `StarwireMicReceiver` (one C# file, built on your PC from the source in the zip)
 accepts packets from local-network or private VPN addresses with the right stream name (a filter,
 not a security check, as above), and plays them into CABLE Input in 10 ms blocks. Playback starts once 40 ms is queued and never falls
-more than 120 ms behind. The device's and the PC's clocks drift apart (60 ppm in my test), so when the buffer
+more than 120 ms behind. The device's and the PC's clocks drift apart (about 60 ppm in my test), so when the buffer
 stays above 60 ms for 2 seconds it skips a block to keep the delay down.
 
 <p align="center">
 <img src="docs/images/mic-packet.png" width="820" alt="A real VBAN packet from the tablet's microphone as a hexdump, with each header field decoded: the VBAN marker, 48 kHz, 256 samples, mono, 16-bit PCM, the stream name Stream1 and the frame counter, followed by the receiver's rules for accepting and buffering packets.">
 <br>
-<img src="docs/images/mic-measured.png" width="820" alt="Measurements over 90 seconds of Wi-Fi: packet arrival against the ideal schedule (p50 10.9 ms, p99 21 ms, max 38 ms), the receiver's buffer replayed from those arrivals (30 to 50 ms, no underruns, nothing dropped), CABLE Output's level with no dropouts, and the PC-side delay with and without the clock-drift fix.">
+<img src="docs/images/mic-measured.png" width="820" alt="Measurements over 90 seconds of Wi-Fi: packet arrival against the ideal schedule (p50 10.9 ms, p99 21 ms, max 38 ms), the receiver's buffer replayed from those arrivals (no underruns, nothing dropped), CABLE Output's level with no dropouts, and the PC-side delay with and without the clock-drift fix.">
 </p>
 
 - On the PC alone, a packet takes about 107 to 119 ms to be heard on CABLE Output: 40 ms of
@@ -489,17 +490,18 @@ Starwire's native code from source. A few parts are committed already built inst
 - `app/src/main/jni/pyrowave/lib`: PyroWave, 64-bit ARM only. This is Moonlight X's file,
   unchanged. `SOURCE` names the upstream commit Moonlight X recorded for it.
   `build_libpyrowave.sh` builds that commit, but with the newer NDK this repo uses, so the
-  result isn't byte-for-byte the same file.
+  result isn't byte-for-byte the same file. It hasn't been proven byte for byte yet.
 - `app/src/main/jni/adrenotools/lib`: libadrenotools and its four hook libraries, 64-bit ARM
   only, used only by the custom driver option. They were built with `build_libadrenotools.sh`
-  from the upstream commits in `SOURCE`. Rebuilt in a different folder, `libadrenotools.so`
-  comes out the same and the four hooks differ only in their 20-byte build ID, because the build
-  ID depends on the folder they were built in.
+  from the upstream commits in `SOURCE`. Rebuilt from those commits with the original folder
+  names mapped in, all five come out byte for byte the same.
 - `app/src/main/jni/moonlight-core/opus` and `openssl`: static Opus and OpenSSL libraries, kept
   as they are from Moonlight.
 
 The two scripts need CMake and Ninja, and `PYROWAVE_DIR` or `ADRENOTOOLS_DIR` set to your
-checkout of the upstream source.
+checkout of the upstream source. [docs/PROVENANCE.md](docs/PROVENANCE.md) lists every committed
+binary with its source, licence and SHA-256, and `.github/tools/prebuilts/verify.sh` rebuilds
+them and compares the bytes.
 
 The microphone receiver for Windows and its setup script are in [`windows/`](windows). There's
 nothing to build there by hand: the setup compiles the receiver on the PC.
