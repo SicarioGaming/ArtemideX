@@ -2,13 +2,15 @@
 
 ## Reporting a security problem
 
-Please don't put the details in a public issue or discussion. GitHub's private vulnerability
-reporting isn't turned on for this repo yet, so for now:
+Please don't put the details in a public issue or discussion. Report it privately instead:
 
-1. [Open an issue](https://github.com/SicarioGaming/Starwire/issues/new/choose) that only says
-   you've found a security problem, and which part of Starwire it's in (the Android app, the
-   Windows microphone receiver or its setup). Leave out how it works.
-2. I'll reply there to set up a private way for you to send the details.
+1. Go to the repo's [Security tab](https://github.com/SicarioGaming/Starwire/security) and choose
+   **Report a vulnerability** (or use [this link](https://github.com/SicarioGaming/Starwire/security/advisories/new)).
+2. Say which part of Starwire it's in (the Android app, the Windows microphone receiver or its
+   setup), what you found and how to reproduce it. Only you and I can see the report.
+
+I'll reply there. If you can't use GitHub's form, open an issue that only says you've found a
+security problem, without the details, and I'll get in touch.
 
 Fixes go into new releases, so please check the problem is still there in the
 [latest release](https://github.com/SicarioGaming/Starwire/releases/latest).
