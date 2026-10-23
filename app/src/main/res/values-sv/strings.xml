@@ -19,7 +19,7 @@
     <string name="pcview_menu_details">Visa detaljer</string>
     <string name="pcview_menu_eol">NVIDIA GameStream upphör att fungera</string>
     <string name="nettest_title_waiting">Testning av nätverksanslutning</string>
-    <string name="nettest_text_waiting">Moonlight testar din nätverksanslutning för att avgöra om några nödvändiga portar är blockerade.
+    <string name="nettest_text_waiting">Starwire testar din nätverksanslutning för att avgöra om några nödvändiga portar är blockerade.
 \n
 \nDetta kan ta några sekunder…</string>
     <string name="pair_pc_ingame">Datorn är för närvarande i ett spel. Du måste stänga spelet innan fogning.</string>
@@ -42,7 +42,7 @@
     <string name="error_pc_offline">Dator är offline</string>
     <string name="error_unknown_host">Misslyckades med att lösa värd</string>
     <string name="title_decoding_error">Videoavkodare brakade</string>
-    <string name="message_decoding_error">Moonlight har brakat på grund av en inkompatibilitet med den här enhetens videodekoder. Försök att jämka streaminginställningarna om braket fortsätter.</string>
+    <string name="message_decoding_error">Starwire har brakat på grund av en inkompatibilitet med den här enhetens videodekoder. Försök att jämka streaminginställningarna om braket fortsätter.</string>
     <string name="title_decoding_reset">Återställning av videoinställningar</string>
     <string name="error_usb_prohibited">USB-åtkomst är förbjuden av enhetens administratör. Kontrollera dina Knox- eller MDM-inställningar.</string>
     <string name="unable_to_pin_shortcut">Din nuvarande lanseringsprogramvara tillåter inte att du skapar genvägar som är fastlåsta.</string>
@@ -118,7 +118,7 @@
     <string name="title_checkbox_multi_controller">Automatiskt upptäckande av närvarande spelkontroll</string>
     <string name="title_checkbox_vibrate_fallback">Efterlikna stöd för rumble med vibrationer</string>
     <string name="summary_checkbox_vibrate_fallback">Vibrerar enheten för att efterlikna rumble om din spelplatta inte har stöd för det</string>
-    <string name="summary_seekbar_deadzone">Observera: Vissa spel kan kräva en större dödzon än vad Moonlight är konfigurerat för att använda.</string>
+    <string name="summary_seekbar_deadzone">Observera: Vissa spel kan kräva en större dödzon än vad Starwire är konfigurerat för att använda.</string>
     <string name="title_seekbar_deadzone">Jämka analogstickans dödzon</string>
     <string name="suffix_seekbar_deadzone">%</string>
     <string name="title_checkbox_xb1_driver">Drivrutin för Xbox 360/One USB-spelplatta</string>
@@ -144,7 +144,7 @@
     <string name="suffix_osc_opacity">%</string>
     <string name="title_checkbox_enable_pip">Sätt på bild-i-bild-observatörsläge</string>
     <string name="title_language_list">Språk</string>
-    <string name="summary_language_list">Språk att använda för Moonlight</string>
+    <string name="summary_language_list">Språk att använda för Starwire</string>
     <string name="title_checkbox_small_icon_mode">Använd liten omslagskonst</string>
     <string name="summary_checkbox_small_icon_mode">Mindre lådor i appgallret gör att fler appar syns på skärmen</string>
     <string name="category_host_settings">Värdinställningar</string>
@@ -153,7 +153,6 @@
     <string name="title_checkbox_host_audio">Spela upp ljud på datorn</string>
     <string name="summary_checkbox_host_audio">Spela upp ljud från datorn och den här enheten</string>
     <string name="category_advanced_settings">Utvecklade inställningar</string>
-    <string name="title_unlock_fps">Lås upp alla möjliga bildfrekvenser</string>
     <string name="title_checkbox_reduce_refresh_rate">Tillåt minskning av uppdateringsfrekvensen</string>
     <string name="title_checkbox_disable_warnings">Ta bort varningsmedelanden</string>
     <string name="summary_checkbox_disable_warnings">Ta bort varningsmeddelanden om inmatning på skärmen när du strömmar</string>
@@ -173,8 +172,6 @@
     <string name="summary_troubleshooting">Visa gissningar för att utvärdera och åtgärda vanliga strömningsbeskymmer</string>
     <string name="title_privacy_policy">Integritetspolicy</string>
     <string name="summary_privacy_policy">Visa Moonlights integritetspolicy</string>
-    <string name="resolution_360p">360p</string>
-    <string name="resolution_480p">480p</string>
     <string name="resolution_720p">720p</string>
     <string name="resolution_1440p">1440p</string>
     <string name="resolution_4k">4K</string>
@@ -189,15 +186,15 @@
     <string name="pacing_balanced_alt">Balanserad med FPS-gräns</string>
     <string name="pacing_smoothness">Föredrar smidigast video (kan öka latensen avsevärt)</string>
     <string name="nettest_title_done">Nätverkstestet fullföljt</string>
-    <string name="nettest_text_failure">Din enhets aktuella nätverksanslutning verkar blockera Moonlight. Streaming via Internet kanske inte fungerar när du är ansluten till det här nätverket.
+    <string name="nettest_text_failure">Din enhets aktuella nätverksanslutning verkar blockera Starwire. Streaming via Internet kanske inte fungerar när du är ansluten till det här nätverket.
 \n
 \nFöljande nätverksportar blockerades:
 \n</string>
-    <string name="nettest_text_success">Ditt nätverk verkar inte blockera Moonlight. Om du fortfarande har problem med anslutningen kan du kontrollera datorns brandväggsinställningar.
+    <string name="nettest_text_success">Ditt nätverk verkar inte blockera Starwire. Om du fortfarande har problem med anslutningen kan du kontrollera datorns brandväggsinställningar.
 \n
 \nOm du försöker streama via Internet installerar du Moonlight Internet Hosting Tool på din dator och kör den medföljande Internet Streaming Tester för att kontrollera datorns Internetanslutning.</string>
     <string name="nettest_text_inconclusive">Nätverkstestet kunde inte utföras eftersom ingen av Moonlights servrar för anslutningstestning kunde nås. Kontrollera din internetanslutning eller försök igen senare.</string>
-    <string name="nettest_text_blocked">Enhetens aktuella nätverksanslutning blockerar Moonlight. Streaming via Internet kanske inte fungerar när du är ansluten till det här nätverket.</string>
+    <string name="nettest_text_blocked">Enhetens aktuella nätverksanslutning blockerar Starwire. Streaming via Internet kanske inte fungerar när du är ansluten till det här nätverket.</string>
     <string name="pair_pc_offline">Dator är offline</string>
     <string name="error_manager_not_running">Tjänsten ComputerManager körs inte. Vänta några sekunder eller starta om programmet.</string>
     <string name="error_404">GFE returnerade ett HTTP 404-fel. Kontrollera att din dator har en GPU som stöds. Användning av fjärrskrivbordsprogram kan också orsaka det här felet. Försök att starta om maskinen eller installera om GFE.</string>
@@ -215,20 +212,12 @@
 \n Kontrollera att Sunshine körs på värddatorn eller att GameStream är aktiverat i inställningarna för GeForce Experience SHIELD.</string>
     <string name="perf_overlay_netlatency">Genomsnittlig nätverksfördröjning: %1$d ms (varians: %2$d ms)</string>
     <string name="applist_quit_fail">Misslyckades att avsluta</string>
-    <string name="title_native_res_dialog">Varning för ursprunglig upplösning</string>
-    <string name="text_native_res_dialog">Inbyggd upplösning och/eller FPS kanske inte stöds av streamingservern. Du kommer förmodligen att behöva konfigurera ett matchande anpassat visningsläge för värddatorn manuellt.
-\n
-\nOm du väljer att skapa en anpassad upplösning i NVIDIAs kontrollpanel för att matcha dina skärminställningar, se till att du har läst och förstått NVIDIAs varning om möjlig bildskärmsskada, PC-instabilitet och andra potentiella problem.
-\n
-\nVi är inte ansvariga för eventuella problem som uppstår av att skapa en anpassad upplösning på din PC.
-\n
-\nDet kan vara så att din bildskärm inte stöder en nödvändig bildskärmskonfiguration. Om så är fallet kan du försöka ställa in en virtuell skärm. Slutligen, om din enhet eller värddator inte stöder streaming med en specifik upplösning eller uppdateringsfrekvens, har du tyvärr ingen tur.</string>
     <string name="summary_seekbar_bitrate">Öka för bättre bildkvalitet. Minska för att förbättra prestandan på långsammare anslutningar.</string>
     <string name="title_checkbox_stretch_video">Sträck ut videon till helskärm</string>
     <string name="summary_audio_config_list">Aktivera 5.1 eller 7.1 surroundljud för hemmabiosystem</string>
     <string name="summary_checkbox_enable_audiofx">Ljudeffekter kan fungera under streaming, men kan öka ljudfördröjningen</string>
     <string name="summary_checkbox_multi_controller">Om du avmarkerar det här alternativet tvingas en spelplatta att alltid finnas med</string>
-    <string name="summary_checkbox_usb_bind_all">Använd Moonlights USB-drivrutin för alla gamepads som stöds, även om det finns stöd för Xbox-kontroller i original</string>
+    <string name="summary_checkbox_usb_bind_all">Använd Starwires USB-drivrutin för alla gamepads som stöds, även om det finns stöd för Xbox-kontroller i original</string>
     <string name="summary_checkbox_mouse_nav_buttons">Om du lägger till det här alternativet kan högerklickandet gå sönder på vissa felaktiga enheter</string>
     <string name="title_checkbox_show_onscreen_controls">Visa kontrollerna på skärmen</string>
     <string name="summary_checkbox_show_onscreen_controls">Visa en virtuell styrenhet på pekskärmen</string>
@@ -237,7 +226,6 @@
     <string name="summary_osc_opacity">Gör kontrollerna på skärmen mer/mindre genomskinliga</string>
     <string name="summary_checkbox_enable_pip">Gör det möjligt att se strömmen (men inte att styra den) medan du gör andra saker samtidigt</string>
     <string name="category_ui_settings">Inställningar för användargränssnittet</string>
-    <string name="summary_unlock_fps">Streaming med 90 eller 120 FPS kan minska latenstiden på avancerade enheter, men kan orsaka fördröjning eller instabilitet på enheter som inte har stöd för det</string>
     <string name="summary_checkbox_reduce_refresh_rate">Lägre uppdateringsfrekvenser på skärmen kan spara ström på bekostnad av ytterligare videolatens</string>
     <string name="summary_full_range">Detta kan leda till förlust av detalj i ljusa och mörka områden om enheten inte visar videoinnehåll med fullt omfång på rätt sätt.</string>
     <string name="fps_120">120 FPS</string>
@@ -247,7 +235,6 @@
     <string name="fps_60">60 FPS</string>
     <string name="summary_frame_pacing">Ange hur du ska balansera videofördröjning och jämnhet</string>
     <string name="fps_suffix_fps">FPS</string>
-    <string name="title_native_fps_dialog">Native FPS varning</string>
     <string name="category_gamepad_settings">Spelkontroller inställningar</string>
     <string name="title_checkbox_gamepad_motion_sensors">Tillåt användning av spelkontrollens rörelsesensorer</string>
     <string name="videoformat_auto">Automatisk (Rekommenderad)</string>

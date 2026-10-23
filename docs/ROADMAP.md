@@ -175,8 +175,8 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       channel). Only works with logabell's Apollo build on the PC
 - [x] Microphone with any host (Vibepollo, Sunshine, regular Apollo): a VBAN stream to Starwire's
       own receiver on the PC, which plays it into VB-Cable; one setup script installs both. Not
-      encrypted or authenticated in 0.2.0, so only for networks you trust (`SECURITY.md` has the
-      details); a fix is being worked on
+      encrypted or authenticated in 0.2.0; encrypted, and only from paired devices, from 0.2.1
+      (below)
 - [ ] Microphone receiver for macOS and Linux (the Windows one is in `windows/`)
 - [ ] Microphone over the stream itself with Vibepollo or regular Apollo: waiting for either to
       accept logabell's design
@@ -184,6 +184,63 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       Fold's cover screen); the game screen and the stream menu now fit small screens too, with
       on-device layout tests at phone and foldable sizes (the tablet's display resized with
       `adb shell wm size`)
+
+## 0.2.1: after the 0.2.0 code review
+
+- [x] GitHub repo cleanup, after
+      [u/rambo3349's code review](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5/starwire_020_mic_passthrough_wo_needing_to_modify/19rigium2zrt0/)
+      in the 0.2.0 Reddit thread. The public repo now carries the real history, every commit with
+      its own description and sharing history with Moonlight X, so upstream changes can be merged
+      again. Before, it had one commit per folder with the same few messages. The switch on
+      23 Oct was a plain fast-forward, so clones, forks and the release tags kept working; an old
+      account name and the PC's name were taken out of the maintainer's commits first. Also:
+      every prebuilt library is traced to its source and rebuilt byte for byte on GitHub
+      (`docs/PROVENANCE.md`, `prebuilts.yml`), the 0.2.0 mic measurements are published with
+      their raw data and a script that recomputes them (`docs/measurements/`), the README and the
+      release pages say plainly which features are experimental, `SECURITY.md` (with private vulnerability
+      reporting) and `CONTRIBUTING.md` were added, and `.github/tools/check-publish.sh` keeps
+      secrets and personal details out of anything pushed to the public repo. This part is
+      already live; it didn't need a release
+- [x] Encrypted microphone (SWMC version 1, `docs/dev/mic-protocol.md`): each device pairs with
+      the PC once with a 16-character code from the receiver's **Pair a device...**, and in
+      Starwire **Pair with the PC**. Each stream gets its own AES-256-GCM key, and the receiver
+      refuses devices it hasn't paired, replayed, late and forged packets, and plain VBAN unless
+      it's set up with `-AllowUnencrypted`. A "Not encrypted" option stays in the app for
+      Voicemeeter and other VBAN apps, and 0.2.0's default moves to the encrypted receiver once.
+      The receiver now plays through WASAPI, with waveOut if WASAPI doesn't work. Updating from
+      0.2.0 needs both sides and pairing once. Tested: the app and the receiver agree on a shared
+      vectors file (`SwmcCodecTest`, `windows/tests/run-tests.ps1`); a loopback run on one PC
+      (`windows/tests/e2e-loopback.ps1`) played every packet in order and refused a replayed, a
+      late, two forged and one plain VBAN packet; encrypting took about 6.5 microseconds per
+      packet in a benchmark on the tablet; and on 23 Oct a real stream from the tablet to the PC
+      over Wi-Fi, with a receiver that only takes encrypted audio, had sound only while the
+      stream ran. Dropouts weren't counted in that test
+- [x] Custom PyroWave driver: the setting says it's experimental, and the first time it's turned
+      on, a warning says what a driver file can do and asks first. Imports are checked (a plain
+      file name, at most 64 MB, a 64-bit ARM library, or an archive of at most 64 files holding
+      one) and replace the earlier driver; a refused file keeps it. The SHA-256 is recorded at
+      import, shown under the setting and checked before every load, and only files inside
+      Starwire's driver folder are loaded (a symlink out of it is refused). Archives unpack into
+      a folder named after their SHA-256, which fixes a different archive with the same library
+      name reusing the old library. The driver can be removed, and it's left out of backups.
+      JVM tests in `CustomVulkanDriverImportTest`, device tests in `CustomVulkanDriverTest`. A
+      driver imported by 0.2.0 has no recorded SHA-256, so it has to be chosen again. Still not
+      tried with a real Turnip driver
+- [x] Async decode's flush recovery never hands out a buffer from before the flush. One the
+      codec offered just before `flush()` was handed out after `start()` once, on the small
+      phone emulator, and failed with "index 0 is not owned by client". JVM tests in
+      `AsyncCodecFlushTest`; `AsyncDecodeTest` passed its flush recovery 25 times in a row on
+      the RedMagic tablet
+- [x] With animations off, the game screen's endless animations (the glow, the floating
+      cover, the rainbow, the ring round the chosen game, the stars) stay still. Android 5 to
+      7.1 ran them every frame, so the screen never stopped redrawing and the Android 6
+      emulator's tests hung. Before Android 8 they also stop, not pause, while the screen is out
+      of sight, since a paused one there still wakes the CPU every frame. JVM tests in
+      `LoopsTest`. Not yet tried on a real Android 5 to 7.1 device or rerun on the emulator
+- [x] The in-stream menu's tools grid fades out at an edge with more tools to scroll to (a
+      phone, a Fold's cover screen, a small handheld), and the controller's selection stops
+      clear of the fade. Checked at every screen size in `ActivityScreensTest`, and in
+      `GridScrollTest`
 
 ## Open questions
 

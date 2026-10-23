@@ -3,7 +3,7 @@
 // have paced it. Not part of the app build; build and run on the host with:
 //   g++ -std=c++17 -O2 -I.. ../frame_pacer.cpp pacer_replay.cpp -o pacer_replay
 //   ./pacer_replay pacer-20260928-081500.csv [--events 40]
-// or use tools/pacer-trace.sh, which builds it and runs it on pulled traces.
+// or use .github/tools/pacer-trace.sh, which builds it and runs it on pulled traces.
 
 #include "frame_pacer.h"
 

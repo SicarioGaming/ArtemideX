@@ -19,19 +19,19 @@
     <string name="pcview_menu_details">Details anzeigen</string>
     <!-- Network test strings -->
     <string name="nettest_title_waiting">Netzwerkverbindung wird getestet</string>
-    <string name="nettest_text_waiting">Moonlight testet Ihre Netzwerkverbindung, um festzustellen, ob benötigte Ports blockiert sind.
+    <string name="nettest_text_waiting">Starwire testet Ihre Netzwerkverbindung, um festzustellen, ob benötigte Ports blockiert sind.
 \n
 \nDies kann einige Sekunden dauern…</string>
     <string name="nettest_title_done">Netzwerktest abgeschlossen</string>
-    <string name="nettest_text_success">Dein Netzwerk scheint Moonlight nicht zu blockieren. Wenn du weiterhin Probleme mit der Verbindung hast, überprüfe die Firewall-Einstellungen deines Hosts
+    <string name="nettest_text_success">Dein Netzwerk scheint Starwire nicht zu blockieren. Wenn du weiterhin Probleme mit der Verbindung hast, überprüfe die Firewall-Einstellungen deines Hosts
 \n
 \nWenn du versuchst, über das Internet zu streamen, installiere das Moonlight Internet Hosting Tool auf deinem Host und führe den mitgelieferten Internet-Streaming-Tester aus, um die Internetverbindung des Hosts zu überprüfen.</string>
     <string name="nettest_text_inconclusive">Der Netzwerktest konnte nicht durchgeführt werden, da keiner der Verbindungstestserver von Moonlight erreichbar war. Überprüfe deine Internetverbindung oder versuche es später noch einmal.</string>
-    <string name="nettest_text_failure">Die aktuelle Netzwerkverbindung deines Geräts scheint Moonlight zu blockieren. Das Streaming über das Internet funktioniert möglicherweise nicht, während du mit diesem Netzwerk verbunden bist.
+    <string name="nettest_text_failure">Die aktuelle Netzwerkverbindung deines Geräts scheint Starwire zu blockieren. Das Streaming über das Internet funktioniert möglicherweise nicht, während du mit diesem Netzwerk verbunden bist.
 \n
 \nFolgende Netzwerkports wurden blockiert:
 \n</string>
-    <string name="nettest_text_blocked">Die aktuelle Netzwerkverbindung deines Geräts blockiert Moonlight. Das Streaming über das Internet funktioniert möglicherweise nicht, während du mit diesem Netzwerk verbunden bist.</string>
+    <string name="nettest_text_blocked">Die aktuelle Netzwerkverbindung deines Geräts blockiert Starwire. Das Streaming über das Internet funktioniert möglicherweise nicht, während du mit diesem Netzwerk verbunden bist.</string>
     <!-- Pair messages -->
     <string name="pairing">Koppeln…</string>
     <string name="pair_pc_offline">Host ist offline</string>
@@ -58,7 +58,7 @@
     <string name="error_unknown_host">Hostname konnte nicht aufgelöst werden</string>
     <string name="error_404">GFE ist auf einen HTTP 404 Fehler gestoßen. Stelle sicher, dass die GPU deines Hosts unterstützt wird. Die Verwendung von Remote-Desktop Software kann ebenso diesen Fehler verursachen. Starte deinen Host neu oder installiere GFE neu.</string>
     <string name="title_decoding_error">Video Dekodierer ist abgestürzt</string>
-    <string name="message_decoding_error">Moonlight ist wegen einer Inkompatibilität zu dem Video Dekodierer deines Gerätes abgestürzt. Sollten weiterhin Abstürze auftreten, ändere deine Streaming Einstellungen.</string>
+    <string name="message_decoding_error">Starwire ist wegen einer Inkompatibilität zu dem Video Dekodierer deines Gerätes abgestürzt. Sollten weiterhin Abstürze auftreten, ändere deine Streaming Einstellungen.</string>
     <string name="title_decoding_reset">Video Einstellungen zurücksetzen</string>
     <string name="message_decoding_reset">Der Video Dekodierer deines Geräts ist wiederholt mit den ausgewählten Einstellungen abgestürzt. Deine Streamingeinstellungen wurden zurückgesetzt.</string>
     <string name="error_usb_prohibited">USB Zugriff ist administrativ unterbunden. Bitte überprüfen sie ihre Knox oder MDM Einstellungen.</string>
@@ -148,7 +148,7 @@
     <string name="title_checkbox_xb1_driver">Xbox 360/One Controller Treiber</string>
     <string name="summary_checkbox_xb1_driver">Aktiviert den eingebauten USB Treiber für Geräte die keine Xbox-Controller Unterstützung haben</string>
     <string name="title_checkbox_usb_bind_all">Android Controller Unterstützung überschreiben</string>
-    <string name="summary_checkbox_usb_bind_all">Erzwingt die Verwendung von Moonlights USB Treiber für alle Xbox kompatiblen Controller</string>
+    <string name="summary_checkbox_usb_bind_all">Erzwingt die Verwendung von Starwires USB Treiber für alle Xbox kompatiblen Controller</string>
     <string name="title_checkbox_mouse_emulation">Maus Emulation via Controller</string>
     <string name="summary_checkbox_mouse_emulation">Langes gedrückt halten der Start-Taste wechselt in den Maus Modus</string>
     <string name="title_checkbox_mouse_nav_buttons">Vor- und Zurück-Tasten aktivieren</string>
@@ -175,7 +175,7 @@
     <string name="title_checkbox_enable_pip">Aktivieren des Bild-in-Bild Modus</string>
     <string name="summary_checkbox_enable_pip">Ermöglicht die Anzeige (aber nicht die Steuerung) des Streams während des Multitasking</string>
     <string name="title_language_list">Sprache</string>
-    <string name="summary_language_list">Sprache die Moonlight verwenden soll</string>
+    <string name="summary_language_list">Sprache die Starwire verwenden soll</string>
     <string name="title_checkbox_small_icon_mode">Verwende kleine Cover</string>
     <string name="summary_checkbox_small_icon_mode">Verwende kleine Cover in der Rasteransicht, um mehr gleichzeitig anzeigen zu können</string>
     <string name="category_host_settings">Host Einstellungen</string>
@@ -185,8 +185,6 @@
     <string name="summary_checkbox_host_audio">Audio auf dem Host und auf diesem Gerät wiedergeben</string>
     <string name="category_advanced_settings">Erweiterte Einstellungen</string>
     <string name="title_disable_frame_drop">Nie Frames Überspringen</string>
-    <string name="title_unlock_fps">Alle möglichen Framerates freischalten</string>
-    <string name="summary_unlock_fps">Streaming mit 90 oder 120 FPS kann die Latenz auf High-End-Geräten verringern, kann aber bei Geräten, die dies nicht unterstützen, zu stottern oder Instabilität führen</string>
     <string name="title_checkbox_disable_warnings">Warnhinweise deaktivieren</string>
     <string name="summary_checkbox_disable_warnings">On-Screen Warnmeldungen während des Streaming deaktivieren</string>
     <string name="summary_disable_frame_drop">Kann das Mikro-Ruckeln auf einigen Geräten reduzieren, allerdings erhöht dies gleichzeitig die Latenz</string>
@@ -199,14 +197,6 @@
     <string name="title_enable_post_stream_toast">Zeige Latenz-Informationen nach dem Streaming</string>
     <string name="summary_enable_post_stream_toast">Anzeige einer Informationsmeldung über die Latenz nach dem Ende des Streams</string>
     <string name="resolution_prefix_native">Nativ</string>
-    <string name="text_native_res_dialog">Native Auflösungsmodi werden unter Umständen nicht vom Streaming Server unterstützt. Wahrscheinlich musst du diese manuell für den Host einstellen.
-\n
-\nWenn du eine benutzerdefinierte Auflösung in der NVIDIA Systemsteuerung erstellst, um die Auflösung deines Geräts anzupassen, stelle bitte sicher, dass du die Warnung von NVIDIA bezüglich möglicher Monitorschäden, PC-Instabilität und anderer potenzieller Probleme gelesen und verstanden hast.
-\n
-\nWir übernehmen keine Verantwortung für Probleme, die aus der Erstellung einer angepassten Auflösung auf deinem PC resultieren.
-\n
-\nEs kann sein, dass dein Monitor eine notwendige Konfiguration nicht unterstützt. In diesem Fall, kann ein Virtuelles Display Abhilfe schaffen. Allerdings kann es sein, dass dein Gerät oder dein Host das Streaming in einer bestimmten Auflösung oder Bildwiederholrate nicht unterstützt.</string>
-    <string name="title_native_res_dialog">Native Auflösungswarnung</string>
     <string name="check_ports_msg">Überprüfe deine Firewall und Portweiterleitungsregeln für folgende(n) Port(s):</string>
     <string name="early_termination_error">Beim Starten des Streams auf deinem Host ist etwas schief gelaufen.
 \n
@@ -224,7 +214,6 @@
     <string name="pacing_balanced">Ausgeglichen</string>
     <string name="pacing_smoothness">Bevorzuge flüssige Bildwiedergabe (kann die Latenzzeit deutlich erhöhen)</string>
     <string name="perf_overlay_streamdetails">Video Stream: %1$s %2$.2f FPS</string>
-    <string name="resolution_360p">360p</string>
     <string name="resolution_1080p">1080p</string>
     <string name="resolution_1440p">1440p</string>
     <string name="resolution_4k">4K</string>
@@ -233,7 +222,6 @@
     <string name="audioconf_71surround">7.1 Surround Sound</string>
     <string name="perf_overlay_netlatency">Durchschnittliche Netzwerklatenz: %1$d ms (Abweichung: %2$d ms)</string>
     <string name="fps_30">30 FPS</string>
-    <string name="resolution_480p">480p</string>
     <string name="fps_120">120 FPS</string>
     <string name="resolution_720p">720p</string>
     <string name="fps_60">60 FPS</string>
@@ -249,7 +237,7 @@
     <string name="category_help">Hilfe</string>
     <string name="title_setup_guide">Einstellungsanleitung</string>
     <string name="summary_privacy_policy">Moonlight\'s Datenschutzbestimmungen anzeigen</string>
-    <string name="summary_seekbar_deadzone">Hinweis: Einige Spiele können eine größere Controller-Totzone erzwingen als die, die in Moonlight konfiguriert ist.</string>
+    <string name="summary_seekbar_deadzone">Hinweis: Einige Spiele können eine größere Controller-Totzone erzwingen als die, die in Starwire konfiguriert ist.</string>
     <string name="summary_checkbox_enable_audiofx">Ermöglicht das Funktionieren von Audioeffekten beim Streaming, kann aber die Audio-Latenz erhöhen</string>
     <string name="resolution_prefix_native_portrait">(Portrait)</string>
     <string name="title_checkbox_reduce_refresh_rate">Aktualisierungsrate verringern erlauben</string>
@@ -258,7 +246,6 @@
     <string name="frame_conversion_error">Der Host-PC hat einen schwerwiegenden Videocodierungsfehler gemeldet.
 \n
 \nVersuchen Sie, den HDR-Modus zu deaktivieren, die Streaming-Auflösung zu ändern oder die Bildschirmauflösung des Host-PCs zu ändern.</string>
-    <string name="title_native_fps_dialog">Native FPS Warnung</string>
     <string name="videoformat_av1always">Immer AV1 verwenden (Experimentell)</string>
     <string name="title_checkbox_gamepad_motion_sensors">Erlaube Benutzen von Gamepad Bewegungssensoren</string>
     <string name="videoformat_h264always">Immer H.264 verwenden</string>

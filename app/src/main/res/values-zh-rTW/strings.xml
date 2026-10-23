@@ -42,7 +42,7 @@
     <string name="error_unknown_host"> 無法解析主機位址 </string>
     <string name="error_404">GFE 傳回了 HTTP 404 錯誤，請確保你的電腦 GPU 支援串流。使用遠端桌面軟體同樣會引起此錯誤，請嘗試重啟電腦或重新安裝 GFE。</string>
     <string name="title_decoding_error">視訊解碼器已當機</string>
-    <string name="message_decoding_error">由於與這個裝置的視訊解碼器不相容，Moonlight 已當機。若當機持續，請嘗試調整串流設定。</string>
+    <string name="message_decoding_error">由於與這個裝置的視訊解碼器不相容，Starwire 已當機。若當機持續，請嘗試調整串流設定。</string>
     <string name="title_decoding_reset">重設視訊設定</string>
     <string name="message_decoding_reset">由於裝置的視訊解碼器在你選取的串流設定上持續當機，已重設你的串流設定。</string>
     <string name="error_usb_prohibited">裝置管理員已禁止 USB 訪問。請檢查您的 Knox 或 MDM 設定。</string>
@@ -111,8 +111,6 @@
     <string name="summary_fps_list">提高影格速率以取得更順暢的視訊串流，降低可在低效能裝置上取得更好的串流體驗。</string>
     <string name="title_seekbar_bitrate">視訊位元速率</string>
     <string name="summary_seekbar_bitrate">提高位元速率以提升圖像品質，降低可在較慢的網路中取得更好的串流體驗。</string>
-    <string name="title_unlock_fps">解鎖所有可用影格速率</string>
-    <string name="summary_unlock_fps">以 90 或 120 畫面更新率串流可能會減少在高效能裝置上的網路延時，但在不支援的裝置上會卡頓或不穩定的狀況</string>
     <string name="title_checkbox_stretch_video">將畫面延展至全螢幕</string>
     <string name="title_checkbox_disable_warnings">停用錯誤訊息</string>
     <string name="summary_checkbox_disable_warnings">停用串流中連線錯誤訊息</string>
@@ -133,7 +131,7 @@
     <string name="title_checkbox_xb1_driver">Xbox 360/One USB 手把驅動程式</string>
     <string name="summary_checkbox_xb1_driver">為缺少原生 Xbox 控制器支援的裝置啟用內建 USB 驅動程式</string>
     <string name="title_checkbox_usb_bind_all">覆寫原生 Xbox 手把支援</string>
-    <string name="summary_checkbox_usb_bind_all">強制 Moonlight 的 USB 驅動程式接管所有受支援的原生 Xbox 控制器</string>
+    <string name="summary_checkbox_usb_bind_all">強制 Starwire 的 USB 驅動程式接管所有受支援的原生 Xbox 控制器</string>
     <string name="title_checkbox_mouse_emulation">透過手把仿真滑鼠</string>
     <string name="summary_checkbox_mouse_emulation">長按開始鍵將手把切換為滑鼠模式</string>
     <string name="title_checkbox_mouse_nav_buttons"> 啟用前進後退滑鼠鍵 </string>
@@ -154,7 +152,7 @@
     <string name="toast_reset_osc_success">螢幕控制按鈕已重設為預設值</string>
     <string name="category_ui_settings">使用者介面設定</string>
     <string name="title_language_list"> 語言 </string>
-    <string name="summary_language_list">選擇 Moonlight 顯示的語言</string>
+    <string name="summary_language_list">選擇 Starwire 顯示的語言</string>
     <string name="title_checkbox_small_icon_mode"> 使用小圖示 </string>
     <string name="summary_checkbox_small_icon_mode">使用小圖示以在螢幕上顯示更多應用程式</string>
     <string name="category_host_settings">主機設定</string>
@@ -179,14 +177,6 @@
     <string name="summary_osc_opacity">使螢幕控制按钮變得更透明/更不透明</string>
     <string name="suffix_seekbar_bitrate_mbps">Mbps</string>
     <string name="resolution_prefix_native">原生</string>
-    <string name="text_native_res_dialog">原生解析度或 FPS 可能不受串流伺服器支援，您可能需要為主機手動設定相符的自訂顯示模式。
-\n
-\n如果您選擇在 NVIDIA 控制面板中建立自訂解析度以符合您的螢幕設定，請確保您已閱讀並理解 NVIDIA 關於可能導致監視器損毀和電腦不穩定以及其他潛在問題的警告。
-\n
-\n對於您在您的電腦上建立自訂解析度而導致的任何問題，我們概不負責。
-\n
-\n您的顯示器可能不支援必要的顯示組態。如果是這樣，您可以嘗試設定虛擬監視器。最后，如果您的裝置或主機不支援以特定解析度或重新整理速率串流，只能說您運氣欠佳了。</string>
-    <string name="title_native_res_dialog">原生解析度警告</string>
     <string name="applist_menu_hide_app">隱藏遊戲</string>
     <string name="check_ports_msg">檢查您的防火牆和通訊埠轉送規則中的通訊埠：</string>
     <string name="early_termination_error">您的主機電腦在開始串流時出了點問題。
@@ -195,17 +185,17 @@
     <string name="no_frame_received_error">您的網路連線品質不佳。降低視訊位元速率設定或更換更快的連線。</string>
     <string name="no_video_received_error">沒有接收到來自主機的視訊。</string>
     <string name="video_decoder_init_failed">無法初始化視訊解碼器，您的裝置可能不支援選取的解析度或影格速率。</string>
-    <string name="nettest_text_blocked">您裝置目前的網路連線封鎖了 Moonlight。連線到該網路時可能無法透過網際網路串流。</string>
-    <string name="nettest_text_failure">您裝置目前的網路連線似乎封鎖了 Moonlight。連線到該網路時可能無法透過網際網路串流。
+    <string name="nettest_text_blocked">您裝置目前的網路連線封鎖了 Starwire。連線到該網路時可能無法透過網際網路串流。</string>
+    <string name="nettest_text_failure">您裝置目前的網路連線似乎封鎖了 Starwire。連線到該網路時可能無法透過網際網路串流。
 \n
 \n以下網路通訊埠被封鎖：
 \n</string>
     <string name="nettest_text_inconclusive">由於沒有 Moonlight 連線測試伺服器可供訪問，因此無法執行網路測試。請檢查您的 Internet 連線或稍後再試。</string>
-    <string name="nettest_text_success">您的網路似乎沒有封鎖 Moonlight。如果仍然無法連線，請檢查您電腦的防火牆設定。
+    <string name="nettest_text_success">您的網路似乎沒有封鎖 Starwire。如果仍然無法連線，請檢查您電腦的防火牆設定。
 \n
 \n如果您是嘗試透過網際網路串流，請在您的電腦上安裝 Moonlight Internet Hosting Tool，然後執行裡面的 Internet Streaming Tester 來檢查電腦的網際網路連線。</string>
     <string name="nettest_title_done">網路檢測完畢</string>
-    <string name="nettest_text_waiting">Moonlight 正在測試您的網路連線以確認必要連接埠是否被封鎖。
+    <string name="nettest_text_waiting">Starwire 正在測試您的網路連線以確認必要連接埠是否被封鎖。
 \n
 \n可能需要等待一些時間…</string>
     <string name="nettest_title_waiting">正在測試網路連線</string>
@@ -227,9 +217,7 @@
     <string name="fps_60">60 FPS</string>
     <string name="fps_90">90 FPS</string>
     <string name="fps_120">120 FPS</string>
-    <string name="resolution_360p">360P</string>
     <string name="resolution_720p">720P</string>
-    <string name="resolution_480p">480P</string>
     <string name="resolution_1080p">1080P</string>
     <string name="resolution_1440p">1440P</string>
     <string name="title_frame_pacing">視訊影格調步</string>
@@ -245,7 +233,7 @@
     <string name="title_setup_guide">設定指南</string>
     <string name="summary_troubleshooting">檢視診斷和修正常見串流問題的提示</string>
     <string name="summary_privacy_policy">檢視 Moonlight 的隱私權政策</string>
-    <string name="summary_seekbar_deadzone">注意：有些遊戲可以強制執行一個比 Moonlight 設定大的死區。</string>
+    <string name="summary_seekbar_deadzone">注意：有些遊戲可以強制執行一個比 Starwire 設定大的死區。</string>
     <string name="title_checkbox_absolute_mouse_mode">遠端桌面滑鼠模式</string>
     <string name="summary_checkbox_absolute_mouse_mode">這可以讓滑鼠在遠端桌面使用中的加速表現更加自然，但與很多遊戲不相容。</string>
     <string name="title_checkbox_enable_audiofx">啟用系統等化器支援</string>
@@ -262,7 +250,6 @@
     <string name="pair_pairing_help">若您的主機電腦正在執行 Sunshine，請導覽至 Sunshine 網頁 UI 並輸入 PIN 碼。</string>
     <string name="pcview_menu_eol">NVIDIA GameStream 終止服務</string>
     <string name="fps_suffix_fps">FPS</string>
-    <string name="title_native_fps_dialog">原生 FPS 警告</string>
     <string name="category_gamepad_settings">手把設定</string>
     <string name="title_checkbox_gamepad_touchpad_as_mouse">一律使用觸摸板控制滑鼠</string>
     <string name="summary_checkbox_gamepad_motion_sensors">在使用動態感測器模擬手把時啟用支援的主機以要求動態感測器資料，若動態感測器未在遊戲中使用，停用後可能會輕微降低電力和網路使用量。</string>

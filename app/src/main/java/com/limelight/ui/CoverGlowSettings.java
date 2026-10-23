@@ -145,6 +145,9 @@ public final class CoverGlowSettings {
     }
 
     // The settings the "Predicted impact" panel describes
+    // The "Predicted impact" panel shows on screens at least this wide
+    static final int FEEL_PANEL_MIN_WIDTH_DP = 840;
+
     private static final List<String> FEEL_KEYS = Arrays.asList(
             "frame_pacing", "vsync_mode", "checkbox_async_decode", "checkbox_async_lfr");
 
@@ -158,7 +161,7 @@ public final class CoverGlowSettings {
         if (panel == null || column == null) {
             return null;
         }
-        if (activity.getResources().getConfiguration().screenWidthDp < 840) {
+        if (activity.getResources().getConfiguration().screenWidthDp < FEEL_PANEL_MIN_WIDTH_DP) {
             // Hide the whole column, not just the panel: its fixed width would otherwise squeeze
             // the settings list to nothing on narrow screens (Galaxy Z Fold cover screen)
             column.setVisibility(View.GONE);
@@ -277,6 +280,9 @@ public final class CoverGlowSettings {
                 "video_format", "video_renderer", "pyrowave_late_frames"}) {
             CREDITS.put(key, moonlightX);
         }
+        // The settings are Moonlight's own; entering any value is from Moonlight X
+        CREDITS.put("list_resolution", "Custom resolutions from Moonlight X by MoreOrLessSoftware");
+        CREDITS.put("list_fps", "Custom frame rates from Moonlight X by MoreOrLessSoftware");
         CREDITS.put("import_shortcuts_file", "File format from Axixi2233 and Artemis by Yukino Song");
         CREDITS.put("clear_imported_shortcuts", "File format from Axixi2233 and Artemis by Yukino Song");
         CREDITS.put("checkbox_pinch_to_zoom", "Idea from Moonlit Artemis by 4had45");
@@ -360,6 +366,17 @@ public final class CoverGlowSettings {
             pinned = index;
             highlight(index);
             list.smoothScrollToPositionFromTop(position, 0, 300);
+            // Over rows of different heights the smooth scroll can stop well off the heading (the
+            // On-screen controls heading ended up at the bottom of the screen every time), so stop
+            // it and land on the heading exactly, unless the list was dragged or another pill
+            // tapped since
+            list.postDelayed(() -> {
+                if (pinned == index) {
+                    // A zero scroll stops what's left of the smooth one
+                    list.smoothScrollBy(0, 0);
+                    list.setSelectionFromTop(position, 0);
+                }
+            }, 450);
         }
 
         void follow(int firstVisible) {

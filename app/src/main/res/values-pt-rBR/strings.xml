@@ -5,7 +5,6 @@
     <string name="pacing_latency">Preferir baixa latência</string>
     <string name="summary_enable_hdr">Transmita HDR quando o jogo e a GPU do PC suportarem. O HDR requer uma GPU da série GTX 1000 ou posterior.</string>
     <string name="summary_enable_post_stream_toast">Exibe uma mensagem com informações de latência após o término da transmissão</string>
-    <string name="summary_unlock_fps">Transmitir a 90 ou 120 FPS pode reduzir a latência em dispositivos de última geração, mas pode causar atraso ou instabilidade em dispositivos que não suportam</string>
     <string name="summary_checkbox_vibrate_osc">Vibra seu dispositivo para emular rumble nos controles de tela</string>
     <string name="pcview_menu_header_offline">Indisponível</string>
     <string name="pcview_menu_header_unknown">Atualizando</string>
@@ -24,14 +23,14 @@
     <string name="searching_pc">Procurando por PCs rodando o GameStream...
 \n
 \nCertifique-se de que o GameStream esteja ativado nas configurações do SHIELD do GeForce Experience.</string>
-    <string name="nettest_text_success">Sua rede não parece estar bloqueando o Moonlight. Se você ainda tiver problemas para se conectar, verifique as configurações de firewall do seu PC.
+    <string name="nettest_text_success">Sua rede não parece estar bloqueando o Starwire. Se você ainda tiver problemas para se conectar, verifique as configurações de firewall do seu PC.
 \n
 \nSe você estiver tentando transmitir pela Internet, instale o Moonlight Internet Hosting Tool em seu PC e execute o Internet Streaming Tester para verificar a conexão com a Internet do seu PC.</string>
     <string name="check_ports_msg">Verifique o firewall e permita a(s) seguinte(s) para porta(s):</string>
     <string name="wol_no_mac">Não foi possível acordar o PC porque não tem um endereço MAC armazenado</string>
     <string name="wol_waking_msg">Pode levar alguns segundos para o seu PC acordar. Se isso não acontecer, verifique se ele está configurado corretamente para Wake-On-LAN.</string>
     <string name="error_404">GFE retornou um erro HTTP 404. Verifique se o seu PC está executando uma GPU compatível. O uso do software de área de trabalho remota também pode causar esse erro. Tente reiniciar sua máquina ou reinstalar o GFE.</string>
-    <string name="message_decoding_error">Moonlight crashou devido a uma incompatibilidade com o decodificador de vídeo deste dispositivo. Tente ajustar as configurações de transmissão se as falhas continuarem.</string>
+    <string name="message_decoding_error">Starwire crashou devido a uma incompatibilidade com o decodificador de vídeo deste dispositivo. Tente ajustar as configurações de transmissão se as falhas continuarem.</string>
     <string name="message_decoding_reset">O decodificador de vídeo do seu dispositivo continua crashando nas configurações de transmissão selecionadas. Suas configurações de transmissão foram redefinidas para o padrão.</string>
     <string name="error_usb_prohibited">O acesso USB é proibido pelo administrador do seu dispositivo. Verifique suas configurações de Knox ou MDM.</string>
     <string name="unable_to_pin_shortcut">Seu launcher atual não permite a criação de atalhos fixados.</string>
@@ -41,8 +40,6 @@
     <string name="early_termination_error">Algo deu errado no seu PC ao iniciar a transmissão.\n\nCertifique-se de não ter nenhum conteúdo protegido por DRM aberto em seu PC. Você também pode tentar reiniciar ele.</string>
     <string name="conn_establishing_msg">Iniciando a conexão</string>
     <string name="conn_establishing_title">Estabelecendo Conexão</string>
-    <string name="resolution_360p">360p</string>
-    <string name="resolution_480p">480p</string>
     <string name="resolution_720p">720p</string>
     <string name="resolution_1080p">1080p</string>
     <string name="resolution_1440p">1440p</string>
@@ -73,13 +70,13 @@
     <string name="nettest_title_done">Teste de Internet Completo</string>
     <string name="pcview_menu_pair_pc">Parear com o PC</string>
     <string name="pcview_menu_send_wol">Enviar Wake-On-LAN</string>
-    <string name="nettest_text_waiting">O Moonlight está testando a sua conexão de internet para determinar se alguma das portas requeridas estão bloqueadas.\n\nIsso pode levar alguns segundos…</string>
+    <string name="nettest_text_waiting">O Starwire está testando a sua conexão de internet para determinar se alguma das portas requeridas estão bloqueadas.\n\nIsso pode levar alguns segundos…</string>
     <string name="nettest_text_inconclusive">O teste de rede não pôde ser executado porque nenhum dos servidores de teste de conexão do Moonlight estava acessível. Verifique sua conexão com a Internet ou tente novamente mais tarde.</string>
-    <string name="nettest_text_failure">A conexão de rede atual do seu dispositivo parece estar bloqueando o Moonlight. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.
+    <string name="nettest_text_failure">A conexão de rede atual do seu dispositivo parece estar bloqueando o Starwire. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.
 \n
 \nAs seguintes portas de rede estão bloqueadas:
 \n</string>
-    <string name="nettest_text_blocked">A conexão de rede atual do seu dispositivo está bloqueando o Moonlight. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.</string>
+    <string name="nettest_text_blocked">A conexão de rede atual do seu dispositivo está bloqueando o Starwire. A transmissão pela Internet pode não funcionar enquanto estiver conectado a esta rede.</string>
     <string name="pairing">Pareando…</string>
     <string name="pair_pc_offline">Esse computador está indisponível</string>
     <string name="pair_pc_ingame">Esse computador está atualmente em um jogo. Você deve fechar o jogo antes de parear.</string>
@@ -150,14 +147,6 @@
     <string name="category_basic_settings">Configurações Básicas</string>
     <string name="title_resolution_list">Resolução</string>
     <string name="summary_resolution_list">Aumente para melhorar a clareza da imagem. Diminua para melhor desempenho em dispositivos de baixo custo e redes mais lentas.</string>
-    <string name="title_native_res_dialog">Alerta de Resolução Nativa</string>
-    <string name="text_native_res_dialog">Os modos de resolução nativa não são oficialmente suportados pelo GeForce Experience, portanto, ele não definirá a resolução da tela do host. Você precisará configurá-lo manualmente durante o jogo.
-\n
-\nSe você optar por criar uma resolução personalizada no Painel de controle da NVIDIA para corresponder à resolução do seu dispositivo, certifique-se de ter lido e entendido o aviso da NVIDIA sobre possíveis danos ao monitor, instabilidade do PC e outros problemas potenciais.
-\n
-\nNão nos responsabilizamos por quaisquer problemas resultantes da criação de uma resolução personalizada em seu PC.
-\n
-\nPor fim, seu dispositivo ou PC host pode não suportar transmissões na resolução nativa. Se não funcionar no seu dispositivo, você está sem sorte, infelizmente.</string>
     <string name="title_fps_list">Taxa de quadros por segundo</string>
     <string name="summary_fps_list">Aumente para uma transmissão de vídeo mais suave. Diminua para melhor desempenho em dispositivos de baixo custo.</string>
     <string name="title_seekbar_bitrate">Taxa de bits</string>
@@ -184,21 +173,20 @@
     <string name="suffix_seekbar_deadzone">%</string>
     <string name="title_checkbox_xb1_driver">Driver de gamepad USB Xbox 360/One</string>
     <string name="title_checkbox_usb_bind_all">Substituir o suporte nativo ao gamepad do Xbox</string>
-    <string name="summary_checkbox_usb_bind_all">Use o driver USB do Moonlight para todos os gamepads suportados, mesmo se houver suporte nativo ao controle Xbox</string>
+    <string name="summary_checkbox_usb_bind_all">Use o driver USB do Starwire para todos os gamepads suportados, mesmo se houver suporte nativo ao controle Xbox</string>
     <string name="title_checkbox_mouse_emulation">Emulação de mouse via gamepad</string>
     <string name="summary_checkbox_mouse_emulation">Segure o botão Start para mudar o gamepad para o modo de mouse</string>
     <string name="summary_checkbox_mouse_nav_buttons">Ativar esta opção pode bugar o clique com o botão direito em alguns dispositivos com bugs</string>
     <string name="summary_checkbox_flip_face_buttons">Inverte os botões A/B e X/Y dos gamepads e controles de tela</string>
     <string name="category_on_screen_controls_settings">Configurações de Controles de Tela</string>
     <string name="title_checkbox_flip_face_buttons">Inverter botões</string>
-    <string name="title_unlock_fps">Liberar todas as taxas de quadros possíveis</string>
     <string name="category_advanced_settings">Configurações Avançadas</string>
     <string name="title_checkbox_host_audio">Reproduzir áudio no PC</string>
     <string name="summary_checkbox_host_audio">Reproduz o áudio do computador e deste dispositivo</string>
     <string name="title_checkbox_enable_sops">Otimizar configurações de jogo</string>
     <string name="summary_checkbox_enable_sops">Permitir que o GFE modifique as configurações do jogo para otimizar a transmissão</string>
     <string name="title_language_list">Idioma</string>
-    <string name="summary_language_list">Idioma para ser usado no Moonlight</string>
+    <string name="summary_language_list">Idioma para ser usado no Starwire</string>
     <string name="summary_checkbox_enable_pip">Permite que a transmissão seja visualizada (mas não controlada) enquanto usa outros apps</string>
     <string name="category_ui_settings">Configurações de Interface</string>
     <string name="suffix_osc_opacity">%</string>
@@ -229,7 +217,7 @@
     <string name="summary_checkbox_absolute_mouse_mode">Isso pode alterar a aceleração do mouse para se comportar mais naturalmente para uso em desktop remoto, mas é incompatível com muitos jogos.</string>
     <string name="summary_privacy_policy">Veja a política de privacidade do Moonlight</string>
     <string name="pacing_balanced_alt">Equilibrado com limite de FPS</string>
-    <string name="summary_seekbar_deadzone">Nota: Alguns jogos podem impor uma zona morta maior do que o Moonlight está configurado para usar.</string>
+    <string name="summary_seekbar_deadzone">Nota: Alguns jogos podem impor uma zona morta maior do que o Starwire está configurado para usar.</string>
     <string name="title_checkbox_absolute_mouse_mode">Modo de mouse para área de trabalho remota</string>
     <string name="resolution_prefix_native_landscape">(Paisagem)</string>
     <string name="title_checkbox_reduce_refresh_rate">Permitir redução de taxa de atualização</string>

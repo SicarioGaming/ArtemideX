@@ -104,7 +104,7 @@ public class StarfieldView extends View {
     public void onVisibilityAggregated(boolean visible) {
         super.onVisibilityAggregated(visible);
         if (visible) {
-            if (twinkle == null) {
+            if (twinkle == null && Loops.allowed(getContext())) {
                 twinkle = ValueAnimator.ofFloat(0f, (float) (Math.PI * 2));
                 twinkle.setDuration(TWINKLE_MS);
                 twinkle.setRepeatCount(ValueAnimator.INFINITE);
@@ -120,5 +120,10 @@ public class StarfieldView extends View {
             twinkle.cancel();
             twinkle = null;
         }
+    }
+
+    // For tests: whether the stars twinkle
+    boolean isTwinkling() {
+        return twinkle != null;
     }
 }

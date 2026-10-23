@@ -129,7 +129,8 @@ public class AudioHaptics {
 
             if ((outputs & OUTPUT_DEVICE) != 0 && vibrator != null) {
                 if (level > 0) {
-                    if (amplitudeControl) {
+                    // amplitudeControl is only set on Android 8 and up; the check repeats it for lint
+                    if (amplitudeControl && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         int amplitude = Math.max(1, Math.round(level * 255));
                         vibrator.vibrate(VibrationEffect.createOneShot(TICK_MS + 15, amplitude));
                     }

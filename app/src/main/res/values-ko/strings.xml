@@ -102,7 +102,7 @@
     <string name="summary_checkbox_show_onscreen_controls">터치스크린에 가상 컨트롤러 오버레이를 표시합니다</string>
     <string name="category_ui_settings">UI 설정</string>
     <string name="title_language_list">언어</string>
-    <string name="summary_language_list">Moonlight에서 사용할 언어를 선택합니다</string>
+    <string name="summary_language_list">Starwire에서 사용할 언어를 선택합니다</string>
     <string name="title_checkbox_small_icon_mode">작은 아이콘 사용</string>
     <string name="summary_checkbox_small_icon_mode">한 화면에서 더 많은 게임을 볼 수 있게 게임을 더 작게 표시합니다</string>
     <string name="category_host_settings">호스트 설정</string>
@@ -125,14 +125,6 @@
     <string name="resolution_prefix_native">네이티브</string>
     <string name="summary_fps_list">높을수록 화면이 더 부드러워집니다. 저사양 기기에서는 낮추는것이 좋습니다.</string>
     <string name="title_fps_list">FPS 설정</string>
-    <string name="text_native_res_dialog">네이티브 해상도 및 FPS는 스트리밍 서버에서 지원하지 않을 수 있습니다. 호스트 PC에 대해 일치하는 사용자 지정 디스플레이 모드를 수동으로 구성해야 할 수 있습니다.
-\n
-\n화면 설정과 일치하도록 NVIDIA 제어판에서 사용자 정의 해상도를 생성 할 경우 모니터 손상, PC 불안정 및 기타 잠재적인 문제에 대한 NVIDIA의 경고를 읽고 이해했는지 확인하십시오.
-\n
-\nMoonlight는 PC에서 사용자 지정 해상도를 생성하여 발생하는 문제에 대해 책임을 지지 않습니다.
-\n
-\n모니터가 필요한 디스플레이 구성을 지원하지 않을 경우 가상 모니터 설정을 시도할 수 있습니다. 장치나 호스트 PC가 특정 해상도나 새로 고침 빈도로 스트리밍을 지원하지 않을 수 있습니다.</string>
-    <string name="title_native_res_dialog">네이티브 해상도 주의사항</string>
     <string name="addpc_wrong_sitelocal">주소가 잘못된 것 같습니다. 인터넷을 통해 스트리밍하려면 라우터의 공용 IP 주소를 사용해야합니다.</string>
     <string name="applist_details_id">앱 ID:</string>
     <string name="applist_menu_hide_app">게임 숨기기</string>
@@ -158,19 +150,19 @@
     <string name="error_usb_prohibited">기기 관리자에 의해 USB 액세스가 차단되었습니다. Knox 또는 MDM 설정을 확인하십시오.</string>
     <string name="message_decoding_reset">선택한 스트리밍 설정에서 장치의 비디오 디코더가 계속 문제가 발생합니다. 스트리밍 설정이 기본값으로 재설정되었습니다.</string>
     <string name="title_decoding_reset">비디오 설정 초기화</string>
-    <string name="message_decoding_error">이 장치의 비디오 디코더와 호환되지 않아 Moonlight에서 오류가 발생했습니다. 충돌이 계속되면 스트리밍 설정을 조정 해보십시오.</string>
+    <string name="message_decoding_error">이 장치의 비디오 디코더와 호환되지 않아 Starwire에서 오류가 발생했습니다. 충돌이 계속되면 스트리밍 설정을 조정 해보십시오.</string>
     <string name="title_decoding_error">비디오 디코더 오류</string>
-    <string name="nettest_text_blocked">기기의 현재 네트워크가 Moonlight를 차단하고 있습니다. 이 네트워크에 연결되어 있으면 인터넷을 통한 스트리밍이 작동하지 않을 수 있습니다.</string>
-    <string name="nettest_text_failure">기기의 현재 네트워크가 Moonlight를 차단하는 것 같습니다. 이 네트워크에 연결되어 있으면 인터넷을 통한 스트리밍이 작동하지 않을 수 있습니다.
+    <string name="nettest_text_blocked">기기의 현재 네트워크가 Starwire를 차단하고 있습니다. 이 네트워크에 연결되어 있으면 인터넷을 통한 스트리밍이 작동하지 않을 수 있습니다.</string>
+    <string name="nettest_text_failure">기기의 현재 네트워크가 Starwire를 차단하는 것 같습니다. 이 네트워크에 연결되어 있으면 인터넷을 통한 스트리밍이 작동하지 않을 수 있습니다.
 \n
 \n차단된 네트워크 포트:
 \n</string>
     <string name="nettest_text_inconclusive">Moonlight의 테스트 서버에 연결할 수 없기 때문에 네트워크 테스트를 할 수 없습니다. 인터넷 연결을 확인하거나 나중에 다시 시도하십시오.</string>
-    <string name="nettest_text_success">네트워크가 Moonlight를 차단하지 않는 것 같습니다. 여전히 연결에 문제가 있으면 PC의 방화벽 설정을 확인하십시오
+    <string name="nettest_text_success">네트워크가 Starwire를 차단하지 않는 것 같습니다. 여전히 연결에 문제가 있으면 PC의 방화벽 설정을 확인하십시오
 \n
 \n인터넷을 통해 연결하려는 경우 PC에 Moonlight Internet Hosting Tool을 설치하고 Internet Streaming Tester를 실행하여 PC의 인터넷 연결을 확인하십시오.</string>
     <string name="nettest_title_done">네트워크 연결 테스트 완료</string>
-    <string name="nettest_text_waiting">Moonlight는 필요한 포트가 차단되었는지 확인하기 위해 네트워크 연결을 테스트하고 있습니다.
+    <string name="nettest_text_waiting">Starwire는 필요한 포트가 차단되었는지 확인하기 위해 네트워크 연결을 테스트하고 있습니다.
 \n
 \n잠시 기다려 주세요…</string>
     <string name="pcview_menu_header_unknown">상태 확인중</string>
@@ -192,8 +184,6 @@
     <string name="title_enable_hdr">HDR활성화 (실험용)</string>
     <string name="summary_disable_frame_drop">일부 장치에서 미세한 끊김 현상을 줄일 수 있지만 지연 시간이 늘어날 수 있습니다</string>
     <string name="title_disable_frame_drop">프레임드랍 최적화</string>
-    <string name="summary_unlock_fps">90 또는 120FPS로 스트리밍하면 지연 시간이 줄어들 수 있지만 이를 지원할 수 없는 장치에서는 지연 또는 불안정 할 수 있습니다</string>
-    <string name="title_unlock_fps">모든 프레임 속도 잠금 해제</string>
     <string name="summary_checkbox_enable_pip">PIP모드를 사용하는 중에 화면은 볼 수 있지만 제어는 할 수 없습니다</string>
     <string name="dialog_title_osc_opacity">투명도 조절</string>
     <string name="summary_osc_opacity">가상컨트롤러의 투명도를 조절할 수 있습니다</string>
@@ -212,7 +202,7 @@
     <string name="summary_checkbox_mouse_nav_buttons">이 옵션을 활성화하면 일부 장치에서 오른쪽 클릭에 문제가 있을 수 있습니다</string>
     <string name="title_checkbox_mouse_nav_buttons">마우스 사이드버튼 활성화</string>
     <string name="summary_checkbox_mouse_emulation">패드의 Start 버튼을 길게 누르면 컨트롤러가 마우스 모드로 전환됩니다</string>
-    <string name="summary_checkbox_usb_bind_all">Xbox 컨트롤러를 기본으로 지원하는 경우에도 지원되는 모든 컨트롤러에 Moonlight의 USB 드라이버를 사용합니다</string>
+    <string name="summary_checkbox_usb_bind_all">Xbox 컨트롤러를 기본으로 지원하는 경우에도 지원되는 모든 컨트롤러에 Starwire의 USB 드라이버를 사용합니다</string>
     <string name="title_checkbox_usb_bind_all">기본 Xbox 컨트롤러 지원 무시</string>
     <string name="title_checkbox_mouse_emulation">컨트롤러를 마우스처럼 사용하기</string>
     <string name="perf_overlay_streamdetails">비디오 스트림 : %1$s %2$.2f FPS</string>
@@ -223,12 +213,10 @@
     <string name="videoformat_hevcalways">HEVC 선호</string>
     <string name="summary_seekbar_deadzone">참고: 일부 게임은 이 설정값보다 더 큰 데드존이 적용되있을 수 있습니다.</string>
     <string name="resolution_1080p">1080p</string>
-    <string name="resolution_360p">360p</string>
     <string name="resolution_720p">720p</string>
     <string name="resolution_4k">4K</string>
     <string name="fps_30">30 FPS</string>
     <string name="resolution_1440p">1440p</string>
-    <string name="resolution_480p">480p</string>
     <string name="fps_90">90 FPS</string>
     <string name="fps_120">120 FPS</string>
     <string name="audioconf_stereo">스트레오</string>
@@ -268,7 +256,6 @@
     <string name="pair_pairing_help">호스트 PC에서 Sunshine을 실행 중인 경우 Sunshine 웹 UI로 이동하여 PIN을 입력합니다.</string>
     <string name="perf_overlay_hostprocessinglatency">호스트 처리 대기 시간 최소/최대/평균: %1$.1f/%2$.1f/%3$.1f ms</string>
     <string name="fps_suffix_fps">FPS</string>
-    <string name="title_native_fps_dialog">네이티브 FPS 주의사항</string>
     <string name="category_gamepad_settings">컨트롤러 설정</string>
     <string name="title_checkbox_gamepad_touchpad_as_mouse">항상 터치패드로 마우스 제어</string>
     <string name="videoformat_av1always">AV1 선호 (실험용)</string>

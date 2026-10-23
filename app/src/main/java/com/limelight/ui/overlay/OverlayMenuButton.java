@@ -39,6 +39,12 @@ public class OverlayMenuButton extends LinearLayout {
     private static final int PADDING_DP = 12;
     private static final int TEXT_SIZE_SP = 12;
     private static final int CORNER_RADIUS_DP = 8;
+    // A tile's label: its size, the padding beside it and how many lines it may take. With 4 dp
+    // a side (it was 8), "PC Commands" fits whole in a row of five on a tablet, so the tools still
+    // fit there without scrolling.
+    static final int TILE_TEXT_SIZE_SP = 12;
+    static final int TILE_SIDE_PADDING_DP = 4;
+    static final int TILE_LABEL_LINES = 2;
 
     private static final int DARK = 0xFF0B0F14;
     private static final int FROSTED = 0x1AFFFFFF;
@@ -128,7 +134,7 @@ public class OverlayMenuButton extends LinearLayout {
         if (style == STYLE_TILE) {
             setOrientation(VERTICAL);
             setGravity(Gravity.CENTER);
-            int padding = (int) (8 * density);
+            int padding = (int) (TILE_SIDE_PADDING_DP * density);
             setPadding(padding, (int) (12 * density), padding, (int) (10 * density));
             setMinimumHeight((int) (82 * density));
             background.setCornerRadius(18 * density);
@@ -137,8 +143,8 @@ public class OverlayMenuButton extends LinearLayout {
             labelParams.topMargin = iconView.getVisibility() == GONE ? 0 : (int) (8 * density);
             labelParams.gravity = Gravity.CENTER_HORIZONTAL;
             labelView.setGravity(Gravity.CENTER);
-            labelView.setMaxLines(2);
-            labelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            labelView.setMaxLines(TILE_LABEL_LINES);
+            labelView.setTextSize(TypedValue.COMPLEX_UNIT_SP, TILE_TEXT_SIZE_SP);
         }
         else if (style == STYLE_PILL || style == STYLE_PRIMARY) {
             setGravity(Gravity.CENTER);
@@ -323,6 +329,15 @@ public class OverlayMenuButton extends LinearLayout {
         }
         button.setLabel(label);
         return button;
+    }
+
+    /** Measures text the way a tile draws its label (bold, at the tile's size and the font scale). */
+    static Paint tileLabelPaint(Context context) {
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextSize(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, TILE_TEXT_SIZE_SP,
+                context.getResources().getDisplayMetrics()));
+        return paint;
     }
 
     public static OverlayMenuButton create(Context context, int iconResId, String label, int style) {

@@ -12,8 +12,6 @@
     <string name="title_disable_frame_drop">Soha ne dobjon el képkockákat</string>
     <string name="summary_checkbox_disable_warnings">Streamelés közben a képernyőn megjelenő csatlakozási figyelmeztető üzenetek kikapcsolása</string>
     <string name="title_checkbox_disable_warnings">Figyelmeztető üzenetek kikapcsolása</string>
-    <string name="summary_unlock_fps">A 90 vagy 120 FPS-en történő streamelés csökkentheti a csúcskategóriás eszközök késleltetését, de akadozást vagy instabilitást okozhat azokon az eszközökön, amelyek ezt nem támogatják</string>
-    <string name="title_unlock_fps">Az összes lehetséges képkockasebesség feloldása</string>
     <string name="category_advanced_settings">Haladó beállítások</string>
     <string name="summary_checkbox_host_audio">Hang lejátszása a számítógépről és erről az eszközről</string>
     <string name="title_checkbox_host_audio">Hang lejátszása számítógépen</string>
@@ -22,7 +20,6 @@
     <string name="category_host_settings">Gazdagép beállítások</string>
     <string name="summary_checkbox_small_icon_mode">Az alkalmazásrács kisebbik rajza lehetővé teszi, hogy több alkalmazás is látható legyen a képernyőn</string>
     <string name="title_checkbox_small_icon_mode">Kis dobozos rajzok használata</string>
-    <string name="summary_language_list">A Moonlight-hoz használt nyelv</string>
     <string name="title_language_list">Nyelv</string>
     <string name="summary_checkbox_enable_pip">Lehetővé teszi a stream megtekintését (de nem vezérlését) miközben mást csinálsz</string>
     <string name="title_checkbox_enable_pip">Kép a képben megfigyelő mód engedélyezése</string>
@@ -49,7 +46,7 @@
     <string name="title_checkbox_mouse_nav_buttons">Az előre és hátra gombok engedélyezése</string>
     <string name="summary_checkbox_mouse_emulation">A Start gomb hosszan tartó megnyomásával egér üzemmódba kapcsol a gamepad</string>
     <string name="title_checkbox_mouse_emulation">Az egér emulációja a gamepadon keresztül</string>
-    <string name="summary_checkbox_usb_bind_all">A Moonlight USB-illesztőprogramjának használata az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox-vezérlő támogatás van jelen</string>
+    <string name="summary_checkbox_usb_bind_all">A Starwire USB-illesztőprogramjának használata az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox-vezérlő támogatás van jelen</string>
     <string name="title_checkbox_usb_bind_all">Natív Xbox játéktámogatás felülbírálása</string>
     <string name="summary_checkbox_xb1_driver">Beépített USB-illesztőprogramot engedélyez natív Xbox-vezérlő támogatás nélküli eszközökhöz</string>
     <string name="title_checkbox_xb1_driver">Xbox 360/One USB gamepad illesztőprogram</string>
@@ -72,8 +69,6 @@
     <string name="title_seekbar_bitrate">Videó bitráta</string>
     <string name="summary_fps_list">Növeld a gördülékenyebb videofolyamért, csökkentsd a jobb teljesítményért az alsó kategóriás eszközökön.</string>
     <string name="title_fps_list">Videó képkockasebessége</string>
-    <string name="text_native_res_dialog">Előfordulhat, hogy a streamelő szerver nem támogatja a natív felbontást és/vagy FPS-t. Valószínűleg manuálisan kell beállítanod egy megfelelő egyéni megjelenítési módot a gazdagépen.\n\nHa úgy döntesz, hogy egy egyéni felbontást hozol létre az NVIDIA Vezérlőpultban a képernyő beállításainak megfelelően, győződj meg, hogy elolvastad és megértetted az NVIDIA figyelmeztetését a monitor lehetséges károsodására, a számítógép instabilitására és más lehetséges problémákra vonatkozóan.\n\nNem vállalunk felelősséget a számítógépeden egyéni felbontás létrehozásából eredő problémákért.\n\nElőfordulhat, hogy a monitorod nem támogatja a szükséges kijelzőkonfigurációt. Ebben az esetben megpróbálhatsz egy virtuális monitort beállítani. Végül, ha a készülék vagy a gazdagép nem támogatja a streamelést egy adott felbontáson vagy frissítési frekvencián, akkor sajnos nincs szerencséd.</string>
-    <string name="title_native_res_dialog">Natív felbontás figyelmeztetés</string>
     <string name="summary_resolution_list">Növeld a jobb képélességhez, csökkentsd a jobb teljesítményhez az alsóbb kategóriás eszközökön és a lassabb hálózatokon.</string>
     <string name="title_resolution_list">Videó felbontás</string>
     <string name="category_basic_settings">Alapbeállítások</string>
@@ -135,7 +130,7 @@
     <string name="error_usb_prohibited">Az USB-hozzáférést az eszköz rendszergazdája tiltja. Ellenőrizze a Knox vagy az MDM beállításait.</string>
     <string name="message_decoding_reset">Az eszköz videodekóderje továbbra is összeomlik a kiválasztott adatfolyam-beállításoknál. A streamelési beállítások vissza lettek állítva az alapértelmezettre.</string>
     <string name="title_decoding_reset">Videóbeállítások visszaállítása</string>
-    <string name="message_decoding_error">A Moonlight összeomlott az eszköz videódekóderével való inkompatibilitás miatt. Próbáld meg módosítani a streamelési beállításokat, ha az összeomlások továbbra is fennállnak.</string>
+    <string name="message_decoding_error">A Starwire összeomlott az eszköz videódekóderével való inkompatibilitás miatt. Próbáld meg módosítani a streamelési beállításokat, ha az összeomlások továbbra is fennállnak.</string>
     <string name="title_decoding_error">A videó dekóder összeomlott</string>
     <string name="error_404">A GFE HTTP 404 hibát adott vissza. Győződj meg arról, hogy a számítógépen támogatott GPU fut. A távoli asztali szoftver használata szintén ezt a hibát okozhatja. Próbáld újraindítani a gépet, vagy telepítsd újra a GFE-t.</string>
     <string name="conn_error_title">Csatlakozási hiba</string>
@@ -161,12 +156,9 @@
     <string name="pair_pairing_msg">Kérjük, adja meg a következő PIN-kódot a cél számítógépen:</string>
     <string name="pair_pc_ingame">A számítógép jelenleg játékban van. A párosítás előtt be kell zárni a játékot.</string>
     <string name="pair_pc_offline">A számítógép nem elérhető</string>
-    <string name="nettest_text_blocked">Az eszköz jelenlegi hálózati kapcsolata blokkolja a Moonlight-ot. Előfordulhat, hogy az interneten keresztüli streamelés nem működik, ha csatlakozik ehhez a hálózathoz.</string>
-    <string name="nettest_text_failure">Úgy tűnik, hogy az eszköz jelenlegi hálózati kapcsolata blokkolja a Moonlight-ot. Előfordulhat, hogy az interneten keresztüli streamelés nem működik, ha csatlakozik ehhez a hálózathoz.\n\nA következő hálózati portokat blokkolták:\n</string>
     <string name="nettest_text_inconclusive">A hálózati tesztet nem sikerült elvégezni, mert a Moonlight egyik kapcsolat tesztelő szervere sem volt elérhető. Ellenőrizd az internetkapcsolatot, vagy próbáld újra később.</string>
-    <string name="nettest_text_success">Úgy tűnik, a hálózatod nem blokkolja a Moonlightot. Ha továbbra is problémáid vannak a csatlakozással, ellenőrizd a számítógép tűzfalbeállításait.\n\nHa az interneten keresztül szeretnél streamelni, telepítsd a Moonlight Internet Hosting Toolt a számítógépedre, és futtassd a mellékelt Internet Streaming Testert a számítógép internetkapcsolatának ellenőrzéséhez.</string>
     <string name="nettest_title_done">Hálózati kapcsolat tesztelése befejeződött</string>
-    <string name="nettest_text_waiting">A Moonlight teszteli a hálózati kapcsolatot, hogy megállapítsa, nem blokkoltak-e szükséges portokat.\n\nEz eltarthat néhány másodpercig…</string>
+    <string name="nettest_text_waiting">A Starwire teszteli a hálózati kapcsolatot, hogy megállapítsa, nem blokkoltak-e szükséges portokat.\n\nEz eltarthat néhány másodpercig…</string>
     <string name="pcview_menu_test_network">Hálózati kapcsolat tesztelése</string>
     <string name="nettest_title_waiting">Hálózati kapcsolat tesztelése</string>
     <string name="pcview_menu_details">Részletek megtekintése</string>
@@ -191,8 +183,6 @@
     <string name="title_checkbox_reduce_refresh_rate">A frissítési sebesség csökkentésének engedélyezése</string>
     <string name="summary_frame_pacing">Add meg a videók késleltetésének és simaságának egyensúlyát</string>
     <string name="title_checkbox_enable_audiofx">Rendszeres kiegyenlítő támogatás engedélyezése</string>
-    <string name="resolution_360p">360p</string>
-    <string name="title_native_fps_dialog">Natív FPS figyelmeztetés</string>
     <string name="pacing_balanced">Kiegyensúlyozott</string>
     <string name="summary_full_range">Ez részletvesztést okoz a világos és sötét területeken, ha a készülék nem jeleníti meg megfelelően a teljes színtartományú videotartalmat.</string>
     <string name="summary_privacy_policy">A Moonlight adatvédelmi szabályzatának megtekintése</string>
@@ -211,7 +201,6 @@
     <string name="summary_checkbox_gamepad_touchpad_as_mouse">Kényszeríti a gamepad touchpad bevitelét a gazdagép egér vezérlésére, még akkor is, ha egy touchpaddal ellátott gamepadot emulál.</string>
     <string name="title_frame_pacing">A videó képkocka-ütemezése</string>
     <string name="resolution_1440p">1440p</string>
-    <string name="resolution_480p">480p</string>
     <string name="videoformat_hevcalways">HEVC előnyben részesítése</string>
     <string name="fps_60">60 FPS</string>
     <string name="audioconf_51surround">5.1 Térhatású hangzás</string>
@@ -219,7 +208,7 @@
     <string name="fps_90">90 FPS</string>
     <string name="summary_checkbox_gamepad_motion_sensors">Lehetővé teszi a támogatott gazdagépek számára, hogy mozgásérzékelős adatokat kérjenek, amikor mozgásérzékelőkkel ellátott gamepadot emulálnak. A letiltás némileg csökkentheti az energia- és hálózathasználatot, ha a játékban nem használnak mozgásérzékelőket.</string>
     <string name="resolution_1080p">1080p</string>
-    <string name="summary_seekbar_deadzone">Megjegyzés: Egyes játékok nagyobb holtteret kényszeríthetnek ki, mint amire a Moonlight be van állítva.</string>
+    <string name="summary_seekbar_deadzone">Megjegyzés: Egyes játékok nagyobb holtteret kényszeríthetnek ki, mint amire a Starwire be van állítva.</string>
     <string name="audioconf_stereo">Sztereó</string>
     <string name="videoformat_h264always">H.264 előnyben részesítése</string>
     <string name="title_privacy_policy">Adatvédelmi irányelvek</string>

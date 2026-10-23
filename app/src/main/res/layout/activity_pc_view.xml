@@ -91,6 +91,7 @@
 
     <ImageButton
         android:id="@+id/settingsButton"
+        android:contentDescription="@string/cg_settings"
         android:layout_width="70dp"
         android:layout_height="65dp"
         android:cropToPadding="false"
@@ -113,7 +114,7 @@
         android:layout_toEndOf="@+id/settingsButton"
         android:src="@drawable/ic_overrides_enabled"
         android:preferKeepClear="true"
-        android:contentDescription="Toggle Overrides Section"
+        android:contentDescription="@string/cg_a11y_overrides"
         style="?android:attr/borderlessButtonStyle"/>
 
     <ImageButton
@@ -127,11 +128,12 @@
         android:layout_toEndOf="@+id/overridesToggleButton"
         android:src="@drawable/ic_auto_resume_enabled"
         android:preferKeepClear="true"
-        android:contentDescription="Toggle Auto Resume"
+        android:contentDescription="@string/cg_a11y_auto_resume"
         style="?android:attr/borderlessButtonStyle"/>
 
     <ImageButton
         android:id="@+id/helpButton"
+        android:contentDescription="@string/help"
         android:layout_width="70dp"
         android:layout_height="65dp"
         android:cropToPadding="false"
@@ -145,6 +147,7 @@
     
     <ImageButton
         android:id="@+id/manuallyAddPc"
+        android:contentDescription="@string/title_add_pc"
         android:layout_width="70dp"
         android:layout_height="65dp"
         android:cropToPadding="false"

@@ -1,32 +1,126 @@
-name: Build
+name: Build and test
 
+# Every push to a branch and every pull request: the JVM tests, lint, the native host tests, the
+# tool checks, and the debug and test APKs. The on-device tests on emulators are devices.yml's;
+# a manual run here can add its core tier (a small phone, a foldable, a tablet, a handheld and
+# Android 6). Actions are pinned to full commit hashes; the comment says which release each one is.
 on:
   push:
-    branches: [main]
+    branches: ['**']
   pull_request:
+  workflow_dispatch:
+    inputs:
+      devices:
+        description: Also run the on-device tests on emulators (devices.yml, core tier)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    name: Build and test
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: 21
 
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      # Gradle won't even configure the project without the NDK version build.gradle names
       - name: Install the NDK
         run: |
           NDK=$(grep -oP 'ndkVersion "\K[^"]+' app/build.gradle)
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK" > /dev/null
 
-      - name: Build the debug APK and the tests
+      # Robolectric fetches android-all-instrumented for SDK 36 (about 204 MB) into ~/.m2 on a
+      # fresh runner. app/build.gradle names the Robolectric version, so a new one gets a new key.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('app/build.gradle') }}
+
+      # Lint fails on anything not already listed in app/lint-baseline.xml
+      - name: JVM tests and lint
+        run: ./gradlew --no-daemon --continue testNonRootDebugUnitTest lintNonRootDebug
+
+      # Compares the screenshots in app/src/test/screenshots (recorded on Windows) pixel for
+      # pixel. Not blocking until a run shows Linux draws the same pixels; then run
+      # verifyRoborazziNonRootDebug in the step above instead of testNonRootDebugUnitTest and
+      # remove this step.
+      - name: Screenshot tests
+        id: screenshots
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: ./gradlew --no-daemon verifyRoborazziNonRootDebug
+
+      # The pictures that differ. Once the step above is gone, this one's condition is failure().
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() && steps.screenshots.outcome == 'failure' }}
+        with:
+          name: screenshot-diffs
+          path: app/build/outputs/roborazzi/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # Each exits 1 if a check fails. (pyrowave_partial_test needs a GPU, so it isn't here.)
+      - name: Native host tests
+        if: ${{ !cancelled() }}
+        run: |
+          sh app/src/main/jni/moonlight-core/tests/partial_frame_test.sh
+          cd app/src/main/jni/vulkan/tests
+          for t in frame_pacer present_scheduler; do
+            g++ -std=c++17 -O2 -I.. ../$t.cpp ${t}_test.cpp -o "$RUNNER_TEMP/${t}_test"
+            "$RUNNER_TEMP/${t}_test"
+          done
+
+      - name: Tool checks
+        if: ${{ !cancelled() }}
+        run: bash .github/tools/check-tools.sh
+
+      - name: Build the debug APK and the test APK
         run: ./gradlew --no-daemon assembleNonRootDebug assembleNonRootDebugAndroidTest
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: starwire-debug
           path: app/build/outputs/apk/nonRoot/debug/*.apk
+          retention-days: 7
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: starwire-debug-tests
+          path: app/build/outputs/apk/androidTest/nonRoot/debug/*.apk
+          retention-days: 7
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: test-and-lint-reports
+          path: |
+            app/build/reports/tests/
+            app/build/reports/lint-results-nonRootDebug.*
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # devices.yml puts in the command-line tools that know pixel_fold and the other newer profiles
+  # (the runner's own 12.0 don't) and checks every leg's profile and system image first
+  devices:
+    name: Device tests
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.devices
+    uses: ./.github/workflows/devices.yml
+    with:
+      tier: core

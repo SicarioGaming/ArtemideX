@@ -3,4 +3,15 @@
     <issue id="InvalidPackage">
         <ignore path="**/bcpkix-jdk15on-*.jar"/>
     </issue>
+    <!-- Inside BouncyCastle's own jar, not this app's code, and its path differs on every PC -->
+    <issue id="TrustAllX509TrustManager">
+        <ignore path="**/bcpkix-jdk18on-*.jar"/>
+    </issue>
+    <!-- The only bitmaps in the drawable folders are three that belong in drawable-xhdpi alone:
+         the Android TV banner (320x180, an xhdpi image by Android TV's rules), OUYA's launcher
+         image (which OUYA reads from there by name) and an unused placeholder. Everything else is
+         a vector, and the shortcut icons have every density under mipmap-*. The check's message
+         also holds the folder's path with the system's separator, so a baseline entry for it made
+         on Windows doesn't match on Linux. -->
+    <issue id="IconMissingDensityFolder" severity="ignore"/>
 </lint>

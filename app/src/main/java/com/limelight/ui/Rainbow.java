@@ -30,7 +30,10 @@ public final class Rainbow {
 
     private Rainbow() {}
 
-    /** Paints the text with the flowing rainbow. Cancel the returned animator when done. */
+    /**
+     * Paints the text with the flowing rainbow, flowing if the user has animations on (Loops).
+     * Cancel the returned animator when done.
+     */
     public static ValueAnimator applyTo(TextView view) {
         Matrix matrix = new Matrix();
         LinearGradient[] shader = new LinearGradient[1];
@@ -57,7 +60,7 @@ public final class Rainbow {
                 view.invalidate();
             }
         });
-        flow.start();
+        Loops.run(view.getContext(), flow);
         return flow;
     }
 
@@ -109,7 +112,7 @@ public final class Rainbow {
 
         @Override
         public void start() {
-            if (spin != null) {
+            if (spin != null || !loopsAllowed()) {
                 return;
             }
             spin = ValueAnimator.ofFloat(0f, 360f);
@@ -121,6 +124,12 @@ public final class Rainbow {
                 invalidateSelf();
             });
             spin.start();
+        }
+
+        // The ring has no context of its own; the tile it's drawn on does
+        private boolean loopsAllowed() {
+            Callback host = getCallback();
+            return !(host instanceof View) || Loops.allowed(((View) host).getContext());
         }
 
         @Override

@@ -12,14 +12,12 @@
     <string name="title_disable_frame_drop">Không bao giờ giảm khung hình</string>
     <string name="summary_checkbox_disable_warnings">Tắt các thông báo cảnh báo kết nối trên màn hình trong khi stream</string>
     <string name="title_checkbox_disable_warnings">Tắt các thông báo cảnh báo</string>
-    <string name="summary_unlock_fps">Việc stream tại 90 hoặc 120 FPS có thể sẽ giảm độ trễ trên các thiết bị tầm cao nhưng có thể sẽ gây ra lag hoặc mất ổn định trên các thiết bị không thể hỗ trợ việc đó</string>
-    <string name="title_unlock_fps">Mở khoá tất cả tốc độ khung hình có thể có</string>
     <string name="category_advanced_settings">Cài đặt nâng cao</string>
     <string name="summary_checkbox_host_audio">Phát âm thanh từ máy tính và thiết bị này</string>
     <string name="title_checkbox_host_audio">Phát âm thanh trên PC</string>
     <string name="summary_checkbox_small_icon_mode">Bìa nhỏ trong lưới ứng dụng cho phép hiển thị nhiều ứng dụng hơn trên màn hình</string>
     <string name="title_checkbox_small_icon_mode">Sử dụng bìa nhỏ</string>
-    <string name="summary_language_list">Ngôn ngữ để sử dụng cho Moonlight</string>
+    <string name="summary_language_list">Ngôn ngữ để sử dụng cho Starwire</string>
     <string name="title_language_list">Ngôn ngữ</string>
     <string name="summary_checkbox_enable_pip">Cho phép stream được xem (nhưng không được điều khiển) trong khi đa nhiệm</string>
     <string name="title_checkbox_enable_pip">Bật chế độ quan sát Hình-trong-Hình</string>
@@ -46,7 +44,7 @@
     <string name="title_checkbox_mouse_nav_buttons">Bật các nút quay lại và đi trước của chuột</string>
     <string name="summary_checkbox_mouse_emulation">Việc nhấn giữ nút Start sẽ chuyển tay cầm điều khiển vào chế độ chuột</string>
     <string name="title_checkbox_mouse_emulation">Giả lập chuột qua tay cầm điều khiển</string>
-    <string name="summary_checkbox_usb_bind_all">Sử dụng driver USB của Moonlight cho tất cả tay cầm điều khiển được hỗ trợ, kể cả nếu có hỗ trợ tay cầm điều khiển Xbox</string>
+    <string name="summary_checkbox_usb_bind_all">Sử dụng driver USB của Starwire cho tất cả tay cầm điều khiển được hỗ trợ, kể cả nếu có hỗ trợ tay cầm điều khiển Xbox</string>
     <string name="title_checkbox_usb_bind_all">Ghi đè lên sự hỗ trợ tay cầm điều khiển Xbox</string>
     <string name="summary_checkbox_xb1_driver">Bật một driver USB được tích hợp cho các thiết bị không hỗ trợ tay cầm điều khiển Xbox</string>
     <string name="title_checkbox_xb1_driver">Driver tay cầm điều khiển USB Xbox 360/One</string>
@@ -69,14 +67,6 @@
     <string name="title_seekbar_bitrate">Tốc độ bit video</string>
     <string name="summary_fps_list">Tăng để stream video mượt mà hơn. Giảm để có hiệu năng tốt hơn trên các thiết bị tầm thấp hơn.</string>
     <string name="title_fps_list">Tốc độ khung hình video</string>
-    <string name="text_native_res_dialog">Các chế độ độ phân giải gốc không được GeForce Experience hỗ trợ chính thức, nên nó sẽ không tự đặt độ phân giải hiển thị của máy chủ. Bạn sẽ cần phải đặt nó theo cách thủ công trong khi đang trong trò chơi.
-\n
-\nNếu bạn chọn việc tạo một độ phân giải tuỳ chỉnh trong Bảng điều khiển NVIDIA để khớp với độ phân giải thiết bị, vui lòng chắc chắn là bạn đã đọc và hiểu cảnh báo của NVIDIA về hư hại màn hình có thể có, sự bất ổn của PC, và các vấn đề tiềm năng khác.
-\n
-\nChúng tôi không chịu trách nhiệm cho bất kỳ vấn đề nào gây ra từ việc tạo độ phân giải tuỳ chỉnh trên PC.
-\n
-\nCuối cùng, thiết bị hoặc PC chủ có thể không hỗ trợ việc stream tại độ phân giải gốc. Nếu việc này không hoạt động trên thiết bị, không may mắn là bạn không thể làm gì được.</string>
-    <string name="title_native_res_dialog">Cảnh báo độ phân giải gốc</string>
     <string name="summary_resolution_list">Tăng để cải thiện độ rõ của hình ảnh. Giảm để có hiệu năng tốt hơn trên các thiết bị tầm thấp hơn và các mạng chậm hơn.</string>
     <string name="title_resolution_list">Độ phân giải video</string>
     <string name="category_basic_settings">Cài đặt cơ bản</string>
@@ -141,7 +131,7 @@
     <string name="error_usb_prohibited">Quyền truy cập USB bị cấm bởi quản trị viên thiết bị. Hãy kiểm tra cài đặt Knox hoặc MDM.</string>
     <string name="message_decoding_reset">Trình giải mã video của thiết bị vẫn tiếp tục dừng đột ngột tại các cài đặt stream đã chọn. Các cài đặt stream đã được đặt lại về mặc định.</string>
     <string name="title_decoding_reset">Đã đặt lại cài đặt video</string>
-    <string name="message_decoding_error">Moonlight đã bị dừng đột ngột vì một sự không tương thích với trình giải mã video của thiết bị này. Hãy chắc chắn là GeForce Experience được cập nhật lên phiên bản mới nhất trên PC. Hãy thử điều chỉnh cài đặt stream nếu việc dừng đột ngột vẫn tiếp tục.</string>
+    <string name="message_decoding_error">Starwire đã bị dừng đột ngột vì một sự không tương thích với trình giải mã video của thiết bị này. Hãy chắc chắn là GeForce Experience được cập nhật lên phiên bản mới nhất trên PC. Hãy thử điều chỉnh cài đặt stream nếu việc dừng đột ngột vẫn tiếp tục.</string>
     <string name="title_decoding_error">Trình giải mã video bị dừng đột ngột</string>
     <string name="error_404">GFE đã trả lời bằng lỗi HTTP 404. Hãy chắc chắn rằng PC của bạn đang chạy một GPU được hỗ trợ. Việc sử dụng phần mềm máy tính từ xa cũng có thể gây ra lỗi này. Hãy thử khởi động lại máy hoặc cài đặt lại GFE.</string>
     <string name="error_unknown_host">Xử lý máy chủ thất bại</string>
@@ -172,17 +162,17 @@
     <string name="pair_pc_ingame">Máy tính hiện đang trong một trò chơi. Bạn phải đóng trò chơi trước khi ghép đôi.</string>
     <string name="pair_pc_offline">Máy tính đang ngoại tuyến</string>
     <string name="pairing">Đang ghép đôi…</string>
-    <string name="nettest_text_blocked">Kết nối mạng hiện tại của thiết bị đang chặn Moonlight. Việc stream qua Internet có thể sẽ không được khi đang kết nối đến mạng này.</string>
-    <string name="nettest_text_failure">Kết nối mạng hiện tại của thiết bị có vẻ là đang chặn Moonlight. Việc stream qua Internet có thể sẽ không được khi đang kết nối đến mạng này.
+    <string name="nettest_text_blocked">Kết nối mạng hiện tại của thiết bị đang chặn Starwire. Việc stream qua Internet có thể sẽ không được khi đang kết nối đến mạng này.</string>
+    <string name="nettest_text_failure">Kết nối mạng hiện tại của thiết bị có vẻ là đang chặn Starwire. Việc stream qua Internet có thể sẽ không được khi đang kết nối đến mạng này.
 \n
 \nCác cổng mạng sau bị chặn:
 \n</string>
     <string name="nettest_text_inconclusive">Việc thử nghiệm mạng không thể được thực hiện vì không có máy chủ thử nghiệm kết nối nào của Moonlight có thể được kết nối đến. Hãy kiểm tra kết nối Internet của bạn hoặc thử lại sau.</string>
-    <string name="nettest_text_success">Mạng của bạn có vẻ là không chặn Moonlight. Nếu bạn vẫn gặp rắc rối trong việc kết nối, hãy kiểm tra cài đặt tường lửa của PC.
+    <string name="nettest_text_success">Mạng của bạn có vẻ là không chặn Starwire. Nếu bạn vẫn gặp rắc rối trong việc kết nối, hãy kiểm tra cài đặt tường lửa của PC.
 \n
 \nNếu bạn đang cố stream qua Internet, hãy cài đặt Moonlight Internet Hosting Tool trên PC và chạy Internet Streaming Tester được bao gồm trong đó để kiểm tra kết nối Internet của PC.</string>
     <string name="nettest_title_done">Thử nghiệm mạng hoàn tất</string>
-    <string name="nettest_text_waiting">Moonlight đang thử nghiệm kết nối mạng của bạn để xác định xem NVIDIA GameStream có bị chặn không.
+    <string name="nettest_text_waiting">Starwire đang thử nghiệm kết nối mạng của bạn để xác định xem NVIDIA GameStream có bị chặn không.
 \n
 \nViệc này có thể sẽ mất một vài giây…</string>
     <string name="nettest_title_waiting">Đang thử nghiệm kết nối mạng</string>
@@ -211,9 +201,7 @@
     <string name="pacing_latency">Ưu tiên độ trễ thấp nhất</string>
     <string name="pacing_balanced">Cân bằng</string>
     <string name="pacing_smoothness">Ưu tiên video mượt nhất (có thể tăng độ trễ đáng kể)</string>
-    <string name="resolution_480p">480p</string>
     <string name="fps_120">120 FPS</string>
-    <string name="resolution_360p">360p</string>
     <string name="resolution_720p">720p</string>
     <string name="resolution_1080p">1080p</string>
     <string name="resolution_1440p">1440p</string>

@@ -40,6 +40,13 @@ int LbqPeekQueueElement(PLINKED_BLOCKING_QUEUE queueHead, void** data) { (void)q
 void LbqSignalQueueShutdown(PLINKED_BLOCKING_QUEUE queueHead) { (void)queueHead; }
 void LbqSignalQueueUserWake(PLINKED_BLOCKING_QUEUE queueHead) { (void)queueHead; }
 int LbqGetItemCount(PLINKED_BLOCKING_QUEUE queueHead) { (void)queueHead; return 0; }
+// No partial frame deadline (2465f10 in moonlight-common-c added it; without this the test
+// didn't link): frames are only cut short by what's lost
+bool getPartialFrameDeadline(int64_t* offsetUs, int* minReceivedPercent) {
+    *offsetUs = 0;
+    *minReceivedPercent = 0;
+    return false;
+}
 
 #define PACKET_SIZE 1392
 #define PAYLOAD_SIZE (PACKET_SIZE - (int)sizeof(NV_VIDEO_PACKET))
@@ -215,12 +222,17 @@ int main(void) {
     check(gotFrames == 4, "the partial next frame, then this whole one, are delivered");
     checkFrame(4, frames[3], length, NULL, shards);
 
-    printf("The first packet (frame header) lost:\n");
+    // PyroWave can't decode a frame without its sequence header and coarsest blocks, which come
+    // first, so a frame that lost its first packet is dropped (see queuePartialFrame()). The
+    // next frame must still get through.
+    printf("The first packet (frame header) lost, so the frame is dropped:\n");
     memset(lost, 0, sizeof(lost));
     lost[0] = true;
+    const int beforeHeaderLost = gotFrames;
     sendFrame(6, frames[5], length, lost);
-    sendFrame(7, frames[6], length, first);
-    checkFrame(6, frames[5], length, lost, shards);
+    sendFrame(7, frames[6], length, NULL);
+    check(gotFrames == beforeHeaderLost + 1, "only the next, whole frame is delivered");
+    checkFrame(7, frames[6], length, NULL, shards);
 
     printf("The last packet lost:\n");
     memset(lost, 0, sizeof(lost));

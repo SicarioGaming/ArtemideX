@@ -20,10 +20,17 @@ The sources and the last commit reviewed for each are in `.github/tools/upstream
   as a git remote and port the commits by hand. Starwire's base has moved on, so plain merges
   rarely apply cleanly.
 - **Ideas** (Moonlight V+, Moonlit Artemis, upstream Moonlight): write the feature for Starwire.
-- Add an on-device test for it (`app/src/androidTest`) and run them all:
-  `./gradlew connectedNonRootDebugAndroidTest`.
+- Add an on-device test for it (`app/src/androidTest`) and run them all, with the smoke tests:
+  `./gradlew assembleNonRootDebug assembleNonRootDebugAndroidTest`, then
+  `.github/tools/device-test.sh -s <serial>` (`--allow-stream` adds a short Desktop stream). It
+  installs with `adb install -r` and never uninstalls, so the debug app keeps its pairing, which
+  `connectedNonRootDebugAndroidTest` may not.
 - Credit it in the README's **Where every feature comes from** table (project, author, and
-  whether it was ported or an idea).
+  whether it was ported or an idea). A new project in the README's **Credits** table goes in
+  `AboutCredits.java` too, which is the Credits page in Settings → About.
+- A new or updated library, prebuilt or submodule goes in `OpenSourceNotices.java` (name,
+  version, licence) with its licence text in `app/src/main/assets/licenses`. The on-device test
+  `OpenSourceNoticesTest` fails if a native library has no entry.
 - Move that source's last-reviewed commit forward in `.github/tools/upstream/sources.txt`, even for
   commits you decided to skip.
 
@@ -31,11 +38,14 @@ The sources and the last commit reviewed for each are in `.github/tools/upstream
 
 1. Raise `versionName` and `versionCode` in `app/build.gradle`.
 2. Write the notes in `.github/release-notes/v<version>-notes.md` (plain, first person). Leave
-   `APK_SHA256` and `CERT_SHA256` where the checksums go; the release fills them in.
+   `APK_SHA256`, `ZIP_SHA256` and `CERT_SHA256` where the checksums go; the release fills them
+   in. If the notes have no `CERT_SHA256`, the release adds a **Check your download** part above
+   the closing `GPL-3.0.` line by itself.
 3. Tag and push: `git tag v<version> && git push origin v<version>`.
 
 The **Release** workflow builds the signed APK, checks its signature, and publishes the GitHub
-release with the notes and checksums. It needs these repository secrets (Settings → Secrets and
+release with the notes and checksums. It stops if the APK isn't signed with Starwire's release
+certificate (`B6:04:1D:…:3F:97`, written out in the README's **Check your download**). It needs these repository secrets (Settings → Secrets and
 variables → Actions), set once:
 
 | Secret | Value |

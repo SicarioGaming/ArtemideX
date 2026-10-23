@@ -4,7 +4,11 @@ package com.limelight;
 import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.AndroidAudioRenderer;
 import com.limelight.binding.audio.MicrophoneCaptureManager;
+import com.limelight.binding.audio.MicrophoneSink;
 import com.limelight.binding.audio.VbanSender;
+import com.limelight.binding.audio.securemic.MicPairing;
+import com.limelight.binding.audio.securemic.MicPairingStore;
+import com.limelight.binding.audio.securemic.SecureVbanSender;
 import com.limelight.binding.audio.AudioHaptics;
 import com.limelight.binding.input.ControllerHandler;
 import com.limelight.binding.input.KeyboardTranslator;
@@ -37,6 +41,7 @@ import com.limelight.preferences.AppPreferences;
 import com.limelight.preferences.GlPreferences;
 import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.BrightnessSliderView;
+import com.limelight.ui.FloatingButton;
 import com.limelight.ui.GameGestures;
 import com.limelight.ui.PanZoomHandler;
 import com.limelight.ui.StreamView;
@@ -44,6 +49,7 @@ import com.limelight.ui.overlay.CustomCommand;
 import com.limelight.ui.CoverGlow;
 import com.limelight.ui.overlay.OverlayMenuView;
 import com.limelight.utils.Dialog;
+import com.limelight.utils.HostCursorLedger;
 import com.limelight.utils.ServerHelper;
 import com.limelight.utils.SessionResumeManager;
 import com.limelight.utils.ShortcutHelper;
@@ -80,6 +86,8 @@ import android.os.PowerManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.text.Html;
 import android.util.Rational;
 import android.util.TypedValue;
@@ -184,15 +192,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private BrightnessSliderView brightnessSliderView;
     private OverlayMenuView overlayMenuView;
 
-    // Floating menu button (from Artemide): tap opens the overlay menu, drag moves it
+    // Floating menu button (from Artemide): tap opens the overlay menu, drag moves it, and
+    // FloatingButton remembers where it was dragged
     private ImageButton floatingMenuButton;
+    private FloatingButton floatingButton;
     private boolean floatingButtonShown;
-    private boolean floatingButtonMoving;
-    private float floatingButtonDX, floatingButtonDY;
-    private float floatingButtonStartX, floatingButtonStartY;
-    private static final int FLOATING_BUTTON_DRAG_THRESHOLD = 10;
-    // Matches android:alpha on floatingMenuButton in activity_game.xml
-    private static final float FLOATING_BUTTON_IDLE_ALPHA = 0.55f;
 
     // Tracks the on-screen controller's visibility for the overlay menu toggle
     private boolean onscreenControllerShown;
@@ -201,13 +205,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private PanZoomHandler panZoomHandler;
     private boolean isPanZoomMode;
 
-    // Touch modes from Artemide's mouse mode picker, in its order
-    private static final int MOUSE_MODE_MULTI_TOUCH = 0;
-    private static final int MOUSE_MODE_DIRECT_TOUCH = 1;
-    private static final int MOUSE_MODE_TRACKPAD_NATURAL = 2;
-    private static final int MOUSE_MODE_TRACKPAD_GAMING = 3;
-    private static final int MOUSE_MODE_DISABLED = 4;
-    private static final int MOUSE_MODE_DIRECT_TOUCH_SWAPPED = 5;
+    // Touch modes from Artemide's mouse mode picker, in its order (not private, for the JVM tests)
+    static final int MOUSE_MODE_MULTI_TOUCH = 0;
+    static final int MOUSE_MODE_DIRECT_TOUCH = 1;
+    static final int MOUSE_MODE_TRACKPAD_NATURAL = 2;
+    static final int MOUSE_MODE_TRACKPAD_GAMING = 3;
+    static final int MOUSE_MODE_DISABLED = 4;
+    static final int MOUSE_MODE_DIRECT_TOUCH_SWAPPED = 5;
     private int mouseMode;
 
     // Whether the trackpad modes use the custom sensitivity from settings
@@ -239,6 +243,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     private MediaCodecDecoderRenderer decoderRenderer;
     private MicrophoneCaptureManager microphoneCaptureManager;
+    // The encrypted microphone's problems already told this stream
+    private final java.util.Set<Integer> micStatusesShown = new java.util.HashSet<>();
     private boolean reportedCrash;
 
     private WifiManager.WifiLock highPerfWifiLock;
@@ -439,7 +445,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         overlayMenuView.setFlipFaceButtons(prefConfig.flipFaceButtons);
 
         floatingMenuButton = findViewById(R.id.floatingMenuButton);
-        initFloatingButton();
+        // Kept within the window, as the drag always was
+        floatingButton = new FloatingButton(floatingMenuButton, getWindow().getDecorView(),
+                PreferenceManager.getDefaultSharedPreferences(this), this::toggleOverlayMenu);
         setFloatingButtonShown(prefConfig.enableFloatingButton);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
@@ -488,6 +496,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         byte[] derCertData = Game.this.getIntent().getByteArrayExtra(EXTRA_SERVER_CERT);
 
         app = new NvApp(appName != null ? appName : "app", appId, appSupportsHdr);
+
+        hostCursor = new HostCursorController(prefConfig.hideCursorMode,
+                new HostCursorLedger(getNoBackupFilesDir(),
+                        HostCursorLedger.hostKey(getIntent().getStringExtra(EXTRA_PC_UUID), host)),
+                hostCursorToggle, hostCursorScheduler, appId);
 
         // The menu sheet shows the game and takes its cover colour from the game screen
         overlayMenuView.setGameInfo(appName,
@@ -684,8 +697,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setSupportedVideoFormats(supportedVideoFormats)
                 .setAttachedGamepadMask(gamepadMask)
                 .setAudioConfiguration(prefConfig.audioConfiguration)
-                // With VBAN the microphone goes straight to the PC, not over the stream
-                .setEnableMicrophone(prefConfig.enableMicrophone && !prefConfig.microphoneToVban)
+                // Only ask the host for a mic channel when the microphone goes over the stream; to
+                // a receiver on the PC it goes straight there
+                .setEnableMicrophone(prefConfig.enableMicrophone
+                        && PreferenceConfiguration.MICROPHONE_TARGET_HOST.equals(prefConfig.microphoneTarget))
                 .setColorSpace(decoderRenderer.getPreferredColorSpace())
                 .setColorRange(decoderRenderer.getPreferredColorRange())
                 .setPersistGamepadsAfterDisconnect(!prefConfig.multiController);
@@ -766,6 +781,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(quitAppReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
+            // There is no flag to pass before Android 13 (lint doesn't see the version check)
+            //noinspection UnspecifiedRegisterReceiverFlag
             registerReceiver(quitAppReceiver, filter);
         }
 
@@ -775,51 +792,69 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     private void setPreferredOrientationForCurrentDisplay() {
         Display display = getWindowManager().getDefaultDisplay();
+        boolean squarish = PreferenceConfiguration.isSquarishScreen(display);
+        boolean hinge = squarish && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE);
+        setRequestedOrientation(streamOrientation(squarish, hinge, prefConfig.onscreenController,
+                prefConfig.width, prefConfig.height));
+    }
+
+    // Starwire: the orientation the stream asks for, kept apart from the activity so the JVM
+    // tests can check it (GameRulesTest)
+    static int streamOrientation(boolean squarishScreen, boolean hingeSensor, boolean onscreenController,
+                                 int width, int height) {
+        // For regular displays, we always request landscape. That includes a foldable's cover
+        // screen, which is a tall phone screen even though the device has a hinge.
+        if (!squarishScreen) {
+            return ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
+        }
+
+        // A foldable's inner screen: forcing landscape there can hand the stream a rotated
+        // surface, shrunk with black borders (seen on Galaxy Z Folds). Let it follow the
+        // device instead. Idea from Moonlight Fold (sblocktechnologies) and
+        // moonlight-stream/moonlight-android#1613.
+        if (hingeSensor) {
+            return ActivityInfo.SCREEN_ORIENTATION_FULL_USER;
+        }
 
         // For semi-square displays, we use more complex logic to determine which orientation to use (if any)
-        if (PreferenceConfiguration.isSquarishScreen(display)) {
-            // A foldable's inner screen: forcing landscape there can hand the stream a rotated
-            // surface, shrunk with black borders (seen on Galaxy Z Folds). Let it follow the
-            // device instead. Idea from Moonlight Fold (sblocktechnologies) and
-            // moonlight-stream/moonlight-android#1613; the cover screen keeps landscape.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-                    getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE)) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
-                return;
-            }
+        int desiredOrientation = Configuration.ORIENTATION_UNDEFINED;
 
-            int desiredOrientation = Configuration.ORIENTATION_UNDEFINED;
+        // OSC doesn't properly support portrait displays, so don't use it in portrait mode by default
+        if (onscreenController) {
+            desiredOrientation = Configuration.ORIENTATION_LANDSCAPE;
+        }
 
-            // OSC doesn't properly support portrait displays, so don't use it in portrait mode by default
-            if (prefConfig.onscreenController) {
+        // For native resolution, we will lock the orientation to the one that matches the specified resolution
+        if (PreferenceConfiguration.isNativeResolution(width, height)) {
+            if (width > height) {
                 desiredOrientation = Configuration.ORIENTATION_LANDSCAPE;
             }
-
-            // For native resolution, we will lock the orientation to the one that matches the specified resolution
-            if (PreferenceConfiguration.isNativeResolution(prefConfig.width, prefConfig.height)) {
-                if (prefConfig.width > prefConfig.height) {
-                    desiredOrientation = Configuration.ORIENTATION_LANDSCAPE;
-                }
-                else {
-                    desiredOrientation = Configuration.ORIENTATION_PORTRAIT;
-                }
-            }
-
-            if (desiredOrientation == Configuration.ORIENTATION_LANDSCAPE) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
-            }
-            else if (desiredOrientation == Configuration.ORIENTATION_PORTRAIT) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT);
-            }
             else {
-                // If we don't have a reason to lock to portrait or landscape, allow any orientation
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
+                desiredOrientation = Configuration.ORIENTATION_PORTRAIT;
             }
+        }
+
+        if (desiredOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            return ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE;
+        }
+        else if (desiredOrientation == Configuration.ORIENTATION_PORTRAIT) {
+            return ActivityInfo.SCREEN_ORIENTATION_USER_PORTRAIT;
         }
         else {
-            // For regular displays, we always request landscape
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+            // If we don't have a reason to lock to portrait or landscape, allow any orientation
+            return ActivityInfo.SCREEN_ORIENTATION_FULL_USER;
         }
+    }
+
+    // Starwire: pan/zoom and the touch-disabled mode skip the normal touch handling, so they
+    // open the overlay menu on a three-finger touch before it; otherwise there could be no way
+    // back to the menu when the floating button is hidden and no controller is connected.
+    // (The other modes open it from their own three-finger tap.) Checked by GameRulesTest.
+    static boolean opensMenuBeforeTouchHandling(boolean panZoomMode, int mouseMode, int actionMasked,
+                                                int pointerCount) {
+        return (panZoomMode || mouseMode == MOUSE_MODE_DISABLED) &&
+                actionMasked == MotionEvent.ACTION_POINTER_DOWN && pointerCount == 3;
     }
 
 
@@ -2389,12 +2424,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 // First, so it sees every finger down and up, whatever handles the touch below
                 updateHostCursorForTouch(event);
 
-                if ((isPanZoomMode || mouseMode == MOUSE_MODE_DISABLED) &&
-                        event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN &&
-                        event.getPointerCount() == 3) {
-                    // These modes skip the normal touch handling, so open the overlay menu on a
-                    // three-finger touch here; otherwise there could be no way back to the menu
-                    // when the floating button is hidden and no controller is connected
+                if (opensMenuBeforeTouchHandling(isPanZoomMode, mouseMode,
+                        event.getActionMasked(), event.getPointerCount())) {
                     overlayMenuView.show();
                     return true;
                 }
@@ -2670,8 +2701,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     }
 
     // Microphone streaming over the stream only works with hosts that accept it (logabell's Apollo
-    // build); other hosts never negotiate it, so the stream carries on without the mic. With VBAN
-    // the microphone goes to a receiver on the PC instead, whatever the host.
+    // build); other hosts never negotiate it, so the stream carries on without the mic. Otherwise
+    // the microphone goes to a receiver on the PC, whatever the host: Starwire's own, encrypted
+    // (the default), or another VBAN receiver, not encrypted.
     private void startMicrophoneCapture() {
         if (!prefConfig.enableMicrophone) {
             return;
@@ -2683,20 +2715,25 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             return;
         }
 
-        if (prefConfig.microphoneToVban) {
-            // The PC's address can be a name, and looking it up isn't allowed on this thread
+        micStatusesShown.clear();
+        if (!PreferenceConfiguration.MICROPHONE_TARGET_HOST.equals(prefConfig.microphoneTarget)) {
+            final boolean encrypted = PreferenceConfiguration.MICROPHONE_TARGET_STARWIRE.equals(prefConfig.microphoneTarget);
+            // The PC's address can be a name, and looking it up isn't allowed on this thread; the
+            // pairing comes from Keystore, which can be slow too
             String host = getIntent().getStringExtra(EXTRA_HOST);
+            String computerUuid = getIntent().getStringExtra(EXTRA_PC_UUID);
             new Thread(() -> {
                 InetAddress address = null;
                 try {
                     address = InetAddress.getByName(host);
                 }
                 catch (UnknownHostException | SecurityException e) {
-                    LimeLog.warning("Couldn't look up the PC for VBAN: " + e.getMessage());
+                    LimeLog.warning("Couldn't look up the PC for the microphone: " + e.getMessage());
                 }
                 final InetAddress resolved = address;
-                runOnUiThread(() -> startVbanMicrophone(resolved));
-            }, "MicVbanLookup").start();
+                final MicPairing pairing = encrypted ? new MicPairingStore(Game.this).forComputer(computerUuid) : null;
+                runOnUiThread(() -> startPcMicrophone(resolved, encrypted, pairing));
+            }, "MicLookup").start();
             return;
         }
 
@@ -2719,7 +2756,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }
     }
 
-    private void startVbanMicrophone(InetAddress address) {
+    private void startPcMicrophone(InetAddress address, boolean encrypted, MicPairing pairing) {
         // The stream may have ended while the PC's address was looked up
         if (!connected || isFinishing()) {
             return;
@@ -2728,27 +2765,57 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
             return;
         }
-        // VBAN isn't encrypted, so the audio only goes to a PC on the home network or a private VPN
+        // Only to a PC on the home network or a private VPN, encrypted or not. That's a filter, not
+        // the security: the encryption and pairing are.
         if (!VbanSender.isHomeNetworkAddress(address)) {
-            LimeLog.info("Not sending the microphone over VBAN to " + address.getHostAddress());
-            Toast.makeText(this, R.string.microphone_vban_not_home, Toast.LENGTH_LONG).show();
+            LimeLog.info("Not sending the microphone to " + address.getHostAddress() + ": not a home-network address");
+            Toast.makeText(this, encrypted ? R.string.microphone_secure_not_home : R.string.microphone_vban_not_home,
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (encrypted && pairing == null) {
+            LimeLog.info("Not sending the microphone: Starwire isn't paired with this PC's receiver");
+            Toast.makeText(this, R.string.microphone_secure_not_paired, Toast.LENGTH_LONG).show();
             return;
         }
 
         if (microphoneCaptureManager == null) {
             microphoneCaptureManager = new MicrophoneCaptureManager(this);
         }
-        VbanSender sender = new VbanSender(address, prefConfig.vbanPort, prefConfig.vbanStreamName);
-        if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null, sender)) {
-            LimeLog.warning("Unable to start the microphone for VBAN");
+        MicrophoneSink sink = encrypted
+                ? new SecureVbanSender(address, prefConfig.vbanPort, pairing, status -> runOnUiThread(() -> onMicrophoneStatus(status)))
+                : new VbanSender(address, prefConfig.vbanPort, prefConfig.vbanStreamName);
+        if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null, sink)) {
+            LimeLog.warning("Unable to start the microphone for the PC's receiver");
             Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // What the PC's receiver said, told once per stream for each problem
+    private void onMicrophoneStatus(int status) {
+        int message;
+        switch (status) {
+            case SecureVbanSender.STATUS_NO_ANSWER:
+                message = R.string.microphone_secure_no_answer;
+                break;
+            case SecureVbanSender.STATUS_BUSY:
+                message = R.string.microphone_secure_busy;
+                break;
+            case SecureVbanSender.STATUS_NO_OUTPUT:
+                message = R.string.microphone_secure_no_output;
+                break;
+            default:
+                return;
+        }
+        if (connected && !isFinishing() && micStatusesShown.add(status)) {
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
         }
     }
 
     private void stopConnection() {
         stopMicrophoneCapture();
         // Give the PC its cursor back before the connection goes away
-        restoreHostCursor();
+        final boolean flushHostCursor = hostCursor.onStopping();
 
         if (connecting || connected) {
             connecting = connected = false;
@@ -2766,6 +2833,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // during the process of stopping this one.
             new Thread() {
                 public void run() {
+                    if (flushHostCursor) {
+                        // Vibepollo throws away input it hasn't handled yet when the session
+                        // stops, so give the cursor toggle time to get there first
+                        SystemClock.sleep(200);
+                        hostCursor.onShowFlushed();
+                    }
                     conn.stop();
                 }
             }.start();
@@ -2853,6 +2926,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                // The link is gone, so a hidden PC cursor is shown at the next connection
+                hostCursor.onConnectionLost(errorCode);
+
                 // Let the display go to sleep now
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -2979,9 +3055,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     syncClipboardToHost(true);
                 }
 
-                if (prefConfig.hideCursorMode == PreferenceConfiguration.HIDE_CURSOR_ALWAYS) {
-                    setHostCursorHidden(true);
+                // Hide the PC cursor for "Always", or put right one an earlier stream left hidden
+                if (hostCursor.onStreamStarted(conn.resumedExistingSession())
+                        == HostCursorController.RECONCILE_SHOWN) {
+                    Toast.makeText(Game.this, R.string.host_cursor_reconciled, Toast.LENGTH_LONG).show();
                 }
+                overlayMenuView.setFixHostCursorShown(isFixHostCursorOffered());
             }
         });
 
@@ -3482,6 +3561,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
 
             @Override
+            public void onFixHostCursor() {
+                if (hostCursor.onManualFix()) {
+                    Toast.makeText(Game.this, R.string.host_cursor_fix_sent, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
             public boolean isToggleOn(int toggle) {
                 switch (toggle) {
                     case OverlayMenuView.TOGGLE_STATS:
@@ -3571,62 +3657,55 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         performanceOverlayView.setSingleLine(true);
     }
 
-    // Vibepollo (like Sunshine) toggles drawing the cursor into the video on Ctrl+Alt+Shift+N
-    private static final short[] TOGGLE_HOST_CURSOR_KEYS = {
-            OverlayMenuView.VK_LCONTROL, OverlayMenuView.VK_LMENU, OverlayMenuView.VK_LSHIFT, 0x4E /* N */
+    // Hides and shows the PC cursor for "Hide PC cursor", and remembers per PC what it hid
+    private HostCursorController hostCursor;
+
+    private final HostCursorController.Toggle hostCursorToggle = new HostCursorController.Toggle() {
+        @Override
+        public boolean isLinkUp() {
+            // GeForce Experience has no such toggle, so the keys would only reach the game
+            return connected && conn != null && !conn.isNvidiaServerSoftware();
+        }
+
+        @Override
+        public void send() {
+            // Ctrl+Alt+Shift+N, pressed and released in one go
+            HostCursorController.pressToggleKeys((keyCode, keyDirection, modifiers) ->
+                    conn.sendKeyboardInput(keyCode, keyDirection, modifiers, (byte) 0));
+        }
     };
 
-    // Whether Starwire has toggled the PC's cursor off, so it can be turned back on
-    private boolean hostCursorHidden;
-    private final Runnable showHostCursor = () -> setHostCursorHidden(false);
-
-    private void setHostCursorHidden(boolean hidden) {
-        if (hidden == hostCursorHidden || !connected) {
-            return;
+    private final HostCursorController.Scheduler hostCursorScheduler = new HostCursorController.Scheduler() {
+        @Override
+        public void postDelayed(Runnable task, long delayMs) {
+            streamView.postDelayed(task, delayMs);
         }
-        hostCursorHidden = hidden;
-        sendKeys(TOGGLE_HOST_CURSOR_KEYS);
-    }
 
-    /**
-     * Hide the PC cursor while a finger is down ("Hide PC cursor: While touching"). Showing it
-     * again waits a moment, so quick taps don't make it flicker or send the toggle twice in a row.
-     */
+        @Override
+        public void cancel(Runnable task) {
+            streamView.removeCallbacks(task);
+        }
+    };
+
+    // Hide the PC cursor while a finger is down ("Hide PC cursor: While touching")
     private void updateHostCursorForTouch(MotionEvent event) {
-        if (prefConfig.hideCursorMode != PreferenceConfiguration.HIDE_CURSOR_WHILE_TOUCHING) {
-            return;
-        }
-
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                streamView.removeCallbacks(showHostCursor);
-                setHostCursorHidden(true);
+                hostCursor.onFingerDown();
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                streamView.removeCallbacks(showHostCursor);
-                streamView.postDelayed(showHostCursor, 300);
+                hostCursor.onFingersUp();
                 break;
         }
     }
 
-    // Shows the PC cursor again right away; the connection may be about to close
-    private void restoreHostCursor() {
-        streamView.removeCallbacks(showHostCursor);
-        if (!hostCursorHidden || !connected || conn == null) {
-            return;
-        }
-        hostCursorHidden = false;
-
-        byte modifiers = 0;
-        for (short key : TOGGLE_HOST_CURSOR_KEYS) {
-            conn.sendKeyboardInput(key, KeyboardPacket.KEY_DOWN, modifiers, (byte) 0);
-            modifiers |= getModifierForKey(key);
-        }
-        for (int i = TOGGLE_HOST_CURSOR_KEYS.length - 1; i >= 0; i--) {
-            modifiers &= (byte) ~getModifierForKey(TOGGLE_HOST_CURSOR_KEYS[i]);
-            conn.sendKeyboardInput(TOGGLE_HOST_CURSOR_KEYS[i], KeyboardPacket.KEY_UP, modifiers, (byte) 0);
-        }
+    // "Fix PC cursor" is offered where hiding it is used, and where a cursor left hidden by an
+    // earlier stream was just turned back on (that guess can be wrong if Vibepollo restarted)
+    private boolean isFixHostCursorOffered() {
+        return conn != null && !conn.isNvidiaServerSoftware() &&
+                (prefConfig.hideCursorMode != PreferenceConfiguration.HIDE_CURSOR_NEVER ||
+                        hostCursor.reconciledThisStream());
     }
 
     private static int virtualDisplayFromSetting(String mode) {
@@ -4052,51 +4131,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         return com.limelight.ui.AppIcons.tile(this, appName);
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private void initFloatingButton() {
-        // Tap opens the overlay menu, or closes it when it's open; drag moves the button, kept
-        // within the screen (from Artemide). The button sits above the menu, so it stays tappable.
-        floatingMenuButton.setOnTouchListener((view, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    floatingButtonStartX = event.getRawX();
-                    floatingButtonStartY = event.getRawY();
-                    floatingButtonDX = view.getX() - event.getRawX();
-                    floatingButtonDY = view.getY() - event.getRawY();
-                    floatingButtonMoving = false;
-                    // The button sits faded over the game and lights up while touched
-                    view.animate().alpha(1f).setDuration(120).start();
-                    return true;
-                case MotionEvent.ACTION_MOVE:
-                    if (Math.abs(event.getRawX() - floatingButtonStartX) > FLOATING_BUTTON_DRAG_THRESHOLD ||
-                            Math.abs(event.getRawY() - floatingButtonStartY) > FLOATING_BUTTON_DRAG_THRESHOLD) {
-                        floatingButtonMoving = true;
-                    }
-
-                    float maxX = getWindow().getDecorView().getWidth() - view.getWidth();
-                    float maxY = getWindow().getDecorView().getHeight() - view.getHeight();
-                    view.setX(Math.max(0, Math.min(event.getRawX() + floatingButtonDX, maxX)));
-                    view.setY(Math.max(0, Math.min(event.getRawY() + floatingButtonDY, maxY)));
-                    return true;
-                case MotionEvent.ACTION_UP:
-                    if (!floatingButtonMoving) {
-                        toggleOverlayMenu();
-                    }
-                    floatingButtonMoving = false;
-                    view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
-                    return true;
-                case MotionEvent.ACTION_CANCEL:
-                    floatingButtonMoving = false;
-                    view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
-                    return true;
-                default:
-                    return false;
-            }
-        });
-        // TalkBack's double-tap arrives as a click, not as touches
-        floatingMenuButton.setOnClickListener(view -> toggleOverlayMenu());
-    }
-
     private void toggleOverlayMenu() {
         if (overlayMenuView.getVisibility() == View.VISIBLE) {
             overlayMenuView.closeMenu();
@@ -4109,6 +4143,10 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private void setFloatingButtonShown(boolean shown) {
         floatingButtonShown = shown;
         floatingMenuButton.setVisibility(shown && !isHidingOverlays ? View.VISIBLE : View.GONE);
+        if (shown) {
+            // The screen may have turned or been resized while the button was hidden
+            floatingButton.placeOnNextLayout();
+        }
     }
 
     private void toggleOnscreenController() {

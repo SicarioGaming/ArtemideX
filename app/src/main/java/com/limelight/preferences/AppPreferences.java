@@ -158,6 +158,18 @@ public class AppPreferences {
         // Start with global settings as the base
         PreferenceConfiguration config = PreferenceConfiguration.readPreferences(context);
 
+        applyAppSettings(config, quickLaunchSettings, appSettings);
+
+        return applyOverrides ? applyPreferenceOverrides(context, config) : config;
+    }
+
+    /**
+     * Starwire: lays a quick launch item's settings, then the game's own, over the global ones in
+     * config: for each setting the quick launch value if it has one, otherwise the game's (unless it
+     * uses the global settings), otherwise the global value stays. Kept apart from SharedPreferences
+     * so the order can be tested on the JVM.
+     */
+    static void applyAppSettings(PreferenceConfiguration config, AppSettings quickLaunchSettings, AppSettings appSettings) {
         // Apply settings hierarchy: quick launch -> app -> global (already loaded)
         // For each setting, use quick launch if set, otherwise app, otherwise keep global
 
@@ -260,8 +272,6 @@ public class AppPreferences {
             }
         }
         config.asyncLfr = config.asyncLfr && config.asyncDecode;
-
-        return applyOverrides ? applyPreferenceOverrides(context, config) : config;
     }
 
     private static PreferenceConfiguration applyPreferenceOverrides(Context context, PreferenceConfiguration config) {

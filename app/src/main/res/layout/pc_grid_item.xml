@@ -11,12 +11,14 @@
         android:layout_height="wrap_content">
         <ImageView
             android:id="@+id/grid_image"
+            android:importantForAccessibility="no"
             android:layout_centerHorizontal="true"
             android:layout_width="125dp"
             android:layout_height="125dp">
         </ImageView>
         <ImageView
             android:id="@+id/grid_overlay"
+            android:importantForAccessibility="no"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="28dp"
             android:layout_width="50dp"
@@ -24,6 +26,7 @@
         </ImageView>
         <ProgressBar
             android:id="@+id/grid_spinner"
+            android:importantForAccessibility="no"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="28dp"
             android:layout_width="50dp"
@@ -33,6 +36,7 @@
     </RelativeLayout>
     <TextView
         android:id="@+id/grid_text"
+        android:importantForAccessibility="no"
         android:layout_width="125dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/grid_image_layout"

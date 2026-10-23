@@ -23,6 +23,9 @@ public class ConnectionContext {
 
     // This is the sessionUrl0 tag from /resume and /launch
     public String rtspSessionUrl;
+
+    // Whether the app was already running and this connection resumed it
+    public boolean resumedExistingSession;
     
     public int negotiatedWidth, negotiatedHeight;
     public boolean negotiatedHdr;

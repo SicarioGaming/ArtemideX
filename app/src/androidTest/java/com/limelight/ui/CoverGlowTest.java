@@ -3,11 +3,13 @@ package com.limelight.ui;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.os.Build;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,7 +69,8 @@ public class CoverGlowTest {
     @Test
     public void aHardwareCoverTintsWithoutCrashing() {
         // Box art is decoded straight to GPU memory, where its pixels can't be read directly
-        // (0.1.0 crashed on the first cover that loaded)
+        // (0.1.0 crashed on the first cover that loaded). GPU bitmaps start with Android 8.
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
         Bitmap soft = Bitmap.createBitmap(120, 160, Bitmap.Config.ARGB_8888);
         soft.eraseColor(Color.rgb(200, 30, 40));
         Bitmap cover = soft.copy(Bitmap.Config.HARDWARE, false);
@@ -137,13 +140,25 @@ public class CoverGlowTest {
             scenario.onActivity(activity -> {
                 LinearLayout pills = activity.findViewById(R.id.settingsSections);
                 assertTrue("only " + pills.getChildCount() + " sections", pills.getChildCount() >= 5);
-                // Plain-language names (the tablet runs in English)
-                assertEquals("Stream", ((TextView) pills.getChildAt(0)).getText().toString());
-                assertEquals("Sound & vibration", ((TextView) pills.getChildAt(1)).getText().toString());
+                // Plain-language names in English; other languages keep their section headings
+                // (the device matrix runs this in Hebrew too)
+                @SuppressWarnings("deprecation")
+                boolean english = "en".equals(activity.getResources().getConfiguration().locale.getLanguage());
+                assertEquals(activity.getString(english ? R.string.cg_section_stream : R.string.category_basic_settings),
+                        ((TextView) pills.getChildAt(0)).getText().toString());
+                assertEquals(activity.getString(english ? R.string.cg_section_sound : R.string.category_audio_settings),
+                        ((TextView) pills.getChildAt(1)).getText().toString());
 
-                // The "Predicted impact" panel fits on the tablet's wide screen
-                assertEquals(View.VISIBLE, activity.findViewById(R.id.feelPanel).getVisibility());
-                assertTrue(((TextView) activity.findViewById(R.id.feelText)).getText().length() > 0);
+                // The "Predicted impact" panel shows when the screen is wide enough for it (a
+                // tablet held sideways), and its whole column goes on narrower ones (the tablet
+                // held upright), so the settings keep their room
+                if (activity.getResources().getConfiguration().screenWidthDp >= CoverGlowSettings.FEEL_PANEL_MIN_WIDTH_DP) {
+                    assertEquals(View.VISIBLE, activity.findViewById(R.id.feelPanel).getVisibility());
+                    assertTrue(((TextView) activity.findViewById(R.id.feelText)).getText().length() > 0);
+                }
+                else {
+                    assertEquals(View.GONE, activity.findViewById(R.id.feelColumn).getVisibility());
+                }
                 assertTrue(pills.getChildAt(0).isSelected());
 
                 // Tapping a section moves the highlight to it
@@ -298,7 +313,9 @@ public class CoverGlowTest {
                     android.view.KeyEvent.KEYCODE_DPAD_DOWN));
             save(root, target, "menu_overlay.png");
 
-            // Every row of tools is laid out and inside the visible part of the grid
+            // Every row of tools is laid out. Where they don't all fit (a phone, a Fold's cover
+            // screen), the grid fades out at the bottom to show there's more, and scrolls far
+            // enough to show the last row whole.
             android.widget.ScrollView grid = findFirst(menu, android.widget.ScrollView.class);
             ViewGroup rows = (ViewGroup) grid.getChildAt(0);
             StringBuilder layout = new StringBuilder("scroll h=" + grid.getHeight() + " content h=" + rows.getHeight() + ";");
@@ -309,7 +326,16 @@ public class CoverGlowTest {
                         .append(" first h=").append(((ViewGroup) row).getChildAt(0).getHeight()).append(';');
             }
             View last = rows.getChildAt(rows.getChildCount() - 1);
-            assertTrue(layout.toString(), last.getHeight() > 0 && last.getBottom() <= grid.getHeight());
+            assertTrue(layout.toString(), last.getHeight() > 0);
+            if (rows.getHeight() <= grid.getHeight()) {
+                assertTrue(layout.toString(), last.getBottom() <= grid.getHeight());
+            }
+            else {
+                assertTrue("nothing shows there are more tools; " + layout, grid.getVerticalFadingEdgeLength() > 0);
+                grid.scrollTo(0, rows.getHeight());
+                assertTrue("can't scroll to the last row; " + layout, last.getTop() >= grid.getScrollY()
+                        && last.getBottom() <= grid.getScrollY() + grid.getHeight());
+            }
         });
     }
 
@@ -350,8 +376,11 @@ public class CoverGlowTest {
         assertTrue(CoverGlowSettings.creditFor("checkbox_async_decode").contains("derflacco"));
         assertTrue(CoverGlowSettings.creditFor("list_audio_haptics").contains("Moonlight V+"));
         assertTrue(CoverGlowSettings.creditFor("checkbox_custom_vulkan_driver").contains("NoCrypt"));
+        // Moonlight's own resolution and frame rate settings take any value, from Moonlight X
+        assertTrue(CoverGlowSettings.creditFor("list_resolution").contains("Moonlight X"));
+        assertTrue(CoverGlowSettings.creditFor("list_fps").contains("MoreOrLessSoftware"));
         // Moonlight's own and Starwire's new settings have no credit line
-        assertEquals(null, CoverGlowSettings.creditFor("list_resolution"));
+        assertEquals(null, CoverGlowSettings.creditFor("seekbar_bitrate_kbps"));
         assertEquals(null, CoverGlowSettings.creditFor("hide_cursor_mode"));
     }
 

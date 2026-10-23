@@ -1,5 +1,6 @@
 package com.limelight.binding.audio;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
@@ -252,20 +253,18 @@ public class MicrophoneCaptureManager {
                 samplesRead = record.read(readBuffer, 0, readBuffer.length);
             }
 
+            readErrors = readErrorsAfter(samplesRead, readErrors);
+            if (readErrors < 0) {
+                LimeLog.warning("Microphone stopped after repeated read errors");
+                break;
+            }
             if (samplesRead < 0) {
-                // The recorder failed (another app took the mic, or the device went away). Errors
-                // come back at once, so wait between tries, and give up after about a second.
-                if (++readErrors == 1) {
+                if (readErrors == 1) {
                     LimeLog.warning("Microphone read failed: " + samplesRead);
                 }
-                if (readErrors >= 50) {
-                    LimeLog.warning("Microphone stopped after repeated read errors");
-                    break;
-                }
-                SystemClock.sleep(20);
+                SystemClock.sleep(READ_ERROR_WAIT_MS);
                 continue;
             }
-            readErrors = 0;
             if (samplesRead == 0) {
                 continue;
             }
@@ -296,6 +295,21 @@ public class MicrophoneCaptureManager {
                 dispatchStatus(currentStatus, nextLevel, nextSignalDetected);
             }
         }
+    }
+
+    // When the recorder fails (another app took the mic, or the device went away), errors come
+    // back at once. So the capture loop waits between tries and gives up after about a second.
+    static final int READ_ERROR_WAIT_MS = 20;
+    static final int READ_ERROR_LIMIT = 50;
+
+    // Read errors in a row after a read that returned samplesRead, or -1 once the capture loop
+    // should give up (pure, so the JVM tests can check it)
+    static int readErrorsAfter(int samplesRead, int errorsBefore) {
+        if (samplesRead >= 0) {
+            return 0;
+        }
+        int errors = errorsBefore + 1;
+        return errors >= READ_ERROR_LIMIT ? -1 : errors;
     }
 
     private CaptureConfig createCaptureConfig(int preferredDeviceId) {
@@ -406,6 +420,8 @@ public class MicrophoneCaptureManager {
         }
     }
 
+    // startCapture() checks RECORD_AUDIO before it gets here, which lint can't follow
+    @SuppressLint("MissingPermission")
     private AudioRecord buildAudioRecord(int audioSource, int bufferSizeBytes) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             return new AudioRecord.Builder()
@@ -499,6 +515,10 @@ public class MicrophoneCaptureManager {
     }
 
     private static String describeDevice(AudioDeviceInfo deviceInfo) {
+        // Callers only have devices on Android 6 and up; this says so for lint
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return "Input device";
+        }
         switch (deviceInfo.getType()) {
             case AudioDeviceInfo.TYPE_BUILTIN_MIC:
                 return "Built-in microphone";

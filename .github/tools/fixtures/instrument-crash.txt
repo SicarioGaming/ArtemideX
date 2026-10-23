@@ -1,0 +1,35 @@
+INSTRUMENTATION_STATUS: class=com.limelight.smoke.SmokeTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stream=
+INSTRUMENTATION_STATUS: test=screensSurviveRotationAndBeingRecreated
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.limelight.smoke.SmokeTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=5
+INSTRUMENTATION_STATUS: stack=java.lang.NullPointerException: Attempt to invoke virtual method 'void android.view.WheelDiscObserver.stop(android.app.Activity)' on a null object reference
+	at com.zte.gameassist.app.GameActivityStub.unregisterObserver(GameActivityStub.java:139)
+	at com.zte.gameassist.app.GameActivityStub.-$$Nest$munregisterObserver(GameActivityStub.java:0)
+	at com.zte.gameassist.app.GameActivityStub$WorkHandler.handleMessage(GameActivityStub.java:60)
+	at android.os.Handler.dispatchMessage(Handler.java:110)
+	at android.os.Looper.loopOnce(Looper.java:282)
+	at android.os.Looper.loop(Looper.java:397)
+	at android.os.HandlerThread.run(HandlerThread.java:85)
+
+INSTRUMENTATION_STATUS: stream=
+Process crashed while executing screensSurviveRotationAndBeingRecreated(com.limelight.smoke.SmokeTest):
+java.lang.NullPointerException: Attempt to invoke virtual method 'void android.view.WheelDiscObserver.stop(android.app.Activity)' on a null object reference
+	at com.zte.gameassist.app.GameActivityStub.unregisterObserver(GameActivityStub.java:139)
+	at com.zte.gameassist.app.GameActivityStub.-$$Nest$munregisterObserver(GameActivityStub.java:0)
+	at com.zte.gameassist.app.GameActivityStub$WorkHandler.handleMessage(GameActivityStub.java:60)
+	at android.os.Handler.dispatchMessage(Handler.java:110)
+	at android.os.Looper.loopOnce(Looper.java:282)
+	at android.os.Looper.loop(Looper.java:397)
+	at android.os.HandlerThread.run(HandlerThread.java:85)
+
+INSTRUMENTATION_STATUS: test=screensSurviveRotationAndBeingRecreated
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: shortMsg=Process crashed.
+INSTRUMENTATION_CODE: 0

@@ -59,10 +59,16 @@ public class ScreenWidthTest {
         return addTestPc(APP_LIST);
     }
 
-    // Enough games to fill a few rows on any screen
-    private static String longAppList() {
+    // Enough games for about three screens, so the header can scroll away on any screen (30 weren't
+    // enough on a 1280x800 dp tablet). Sized for the smallest tiles (100x133 dp), with a column
+    // and a row to spare.
+    private String longAppList() {
+        android.content.res.Configuration config = target.getResources().getConfiguration();
+        int columns = config.screenWidthDp / 100 + 1;
+        int rows = config.screenHeightDp * 3 / 133 + 1;
+        int games = Math.max(30, columns * rows);
         StringBuilder list = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?><root status_code=\"200\">");
-        for (int i = 1; i <= 30; i++) {
+        for (int i = 1; i <= games; i++) {
             list.append("<App><IsHdrSupported>0</IsHdrSupported><AppTitle>Game ").append(i)
                     .append("</AppTitle><ID>").append(500000 + i).append("</ID></App>");
         }

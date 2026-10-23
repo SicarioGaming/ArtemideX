@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Floating menu button (from Artemide): tap to open the overlay menu, drag to move. The spot
+     here is where it starts until it's dragged (FloatingButton remembers the spot after that).
+     In a file of its own so the tests lay out the same button as the stream screen. -->
+<ImageButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/floatingMenuButton"
+    android:layout_width="40dp"
+    android:layout_height="40dp"
+    android:layout_gravity="top|start"
+    android:layout_marginTop="24dp"
+    android:layout_marginStart="16dp"
+    android:background="@drawable/floating_menu_button"
+    android:contentDescription="@string/menu_button"
+    android:src="@drawable/ic_menu"
+    android:padding="10dp"
+    android:alpha="0.55"
+    android:visibility="gone"
+    android:elevation="9999dp" />

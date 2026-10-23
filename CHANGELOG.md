@@ -2,21 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Starwire adopted
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html) in 0.2.1, so every release after it is
+numbered by SemVer's rules; 0.2.1 keeps the number it was announced with.
+[RELEASING.md](docs/dev/RELEASING.md#version-numbers) explains what that means for an app, and the
+few places Starwire can't follow it exactly.
 
 The release pages on [GitHub](https://github.com/SicarioGaming/Starwire/releases) have the install
 steps and the checksums for each version.
 
 ## [Unreleased]
 
-These changes are planned for 0.2.1. The repo changes that followed u/rambo3349's code review are
-already live on GitHub.
+## [0.2.1] - 2026-10-23
+
+The repo changes that followed u/rambo3349's code review went live on GitHub before this release.
 
 ### Added
 
 - **Custom resolutions and frame rates,** in the main settings and per game. These come from
   Moonlight X, credited to them.
+- **A jitter buffer per game,** also from Moonlight X. It's used with host frame timing pacing.
+- **The floating menu button stays where you put it:** Starwire remembers its spot for each
+  orientation.
 - **An about page** with credits and the full open-source licences.
 - **Prebuilt libraries:** every one is traced back to its source and rebuilt byte for byte by
   GitHub ([PROVENANCE.md](docs/PROVENANCE.md)).
@@ -25,13 +32,13 @@ already live on GitHub.
 - **Security and contributing:** a [SECURITY.md](SECURITY.md) with private vulnerability
   reporting, and a [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Checksums** are on the release pages, so you can check your download.
-- **Tests:** 273 unit tests (from none), about 135 on-device tests and 32 screenshot tests. The
+- **Tests:** 314 unit tests (from none), 32 of them screenshot tests, and 138 on-device tests. The
   same tests also run on 5 virtual devices, including a Fold shape folded, half-open and unfolded
   (thank you to u/MickeyBronson). Checks run automatically on every change.
 - **This changelog,** and rules for commit messages
   ([Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)) and branch names
   ([Conventional Branch](https://conventionalbranch.org)), checked on every pull request.
-  CONTRIBUTING.md explains them.
+  CONTRIBUTING.md explains them. Thank you to u/stiky21 for suggesting these.
 
 ### Changed
 
@@ -39,11 +46,29 @@ already live on GitHub.
   median delay dropped from about 114 to 98 ms, with far fewer dropouts.
 - **The mic setup window** fits small screens, like a 1280x720 stream.
 - **The custom driver option** is marked experimental, with a plain warning before you turn it on.
+  Starwire now checks each driver file before it loads it, so a driver imported in 0.2.0 has to
+  be chosen again.
 - **Clearer about what's experimental:** the custom Turnip driver is now described as an
   experimental option, not listed with the speed features.
+- **Send my microphone to** has a third choice, **Not encrypted**, for Voicemeeter and other VBAN
+  apps. If you used 0.2.0's default, Starwire switches you to the encrypted receiver once.
+- The app says Starwire, not Moonlight, where it talks about itself, like the network test and the
+  decoder crash message. In Czech, Hungarian, Turkish and Tamil those few lines show in English
+  for now.
 - **Real commit history:** every commit now has its own description, and the repo shares history
   with Moonlight X again, so upstream updates can be merged properly.
 - Various other small cleanups to the GitHub repo and changes to wording for transparency.
+- **Version numbers** follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from now
+  on, also at u/stiky21's suggestion: fixes raise the last number, new features or anything that
+  needs care when you update raise the middle one. Earlier releases keep their numbers and links.
+  [RELEASING.md](docs/dev/RELEASING.md#version-numbers) has the details, including why this
+  release is still 0.2.1.
+
+### Removed
+
+- The Unlock FPS setting. The Custom frame rate takes its place.
+- The 360p and 480p presets (you can still enter them as custom resolutions), and the native
+  resolution and frame rate warnings.
 
 ### Fixed
 
@@ -56,12 +81,19 @@ already live on GitHub.
 - On Android 5 to 7, the background animations now stop when animations are turned off (saves
   battery).
 - The in-stream menu and the games screen fit small screens better.
+- Each section button at the top of Settings scrolls all the way to its heading. On-screen
+  controls, and now and then About, used to stop short.
+- TalkBack can read the game covers and PC cards, and the Play, Resume and Quit buttons say which
+  game they're for.
 
 ### Security
 
 - **Encrypted microphone:** the mic is now encrypted, and only devices you've paired can send
   audio to your PC. Being on the same network is no longer enough, and encryption no longer
   requires Tailscale or a similar VPN.
+- **Updating from 0.2.0** needs both sides: update the app, run the new setup on the PC, then pair
+  once. Until both are updated the mic doesn't work, because the new receiver refuses 0.2.0's
+  unencrypted audio and a 0.2.0 receiver doesn't understand the new app.
 
 Known issues: right-to-left languages (Hebrew, Persian) show translated text, but the layout
 doesn't mirror yet. On very narrow screens, the Quit and Disconnect buttons can cut their labels
@@ -143,7 +175,7 @@ same app renamed; it installs separately, so you can uninstall Voidlink afterwar
 
 ### Added
 
-- The best features of the Android Moonlight clients in one app: Moonlight X's fast video, the
+- The best features of the Android Moonlight clients in one app: Moonlight X's video pipeline, the
   touchscreen tools from Artemide and Artemis, and favourites from Moonlight V+, Moonlit Artemis
   and Moonlight X Turnip. It installs next to any Moonlight you already have.
 - **A new look:** the screens take their colour from the game you pick, over a starfield. Apps
@@ -156,7 +188,8 @@ same app renamed; it installs separately, so you can uninstall Voidlink afterwar
 - **Extras:** monitor switching, pinch to zoom anytime, changing the bitrate mid-stream, audio
   haptics and shortcuts imported from a file.
 
-[Unreleased]: https://github.com/SicarioGaming/Starwire/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/SicarioGaming/Starwire/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/SicarioGaming/Starwire/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/SicarioGaming/Starwire/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/SicarioGaming/Starwire/compare/v0.1.0...v0.1.2
 [0.1.0]: https://github.com/SicarioGaming/Starwire/releases/tag/v0.1.0

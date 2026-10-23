@@ -2,7 +2,6 @@ package com.limelight.preferences;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -28,26 +27,11 @@ import org.junit.runner.RunWith;
 /**
  * From Reddit: say what each setting does to latency and performance. Settings that change speed,
  * smoothness or picture quality show an "Impact:" line under their description, and the rows
- * still work as before.
+ * still work as before. Which settings have a line is a JVM test (SettingsImpactKeysTest).
  */
 @RunWith(AndroidJUnit4.class)
 public class SettingsImpactTest {
     private final Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
-
-    @Test
-    public void streamSettingsHaveImpactLines() {
-        for (String key : new String[] {"list_resolution", "list_fps", "seekbar_bitrate_kbps", "frame_pacing",
-                "vsync_mode", "checkbox_async_decode", "checkbox_async_lfr", "video_format", "video_renderer"}) {
-            assertNotEquals(key + " has no impact line", 0, SettingsImpact.impactFor(key));
-        }
-        // Per-game settings get the same lines as the main ones
-        assertEquals(SettingsImpact.impactFor("frame_pacing"), SettingsImpact.impactFor("list_app_frame_pacing"));
-        assertEquals(SettingsImpact.impactFor("vsync_mode"), SettingsImpact.impactFor("game_vsync_mode"));
-        assertEquals(SettingsImpact.impactFor("list_fps"), SettingsImpact.impactFor("text_app_fps"));
-        // Settings with nothing to say about speed get no line
-        assertEquals(0, SettingsImpact.impactFor("list_languages"));
-        assertEquals(0, SettingsImpact.impactFor(null));
-    }
 
     @Test
     public void impactLineFollowsTheDescription() {

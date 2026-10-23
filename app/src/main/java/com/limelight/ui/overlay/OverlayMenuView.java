@@ -1,6 +1,7 @@
 package com.limelight.ui.overlay;
 
 import android.content.Context;
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.Drawable;
@@ -36,10 +37,16 @@ import java.util.List;
 public class OverlayMenuView extends LinearLayout {
     private static final int BUTTON_SPACING_DP = 8;
     private static final int SHEET_WIDTH_DP = 440;
-    // Five across, so the built-in tools fit on a tablet without scrolling
+    // At most five across, so the built-in tools fit on a tablet without scrolling
     private static final int MAIN_COLUMNS = 5;
+    // Fewer, wider tiles where five would break a label mid-word (a narrow screen, large text),
+    // down to this many
+    private static final int MIN_COLUMNS = 2;
     // Shortcut and monitor names are longer, so their pages use wider tiles
     private static final int PAGE_COLUMNS = 2;
+    // How far the grid fades out where it has more to scroll to. A small handheld's grid still
+    // has room for a whole row between a fade at each end.
+    private static final int GRID_FADE_DP = 32;
     private static final float ANALOG_STICK_THRESHOLD = 0.5f;
     private static final long ANALOG_NAV_THROTTLE_MS = 200;
 
@@ -66,6 +73,8 @@ public class OverlayMenuView extends LinearLayout {
         void onShowServerCommands();
         void onToggleFullKeyboard();
         void onChangeBitrate();
+        // Sends the PC cursor toggle once, for a cursor that ended up the wrong way round
+        void onFixHostCursor();
 
         // Whether a toggle tile (TOGGLE_*) is on, for its switch
         boolean isToggleOn(int toggle);
@@ -154,6 +163,7 @@ public class OverlayMenuView extends LinearLayout {
     private List<OverlayMenuButton> barButtons;
     private List<Integer> barActions;
     private List<OverlayMenuButton> gridButtons;
+    private List<String> gridLabels;
     private List<Integer> gridActions;
     private List<Integer> gridToggles;
 
@@ -164,6 +174,7 @@ public class OverlayMenuView extends LinearLayout {
 
     private MenuActionListener actionListener;
     private CustomCommandsManager commandsManager;
+    private boolean fixHostCursorShown;
     private List<ImportedShortcuts.Shortcut> importedShortcuts = new ArrayList<>();
 
     private static final int ACTION_DISCONNECT = 0;
@@ -188,6 +199,7 @@ public class OverlayMenuView extends LinearLayout {
     private static final int ACTION_FULL_KEYBOARD = 19;
     private static final int ACTION_MONITORS = 20;
     private static final int ACTION_BITRATE = 21;
+    private static final int ACTION_FIX_HOST_CURSOR = 22;
     private static final int ACTION_IMPORTED_BASE = 400;
     private static final int ACTION_MONITOR_BASE = 300;
     private static final int ACTION_CUSTOM_BASE = 100;
@@ -241,6 +253,8 @@ public class OverlayMenuView extends LinearLayout {
         coverSwatch = new ImageView(context);
         coverSwatch.setScaleType(ImageView.ScaleType.CENTER_CROP);
         coverSwatch.setClipToOutline(true);
+        // The game's name sits right beside it, so TalkBack skips the picture
+        coverSwatch.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
         header.addView(coverSwatch, new LinearLayout.LayoutParams(dp(42), dp(56)));
 
         LinearLayout texts = new LinearLayout(context);
@@ -263,9 +277,13 @@ public class OverlayMenuView extends LinearLayout {
         header.addView(texts, textParams);
         addView(header, new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        // The tools grid scrolls when it doesn't fit
+        // The tools grid scrolls when it doesn't fit (on a phone, a Fold's cover screen, or with
+        // custom commands). It fades out at an edge with more tools beyond, so the cut-off row
+        // reads as more to scroll to.
         gridScroll = new ScrollView(context);
         gridScroll.setVerticalScrollBarEnabled(false);
+        gridScroll.setVerticalFadingEdgeEnabled(true);
+        gridScroll.setFadingEdgeLength(dp(GRID_FADE_DP));
         gridScroll.setFocusable(false);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             gridScroll.setDefaultFocusHighlightEnabled(false);
@@ -285,6 +303,7 @@ public class OverlayMenuView extends LinearLayout {
         barButtons = new ArrayList<>();
         barActions = new ArrayList<>();
         gridButtons = new ArrayList<>();
+        gridLabels = new ArrayList<>();
         gridActions = new ArrayList<>();
         gridToggles = new ArrayList<>();
 
@@ -318,6 +337,11 @@ public class OverlayMenuView extends LinearLayout {
         coverSwatch.setImageDrawable(cover);
     }
 
+    /** Whether the main page offers Fix PC Cursor; it shows from the next time the menu opens. */
+    public void setFixHostCursorShown(boolean shown) {
+        fixHostCursorShown = shown;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         // A sheet, not the whole screen: at most SHEET_WIDTH_DP wide
@@ -340,6 +364,7 @@ public class OverlayMenuView extends LinearLayout {
         barButtons.clear();
         barActions.clear();
         gridButtons.clear();
+        gridLabels.clear();
         gridActions.clear();
         gridToggles.clear();
 
@@ -366,7 +391,6 @@ public class OverlayMenuView extends LinearLayout {
         } else {
             // The most used first: both keyboards, mouse, stats and the Guide button, then
             // Artemide's actions and custom commands
-            columns = MAIN_COLUMNS;
             addTile(R.drawable.ic_overlay_keyboard_toggle,
                 getContext().getString(R.string.overlay_menu_keyboard), ACTION_SHOW_KEYBOARD);
             addTile(R.drawable.ic_overlay_keyboard,
@@ -385,6 +409,10 @@ public class OverlayMenuView extends LinearLayout {
                 getContext().getString(R.string.overlay_menu_bitrate), ACTION_BITRATE);
             addTile(R.drawable.ic_overlay_mouse,
                 getContext().getString(R.string.overlay_menu_mouse_mode), ACTION_MOUSE_MODE);
+            if (fixHostCursorShown) {
+                addTile(R.drawable.ic_overlay_mouse,
+                    getContext().getString(R.string.overlay_menu_fix_host_cursor), ACTION_FIX_HOST_CURSOR);
+            }
             addTile(R.drawable.ic_overlay_maximize,
                 getContext().getString(R.string.overlay_menu_pan_zoom), ACTION_PAN_ZOOM, TOGGLE_PAN_ZOOM);
             addTile(R.drawable.ic_overlay_settings,
@@ -409,8 +437,9 @@ public class OverlayMenuView extends LinearLayout {
                 CustomCommand command = customCommands.get(i);
                 addTile(command.getIconResId(), command.getName(), ACTION_CUSTOM_BASE + i);
             }
+            columns = mainColumns();
         }
-        finishGridRow();
+        arrangeGrid();
 
         // The bar: back to the game, then the two ways out. On short screens (a phone held
         // sideways for a stream) all three share one row, leaving room for more tools.
@@ -448,33 +477,17 @@ public class OverlayMenuView extends LinearLayout {
         barContainer.requestLayout();
     }
 
-    private LinearLayout currentRow;
-
     private void addTile(int iconResId, String label, int action) {
         addTile(iconResId, label, action, TOGGLE_NONE);
     }
 
+    // Makes the tile; arrangeGrid puts the tiles into rows once they're all made
     private void addTile(int iconResId, String label, int action, int toggle) {
-        if (currentRow == null || currentRow.getChildCount() >= columns) {
-            currentRow = new LinearLayout(getContext());
-            currentRow.setOrientation(LinearLayout.HORIZONTAL);
-            LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
-                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
-            if (gridContainer.getChildCount() > 0) {
-                rowParams.topMargin = dp(BUTTON_SPACING_DP);
-            }
-            gridContainer.addView(currentRow, rowParams);
-        }
-
         OverlayMenuButton button = OverlayMenuButton.create(getContext(), iconResId, label,
             OverlayMenuButton.STYLE_TILE);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1);
-        if (currentRow.getChildCount() > 0) {
-            params.setMarginStart(dp(BUTTON_SPACING_DP));
-        }
-        currentRow.addView(button, params);
 
         gridButtons.add(button);
+        gridLabels.add(label != null ? label : "");
         gridActions.add(action);
         gridToggles.add(toggle);
         if (toggle != TOGGLE_NONE) {
@@ -492,18 +505,53 @@ public class OverlayMenuView extends LinearLayout {
         });
     }
 
-    // Keeps the last row's tiles the same width as the others
-    private void finishGridRow() {
-        if (currentRow != null) {
-            while (currentRow.getChildCount() < columns) {
+    // Five across where every label fits whole, else fewer. The sheet's width comes from the
+    // screen, as in onMeasure, so it's known before the sheet is first laid out.
+    private int mainColumns() {
+        int margins = 0;
+        if (getLayoutParams() instanceof MarginLayoutParams) {
+            MarginLayoutParams params = (MarginLayoutParams) getLayoutParams();
+            margins = params.leftMargin + params.rightMargin;
+        }
+        float density = getResources().getDisplayMetrics().density;
+        int screen = (int) (getResources().getConfiguration().screenWidthDp * density);
+        int sheet = Math.min(dp(SHEET_WIDTH_DP), screen - margins);
+        Paint paint = OverlayMenuButton.tileLabelPaint(getContext());
+        return TileColumns.fit(gridLabels, paint::measureText, sheet - getPaddingLeft() - getPaddingRight(),
+            dp(BUTTON_SPACING_DP), dp(OverlayMenuButton.TILE_SIDE_PADDING_DP),
+            OverlayMenuButton.TILE_LABEL_LINES, MAIN_COLUMNS, MIN_COLUMNS);
+    }
+
+    // Puts the tiles into rows of `columns`, and keeps the last row's tiles the same width as
+    // the others
+    private void arrangeGrid() {
+        LinearLayout row = null;
+        for (OverlayMenuButton button : gridButtons) {
+            if (row == null || row.getChildCount() >= columns) {
+                row = new LinearLayout(getContext());
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(
+                    LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+                if (gridContainer.getChildCount() > 0) {
+                    rowParams.topMargin = dp(BUTTON_SPACING_DP);
+                }
+                gridContainer.addView(row, rowParams);
+            }
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1);
+            if (row.getChildCount() > 0) {
+                params.setMarginStart(dp(BUTTON_SPACING_DP));
+            }
+            row.addView(button, params);
+        }
+        if (row != null) {
+            while (row.getChildCount() < columns) {
                 // MATCH_PARENT like the tiles: a fixed-height filler would make the row measure
                 // itself from the fillers and collapse to nothing
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1);
                 params.setMarginStart(dp(BUTTON_SPACING_DP));
-                currentRow.addView(new Space(getContext()), params);
+                row.addView(new Space(getContext()), params);
             }
         }
-        currentRow = null;
     }
 
     private void addBarButton(int style, int iconResId, String label, int action,
@@ -769,14 +817,31 @@ public class OverlayMenuView extends LinearLayout {
         // Focus doesn't scroll in touch mode (after the screen was touched), so bring the tile's
         // row into view explicitly
         View row = (View) tile.getParent();
-        int top = row.getTop(), bottom = row.getBottom();
-        int visibleTop = gridScroll.getScrollY(), visibleBottom = visibleTop + gridScroll.getHeight();
-        if (bottom > visibleBottom) {
-            gridScroll.smoothScrollTo(0, bottom - gridScroll.getHeight());
+        int scrollY = scrollToShow(row.getTop(), row.getBottom(), gridScroll.getScrollY(),
+            gridScroll.getHeight(), gridContainer.getHeight(), gridScroll.getVerticalFadingEdgeLength());
+        if (scrollY != gridScroll.getScrollY()) {
+            gridScroll.smoothScrollTo(0, scrollY);
         }
-        else if (top < visibleTop) {
-            gridScroll.smoothScrollTo(0, top);
+    }
+
+    // Where the grid scrolls to show the row from top to bottom: clear of the fade at an edge
+    // with more tools beyond, as ScrollView keeps a focused view clear of it. scrollY when the
+    // row already shows that way.
+    static int scrollToShow(int top, int bottom, int scrollY, int height, int contentHeight, int fade) {
+        if (top > 0) {
+            top -= fade;
         }
+        if (bottom < contentHeight) {
+            bottom += fade;
+        }
+        int target = scrollY;
+        if (bottom > scrollY + height) {
+            target = bottom - height;
+        }
+        else if (top < scrollY) {
+            target = top;
+        }
+        return Math.max(0, Math.min(target, contentHeight - height));
     }
 
     private void clearBarSelection() {
@@ -842,6 +907,9 @@ public class OverlayMenuView extends LinearLayout {
             } else if (action == ACTION_BACK) {
                 switchPage(PAGE_MAIN);
                 return;
+            } else if (action == ACTION_FIX_HOST_CURSOR) {
+                actionListener.onFixHostCursor();
+                shouldCloseMenu = true;
             } else if (action == ACTION_BITRATE) {
                 // The bitrate picker is a dialog; close the menu behind it
                 closeMenu();

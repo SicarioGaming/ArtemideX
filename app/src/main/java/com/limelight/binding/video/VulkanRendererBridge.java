@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.Surface;
 
 import java.io.File;
+import java.util.Locale;
 
 import com.limelight.LimeLog;
 
@@ -23,7 +24,9 @@ public class VulkanRendererBridge {
 
     private static boolean driverConfigured;
     private static String configuredDriverPath;
+    private static String configuredDriverSha256;
     private static String resolvedDriverPath;
+    private static String resolvedDriverSha256;
 
     private long handle;
     private Surface decoderSurface;
@@ -39,23 +42,27 @@ public class VulkanRendererBridge {
      * {@link #isSupported()} or {@link #isPyrowaveSupported()} call, since the loader is opened
      * once per process.
      *
-     * @param driverPath absolute path to the custom driver .so in app-private storage, or null
-     *                   to use the system driver
+     * @param setting the imported driver file (.so, .zip or .adpkg) in Starwire's driver folder,
+     *                or null to use the system driver
+     * @param sha256 the file's SHA-256 recorded when it was imported. A file that no longer
+     *               matches it isn't loaded.
      */
-    public static synchronized void configureCustomDriver(Context context, String setting) {
+    public static synchronized void configureCustomDriver(Context context, String setting, String sha256) {
         if (setting != null && setting.trim().isEmpty()) {
             setting = null;
         }
-        if (driverConfigured && (configuredDriverPath == null ? setting == null
-                : configuredDriverPath.equals(setting))) {
+        if (driverConfigured && same(configuredDriverPath, setting) && same(configuredDriverSha256, sha256)) {
             return;
         }
         driverConfigured = true;
         configuredDriverPath = setting;
+        configuredDriverSha256 = sha256;
 
-        // A .so is used as-is; a .zip/.adpkg is unpacked into app-private storage first
-        String driverPath = CustomVulkanDriver.resolve(context, setting);
+        // Checked first (see CustomVulkanDriver). A .so is used as-is; a .zip/.adpkg is unpacked
+        // into app-private storage.
+        String driverPath = CustomVulkanDriver.resolve(context, setting, sha256);
         resolvedDriverPath = driverPath;
+        resolvedDriverSha256 = driverPath != null ? sha256.trim().toLowerCase(Locale.ROOT) : null;
         String hookLibDir = null;
         String cacheDir = null;
         if (driverPath != null) {
@@ -93,6 +100,15 @@ public class VulkanRendererBridge {
     /** File name of the resolved custom driver, for a status message, or null. */
     public static String getCustomDriverName() {
         return resolvedDriverPath != null ? new File(resolvedDriverPath).getName() : null;
+    }
+
+    /** SHA-256 of the imported driver file that was resolved, or null. */
+    public static String getCustomDriverSha256() {
+        return resolvedDriverSha256;
+    }
+
+    private static boolean same(String a, String b) {
+        return a == null ? b == null : a.equals(b);
     }
 
     /**

@@ -211,7 +211,9 @@ public class PcView extends Activity implements AdapterFragmentCallbacks, QuickL
                 prefs.edit().putBoolean("checkbox_auto_resume_stream", newValue).apply();
                 updateAutoResumeButtonIcon(autoResumeToggleButton);
                 String label = newValue ? "ON" : "OFF";
-                Toast.makeText(this, Html.fromHtml("Auto-resume stream <b>" + label + "</b>", Html.FROM_HTML_MODE_LEGACY), Toast.LENGTH_SHORT).show();
+                // The one-argument fromHtml: the two-argument one doesn't exist before Android 7,
+                // so on Android 5 and 6 this tap would crash (lint's NewApi check catches it)
+                Toast.makeText(this, Html.fromHtml("Auto-resume stream <b>" + label + "</b>"), Toast.LENGTH_SHORT).show();
             });
         }
 

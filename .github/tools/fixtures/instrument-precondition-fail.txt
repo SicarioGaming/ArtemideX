@@ -1,0 +1,44 @@
+INSTRUMENTATION_STATUS: class=com.limelight.devicecheck.MonkeyPreconditionTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stream=
+com.limelight.devicecheck.MonkeyPreconditionTest:
+INSTRUMENTATION_STATUS: test=noSavedPc
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.limelight.devicecheck.MonkeyPreconditionTest
+INSTRUMENTATION_STATUS: current=1
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=1
+INSTRUMENTATION_STATUS: stack=java.lang.AssertionError: PCs the app knows expected:<0> but was:<1>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at com.limelight.devicecheck.MonkeyPreconditionTest.noSavedPc(MonkeyPreconditionTest.java:33)
+
+INSTRUMENTATION_STATUS: stream=
+Error in noSavedPc(com.limelight.devicecheck.MonkeyPreconditionTest):
+java.lang.AssertionError: PCs the app knows expected:<0> but was:<1>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at com.limelight.devicecheck.MonkeyPreconditionTest.noSavedPc(MonkeyPreconditionTest.java:33)
+
+INSTRUMENTATION_STATUS: test=noSavedPc
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_RESULT: stream=
+
+Time: 0.015
+There was 1 failure:
+1) noSavedPc(com.limelight.devicecheck.MonkeyPreconditionTest)
+java.lang.AssertionError: PCs the app knows expected:<0> but was:<1>
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.failNotEquals(Assert.java:835)
+	at org.junit.Assert.assertEquals(Assert.java:647)
+	at com.limelight.devicecheck.MonkeyPreconditionTest.noSavedPc(MonkeyPreconditionTest.java:33)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+
+INSTRUMENTATION_CODE: -1

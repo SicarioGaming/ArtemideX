@@ -31,6 +31,8 @@ public class AsyncDecodeTest {
     private static final int HEIGHT = 240;
     private static final int FRAME_COUNT = 60;
     private static final long TIMEOUT_MS = 5000;
+    // How long LFR's test waits for the decoder to finish: a limit, not a pause
+    private static final long DECODE_WAIT_MS = 30_000;
 
     private static class EncodedFrame {
         final byte[] data;
@@ -226,6 +228,7 @@ public class AsyncDecodeTest {
 
             // Feed everything without taking outputs, so decoded frames pile up
             int sent = 0;
+            int frames = 0;
             List<EncodedFrame> all = stream;
             long deadline = System.currentTimeMillis() + TIMEOUT_MS;
             while (sent < all.size() && System.currentTimeMillis() < deadline) {
@@ -237,14 +240,26 @@ public class AsyncDecodeTest {
                     buf.clear();
                     buf.put(f.data);
                     decoder.queueInputBuffer(in, 0, f.data.length, f.ptsUs, f.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
+                    if ((f.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                        frames++;
+                    }
                 }
             }
-            // Let decoding finish, releasing the frames LFR drops so the decoder never runs out of
-            // output buffers (the renderer thread does this each loop)
-            for (int i = 0; i < 10; i++) {
+            assertEquals("frames fed to the decoder", all.size(), sent);
+            // Let decoding finish: every frame comes out, and all but the waiting one are dropped
+            // by LFR. Release the dropped ones as they come, so the decoder never runs out of
+            // output buffers (the renderer thread does this each loop). An emulator's software
+            // decoder took longer than half a second for 60 frames, so wait for the frames
+            // themselves, as long as it takes up to a generous limit.
+            long decodeDeadline = android.os.SystemClock.uptimeMillis() + DECODE_WAIT_MS;
+            while (releasedByAdapter.get() + adapter.getOutputQueueSize() < frames
+                    && android.os.SystemClock.uptimeMillis() < decodeDeadline) {
                 adapter.drainNoRenderReleaseQueue(decoder, release);
-                Thread.sleep(50);
+                Thread.sleep(20);
             }
+            adapter.drainNoRenderReleaseQueue(decoder, release);
+            assertEquals("frames out of the decoder (dropped plus waiting) after " + DECODE_WAIT_MS + " ms",
+                    frames, releasedByAdapter.get() + adapter.getOutputQueueSize());
 
             // With LFR, at most one frame is waiting, and it's a late one
             assertTrue("Output queue held " + adapter.getOutputQueueSize(), adapter.getOutputQueueSize() <= 1);
@@ -266,9 +281,13 @@ public class AsyncDecodeTest {
         try {
             assertDecodes(decoder, adapter, 0, 20);
 
-            // MediaCodecDecoderRenderer's flush recovery in async mode
+            // MediaCodecDecoderRenderer's flush recovery in async mode. Without resumeAfterFlush(),
+            // a buffer offered just before flush() was handed out after it once, and
+            // getInputBuffer() threw "index 0 is not owned by client" (AsyncCodecFlushTest
+            // plays that order every time).
             adapter.quiesceAndRelease(decoder, release);
             decoder.flush();
+            adapter.resumeAfterFlush();
             decoder.start();
 
             assertDecodes(decoder, adapter, 20, 40);

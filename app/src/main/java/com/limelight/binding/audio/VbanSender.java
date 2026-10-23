@@ -18,8 +18,11 @@ import java.nio.charset.StandardCharsets;
  *
  * VBAN is plain PCM over UDP: a 28-byte header ("VBAN", sample rate, samples per packet, channels,
  * sample format, stream name, frame counter) followed by up to 256 samples. See
- * https://vb-audio.com/Voicemeeter/VBANProtocol_Specifications.pdf. It isn't encrypted, so Starwire
- * only sends it to a PC on the home network (or over a private VPN like Tailscale, which is).
+ * https://vb-audio.com/Voicemeeter/VBANProtocol_Specifications.pdf. It isn't encrypted or
+ * authenticated: anyone on the network can listen to it or send their own. So this is only the
+ * "Not encrypted" option, for Voicemeeter and other VBAN apps, and Starwire only sends it to a PC
+ * on the home network or a private VPN. Starwire's own receiver gets the same packets encrypted
+ * (securemic.SecureVbanSender).
  */
 public final class VbanSender implements MicrophoneSink {
     public static final int DEFAULT_PORT = 6980;
@@ -35,25 +38,24 @@ public final class VbanSender implements MicrophoneSink {
 
     private final InetAddress address;
     private final int port;
-    private final byte[] streamName;
-    private final byte[] buffer = new byte[HEADER_SIZE + SAMPLES_PER_PACKET * 2];
+    final VbanPacketizer packetizer;
     private volatile DatagramSocket socket;
     private volatile boolean closed;
     private DatagramPacket packet;
-    private int samplesInPacket;
-    private int frameNumber;
     private boolean sendFailureLogged;
 
     public VbanSender(InetAddress address, int port, String streamName) {
         this.address = address;
         this.port = port;
-        this.streamName = streamNameBytes(streamName);
+        this.packetizer = new VbanPacketizer(streamName, this::send);
     }
 
     /**
-     * Addresses the unencrypted audio may go to: private home-network ranges, link-local, this
-     * device, and the ranges private VPNs like Tailscale use (100.64.0.0/10 and fc00::/7), whose
-     * traffic is already encrypted.
+     * Addresses the microphone may go to, encrypted or not: private home-network ranges,
+     * link-local, this device, and the ranges private VPNs like Tailscale use (100.64.0.0/10 and
+     * fc00::/7). This is a filter, not a security boundary: everyone on the network has such an
+     * address, a sender's address is easy to fake, and 100.64.0.0/10 is also carrier-grade NAT
+     * space shared with other customers of a mobile or internet provider.
      */
     public static boolean isHomeNetworkAddress(InetAddress address) {
         if (address == null) {
@@ -82,9 +84,8 @@ public final class VbanSender implements MicrophoneSink {
             LimeLog.warning("Couldn't open a socket for VBAN: " + e.getMessage());
             return R.string.microphone_vban_failed;
         }
-        packet = new DatagramPacket(buffer, buffer.length, address, port);
-        samplesInPacket = 0;
-        frameNumber = 0;
+        packet = new DatagramPacket(new byte[0], 0, address, port);
+        packetizer.reset();
         sendFailureLogged = false;
         LimeLog.info("Sending the microphone to VBAN receiver " + address.getHostAddress() + ":" + port);
         return 0;
@@ -95,24 +96,15 @@ public final class VbanSender implements MicrophoneSink {
         if (socket == null || closed) {
             return;
         }
-        // Fill 256-sample packets, little-endian, and send each one as it fills
-        for (int i = 0; i < samples; i++) {
-            int at = HEADER_SIZE + samplesInPacket * 2;
-            buffer[at] = (byte) pcm[i];
-            buffer[at + 1] = (byte) (pcm[i] >> 8);
-            if (++samplesInPacket == SAMPLES_PER_PACKET) {
-                send();
-                samplesInPacket = 0;
-            }
-        }
+        packetizer.write(pcm, samples);
     }
 
-    private void send() {
+    private void send(byte[] buffer, int length) {
         DatagramSocket target = socket;
         if (target == null || closed) {
             return;
         }
-        writeHeader(buffer, SAMPLES_PER_PACKET, frameNumber++, streamName);
+        packet.setData(buffer, 0, length);
         try {
             target.send(packet);
         }

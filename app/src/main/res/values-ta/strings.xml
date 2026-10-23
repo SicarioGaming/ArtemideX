@@ -29,11 +29,7 @@
     <string name="pcview_menu_test_network">பிணைய இணைப்பை சோதிக்கவும்</string>
     <string name="pcview_menu_eol">என்விடியா கேம்ச்ட்ரீம் சேவையின் இறுதி</string>
     <string name="nettest_title_waiting">பிணைய இணைப்பை சோதித்தல்</string>
-    <string name="nettest_text_waiting">தேவையான துறைமுகங்கள் தடுக்கப்பட்டுள்ளதா என்பதை தீர்மானிக்க மூன்லைட் உங்கள் பிணைய இணைப்பை சோதிக்கிறது.\n\n இதற்கு சில வினாடிகள் ஆகலாம்…</string>
-    <string name="nettest_text_success">உங்கள் பிணையம் நிலவொளியைத் தடுப்பதாகத் தெரியவில்லை. இணைப்பதில் உங்களுக்கு இன்னும் சிக்கல் இருந்தால், உங்கள் கணினியின் ஃபயர்வால் அமைப்புகளை சரிபார்க்கவும்.\n\n நீங்கள் இணையத்தில் ச்ட்ரீம் செய்ய முயற்சிக்கிறீர்கள் என்றால், உங்கள் கணினியில் மூன்லைட் இணைய ஓச்டிங் கருவியை நிறுவி, உங்கள் கணினியின் இணைய இணைப்பை சரிபார்க்க சேர்க்கப்பட்ட இணைய ச்ட்ரீமிங் சோதனையாளரை இயக்கவும்.</string>
     <string name="nettest_text_inconclusive">பிணையம் சோதனையை செய்ய முடியவில்லை, ஏனெனில் மூன்லைட்டின் இணைப்பு சோதனை சேவையகங்கள் எதுவும் அடையப்படவில்லை. உங்கள் இணைய இணைப்பைச் சரிபார்க்கவும் அல்லது பின்னர் மீண்டும் முயற்சிக்கவும்.</string>
-    <string name="nettest_text_failure">உங்கள் சாதனத்தின் தற்போதைய பிணைய இணைப்பு நிலவொளியைத் தடுப்பதாகத் தெரிகிறது. இந்த பிணையத்துடன் இணைக்கப்படும்போது இணையத்தில் ச்ட்ரீமிங் வேலை செய்யாது.\n\n பின்வரும் பிணைய துறைமுகங்கள் தடுக்கப்பட்டன:\n</string>
-    <string name="nettest_text_blocked">உங்கள் சாதனத்தின் தற்போதைய பிணைய இணைப்பு நிலவொளியைத் தடுக்கிறது. இந்த பிணையத்துடன் இணைக்கப்படும்போது இணையத்தில் ச்ட்ரீமிங் வேலை செய்யாது.</string>
     <string name="pairing">இணைத்தல்…</string>
     <string name="pair_pc_offline">கணினி ஆஃப்லைனில் உள்ளது</string>
     <string name="pair_pc_ingame">கணினி தற்போது ஒரு விளையாட்டில் உள்ளது. இணைப்பதற்கு முன் நீங்கள் விளையாட்டை மூட வேண்டும்.</string>
@@ -57,7 +53,6 @@
     <string name="unpair_fail">அவிழ்க்கத் தவறிவிட்டது</string>
     <string name="unpair_error">சாதனம் இணைக்கப்படவில்லை</string>
     <string name="error_pc_offline">கணினி ஆஃப்லைனில் உள்ளது</string>
-    <string name="message_decoding_error">இந்த சாதனத்தின் வீடியோ டிகோடருடன் பொருந்தாத தன்மை காரணமாக மூன்லைட் செயலிழந்துள்ளது. செயலிழப்புகள் தொடர்ந்தால் ச்ட்ரீமிங் அமைப்புகளை சரிசெய்ய முயற்சிக்கவும்.</string>
     <string name="title_decoding_reset">வீடியோ அமைப்புகள் மீட்டமைக்கப்படுகின்றன</string>
     <string name="message_decoding_reset">உங்கள் சாதனத்தின் வீடியோ டிகோடர் நீங்கள் தேர்ந்தெடுத்த ச்ட்ரீமிங் அமைப்புகளில் தொடர்ந்து செயலிழந்து வருகிறது. உங்கள் ச்ட்ரீமிங் அமைப்புகள் இயல்புநிலைக்கு மீட்டமைக்கப்பட்டுள்ளன.</string>
     <string name="error_usb_prohibited">உங்கள் சாதன நிர்வாகியால் யூ.எச்.பி அணுகல் தடைசெய்யப்பட்டுள்ளது. உங்கள் நாக்ச் அல்லது எம்.டி.எம் அமைப்புகளை சரிபார்க்கவும்.</string>
@@ -122,8 +117,6 @@
     <string name="category_basic_settings">அடிப்படை அமைப்புகள்</string>
     <string name="title_resolution_list">வீடியோ தீர்மானம்</string>
     <string name="summary_resolution_list">பட தெளிவை மேம்படுத்த அதிகரிக்கவும். குறைந்த இறுதி சாதனங்கள் மற்றும் மெதுவான நெட்வொர்க்குகளில் சிறந்த செயல்திறனுக்கான குறைவு.</string>
-    <string name="title_native_res_dialog">சொந்த தீர்மான எச்சரிக்கை</string>
-    <string name="text_native_res_dialog">நேட்டிவ் தீர்மானம் மற்றும்/அல்லது எஃப்.பி.எச் ச்ட்ரீமிங் சேவையகத்தால் ஆதரிக்கப்படாது. புரவலன் பிசிக்கு கைமுறையாக பொருந்தக்கூடிய தனிப்பயன் காட்சி பயன்முறையை நீங்கள் கட்டமைக்க வேண்டும்.\n\n உங்கள் திரை அமைப்புகளுடன் பொருந்த என்விடியா கண்ட்ரோல் பேனலில் தனிப்பயன் தீர்மானத்தை உருவாக்க நீங்கள் தேர்வுசெய்தால், தயவுசெய்து மானிட்டர் சேதம், பிசி உறுதியற்ற தன்மை மற்றும் பிற சாத்தியமான சிக்கல்களைப் பற்றி என்விடியாவின் எச்சரிக்கையைப் படித்து புரிந்துகொண்டுள்ளீர்கள் என்பதை உறுதிப்படுத்தவும்.\n\n உங்கள் கணினியில் தனிப்பயன் தீர்மானத்தை உருவாக்குவதன் விளைவாக ஏற்படும் எந்தவொரு சிக்கலுக்கும் நாங்கள் பொறுப்பல்ல.\n\n தேவையான காட்சி உள்ளமைவை உங்கள் மானிட்டர் ஆதரிக்கவில்லை. அப்படியானால், நீங்கள் ஒரு மெய்நிகர் மானிட்டரை அமைக்க முயற்சி செய்யலாம். இறுதியாக, உங்கள் சாதனம் அல்லது புரவலன் பிசி ஒரு குறிப்பிட்ட தீர்மானம் அல்லது புதுப்பிப்பு வீதத்தில் ச்ட்ரீமிங்கை ஆதரிக்கவில்லை என்றால், துரதிர்ச்டவசமாக நீங்கள் அதிர்ச்டம் இல்லை.</string>
     <string name="title_fps_list">வீடியோ பிரேம் வீதம்</string>
     <string name="summary_fps_list">மென்மையான வீடியோ ச்ட்ரீமுக்கு அதிகரிப்பு. கீழ் இறுதியில் சாதனங்களில் சிறந்த செயல்திறனைக் குறைத்தல்.</string>
     <string name="title_seekbar_bitrate">வீடியோ பிட்ரேட்</string>
@@ -135,7 +128,6 @@
     <string name="resolution_prefix_native_landscape">(நிலப்பரப்பு)</string>
     <string name="resolution_prefix_native_portrait">(உருவப்படம்)</string>
     <string name="fps_suffix_fps">Fps</string>
-    <string name="title_native_fps_dialog">சொந்த எஃப்.பி.எச் எச்சரிக்கை</string>
     <string name="category_audio_settings">ஆடியோ அமைப்புகள்</string>
     <string name="title_audio_config_list">ஒலி உள்ளமைவை சரவுண்ட் செய்யுங்கள்</string>
     <string name="summary_audio_config_list">வீட்டு-தியேட்டர் அமைப்புகளுக்கு 5.1 அல்லது 7.1 சரவுண்ட் ஒலியை இயக்கவும்</string>
@@ -149,12 +141,10 @@
     <string name="summary_seekbar_vibrate_fallback_strength">உங்கள் சாதனத்தில் அதிர்வு தீவிரத்தை பெருக்கவும் அல்லது குறைக்கவும்</string>
     <string name="suffix_seekbar_vibrate_fallback_strength">%</string>
     <string name="title_seekbar_deadzone">அனலாக் ச்டிக் டெட்சோனை சரிசெய்யவும்</string>
-    <string name="summary_seekbar_deadzone">குறிப்பு: சில விளையாட்டுகள் மூன்லைட் பயன்படுத்த கட்டமைக்கப்பட்டதை விட பெரிய டெட் சோனை செயல்படுத்த முடியும்.</string>
     <string name="suffix_seekbar_deadzone">%</string>
     <string name="title_checkbox_xb1_driver">எக்ச்பாக்ச் 360/ஒரு யூ.எச்.பி கேம்பேட் இயக்கி</string>
     <string name="summary_checkbox_xb1_driver">சொந்த எக்ச்பாக்ச் கட்டுப்படுத்தி உதவி இல்லாத சாதனங்களுக்கான உள்ளமைக்கப்பட்ட யூ.எச்.பி டிரைவரை இயக்குகிறது</string>
     <string name="title_checkbox_usb_bind_all">சொந்த எக்ச்பாக்ச் கேம்பேட் ஆதரவை மேலெழுதவும்</string>
-    <string name="summary_checkbox_usb_bind_all">சொந்த எக்ச்பாக்ச் கட்டுப்படுத்தி உதவி இருந்தாலும், அனைத்து ஆதரிக்கப்பட்ட கேம்பேட்களுக்கும் மூன்லைட்டின் யூ.எச்.பி டிரைவரைப் பயன்படுத்தவும்</string>
     <string name="title_checkbox_mouse_emulation">கேம்பேட் வழியாக சுட்டி எமுலேசன்</string>
     <string name="summary_checkbox_mouse_emulation">தொடக்க பொத்தானை நீண்ட நேரம் அழுத்துவது கேம்பேட்டை சுட்டி பயன்முறையில் மாற்றும்</string>
     <string name="title_checkbox_flip_face_buttons">முகம் பொத்தான்களை புரட்டவும்</string>
@@ -192,7 +182,6 @@
     <string name="title_checkbox_enable_pip">படம்-இன்-பட பார்வையாளர் பயன்முறையை இயக்கவும்</string>
     <string name="summary_checkbox_enable_pip">பல்பணி செய்யும் போது ச்ட்ரீமை பார்க்க அனுமதிக்கிறது (ஆனால் கட்டுப்படுத்தப்படவில்லை)</string>
     <string name="title_language_list">மொழி</string>
-    <string name="summary_language_list">நிலவொளிக்கு பயன்படுத்த மொழி</string>
     <string name="title_checkbox_small_icon_mode">சிறிய பெட்டி கலையைப் பயன்படுத்தவும்</string>
     <string name="summary_checkbox_small_icon_mode">பயன்பாட்டு கட்டத்தில் உள்ள சிறிய பெட்டி கலை மேலும் பயன்பாடுகள் திரையில் காண அனுமதிக்கிறது</string>
     <string name="category_host_settings">புரவலன் அமைப்புகள்</string>
@@ -201,8 +190,6 @@
     <string name="title_checkbox_host_audio">கணினியில் ஆடியோ இயக்கவும்</string>
     <string name="summary_checkbox_host_audio">கணினி மற்றும் இந்த சாதனத்திலிருந்து ஆடியோவை இயக்கவும்</string>
     <string name="category_advanced_settings">மேம்பட்ட அமைப்புகள்</string>
-    <string name="title_unlock_fps">சாத்தியமான அனைத்து பிரேம் விகிதங்களையும் திறக்கவும்</string>
-    <string name="summary_unlock_fps">90 அல்லது 120 FPS இல் ச்ட்ரீமிங் செய்வது உயர்நிலை சாதனங்களில் தாமதத்தைக் குறைக்கலாம், ஆனால் அதை ஆதரிக்க முடியாத சாதனங்களில் பின்னடைவு அல்லது உறுதியற்ற தன்மையை ஏற்படுத்தும்</string>
     <string name="summary_checkbox_reduce_refresh_rate">குறைந்த காட்சி புதுப்பிப்பு விகிதங்கள் சில கூடுதல் வீடியோ தாமதத்தின் இழப்பில் சக்தியை மிச்சப்படுத்தும்</string>
     <string name="title_checkbox_disable_warnings">எச்சரிக்கை செய்திகளை முடக்கு</string>
     <string name="summary_checkbox_disable_warnings">ச்ட்ரீமிங் செய்யும் போது திரை இணைப்பு எச்சரிக்கை செய்திகளை முடக்கு</string>
@@ -222,8 +209,6 @@
     <string name="title_privacy_policy">தனியுரிமைக் கொள்கை</string>
     <string name="summary_privacy_policy">மூன்லைட்டின் தனியுரிமைக் கொள்கையைக் காண்க</string>
     <string name="toast_controller_type_changed">இயக்க சென்சார் எமுலேசன் காரணமாக கேம்பேட் வகை மாற்றப்படலாம்</string>
-    <string name="resolution_360p">360 ப</string>
-    <string name="resolution_480p">480 ப</string>
     <string name="resolution_720p">720 ஆ</string>
     <string name="resolution_1080p">1080 ப</string>
     <string name="resolution_1440p">1440 ப</string>

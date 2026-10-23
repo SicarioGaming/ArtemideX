@@ -20,7 +20,10 @@
 #
 # What it checks:
 #  1. every new commit (merges too) and the tag, if new-tip is one, is by the publishing identity
-#     (PUBLISH_IDENTITY, default below) and dated in UTC (+0000)
+#     (PUBLISH_IDENTITY, default below) and dated in UTC (+0000). An upstream commit brought in with
+#     git cherry-pick -x keeps its own author and author date: that passes when the message's last line
+#     is "(cherry picked from commit <full hash>)", that commit is on an upstream ref, and the author's
+#     name, email and date are the same as its. The committer is still checked as above.
 #  2. no keystores or key files, keystore.properties, local.properties, .env, private/ or Reddit drafts
 #  3. in added lines, file names and commit and tag messages: access tokens, private keys, written-out passwords,
 #     local user folders, private (RFC 1918) host addresses outside test files, and every pattern in
@@ -87,9 +90,9 @@ if [ "$OLD" != - ]; then
   git rev-parse -q --verify "$OLD^{commit}" >/dev/null || { echo "not a commit: $OLD" >&2; exit 2; }
   not+=("$OLD")
 fi
-skipped_up=""
+skipped_up="" up_refs=()
 for r in $UPSTREAM; do
-  if [ -n "$(git for-each-ref --count=1 "refs/remotes/$r/")" ]; then not+=("--remotes=$r")
+  if [ -n "$(git for-each-ref --count=1 "refs/remotes/$r/")" ]; then not+=("--remotes=$r"); up_refs+=("--remotes=$r")
   else skipped_up="$skipped_up $r"; fi
 done
 [ -z "$skipped_up" ] || echo "note: no refs for upstream remote(s)$skipped_up, so their commits are checked too"
@@ -125,15 +128,40 @@ else
 fi
 
 # --- 1. identity and UTC dates ---------------------------------------------------------------------
+# picks gets "commit TAB verdict" for each commit whose message ends with a cherry-pick line: ok, or
+# "upstream" when the commit it names isn't on an upstream ref, or "author" when the author differs.
+# Authors are compared as written in the commits, without .mailmap.
+: > "$tmp/picks"
+author_of() { git log -1 --no-use-mailmap --format='%an%n%ae%n%ad' --date=raw "$1"; }
 if [ -s "$tmp/commits" ]; then
+  git log --no-walk=unsorted --stdin --format='%x01%H%n%B' < "$tmp/commits" |
+    awk 'function pick() { if (c != "" && length(last) == 68 && last ~ /^\(cherry picked from commit [0-9a-f]+\)$/)
+                             print c "\t" substr(last, 28, 40) }
+         /^\001/ { pick(); c = substr($0, 2); last = ""; next }
+         NF { last = $0 }
+         END { pick() }' |
+    while IFS=$'\t' read -r c up; do
+      verdict=upstream
+      if [ ${#up_refs[@]} -gt 0 ] && git cat-file -e "$up^{commit}" 2>/dev/null &&
+         left=$(git rev-list -n 1 "$up" --not "${up_refs[@]}") && [ -z "$left" ]; then
+        verdict=author
+        [ "$(author_of "$c")" = "$(author_of "$up")" ] && verdict=ok
+      fi
+      printf '%s\t%s\n' "$c" "$verdict"
+    done > "$tmp/picks"
   git log --no-walk=unsorted --stdin --format='%H%x09%an <%ae>%x09%cn <%ce>%x09%ad%x09%cd' \
       --date=format:%z < "$tmp/commits" |
-    awk -F'\t' -v ok="$ID_OK" '{
-      if ($2 != ok) print "identity: " substr($1, 1, 10) " author is not " ok
-      if ($3 != ok) print "identity: " substr($1, 1, 10) " committer is not " ok
-      if ($4 != "+0000") print "timezone: " substr($1, 1, 10) " author date is not +0000"
-      if ($5 != "+0000") print "timezone: " substr($1, 1, 10) " committer date is not +0000"
-    }' >> "$tmp/out"
+    awk -F'\t' -v ok="$ID_OK" -v picks="$tmp/picks" '
+      BEGIN { while ((getline p < picks) > 0) { split(p, x, "\t"); pick[x[1]] = x[2] } }
+      { id = substr($1, 1, 10); v = ($1 in pick) ? pick[$1] : ""
+        why = ""
+        if (v == "upstream") why = ", and its cherry-pick line names no upstream commit"
+        if (v == "author") why = ", nor the author and date of the upstream commit it names"
+        if ($2 != ok && v != "ok") print "identity: " id " author is not " ok why
+        if ($3 != ok) print "identity: " id " committer is not " ok
+        if ($4 != "+0000" && v != "ok") print "timezone: " id " author date is not +0000"
+        if ($5 != "+0000") print "timezone: " id " committer date is not +0000"
+      }' >> "$tmp/out"
 fi
 if [ "$(git cat-file -t "$NEW")" = tag ]; then
   tagger=$(git cat-file tag "$NEW" | sed -n 's/^tagger //p' | head -n 1)

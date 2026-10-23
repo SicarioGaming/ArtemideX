@@ -1,0 +1,215 @@
+{
+  "about": [
+    "The emulator legs .github/workflows/devices.yml runs; .github/tools/device-run.sh runs one by hand.",
+    "tier: core runs on the public repo's pull requests, wide adds the weekly legs, release adds the rest. Each tier includes the ones before it.",
+    "profile is an avdmanager device id (avdmanager list device -c, command-line tools 23.0).",
+    "api, target and arch make the system image: system-images;android-<api>;<target>;<arch>.",
+    "hardware overrides the AVD's config.ini after it's made (the handhelds have no stock profile).",
+    "disk is the AVD's data partition (disk.dataPartition.size), 6144M unless a leg sets it; the emulator raised 4 GB to 6 GB on the Android 13, 15 and 16 images. ram is at least what the emulator raises it to: 2560M for Android 15 and 4096M for Android 16.",
+    "postures (foldables): folded, half-open, unfolded, each changed with the app open.",
+    "variants: font-<scale>, display-largest, dark, rtl-<language>, landscape, portrait, gamepad, dpad, tv-launcher.",
+    "After each posture, and each variant but the input ones (gamepad, dpad, tv-launcher), device-test.sh reruns variant_tests and the smoke tests.",
+    "monkey: that many random events with a fixed seed at the end (device-test.sh --monkey; Android 11 or later, where it turns the network off).",
+    "Postures and variants change system settings, so device-run.sh only runs them on emulators, and puts each setting back."
+  ],
+  "variant_tests": [
+    "com.limelight.ScreenWidthTest",
+    "com.limelight.preferences.SettingsWidthTest",
+    "com.limelight.ui.CoverGlowTest",
+    "com.limelight.AppViewTest",
+    "com.limelight.grid.PcCardLabelsTest",
+    "com.limelight.StringsTest"
+  ],
+  "legs": [
+    {
+      "id": "phone-small-35",
+      "name": "Small phone, Android 15",
+      "tier": "core",
+      "why": "360 dp wide, the narrow case (close to a Galaxy Z Fold cover screen's width); biggest text and display size",
+      "profile": "small_phone",
+      "api": "35", "target": "google_apis", "arch": "x86_64",
+      "ram": "2560M",
+      "cache": true,
+      "monkey": 1000,
+      "variants": ["font-1.3", "display-largest"]
+    },
+    {
+      "id": "fold-z-36",
+      "name": "Galaxy Z Fold shape, Android 16",
+      "tier": "core",
+      "why": "337 dp cover screen and 674x841 dp inner screen; folds, half-opens and unfolds with the app open; Android 16 ignores orientation locks on large screens",
+      "profile": "7.6in Foldable",
+      "api": "36", "target": "google_apis", "arch": "x86_64",
+      "ram": "4096M",
+      "cache": true,
+      "postures": ["folded", "half-open", "unfolded"]
+    },
+    {
+      "id": "tablet-35",
+      "name": "Tablet, Android 15",
+      "tier": "core",
+      "why": "Pixel Tablet shape, 1280x800 dp: bigger than the RedMagic Astra (about 1067x668 dp, 2400x1504 at 360 dpi); portrait, Hebrew text and dark mode",
+      "profile": "pixel_tablet",
+      "api": "35", "target": "google_apis", "arch": "x86_64",
+      "ram": "3072M",
+      "cache": true,
+      "variants": ["portrait", "rtl-he", "dark"]
+    },
+    {
+      "id": "handheld-33",
+      "name": "1080p handheld, Android 13",
+      "tier": "core",
+      "why": "Retroid Pocket 5 / AYN Odin 2 class: 5.5 to 6 in 1920x1080 landscape panel (768x432 dp at 400 dpi), controller first",
+      "profile": "medium_phone",
+      "hardware": {"hw.lcd.width": 1920, "hw.lcd.height": 1080, "hw.lcd.density": 400, "hw.initialOrientation": "landscape", "hw.dPad": "yes", "hw.keyboard": "no"},
+      "api": "33", "target": "google_apis", "arch": "x86_64",
+      "ram": "3072M",
+      "cache": true,
+      "monkey": 1000,
+      "variants": ["gamepad"]
+    },
+    {
+      "id": "legacy-23",
+      "name": "Phone, Android 6",
+      "tier": "core",
+      "why": "close to minSdk 21: newer-API calls (like PcView's Html.fromHtml) and the first runtime-permission release",
+      "profile": "medium_phone",
+      "api": "23", "target": "default", "arch": "x86_64",
+      "ram": "2048M",
+      "cache": true
+    },
+    {
+      "id": "minsdk-21",
+      "name": "Small phone, Android 5.0",
+      "tier": "wide",
+      "why": "minSdk 21, the oldest Android the README promises",
+      "profile": "small_phone",
+      "api": "21", "target": "default", "arch": "x86_64",
+      "ram": "2048M",
+      "cache": false
+    },
+    {
+      "id": "phone-large-36",
+      "name": "Large phone, Android 16",
+      "tier": "wide",
+      "why": "big modern phone (448x997 dp); Android 14+ non-linear text scaling up to 200%",
+      "profile": "pixel_9_pro_xl",
+      "api": "36", "target": "google_apis", "arch": "x86_64",
+      "ram": "4096M",
+      "cache": false,
+      "monkey": 3000,
+      "variants": ["font-2.0", "display-largest", "landscape"]
+    },
+    {
+      "id": "fold-pixel-35",
+      "name": "Pixel Fold shape, Android 15",
+      "tier": "wide",
+      "why": "411 dp cover screen and a wide 841x701 dp inner screen",
+      "profile": "pixel_fold",
+      "api": "35", "target": "google_apis", "arch": "x86_64",
+      "ram": "3072M",
+      "cache": false,
+      "postures": ["folded", "half-open", "unfolded"]
+    },
+    {
+      "id": "handheld-28",
+      "name": "1080p handheld, Android 9",
+      "tier": "wide",
+      "why": "older handhelds still on Android 9-10",
+      "profile": "medium_phone",
+      "hardware": {"hw.lcd.width": 1920, "hw.lcd.height": 1080, "hw.lcd.density": 400, "hw.initialOrientation": "landscape", "hw.dPad": "yes", "hw.keyboard": "no"},
+      "api": "28", "target": "default", "arch": "x86_64",
+      "ram": "2048M",
+      "cache": false,
+      "variants": ["gamepad"]
+    },
+    {
+      "id": "handheld-short-30",
+      "name": "4.7 in handheld, Android 11",
+      "tier": "wide",
+      "why": "Retroid Pocket 4 Pro class 1334x750 panel: only 375 dp tall in landscape",
+      "profile": "medium_phone",
+      "hardware": {"hw.lcd.width": 1334, "hw.lcd.height": 750, "hw.lcd.density": 320, "hw.initialOrientation": "landscape", "hw.dPad": "yes", "hw.keyboard": "no"},
+      "api": "30", "target": "google_apis", "arch": "x86_64",
+      "ram": "2048M",
+      "cache": false,
+      "variants": ["font-1.3"]
+    },
+    {
+      "id": "tv-30",
+      "name": "Android TV 11",
+      "tier": "wide",
+      "why": "NVIDIA Shield class TV box: leanback launcher entry, D-pad only (the manifest declares leanback and a TV banner)",
+      "profile": "tv_1080p",
+      "api": "30", "target": "android-tv", "arch": "x86",
+      "ram": "2048M",
+      "cache": false,
+      "monkey": 1000,
+      "variants": ["tv-launcher", "dpad"]
+    },
+    {
+      "id": "tablet-small-29",
+      "name": "7 in tablet, Android 10",
+      "tier": "wide",
+      "why": "960x600 dp tablet; Android 10 is the first with a system dark theme",
+      "profile": "small_tablet",
+      "api": "29", "target": "google_apis", "arch": "x86_64",
+      "ram": "2048M",
+      "cache": false,
+      "variants": ["dark", "portrait"]
+    },
+    {
+      "id": "atd-30",
+      "name": "Lean test image, Android 11",
+      "tier": "wide",
+      "why": "no browser, no keyboard app and no System UI: help links and text fields must not crash without them",
+      "profile": "medium_phone",
+      "api": "30", "target": "aosp_atd", "arch": "x86_64",
+      "ram": "2048M",
+      "cache": false
+    },
+    {
+      "id": "tv-34",
+      "name": "Android TV 14",
+      "tier": "release",
+      "why": "Google TV Streamer / Chromecast class",
+      "profile": "tv_1080p",
+      "api": "34", "target": "android-tv", "arch": "x86",
+      "ram": "2048M",
+      "cache": false,
+      "variants": ["tv-launcher", "dpad"]
+    },
+    {
+      "id": "latest-37",
+      "name": "Phone, newest Android",
+      "tier": "release",
+      "why": "the platform the app compiles against (compileSdk 37), before targetSdk moves",
+      "profile": "medium_phone",
+      "api": "37.0", "target": "google_apis", "arch": "x86_64",
+      "ram": "3072M",
+      "cache": false
+    },
+    {
+      "id": "pagesize-16k-36",
+      "name": "16 KB pages, Android 16",
+      "tier": "release",
+      "why": "16 KB memory pages (newer devices): the native libraries must still load",
+      "profile": "medium_phone",
+      "api": "36", "target": "google_apis_ps16k", "arch": "x86_64",
+      "ram": "3072M",
+      "cache": false
+    },
+    {
+      "id": "arm64-translated-30",
+      "name": "arm64 libraries via translation (experimental)",
+      "tier": "release",
+      "experimental": true,
+      "why": "installs the app as arm64-v8a so the arm64-only PyroWave and adrenotools libraries load through the image's ARM translation",
+      "profile": "medium_phone",
+      "api": "30", "target": "google_apis", "arch": "x86_64",
+      "ram": "3072M",
+      "cache": false,
+      "install_abi": "arm64-v8a"
+    }
+  ]
+}

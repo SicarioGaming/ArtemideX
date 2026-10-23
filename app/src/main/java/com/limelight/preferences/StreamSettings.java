@@ -2,6 +2,8 @@ package com.limelight.preferences;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,7 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
-import android.os.Handler;
+import android.app.AlertDialog;
 import android.os.Vibrator;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
@@ -24,6 +26,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.provider.OpenableColumns;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Range;
 import android.view.Display;
@@ -34,28 +37,31 @@ import android.view.ViewGroup;
 import android.view.WindowInsets;
 import android.widget.Toast;
 
+import com.limelight.BuildConfig;
 import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
 import com.limelight.binding.audio.MicrophoneCaptureManager;
 import com.limelight.binding.audio.VbanSender;
+import com.limelight.binding.audio.securemic.MicPairing;
+import com.limelight.binding.audio.securemic.MicPairingStore;
 import com.limelight.ui.CoverGlowSettings;
 import com.limelight.ui.overlay.ImportedShortcuts;
+import com.limelight.binding.video.CustomVulkanDriver;
 import com.limelight.binding.video.MediaCodecHelper;
-import com.limelight.utils.Dialog;
+import com.limelight.utils.HelpLauncher;
 import com.limelight.utils.UiHelper;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -163,14 +169,7 @@ public class StreamSettings extends Activity {
         private static final int REQUEST_CUSTOM_VULKAN_DRIVER = 0x6472;  // "dr"
         private static final int REQUEST_IMPORT_SHORTCUTS = 0x7363;  // "sc"
         private static final int REQUEST_RECORD_AUDIO = 0x6d63;  // "mc"
-        private int nativeResolutionStartIndex = Integer.MAX_VALUE;
-        private boolean nativeFramerateShown = false;
-
-        private void setValue(String preferenceKey, String value) {
-            ListPreference pref = (ListPreference) findPreference(preferenceKey);
-
-            pref.setValue(value);
-        }
+        private float maxSupportedFps;
 
         private void appendPreferenceEntry(ListPreference pref, String newEntryName, String newEntryValue) {
             CharSequence[] newEntries = Arrays.copyOf(pref.getEntries(), pref.getEntries().length + 1);
@@ -217,9 +216,6 @@ public class StreamSettings extends Activity {
                 }
             }
 
-            if (pref.getEntryValues().length < nativeResolutionStartIndex) {
-                nativeResolutionStartIndex = pref.getEntryValues().length;
-            }
             appendPreferenceEntry(pref, newName, newValue);
         }
 
@@ -245,16 +241,14 @@ public class StreamSettings extends Activity {
             for (CharSequence value : pref.getEntryValues()) {
                 if (fpsValue.equals(value.toString())) {
                     // It is present in the default list, so don't add it again
-                    nativeFramerateShown = false;
                     return;
                 }
             }
 
             appendPreferenceEntry(pref, fpsName, fpsValue);
-            nativeFramerateShown = true;
         }
 
-        private void removeValue(String preferenceKey, String value, Runnable onMatched) {
+        private void removeValue(String preferenceKey, String value) {
             int matchingCount = 0;
 
             ListPreference pref = (ListPreference) findPreference(preferenceKey);
@@ -281,10 +275,6 @@ public class StreamSettings extends Activity {
                 outIndex++;
             }
 
-            if (pref.getValue().equalsIgnoreCase(value)) {
-                onMatched.run();
-            }
-
             // Update the preference with the new list
             pref.setEntries(entries);
             pref.setEntryValues(entryValues);
@@ -302,6 +292,25 @@ public class StreamSettings extends Activity {
                     .putInt(PreferenceConfiguration.BITRATE_PREF_STRING,
                             PreferenceConfiguration.getDefaultBitrate(res, fps))
                     .apply();
+        }
+
+        // Offers the frame rates the display supports. Others can still be entered
+        // as a custom rate, which is kept even if the display doesn't support it.
+        private void setUpFpsEntries() {
+            FpsListPreference fpsPref = (FpsListPreference) findPreference(PreferenceConfiguration.FPS_PREF_STRING);
+            fpsPref.resetEntries();
+
+            // We give some extra room in case the FPS is rounded down
+            if (maxSupportedFps < 118) {
+                removeValue(PreferenceConfiguration.FPS_PREF_STRING, "120");
+            }
+            if (maxSupportedFps < 88) {
+                removeValue(PreferenceConfiguration.FPS_PREF_STRING, "90");
+            }
+            // Never remove 30 FPS or 60 FPS
+
+            addNativeFrameRateEntry(maxSupportedFps);
+            fpsPref.addEntryForCustomValue();
         }
 
         @Override
@@ -331,6 +340,7 @@ public class StreamSettings extends Activity {
             addPreferencesFromResource(R.xml.preferences);
             PreferenceScreen screen = getPreferenceScreen();
             initializeMicrophonePreferences();
+            initializeAboutPreferences();
 
             // hide on-screen controls category on non touch screen devices
             if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
@@ -402,8 +412,14 @@ public class StreamSettings extends Activity {
             }
 
 
+            // Start from the standard resolutions, since the saved value may have
+            // been added as a custom one before this display's entries are known
+            ResolutionListPreference resolutionPref =
+                    (ResolutionListPreference) findPreference(PreferenceConfiguration.RESOLUTION_PREF_STRING);
+            resolutionPref.resetEntries();
+
             Display display = getActivity().getWindowManager().getDefaultDisplay();
-            float maxSupportedFps = display.getRefreshRate();
+            maxSupportedFps = display.getRefreshRate();
 
             // Hide non-supported resolution/FPS combinations
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -528,36 +544,15 @@ public class StreamSettings extends Activity {
                 if (maxSupportedResW != 0) {
                     if (maxSupportedResW < 3840) {
                         // 4K is unsupported
-                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_4K, new Runnable() {
-                            @Override
-                            public void run() {
-                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                                setValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1440P);
-                                resetBitrateToDefault(prefs, null, null);
-                            }
-                        });
+                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_4K);
                     }
                     if (maxSupportedResW < 2560) {
                         // 1440p is unsupported
-                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1440P, new Runnable() {
-                            @Override
-                            public void run() {
-                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                                setValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1080P);
-                                resetBitrateToDefault(prefs, null, null);
-                            }
-                        });
+                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1440P);
                     }
                     if (maxSupportedResW < 1920) {
                         // 1080p is unsupported
-                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1080P, new Runnable() {
-                            @Override
-                            public void run() {
-                                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                                setValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_720P);
-                                resetBitrateToDefault(prefs, null, null);
-                            }
-                        });
+                        removeValue(PreferenceConfiguration.RESOLUTION_PREF_STRING, PreferenceConfiguration.RES_1080P);
                     }
                     // Never remove 720p
                 }
@@ -572,56 +567,11 @@ public class StreamSettings extends Activity {
                 addNativeResolutionEntries(width, height, false);
             }
 
-            if (!PreferenceConfiguration.readPreferences(this.getActivity()).unlockFps) {
-                // We give some extra room in case the FPS is rounded down
-                if (maxSupportedFps < 118) {
-                    removeValue(PreferenceConfiguration.FPS_PREF_STRING, "120", new Runnable() {
-                        @Override
-                        public void run() {
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                            setValue(PreferenceConfiguration.FPS_PREF_STRING, "90");
-                            resetBitrateToDefault(prefs, null, null);
-                        }
-                    });
-                }
-                if (maxSupportedFps < 88) {
-                    // 1080p is unsupported
-                    removeValue(PreferenceConfiguration.FPS_PREF_STRING, "90", new Runnable() {
-                        @Override
-                        public void run() {
-                            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
-                            setValue(PreferenceConfiguration.FPS_PREF_STRING, "60");
-                            resetBitrateToDefault(prefs, null, null);
-                        }
-                    });
-                }
-                // Never remove 30 FPS or 60 FPS
-            }
-            addNativeFrameRateEntry(maxSupportedFps);
+            // A saved resolution that isn't offered, like one the decoder doesn't list
+            // or one entered as a custom size, is kept and shown as a custom entry
+            resolutionPref.addEntryForCustomValue();
 
-            // Android L introduces the drop duplicate behavior of releaseOutputBuffer()
-            // that the unlock FPS option relies on to not massively increase latency.
-            findPreference(PreferenceConfiguration.UNLOCK_FPS_STRING).setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-                @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    // HACK: We need to let the preference change succeed before reinitializing to ensure
-                    // it's reflected in the new layout.
-                    final Handler h = new Handler();
-                    h.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            // Ensure the activity is still open when this timeout expires
-                            StreamSettings settingsActivity = (StreamSettings) SettingsFragment.this.getActivity();
-                            if (settingsActivity != null) {
-                                settingsActivity.reloadSettings();
-                            }
-                        }
-                    }, 500);
-
-                    // Allow the original preference change to take place
-                    return true;
-                }
-            });
+            setUpFpsEntries();
 
             // The jitter buffer only applies to host frame timing pacing
             final Preference jitterBufferPref = findPreference("jitter_buffer");
@@ -684,25 +634,6 @@ public class StreamSettings extends Activity {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
                     String valueStr = (String) newValue;
 
-                    // Detect if this value is the native resolution option
-                    CharSequence[] values = ((ListPreference)preference).getEntryValues();
-                    boolean isNativeRes = true;
-                    for (int i = 0; i < values.length; i++) {
-                        // Look for a match prior to the start of the native resolution entries
-                        if (valueStr.equals(values[i].toString()) && i < nativeResolutionStartIndex) {
-                            isNativeRes = false;
-                            break;
-                        }
-                    }
-
-                    // If this is native resolution, show the warning dialog
-                    if (isNativeRes) {
-                        Dialog.displayDialog(getActivity(),
-                                getResources().getString(R.string.title_native_res_dialog),
-                                getResources().getString(R.string.text_native_res_dialog),
-                                false);
-                    }
-
                     // Write the new bitrate value
                     resetBitrateToDefault(prefs, valueStr, null);
 
@@ -715,15 +646,6 @@ public class StreamSettings extends Activity {
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
                     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SettingsFragment.this.getActivity());
                     String valueStr = (String) newValue;
-
-                    // If this is native frame rate, show the warning dialog
-                    CharSequence[] values = ((ListPreference)preference).getEntryValues();
-                    if (nativeFramerateShown && values[values.length - 1].toString().equals(newValue.toString())) {
-                        Dialog.displayDialog(getActivity(),
-                                getResources().getString(R.string.title_native_fps_dialog),
-                                getResources().getString(R.string.text_native_res_dialog),
-                                false);
-                    }
 
                     // Write the new bitrate value
                     resetBitrateToDefault(prefs, null, valueStr);
@@ -746,8 +668,22 @@ public class StreamSettings extends Activity {
                 });
             }
 
+            // A custom driver is native code that runs inside Starwire, so the first time it's
+            // turned on, say what that means and only turn it on if the user agrees
+            Preference driverEnablePref = findPreference(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PREF_STRING);
+            if (driverEnablePref != null) {
+                driverEnablePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                    if (!(Boolean) newValue || PreferenceManager.getDefaultSharedPreferences(getActivity())
+                            .getBoolean(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_WARNED_PREF_STRING, false)) {
+                        return true;
+                    }
+                    showCustomDriverWarning((CheckBoxPreference) preference);
+                    return false;
+                });
+            }
+
             // The custom Vulkan driver is a file chosen with the system document picker, then
-            // copied into app-private storage where libadrenotools can load it from
+            // checked and copied into app-private storage where libadrenotools can load it from
             Preference driverPref = findPreference(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING);
             if (driverPref != null) {
                 driverPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -767,6 +703,19 @@ public class StreamSettings extends Activity {
                     }
                 });
                 updateCustomDriverSummary();
+            }
+            Preference removeDriverPref = findPreference(PreferenceConfiguration.REMOVE_CUSTOM_VULKAN_DRIVER_PREF_STRING);
+            if (removeDriverPref != null) {
+                removeDriverPref.setOnPreferenceClickListener(preference -> {
+                    CustomVulkanDriver.removeAll(CustomVulkanDriver.directory(getActivity()));
+                    PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+                            .remove(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING)
+                            .remove(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING)
+                            .apply();
+                    updateCustomDriverSummary();
+                    Toast.makeText(getActivity(), R.string.custom_vulkan_driver_removed, Toast.LENGTH_SHORT).show();
+                    return true;
+                });
             }
 
             // Shortcuts imported from a file in Artemide's format, for the Shortcuts page
@@ -862,14 +811,86 @@ public class StreamSettings extends Activity {
             if (pref == null || getActivity() == null) {
                 return;
             }
-            String path = PreferenceManager.getDefaultSharedPreferences(getActivity())
-                    .getString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, "");
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String path = prefs.getString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, "");
+            String sha256 = prefs.getString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING, "");
             if (path == null || path.isEmpty()) {
                 pref.setSummary(R.string.summary_custom_vulkan_driver_path);
             }
-            else {
-                pref.setSummary(new File(path).getName());
+            else if (sha256 == null || sha256.isEmpty()) {
+                // Imported by 0.2.0, which didn't record the SHA-256, so it isn't loaded
+                pref.setSummary(getString(R.string.summary_custom_vulkan_driver_unchecked, new File(path).getName()));
             }
+            else {
+                pref.setSummary(getString(R.string.summary_custom_vulkan_driver_file, new File(path).getName(), sha256));
+            }
+        }
+
+        private void showCustomDriverWarning(CheckBoxPreference pref) {
+            new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.custom_vulkan_driver_warning_title)
+                    .setMessage(R.string.custom_vulkan_driver_warning_message)
+                    .setPositiveButton(R.string.custom_vulkan_driver_warning_accept, (dialog, which) -> {
+                        PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+                                .putBoolean(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_WARNED_PREF_STRING, true)
+                                .apply();
+                        pref.setChecked(true);
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+        }
+
+        // The About section: the version (a tap copies it for a bug report), the code for this
+        // version, and the Credits and Open-source licences pages
+        private void initializeAboutPreferences() {
+            Preference versionPref = findPreference("about_version");
+            Preference sourcePref = findPreference("about_source");
+            Preference creditsPref = findPreference("about_credits");
+            Preference licencesPref = findPreference("about_licences");
+            if (versionPref == null || sourcePref == null || creditsPref == null || licencesPref == null) {
+                return;
+            }
+
+            versionPref.setSummary(getString(R.string.summary_about_version,
+                    BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.GIT_COMMIT));
+            versionPref.setOnPreferenceClickListener(preference -> {
+                ClipboardManager clipboard =
+                        (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                clipboard.setPrimaryClip(ClipData.newPlainText("Starwire version", versionDetails()));
+                // Android 13 and newer show their own "Copied" message
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    Toast.makeText(getActivity(), R.string.about_copied, Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            });
+
+            // The source offer GPL-3.0 asks for: the tagged code this release was built from
+            sourcePref.setSummary(getString(R.string.summary_about_source, BuildConfig.VERSION_NAME));
+            sourcePref.setOnPreferenceClickListener(preference -> {
+                HelpLauncher.launchUrl(getActivity(),
+                        "https://github.com/SicarioGaming/Starwire/tree/v" + BuildConfig.VERSION_NAME);
+                return true;
+            });
+
+            creditsPref.setOnPreferenceClickListener(preference -> {
+                startActivity(new Intent(getActivity(), OpenSourceActivity.class)
+                        .putExtra(OpenSourceActivity.EXTRA_PAGE, OpenSourceActivity.PAGE_CREDITS));
+                return true;
+            });
+            licencesPref.setOnPreferenceClickListener(preference -> {
+                startActivity(new Intent(getActivity(), OpenSourceActivity.class)
+                        .putExtra(OpenSourceActivity.EXTRA_PAGE, OpenSourceActivity.PAGE_LICENCES));
+                return true;
+            });
+        }
+
+        /** What a tap on Version copies: enough to tell builds and devices apart in a bug report. */
+        static String versionDetails() {
+            return "Starwire " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ") "
+                    + BuildConfig.FLAVOR + " " + BuildConfig.BUILD_TYPE
+                    + ", commit " + BuildConfig.GIT_COMMIT
+                    + ", Android " + Build.VERSION.RELEASE + " (API " + Build.VERSION.SDK_INT + ")"
+                    + ", " + Build.MANUFACTURER + " " + Build.MODEL;
         }
 
         // Microphone streaming needs logabell's Apollo build on the PC; the summary says so.
@@ -918,25 +939,34 @@ public class StreamSettings extends Activity {
 
         // The rows that only apply to one microphone destination, kept while they're hidden
         private PreferenceCategory audioCategory;
-        private Preference micHostInfoPref, vbanSetupPref;
+        private Preference micHostInfoPref, vbanSetupPref, micPairingPref;
         private EditTextPreference vbanNamePref, vbanPortPref;
 
-        // Only the rows for the chosen destination show: the Apollo link for the host, the setup
-        // steps, stream name and port for VBAN. (Disabled rows look like live ones in this theme.)
+        // Only the rows for the chosen destination show: for Starwire's receiver the setup guide,
+        // pairing and the port; for another VBAN receiver the guide with its warning, the stream
+        // name and the port; for the host the Apollo link. (Disabled rows look like live ones in
+        // this theme.)
         private void initializeMicrophoneTargetPreferences() {
             ListPreference targetPref =
                     (ListPreference) findPreference(PreferenceConfiguration.MICROPHONE_TARGET_PREF_STRING);
             audioCategory = (PreferenceCategory) findPreference("category_audio_settings");
             micHostInfoPref = findPreference("microphone_host_info");
             vbanSetupPref = findPreference("vban_setup_info");
+            micPairingPref = findPreference("mic_pairing");
             vbanNamePref = (EditTextPreference) findPreference(PreferenceConfiguration.VBAN_STREAM_NAME_PREF_STRING);
             vbanPortPref = (EditTextPreference) findPreference(PreferenceConfiguration.VBAN_PORT_PREF_STRING);
             if (targetPref == null || audioCategory == null || micHostInfoPref == null || vbanSetupPref == null
-                    || vbanNamePref == null || vbanPortPref == null) {
+                    || micPairingPref == null || vbanNamePref == null || vbanPortPref == null) {
                 return;
             }
             final EditTextPreference namePref = vbanNamePref;
             final EditTextPreference portPref = vbanPortPref;
+
+            micPairingPref.setOnPreferenceClickListener(preference -> {
+                MicPairingDialog.show(getActivity(), PreferenceConfiguration.readPreferences(getActivity()).vbanPort,
+                        this::showMicrophonePairing);
+                return true;
+            });
 
             targetPref.setOnPreferenceChangeListener((preference, newValue) -> {
                 showMicrophoneTarget((String) newValue, namePref.getText(), portPref.getText());
@@ -965,6 +995,8 @@ public class StreamSettings extends Activity {
 
         private void showMicrophoneTarget(String target, String streamName, String port) {
             boolean vban = PreferenceConfiguration.MICROPHONE_TARGET_VBAN.equals(target);
+            boolean host = PreferenceConfiguration.MICROPHONE_TARGET_HOST.equals(target);
+            boolean starwire = !vban && !host;
             if (streamName == null || streamName.trim().isEmpty()) {
                 streamName = VbanSender.DEFAULT_STREAM_NAME;
             }
@@ -972,27 +1004,47 @@ public class StreamSettings extends Activity {
                 port = Integer.toString(VbanSender.DEFAULT_PORT);
             }
 
-            setShown(micHostInfoPref, !vban);
-            setShown(vbanSetupPref, vban);
+            setShown(micHostInfoPref, host);
+            setShown(vbanSetupPref, !host);
+            setShown(micPairingPref, starwire);
             setShown(vbanNamePref, vban);
-            setShown(vbanPortPref, vban);
+            setShown(vbanPortPref, !host);
             Preference setupPref = vbanSetupPref;
             Preference namePref = vbanNamePref;
             Preference portPref = vbanPortPref;
 
-            String deviceAddress = localNetworkAddress();
-            int portNumber;
-            try {
-                portNumber = Integer.parseInt(port.trim());
+            if (vban) {
+                String deviceAddress = localNetworkAddress();
+                int portNumber;
+                try {
+                    portNumber = Integer.parseInt(port.trim());
+                }
+                catch (NumberFormatException e) {
+                    portNumber = VbanSender.DEFAULT_PORT;
+                }
+                setupPref.setSummary(getString(R.string.summary_vban_setup,
+                        deviceAddress != null ? deviceAddress : getString(R.string.vban_this_device),
+                        streamName.trim(), portNumber));
             }
-            catch (NumberFormatException e) {
-                portNumber = VbanSender.DEFAULT_PORT;
+            else {
+                setupPref.setSummary(R.string.summary_mic_setup_encrypted);
             }
-            setupPref.setSummary(getString(R.string.summary_vban_setup,
-                    deviceAddress != null ? deviceAddress : getString(R.string.vban_this_device),
-                    streamName.trim(), portNumber));
             namePref.setSummary(getString(R.string.summary_vban_stream_name, streamName.trim()));
             portPref.setSummary(getString(R.string.summary_vban_port, port.trim()));
+            showMicrophonePairing();
+        }
+
+        // Which PCs the microphone is paired with, or "Not paired yet"
+        private void showMicrophonePairing() {
+            if (micPairingPref == null || getActivity() == null) {
+                return;
+            }
+            List<String> names = new ArrayList<>();
+            for (MicPairing pairing : new MicPairingStore(getActivity()).all()) {
+                names.add(pairing.displayName());
+            }
+            micPairingPref.setSummary(names.isEmpty() ? getString(R.string.summary_mic_pairing_none)
+                    : getString(R.string.summary_mic_pairing_done, TextUtils.join(", ", names)));
         }
 
         // A removed row keeps its place (its order from the XML) when it's added back
@@ -1073,44 +1125,28 @@ public class StreamSettings extends Activity {
                 return;
             }
 
-            String name = queryDisplayName(context, uri);
-            if (name == null || name.isEmpty()) {
-                name = "custom_driver.so";
-            }
-            name = new File(name).getName();
-
-            File dir = new File(context.getFilesDir(), "custom_vulkan_driver");
-            if (!dir.exists() && !dir.mkdirs()) {
-                Toast.makeText(context, R.string.custom_vulkan_driver_import_failed, Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            File out = new File(dir, name);
-            try (InputStream in = context.getContentResolver().openInputStream(uri);
-                    OutputStream os = new FileOutputStream(out)) {
+            // Checked as it's copied (name, size, 64-bit ARM library); a file that fails keeps
+            // the driver imported before
+            CustomVulkanDriver.Imported imported;
+            try (InputStream in = context.getContentResolver().openInputStream(uri)) {
                 if (in == null) {
                     throw new IOException("could not open the file");
                 }
-                byte[] buffer = new byte[65536];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    os.write(buffer, 0, read);
-                }
+                imported = CustomVulkanDriver.importDriver(CustomVulkanDriver.directory(context),
+                        queryDisplayName(context, uri), in);
             }
             catch (Exception e) {
-                out.delete();
                 Toast.makeText(context, context.getString(R.string.custom_vulkan_driver_import_failed) + ": " + e.getMessage(),
                         Toast.LENGTH_LONG).show();
                 return;
             }
-            out.setReadable(true, true);
-            out.setExecutable(true, true);
 
             PreferenceManager.getDefaultSharedPreferences(context).edit()
-                    .putString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, out.getAbsolutePath())
+                    .putString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, imported.file.getAbsolutePath())
+                    .putString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING, imported.sha256)
                     .apply();
             updateCustomDriverSummary();
-            Toast.makeText(context, context.getString(R.string.custom_vulkan_driver_imported, name),
+            Toast.makeText(context, context.getString(R.string.custom_vulkan_driver_imported, imported.file.getName()),
                     Toast.LENGTH_SHORT).show();
         }
 

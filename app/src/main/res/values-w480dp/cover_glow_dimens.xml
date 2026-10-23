@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cover Glow's game screen on wide but short screens (a phone held sideways): a smaller header,
-     so the covers start higher. values-w480dp-h520dp holds the sizes for tablets. -->
+<!-- Cover Glow's game screen on wide but short screens (a phone held sideways, a small handheld):
+     a smaller header with the chips beside the buttons, so a whole row of covers shows under it on
+     a screen 375 dp high. values-w480dp-h520dp holds the sizes for tablets. -->
 <resources>
     <dimen name="cg_content_padding">28dp</dimen>
+    <dimen name="cg_content_padding_top">8dp</dimen>
     <dimen name="cg_wordmark_size">28sp</dimen>
-    <dimen name="cg_hero_cover_width">96dp</dimen>
-    <dimen name="cg_hero_cover_height">128dp</dimen>
+    <dimen name="cg_hero_cover_width">78dp</dimen>
+    <dimen name="cg_hero_cover_height">104dp</dimen>
     <dimen name="cg_hero_gap">20dp</dimen>
     <dimen name="cg_hero_title_size">28sp</dimen>
-    <dimen name="cg_hero_top_margin">8dp</dimen>
-    <dimen name="cg_hero_button_height">48dp</dimen>
+    <dimen name="cg_hero_title_margin_top">0dp</dimen>
+    <dimen name="cg_hero_top_margin">0dp</dimen>
+    <dimen name="cg_hero_button_height">44dp</dimen>
     <integer name="cg_hero_title_lines">1</integer>
+    <dimen name="cg_cover_row_margin_top">6dp</dimen>
 
     <style name="CgWordmarkPlace">
         <item name="android:layout_gravity">center</item>
@@ -18,9 +22,19 @@
 
     <style name="CgHeroButtons">
         <item name="android:orientation">horizontal</item>
+        <item name="android:layout_below">@id/heroTitle</item>
+        <item name="android:layout_marginTop">8dp</item>
     </style>
     <style name="CgHeroSettingsButton">
         <item name="android:layout_marginStart">12dp</item>
         <item name="android:layout_marginTop">0dp</item>
+    </style>
+
+    <!-- The chips sit beside the buttons, saving the row they take on other screens -->
+    <style name="CgHeroChipsPlace">
+        <item name="android:layout_toEndOf">@id/heroButtons</item>
+        <item name="android:layout_alignTop">@id/heroButtons</item>
+        <item name="android:layout_alignBottom">@id/heroButtons</item>
+        <item name="android:layout_marginStart">12dp</item>
     </style>
 </resources>

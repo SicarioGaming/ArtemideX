@@ -46,11 +46,11 @@
     <string name="pcview_menu_header_offline">Извън линия</string>
     <string name="pcview_menu_app_list">Преглед на всички приложения</string>
     <string name="pcview_menu_unpair_pc">Раздвояване</string>
-    <string name="nettest_text_waiting">Moonlight тества мрежовата връзка, за да определи дали някой от необходимите портове не е блокиран.\n\nТова може да отнеме няколко секунди…</string>
-    <string name="nettest_text_success">Вашата мрежа изглежда не блокира Moonlight. Ако все още имате проблеми със свързването, проверете настройките на защитната стена на компютъра си.\n\nАко се опитвате да осъществите достъп през Интернет, инсталирайте „Moonlight Internet Hosting Tool“ на компютъра си и стартирайте включения тестер за достъп през Интернет, за да проверите връзката на компютъра си с Интернет.</string>
+    <string name="nettest_text_waiting">Starwire тества мрежовата връзка, за да определи дали някой от необходимите портове не е блокиран.\n\nТова може да отнеме няколко секунди…</string>
+    <string name="nettest_text_success">Вашата мрежа изглежда не блокира Starwire. Ако все още имате проблеми със свързването, проверете настройките на защитната стена на компютъра си.\n\nАко се опитвате да осъществите достъп през Интернет, инсталирайте „Moonlight Internet Hosting Tool“ на компютъра си и стартирайте включения тестер за достъп през Интернет, за да проверите връзката на компютъра си с Интернет.</string>
     <string name="nettest_text_inconclusive">Мрежовият тест не може да бъде извършен, защото нито един от сървърите за проверка на връзката на Moonlight не е достъпен. Проверете връзката си с Интернет или опитайте отново по-късно.</string>
-    <string name="nettest_text_failure">Текущата мрежова връзка на устройството изглежда блокира Moonlight. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.\n\nСледните мрежови портове са блокирани:\n</string>
-    <string name="nettest_text_blocked">Текущата мрежова връзка на устройството блокира Moonlight. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.</string>
+    <string name="nettest_text_failure">Текущата мрежова връзка на устройството изглежда блокира Starwire. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.\n\nСледните мрежови портове са блокирани:\n</string>
+    <string name="nettest_text_blocked">Текущата мрежова връзка на устройството блокира Starwire. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.</string>
     <string name="pair_pairing_msg">Моля, въведете следния ПИН на избрания компютър:</string>
     <string name="pair_fail">Неуспешно сдвояване</string>
     <string name="pair_already_in_progress">Сдвояването вече е в ход</string>
@@ -63,7 +63,7 @@
     <string name="video_decoder_init_failed">Видео декодерът не успя да се инициализира. Вашето устройство може да не поддържа избраната резолюция или честота на кадрите.</string>
     <string name="error_manager_not_running">Услугата ComputerManager не работи. Моля, изчакайте няколко секунди или рестартирайте приложението.</string>
     <string name="error_404">GFE върна грешка HTTP 404. Уверете се, че видео картата на компютъра се поддържа. Използването на софтуер за отдалечен работен плот също може да причини тази грешка. Опитайте да рестартирате машината си или да преинсталирате GFE.</string>
-    <string name="message_decoding_error">Moonlight претърпя срив поради несъвместимост с декодера за видео на това устройство. Опитайте да коригирате настройките за поточно предаване, ако сривовете продължат.</string>
+    <string name="message_decoding_error">Starwire претърпя срив поради несъвместимост с декодера за видео на това устройство. Опитайте да коригирате настройките за поточно предаване, ако сривовете продължат.</string>
     <string name="title_decoding_reset">Нулиране на видео настройките</string>
     <string name="message_decoding_reset">Видео декодерът на устройството продължава да претърпява сривове при избраните от Вас настройки за поточно предаване. Настройките бяха нулирани до стандартните.</string>
     <string name="audioconf_stereo">Стерео</string>
@@ -132,7 +132,6 @@
     <string name="title_checkbox_touchscreen_trackpad">Използване на сензорния екран като сензорен панел</string>
     <string name="title_checkbox_multi_controller">Автоматично откриване на наличен контролер</string>
     <string name="summary_checkbox_multi_controller">Премахването на отметката ще изисква контролера винаги да бъде наличен</string>
-    <string name="text_native_res_dialog">Локалната резолюция и/или броя кадри/сек може да не се поддържат от предаващия сървър. Вероятно ще трябва ръчно да настроите съответстващ персонализиран режим на екрана на отдалечения компютър.\n\nАко изберете да създадете персонализирана резолюция в контролния панел на NVIDIA, който да отговаря на настройките на екрана, уверете се, че сте прочели и разбрали предупреждението на NVIDIA относно възможни щети за монитора, нестабилна работа на компютъра като цяло, както и други потенциални проблеми.\n\nНие не носим отговорност за никакви проблеми произхождащи от създаването на персонализирана резолюция на компютъра Ви.\n\nВъзможно е мониторът Ви да не поддържа определена конфигурация на екрана, която е необходима. Ако е така, може да настроите виртуален монитор. И накрая, ако устройството или компютърът Ви не поддържат поточно предаване при определена резолюция или честота на опресняване, за съжаление няма какво да направите.</string>
     <string name="resolution_prefix_native_fullscreen">Локална, на цял екран</string>
     <string name="summary_checkbox_mouse_emulation">Натискането и задържането на бутона Старт ще превключи контролера в режим на мишка</string>
     <string name="title_checkbox_flip_face_buttons">Размяна на бутоните вдясно</string>
@@ -140,12 +139,11 @@
     <string name="searching_pc">Търсене на достъпни компютри в локалната мрежа…\n\n Уверете се, че Sunshine работи на отдалечения компютър, или че GameStream е включен в настройките на GeForce Experience SHIELD.</string>
     <string name="resolution_prefix_native">Локална</string>
     <string name="fps_suffix_fps">кадри/сек</string>
-    <string name="title_native_fps_dialog">Предупреждение за локални кадри/сек</string>
     <string name="summary_checkbox_enable_audiofx">Разрешава на звуковите ефекти да работят по време на поточното предаване, но може да увеличи забавянето на звука</string>
     <string name="category_gamepad_settings">Настройки на контролера</string>
     <string name="suffix_seekbar_vibrate_fallback_strength">%</string>
     <string name="title_checkbox_usb_bind_all">Замяна на собствената поддръжка на контролери за Xbox</string>
-    <string name="summary_checkbox_usb_bind_all">Използване на USB драйвера на Moonlight за всички поддържани контролери, дори ако е налична собствена поддръжка на контролери за Xbox</string>
+    <string name="summary_checkbox_usb_bind_all">Използване на USB драйвера на Starwire за всички поддържани контролери, дори ако е налична собствена поддръжка на контролери за Xbox</string>
     <string name="summary_checkbox_flip_face_buttons">Разменя бутоните в дясната част на контролера – A/B и X/Y – това важи както за контролерите, така и за екранните елементи за управление</string>
     <string name="error_unknown_host">Отдалеченият компютър не може да бъде намерен</string>
     <string name="unable_to_pin_shortcut">Текущата пускова програма не разрешава създаването на преки пътища.</string>
@@ -156,7 +154,7 @@
     <string name="summary_checkbox_xb1_driver">Включва вградения USB драйвер за устройства без собствена поддръжка на контролери за Xbox</string>
     <string name="title_seekbar_deadzone">Настройване на мъртвата зона на аналоговите стикове</string>
     <string name="title_checkbox_xb1_driver">USB драйвер за контролери за Xbox 360/One</string>
-    <string name="summary_seekbar_deadzone">Забележка: някои игри може да налагат по-голяма мъртва зона от тази, която е настроена в Moonlight.</string>
+    <string name="summary_seekbar_deadzone">Забележка: някои игри може да налагат по-голяма мъртва зона от тази, която е настроена в Starwire.</string>
     <string name="title_checkbox_mouse_emulation">Симулиране на мишка чрез контролер</string>
     <string name="pair_pairing_help">Ако на отдалечения компютър работи Sunshine, отворете уеб интерфейса на Sunshine и въведете ПИН кода.</string>
     <string name="frame_conversion_error">Отдалеченият компютър докладва критична грешка при кодиране на видеото.\n\nОпитайте да изключите режима HDR, да промените резолюцията на потока или резолюцията на екрана на отдалечения компютър.</string>
@@ -183,7 +181,7 @@
     <string name="title_checkbox_enable_pip">Включване на режима за наблюдаване „картина в картината“</string>
     <string name="summary_checkbox_enable_pip">Позволява поточното предаване да бъде наблюдавано (но не и управлявано) докато извършвате други задачи на устройството</string>
     <string name="title_language_list">Език</string>
-    <string name="summary_language_list">Езикът, който да ползва Moonlight</string>
+    <string name="summary_language_list">Езикът, който да ползва Starwire</string>
     <string name="title_checkbox_small_icon_mode">Използване на малки обложки</string>
     <string name="summary_checkbox_small_icon_mode">По-малките обложки в списъка с приложения позволяват да се виждат повече приложения едновременно на екрана</string>
     <string name="category_host_settings">Настройки на отдалечения компютър</string>
@@ -191,8 +189,6 @@
     <string name="summary_checkbox_enable_sops">Позволява на GFE да променя игралните настройки за по-добро поточно предаване</string>
     <string name="summary_checkbox_host_audio">Възпроизвеждане на звука едновременно и на компютъра, и на това устройство</string>
     <string name="category_advanced_settings">Разширени настройки</string>
-    <string name="title_unlock_fps">Отключване на всички възможни кадрови честоти</string>
-    <string name="summary_unlock_fps">Излъчването на 90 или 120 кадъра/сек може да намали забавянето на по-мощните устройства, но може да предизвика проблеми на устройства, които не могат да поддържат такива скорости</string>
     <string name="title_checkbox_host_audio">Възпроизвеждане на звук на компютъра</string>
     <string name="title_checkbox_mouse_nav_buttons">Включване на бутоните на мишката за преминаване напред и назад</string>
     <string name="toast_reset_osc_success">Настройките на екранните елементи за управление са нулирани</string>
@@ -208,7 +204,6 @@
     <string name="title_full_range">Принудително ползване на видео с пълен диапазон (експериментално)</string>
     <string name="summary_troubleshooting">Вижте съвети за анализиране и отстраняване на чести проблеми с поточното предаване</string>
     <string name="analogscroll_right">Десен аналогов стик</string>
-    <string name="title_native_res_dialog">Предупреждение относно локалната резолюция</string>
     <string name="title_checkbox_vibrate_fallback">Симулиране на вибрирането на контролер</string>
     <string name="title_seekbar_vibrate_fallback_strength">Сила на симулираната вибрация</string>
     <string name="summary_checkbox_reduce_refresh_rate">По-ниските честоти на опресняване на екрана могат да намалят консумацията за сметка на малко допълнително забавяне на видеото</string>
@@ -227,8 +222,6 @@
     <string name="title_troubleshooting">Ръководство за отстраняване на проблеми</string>
     <string name="title_privacy_policy">Политика за поверителност</string>
     <string name="summary_privacy_policy">Преглед на политиката за поверителност на Moonlight</string>
-    <string name="resolution_360p">360p</string>
-    <string name="resolution_480p">480p</string>
     <string name="resolution_720p">720p</string>
     <string name="resolution_1440p">1440p</string>
     <string name="resolution_4k">4K</string>

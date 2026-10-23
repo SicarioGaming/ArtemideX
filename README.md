@@ -26,10 +26,10 @@ After [u/rambo3349](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5
 
 In the longer-term pipeline (0.4.0), I noticed a lot of users are connecting from an Ayn Thor or similar DS device. I'm actually super jealous, my Thor should arrive in the next month and on that front I'm wondering what you guys would like to see in terms of "DS features" in future Starwire releases.
 
-Aside from that, here are the draft release notes for 0.2.1 which should go live tonight:
+Aside from that, here are the release notes for 0.2.1, which is out now ([download](https://github.com/SicarioGaming/Starwire/releases/tag/v0.2.1)):
 
 <details open>
-<summary><b>Draft release notes for 0.2.1</b></summary>
+<summary><b>Release notes for 0.2.1</b></summary>
 
 **Following u/rambo3349's code review (already live on GitHub):**
 
@@ -47,6 +47,7 @@ Aside from that, here are the draft release notes for 0.2.1 which should go live
 - **The mic setup window** fits small screens, like a 1280x720 stream.
 - **Custom resolutions and frame rates,** in the main settings and per game. These come from Moonlight X, credited to them.
 - **An about page** with credits and the full open-source licences.
+- **The floating menu button stays where you put it,** for each orientation.
 - **The custom driver option** is marked experimental, with a plain warning before you turn it on.
 - Various other small cleanups to the Github repo and changes to wording for transparency.
 
@@ -62,7 +63,7 @@ Aside from that, here are the draft release notes for 0.2.1 which should go live
 
 **Testing and Development**
 
-- 273 unit tests (from none), about 135 on-device tests and 32 screenshot tests.
+- 314 unit tests (from none), 32 of them screenshot tests, and 138 on-device tests.
 - The same tests also run on 5 virtual devices, including a Fold shape folded, half-open and unfolded. (Thank you to u/MickeyBronson)
 - Checks run automatically on every change.
 
@@ -74,7 +75,7 @@ Aside from that, here are the draft release notes for 0.2.1 which should go live
 
 </details>
 
-Thank you all for your continued trust and engagement. Please keep an eye out for announcements re: 0.2.1. Cheers!
+Thank you all for your continued trust and engagement. Please keep an eye out for announcements re: 0.3.0. Cheers!
 
 ---
 ## New in 0.2.0: your microphone on the PC, with any host
@@ -92,7 +93,9 @@ stay exactly as they are, and the mic starts and stops with the stream, with no 
 like WO Mic or AudioRelay to open on your Android device each time.
 
 <p align="center">
-<img src="docs/images/mic-signal-path.png" width="820" alt="Diagram of the microphone path: on Android, AudioRecord with echo cancelling and noise suppression feeds VbanSender, which sends 48 kHz 16-bit mono packets over UDP port 6980 to StarwireMicReceiver on the Windows PC, which plays them into VB-Cable's CABLE Input; Discord or the game records from CABLE Output. The Moonlight stream between Starwire and the host is unchanged.">
+<img src="docs/images/mic-signal-path.png" width="820" alt="Starwire 0.2.0's microphone path: on Android, AudioRecord with echo cancelling and noise suppression feeds VbanSender, which sends 48 kHz 16-bit mono packets over UDP port 6980 to StarwireMicReceiver on the Windows PC, which plays them into VB-Cable's CABLE Input; Discord or the game records from CABLE Output. The Moonlight stream between Starwire and the host is unchanged.">
+<br>
+<sub>This is 0.2.0's path. From 0.2.1 each VBAN packet travels encrypted inside Starwire's SWMC format, and the receiver only plays audio from devices you've paired, through WASAPI. How it works, below, has the details.</sub>
 </p>
 
 1. On the PC, download **Starwire-Microphone-for-Windows.zip** from the
@@ -104,6 +107,9 @@ like WO Mic or AudioRelay to open on your Android device each time.
    the clock. [Full guide](windows/README.md).
 2. In Discord or the game, choose **CABLE Output** as the microphone.
 3. In Starwire: **Settings → Sound & vibration → Send my microphone**.
+4. Pair them, once: on the PC, right-click the receiver's icon by the clock, choose **Pair a
+   device...**, then **Show the code**. In Starwire, tap **Pair with the PC** under Send my
+   microphone, pick the PC and type the code.
 
 <p align="center">
 <img src="docs/images/mic-setup.png" width="720" alt="The microphone setup finishing in a PowerShell window: the receiver installed in Program Files, VB-Cable found, the firewall rule added for local-network and private VPN addresses, the receiver started with no window (just an icon by the clock), and the check reporting that the microphone heard the test tone.">
@@ -111,27 +117,46 @@ like WO Mic or AudioRelay to open on your Android device each time.
 <sub>All of this is automatic: one double-click runs the PowerShell setup, which builds and starts the receiver, installs VB-Cable if it's missing, adds the firewall rule and checks the virtual mic. This is it finishing on my PC.</sub>
 </p>
 
-The receiver has no window: right-click its icon by the clock to check the virtual mic, play a test
-tone for Discord's mic test or quit (or end it in Task Manager). Measured on my tablet over Wi-Fi:
-16,880 packets in 90 seconds with none lost, no gaps in the receiver's buffer (usually 30 to 50
-ms queued) and about 0.85 Mbps of upload. The raw data and a script that recomputes every number
-are in [docs/measurements](docs/measurements/2026-10-22-mic/).
+The receiver has no window: right-click its icon by the clock to pair a device, see the paired
+devices, check the virtual mic, play a test tone for Discord's mic test or quit (or end it in Task
+Manager). Measured with 0.2.0, before the encryption, on my tablet over Wi-Fi: 16,880 packets in
+90 seconds with none lost, no gaps in the receiver's buffer (usually 30 to 50 ms queued) and about
+0.85 Mbps of upload. The raw data and a script that recomputes every number are in
+[docs/measurements](docs/measurements/2026-10-22-mic/).
 
-**Please read this before you use it.** In 0.2.0 the microphone audio isn't encrypted or
-authenticated. Someone on the same network could listen to it, or send their own audio that
-plays into your PC's virtual mic. Starwire and the receiver only check that addresses are private
-(local network or VPN), and that isn't a security boundary: everyone on your network has a
-private address, and the sender's address is easy to fake. Until the fix ships:
+**Please read this before you use it.** From 0.2.1 the microphone is encrypted, and the receiver
+only plays audio from devices you've paired with that PC. Being on the same network is no longer
+enough to listen to it or to send sound into your PC's virtual mic, and the encryption doesn't
+need Tailscale or a VPN like it. Three things to know:
 
-- Use it only on a network you trust, like your own home network, or over
-  [Tailscale](https://tailscale.com/) or a VPN like it, which encrypts the audio on the way.
-- On a shared network (a dorm, office, hotel or LAN party), quit the receiver, even if you use
-  Tailscale: right-click its icon by the clock, then **Quit**. It starts again the next time you
-  sign in to Windows; the [guide](windows/README.md) says how to stop that.
+- **Updating from 0.2.0 needs both sides:** the app and the PC setup, then pairing once. A 0.2.0
+  receiver won't understand the new app, and the new receiver refuses 0.2.0's unencrypted audio.
+- **Don't show the pairing code while your screen is shared.** Anyone who sees it before you've
+  typed it could pair instead of you.
+- **"Not encrypted"**, the option for Voicemeeter and other VBAN apps, sends plain VBAN, like 0.2.0
+  did. Anyone on the same network can listen to that or send sound into it, so use it only on a
+  network you trust. Starwire's receiver only plays plain VBAN if you set it up with
+  `-AllowUnencrypted`, and then anyone on the network can send sound into it too.
 
-I'm working on a fix. [SECURITY.md](SECURITY.md) has the details. If your PC runs
-[logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can send the
-mic over the stream itself instead.
+[SECURITY.md](SECURITY.md) says what the encryption protects against and what it doesn't. If your
+PC runs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can
+send the mic over the stream itself instead.
+
+**Encrypted, and only from paired devices.** You pair each Android device with the PC once: the
+receiver shows a 16-character code and you type it into Starwire (**Settings → Sound & vibration
+→ Send my microphone → Pair with the PC**). The code authenticates a key exchange, so the device
+and the PC end up with a key nobody else on the network has. Each stream then gets its own
+AES-256-GCM key, every packet is encrypted and authenticated with a counter that only goes up,
+and the receiver refuses anything it can't check: devices it hasn't paired, recorded packets sent
+again, and plain VBAN.
+
+What's tested: the app and the receiver give the same bytes for a shared set of test vectors, the
+app's pairing and sender work against the receiver on one PC's loopback (every packet played in
+order, a replayed, a late, two forged and one plain VBAN packet refused), and the app's side runs
+on my tablet, where encrypting took about 6.5 microseconds per packet in a benchmark. On 23 Oct I
+streamed from my tablet to my PC over Wi-Fi with a receiver that only takes encrypted audio, and
+the sound came through only while the stream ran. I didn't count dropouts in that test. The format
+is in [docs/dev/mic-protocol.md](docs/dev/mic-protocol.md).
 
 <details>
 <summary><b>How it works and what I measured</b></summary>
@@ -140,30 +165,39 @@ mic over the stream itself instead.
 
 On the Android device, Starwire records with `AudioRecord` using the `VOICE_COMMUNICATION` source and turns
 on the platform echo canceller and noise suppressor where the device has them. It reads 20 ms at a
-time and sends 48 kHz 16-bit mono PCM as VBAN over UDP (port 6980 by default): a 28-byte header
-and 256 samples per packet, 187.5 packets a second. It sends to the PC you're streaming from, so
-there's nothing to type in, and it doesn't ask the host for a mic channel.
+time and makes 48 kHz 16-bit mono PCM into VBAN packets: a 28-byte header and 256 samples per
+packet, 187.5 packets a second. Each one is encrypted inside Starwire's SWMC format (584 bytes
+with its header and tag) and sent over UDP (port 6980 by default); the "Not encrypted" option sends
+the plain VBAN packets instead. It sends to the PC you're streaming from, so there's no address to
+type in, and it doesn't ask the host for a mic channel.
 
-On the PC, `StarwireMicReceiver` (one C# file, built on your PC from the source in the zip)
-accepts packets from local-network or private VPN addresses with the right stream name (a filter,
-not a security check, as above), and plays them into CABLE Input in 10 ms blocks. Playback starts once 40 ms is queued and never falls
-more than 120 ms behind. The device's and the PC's clocks drift apart (about 60 ppm in my test), so when the buffer
-stays above 60 ms for 2 seconds it skips a block to keep the delay down.
+On the PC, `StarwireMicReceiver` (two C# files, built on your PC from the source in the zip)
+plays a packet only if it comes from a paired device, checks out under that stream's key and has
+a higher counter than any it has played. As an extra layer it still only takes packets from
+local-network or private VPN addresses (a filter, not a security check). It plays into CABLE Input
+through WASAPI, in 2.7 ms steps on VB-Cable, and uses waveOut's 10 ms blocks (as 0.2.0 did) if
+WASAPI doesn't work. Playback starts once 40 ms is queued and never falls more than 120 ms behind.
+The device's and the PC's clocks drift apart (about 60 ppm in my test), so the receiver notes how
+low the buffer gets in the first 2 seconds, and when it then stays 10 ms or more above that for 2
+seconds, it skips 10 ms to keep the delay down (with waveOut, when it stays above 60 ms for 2
+seconds).
 
 <p align="center">
-<img src="docs/images/mic-packet.png" width="820" alt="A real VBAN packet from the tablet's microphone as a hexdump, with each header field decoded: the VBAN marker, 48 kHz, 256 samples, mono, 16-bit PCM, the stream name Stream1 and the frame counter, followed by the receiver's rules for accepting and buffering packets.">
+<img src="docs/images/mic-packet.png" width="820" alt="A real VBAN packet from the tablet's microphone as a hexdump, with each header field decoded: the VBAN marker, 48 kHz, 256 samples, mono, 16-bit PCM, the stream name Stream1 and the frame counter, followed by the 0.2.0 receiver's rules for accepting and buffering packets.">
 <br>
 <img src="docs/images/mic-measured.png" width="820" alt="Measurements over 90 seconds of Wi-Fi: packet arrival against the ideal schedule (p50 10.9 ms, p99 21 ms, max 38 ms), the receiver's buffer replayed from those arrivals (no underruns, nothing dropped), CABLE Output's level with no dropouts, and the PC-side delay with and without the clock-drift fix.">
 <br>
-<sub>Two notes on the chart are rounded. Checked packet by packet, the network's own spread was 6.4 ms at p99 and 21.6 ms at worst, and the buffer dipped to 20 ms a few times but never ran dry. <a href="docs/measurements/2026-10-22-mic/">The data and the script</a> give every exact number.</sub>
+<sub>The packet, the receiver's rules and the chart are from 0.2.0, before the encryption. In 0.2.1 this VBAN packet travels encrypted inside SWMC. Two notes on the chart are rounded. Checked packet by packet, the network's own spread was 6.4 ms at p99 and 21.6 ms at worst, and the buffer dipped to 20 ms a few times but never ran dry. <a href="docs/measurements/2026-10-22-mic/">The data and the script</a> give every exact number.</sub>
 </p>
 
-- On the PC alone, a packet takes about 107 to 119 ms to be heard on CABLE Output: 40 ms of
-  buffer, the rest Windows' audio path. I haven't measured the Android side yet.
+- With 0.2.0's waveOut playback, on the PC alone, a packet took about 107 to 119 ms to be heard
+  on CABLE Output: 40 ms of buffer, the rest Windows' audio path. With WASAPI in 0.2.1, in my
+  tests on the PC with recorded Wi-Fi timing, the median delay dropped from about 114 to 98 ms
+  (about 7 ms less with a steady clock). I haven't measured the Android side yet.
 - Echo cancelling is whatever the device provides, and some Android devices only apply it to
   calls; headphones get around that.
 - The setup and receiver are Windows only for now. On Linux, PipeWire's VBAN receive module should
-  take the stream (Stream1, UDP 6980), but I haven't tried it.
+  take the "Not encrypted" option's stream (Stream1, UDP 6980), but I haven't tried it.
 - The receiver starts when you sign in, not as a service, so it doesn't run on a PC sitting at the
   sign-in screen.
 
@@ -182,7 +216,7 @@ Artemis/Artemide has. I also missed some QoL features that the recent Windows fo
 that seem to be lagging in terms of an Android client equivalent.
 
 Back-end development started from
-[Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android)'s fast video pipeline, adds
+[Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android)'s video pipeline, adds
 the touchscreen tools from [Artemide](https://github.com/derflacco/moonlight-android) and
 [Artemis](https://github.com/ClassicOldSong/moonlight-android), and picks up favourite features
 from [Moonlight V+](https://github.com/qiin2333/moonlight-vplus),
@@ -246,7 +280,8 @@ Audio haptics turns a game's bass into vibration on your device or controller.
 
 ### 🎙 Your microphone on the PC
 Talk in game chat or Discord through your device's microphone, **with Vibepollo, Sunshine or
-Apollo as they are**: one setup script on the PC, one switch in Starwire. See
+Apollo as they are**: one setup script on the PC, one switch in Starwire, and a code to pair
+them once. The audio is encrypted, and only devices you've paired can send it. See
 [New in 0.2.0](#new-in-020-your-microphone-on-the-pc-with-any-host) for how it works and how to
 set it up.
 
@@ -285,10 +320,27 @@ Vibepollo. I decided what the app should do and how it should look, and
 [Claude Code](https://claude.com/claude-code) wrote the code. I also
 used [REA](https://github.com/morluto/rea) by morluto to look inside the other apps and see how
 their features work. I test on my RedMagic Astra (Snapdragon 8 Elite, Android 16) with a GameSir
-G8+, streaming from Vibepollo, and on my Galaxy Z Fold 6. There are 111 on-device tests in
-`app/src/androidTest` that run on the tablet. Some things haven't been tried yet: the custom
+G8+, streaming from Vibepollo, and on my Galaxy Z Fold 6. The on-device tests in
+`app/src/androidTest` run on the tablet. Some things haven't been tried yet: the custom
 Turnip driver option with a real Turnip driver, and hosts other than Vibepollo.
 [CONTRIBUTING.md](CONTRIBUTING.md) says how to build Starwire and run the tests.
+
+### What's in this repo
+
+| Folder or file | What it is |
+| --- | --- |
+| [`app/`](app) | The Starwire Android app, with its tests in `app/src/test` and `app/src/androidTest` |
+| [`windows/`](windows) | The microphone receiver and its setup for the Windows PC |
+| [`docs/`](docs) | Screenshots, the [roadmap](docs/ROADMAP.md), [where the prebuilt libraries come from](docs/PROVENANCE.md), the mic measurements and maintainer notes |
+| [`.github/`](.github) | The workflows that build, test and release Starwire, the issue forms, the release notes and the maintainer's scripts |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed in each version |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to build, test and send a change, and the rules for commits, branches and version numbers |
+| [`SECURITY.md`](SECURITY.md) | How to report a security problem privately |
+| [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | The rules for anyone changing Starwire, people or coding agents |
+| [`LICENSE.txt`](LICENSE.txt) | The GPL-3.0 licence |
+| `.gitmodules` | Links moonlight-common-c, the streaming protocol library, from [Starwire's copy](https://github.com/SicarioGaming/moonlight-common-c) |
+| `build.gradle`, `settings.gradle`, `gradle.properties`, `gradle/`, `gradlew`, `gradlew.bat` | The Gradle build settings and the Gradle wrapper |
+| `.gitignore` | Files kept out of the repo |
 
 ## Changelog
 
@@ -363,6 +415,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | --- | --- |
 | Floating menu button (tap to open, drag to move) | Ported from Artemis (Yukino Song / ClassicOldSong), via Artemide |
 | A smaller floating button that stays see-through until you touch it, and closes the menu too | New in Starwire, on the Artemis button |
+| The floating button stays where you dragged it, with a spot for landscape and one for portrait | New in Starwire |
 | On/off switches on the items that toggle something, and the menu stays open when you tap them | New in Starwire |
 | The menu header shows the game's cover art, or a Starwire tile for Desktop and games without art | New in Starwire |
 | Shortcuts page: Esc, F11, Alt+F4, Alt+Enter, Ctrl+V, Win, Win+D, Win+G, Ctrl+Alt+Tab, Shift+Tab, Win+Shift+Left, Ctrl+Alt+Shift+F1/F12, Win+Alt+B | Ported from Axixi2233's Moonlight fork (axi), via Artemis and Artemide |
@@ -386,6 +439,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Feature | Source |
 | --- | --- |
 | Vulkan renderer with host frame timing, PyroWave codec | From Moonlight X (MoreOrLessSoftware) |
+| Coming in 0.2.1: custom resolutions and frame rates. A Custom button in the resolution and frame rate lists takes any size up to 7680x4320 and any frame rate, in Settings and per game. It replaces Unlock FPS, and a saved value the device doesn't list is kept instead of being reset. Not yet tried in a stream with Starwire | From Moonlight X (MoreOrLessSoftware) |
 | Custom Vulkan driver (Turnip) for PyroWave: experimental and off by default, and not yet tried with a real Turnip driver | Ported from Moonlight X Turnip (ncpt / NoCrypt), uses libadrenotools (Billy Laws / bylaws). The libadrenotools libraries in the repo were built from the upstream commit in `SOURCE`, not copied from the fork. Starwire refuses files that aren't 64-bit ARM libraries, and goes back to the system driver when one can't load or can't run PyroWave (tested with a broken file, not a real driver) |
 | Warp Drive / Warp 2 frame pacing (2x / 4x FPS from the PC, newest frame shown) | Ported from Artemis (Yukino Song), via Artemide |
 | Fast V-Sync (Artemide's Nano Pacer) | Ported from Artemide (derflacco) |
@@ -413,9 +467,9 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Settings, the game screen and the stream menu fit more Android devices, down to narrow screens like a Galaxy Z Fold's cover screen; the game screen's header scrolls away with the covers | New in Starwire |
 | An "Impact:" line under settings that change latency, smoothness, picture quality or battery | New in Starwire |
 | On a foldable's inner screen, the stream follows the device instead of forcing landscape | Idea from [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) (sblocktechnologies) and [moonlight-android#1613](https://github.com/moonlight-stream/moonlight-android/pull/1613) |
-| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable. Not encrypted or authenticated in 0.2.0, so only for networks you trust ([see above](#new-in-020-your-microphone-on-the-pc-with-any-host)). The receiver has no window, just an icon by the clock with a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
+| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable. Encrypted from 0.2.1, and only from devices you've paired with the PC; a "Not encrypted" option stays for Voicemeeter and other VBAN apps ([see above](#new-in-020-your-microphone-on-the-pc-with-any-host)). The receiver has no window, just an icon by the clock with pairing, a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
 | Or send it over the stream itself, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)); echo-cancelled capture is new in Starwire |
-| Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
+| Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics, and the jitter buffer coming in 0.2.1) | Extends Moonlight X's per-app settings (MoreOrLessSoftware); the per-game jitter buffer is from Moonlight X too |
 
 </details>
 
@@ -440,7 +494,7 @@ repos a star:
 | Project | Author | Used for |
 | --- | --- | --- |
 | [Moonlight Android](https://github.com/moonlight-stream/moonlight-android) | Cameron Gutman and contributors | The original client everything here is built on |
-| [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android) | MoreOrLessSoftware | The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch |
+| [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android) | MoreOrLessSoftware | The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch, custom resolutions and frame rates |
 | [Artemis](https://github.com/ClassicOldSong/moonlight-android) | Yukino Song (ClassicOldSong) | Pan/zoom, touch modes, clipboard, server commands, Virtual Display, Warp pacing, floating button, and more (via Artemide) |
 | [Artemide](https://github.com/derflacco/moonlight-android) | derflacco | Nano Pacer / Fast V-Sync, Sync and Async LFR, async decode, MediaTek low-latency work, and the version of all the Artemis features above that Starwire ported |
 | [Moonlight (Axixi2233 fork)](https://github.com/Axixi2233/moonlight-android) | Axixi2233 | Full keyboard, shortcuts list, Lite overlay, shortcut file format (via Artemis) |
@@ -530,8 +584,10 @@ the same value.
    folder.
 4. Build a debug APK with `./gradlew assembleNonRootDebug`. It installs as "Starwire (Debug)"
    (`com.starwire.debug`), next to the release app.
-5. On-device tests: `./gradlew connectedNonRootDebugAndroidTest`, with one Android device
-   connected over adb. [CONTRIBUTING.md](CONTRIBUTING.md) has more on the tests.
+5. Tests: `./gradlew testNonRootDebugUnitTest` runs the JVM tests on the computer, with no device.
+   For the on-device tests, build the test APK too (`./gradlew assembleNonRootDebugAndroidTest`)
+   and run `.github/tools/device-test.sh -s <serial>` with the device connected over adb.
+   [CONTRIBUTING.md](CONTRIBUTING.md) has more on the tests.
 
 **Signed release builds** use a key that's never committed. Put its details in
 `keystore.properties` in the project folder (it's in `.gitignore`):
@@ -574,5 +630,7 @@ nothing to build there by hand: the setup compiles the receiver on the PC.
 
 ## Licence
 
-GPL-3.0, like Moonlight and every version it builds on. See [LICENSE.txt](LICENSE.txt). PyroWave
-(MIT) and libadrenotools (BSD-2-Clause) keep their own licences.
+GPL-3.0, like Moonlight and every version it builds on. See [LICENSE.txt](LICENSE.txt). The
+libraries inside Starwire keep their own licences, like PyroWave (MIT) and libadrenotools
+(BSD-2-Clause). **Settings → About → Open-source licences** lists every one with its full text,
+and the same texts are in [`app/src/main/assets/licenses`](app/src/main/assets/licenses).

@@ -2,4 +2,6 @@
 <full-backup-content>
     <!-- Don't sync preferences because it often contains device-specific data -->
     <exclude domain="sharedpref" path="."/>
+    <!-- An imported custom Vulkan driver is native code; never restore one from a backup -->
+    <exclude domain="file" path="custom_vulkan_driver"/>
 </full-backup-content>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Shortcut strings -->
     <string name="scut_deleted_pc">PC deleted</string>
     <string name="scut_not_paired">PC not paired</string>
@@ -26,12 +26,12 @@
 
     <!-- Network test strings -->
     <string name="nettest_title_waiting">Testing Network Connection</string>
-    <string name="nettest_text_waiting">Moonlight is testing your network connection to determine if any required ports are blocked.\n\nThis may take a few seconds…</string>
+    <string name="nettest_text_waiting">Starwire is testing your network connection to determine if any required ports are blocked.\n\nThis may take a few seconds…</string>
     <string name="nettest_title_done">Network Test Complete</string>
-    <string name="nettest_text_success">Your network does not appear to be blocking Moonlight. If you still have trouble connecting, check your PC\'s firewall settings.\n\nIf you are trying to stream over the Internet, install the Moonlight Internet Hosting Tool on your PC and run the included Internet Streaming Tester to check your PC\'s Internet connection.</string>
-    <string name="nettest_text_inconclusive">The network test could not be performed because none of Moonlight\'s connection testing servers were reachable. Check your Internet connection or try again later.</string>
-    <string name="nettest_text_failure">Your device\'s current network connection seems to be blocking Moonlight. Streaming over the Internet may not work while connected to this network.\n\nThe following network ports were blocked:\n</string>
-    <string name="nettest_text_blocked">Your device\'s current network connection is blocking Moonlight. Streaming over the Internet may not work while connected to this network.</string>
+    <string name="nettest_text_success">Your network does not appear to be blocking Starwire. If you still have trouble connecting, check your PC\'s firewall settings.\n\nIf you are trying to stream over the Internet, install the Moonlight Internet Hosting Tool on your PC and run the included Internet Streaming Tester to check your PC\'s Internet connection.</string>
+    <string name="nettest_text_inconclusive">The network test could not be performed because none of the Moonlight project\'s connection testing servers were reachable. Check your Internet connection or try again later.</string>
+    <string name="nettest_text_failure">Your device\'s current network connection seems to be blocking Starwire. Streaming over the Internet may not work while connected to this network.\n\nThe following network ports were blocked:\n</string>
+    <string name="nettest_text_blocked">Your device\'s current network connection is blocking Starwire. Streaming over the Internet may not work while connected to this network.</string>
 
     <!-- Pair messages -->
     <string name="pairing">Pairing…</string>
@@ -67,7 +67,7 @@
 	    Using remote desktop software can also cause this error. Try rebooting your machine or reinstalling GFE.
     </string>
     <string name="title_decoding_error">Video Decoder Crashed</string>
-    <string name="message_decoding_error">Moonlight has crashed due to an incompatibility with this device\'s video decoder. Try adjusting the streaming settings if the crashes continue.</string>
+    <string name="message_decoding_error">Starwire has crashed due to an incompatibility with this device\'s video decoder. Try adjusting the streaming settings if the crashes continue.</string>
     <string name="title_decoding_reset">Video Settings Reset</string>
     <string name="message_decoding_reset">Your device\'s video decoder continues to crash at your selected streaming settings. Your streaming settings have been reset to default.</string>
     <string name="error_usb_prohibited">USB access is prohibited by your device administrator. Check your Knox or MDM settings.</string>
@@ -151,14 +151,13 @@
     <string name="category_basic_settings">Basic Settings</string>
     <string name="title_resolution_list">Video resolution</string>
     <string name="summary_resolution_list">Increase to improve image clarity. Decrease for better performance on lower end devices and slower networks.</string>
-    <string name="title_native_res_dialog">Native Resolution Warning</string>
-    <string name="text_native_res_dialog">Native resolution and/or FPS may not be supported by the streaming server. You will probably need to configure a matching custom display mode for the host PC manually.\n\nIf you choose to create a custom resolution in NVIDIA Control Panel to match your screen settings, please ensure you have read and understood NVIDIA\'s warning regarding possible monitor damage, PC instability, and other potential problems.\n\nWe are not responsible for any problems resulting from creating a custom resolution on your PC.\n\nIt may be that your monitor does not support a necessary display configuration. If so, you may try to set up a virtual monitor. Finally, if your device or host PC does not support streaming at a specific resolution or refresh rate, you\'re out of luck unfortunately.</string>
     <string name="title_fps_list">Video frame rate</string>
     <string name="summary_fps_list">Increase for a smoother video stream. Decrease for better performance on lower end devices.</string>
     <string name="title_seekbar_bitrate">Video bitrate</string>
     <string name="summary_seekbar_bitrate">Increase for better image quality. Decrease to improve performance on slower connections.</string>
     <string name="suffix_seekbar_bitrate_mbps">Mbps</string>
     <string name="seekbar_custom">Custom</string>
+    <string name="custom_value_clear">Clear</string>
     <string name="seekbar_custom_message">Enter a value in %1$s</string>
     <string name="seekbar_custom_invalid">Enter a number greater than 0</string>
     <string name="title_checkbox_stretch_video">Stretch video to full-screen</string>
@@ -167,7 +166,12 @@
     <string name="resolution_prefix_native_landscape">(Landscape)</string>
     <string name="resolution_prefix_native_portrait">(Portrait)</string>
     <string name="fps_suffix_fps">FPS</string>
-    <string name="title_native_fps_dialog">Native FPS Warning</string>
+    <string name="fps_custom_entry">Custom (%1$s FPS)</string>
+    <string name="resolution_custom_entry">Custom (%1$s)</string>
+    <string name="resolution_custom_message">Enter a width and height in pixels</string>
+    <string name="resolution_custom_width">Width (e.g. 1920)</string>
+    <string name="resolution_custom_height">Height (e.g. 1080)</string>
+    <string name="resolution_custom_invalid">Enter a number from 1 to %1$d</string>
     <string name="title_checkbox_auto_resume_stream">Auto-resume stream after sleep</string>
     <string name="summary_checkbox_auto_resume_stream">If a stream is running when you put your device to sleep, resume it automatically upon wakeup.</string>
 
@@ -186,12 +190,12 @@
     <string name="summary_seekbar_vibrate_fallback_strength">Amplify or reduce the vibration intensity on your device</string>
     <string name="suffix_seekbar_vibrate_fallback_strength">%</string>
     <string name="title_seekbar_deadzone">Adjust analog stick deadzone</string>
-    <string name="summary_seekbar_deadzone">Note: Some games can enforce a larger deadzone than what Moonlight is configured to use.</string>
+    <string name="summary_seekbar_deadzone">Note: Some games can enforce a larger deadzone than what Starwire is configured to use.</string>
     <string name="suffix_seekbar_deadzone">%</string>
     <string name="title_checkbox_xb1_driver">Xbox 360/One USB gamepad driver</string>
     <string name="summary_checkbox_xb1_driver">Enables a built-in USB driver for devices without native Xbox controller support</string>
     <string name="title_checkbox_usb_bind_all">Override native Xbox gamepad support</string>
-    <string name="summary_checkbox_usb_bind_all">Use Moonlight\'s USB driver for all supported gamepads, even if native Xbox controller support is present</string>
+    <string name="summary_checkbox_usb_bind_all">Use Starwire\'s USB driver for all supported gamepads, even if native Xbox controller support is present</string>
     <string name="title_checkbox_mouse_emulation">Mouse emulation via gamepad</string>
     <string name="summary_checkbox_mouse_emulation">Long pressing the Start button will switch the gamepad into mouse mode</string>
     <string name="title_checkbox_flip_face_buttons">Flip face buttons</string>
@@ -240,7 +244,7 @@
     <string name="title_checkbox_enable_pip">Enable Picture-in-Picture observer mode</string>
     <string name="summary_checkbox_enable_pip">Allows the stream to be viewed (but not controlled) while multitasking</string>
     <string name="title_language_list">Language</string>
-    <string name="summary_language_list">Language to use for Moonlight</string>
+    <string name="summary_language_list">Language to use for Starwire</string>
     <string name="title_checkbox_small_icon_mode">Use small box art</string>
     <string name="summary_checkbox_small_icon_mode">Smaller box art in the app grid allows more apps to be visible on screen</string>
 
@@ -251,8 +255,6 @@
     <string name="summary_checkbox_host_audio">Play audio from the computer and this device</string>
 
     <string name="category_advanced_settings">Advanced Settings</string>
-    <string name="title_unlock_fps">Unlock all possible frame rates</string>
-    <string name="summary_unlock_fps">Streaming at 90 or 120 FPS may reduce latency on high-end devices but can cause lag or instability on devices that can\'t support it</string>
     <string name="title_checkbox_reduce_refresh_rate">Allow refresh rate reduction</string>
     <string name="summary_checkbox_reduce_refresh_rate">Lower display refresh rates can save power at the expense of some additional video latency</string>
     <string name="title_checkbox_disable_warnings">Disable warning messages</string>
@@ -289,11 +291,9 @@
     <string name="toast_controller_type_changed">Gamepad type may be changed due to motion sensor emulation</string>
 
     <!-- Permission justification -->
-    <string name="local_network_rationale">Moonlight requires local network permissions to communicate with nearby hosts</string>
+    <string name="local_network_rationale">Starwire requires local network permissions to communicate with nearby hosts</string>
 
     <!-- Array strings -->
-    <string name="resolution_360p">360p</string>
-    <string name="resolution_480p">480p</string>
     <string name="resolution_720p">720p</string>
     <string name="resolution_1080p">1080p</string>
     <string name="resolution_1440p">1440p</string>
@@ -321,16 +321,24 @@
     <string name="title_video_renderer">Video renderer</string>
     <string name="summary_video_renderer">Vulkan adds dithering and native frame pacing. Automatic uses the direct renderer.</string>
 
-    <string name="title_custom_vulkan_driver">Custom Vulkan driver</string>
-    <string name="summary_custom_vulkan_driver">Load a custom Vulkan driver (for example Turnip) through libadrenotools, for arm64 devices on Android 10+. Used by PyroWave; other codecs keep the system Vulkan driver. If the driver doesn\'t work, the system one is used instead. Restart Starwire after changing it.</string>
+    <string name="title_custom_vulkan_driver">Custom Vulkan driver (experimental)</string>
+    <string name="summary_custom_vulkan_driver">Not yet tried with a real Turnip driver. Loads a Vulkan driver file you choose, such as Turnip, for PyroWave on 64-bit ARM devices with Android 10 or newer; other codecs keep the system driver. If the driver can\'t load or can\'t run PyroWave, the system driver is used instead, but a driver that crashes closes Starwire. Restart Starwire after changing it.</string>
     <string name="title_custom_vulkan_driver_path">Custom driver file</string>
-    <string name="summary_custom_vulkan_driver_path">Tap to choose the driver (.so, .zip, or .adpkg). It is copied into the app\'s private storage.</string>
+    <string name="summary_custom_vulkan_driver_path">Tap to choose the driver (.so, .zip or .adpkg). Starwire checks it\'s a 64-bit ARM library, then copies it into its own storage.</string>
+    <string name="summary_custom_vulkan_driver_file">%1$s\nSHA-256: %2$s</string>
+    <string name="summary_custom_vulkan_driver_unchecked">%1$s was imported by an older Starwire that didn\'t record its SHA-256, so it isn\'t used. Tap to choose it again.</string>
     <string name="custom_vulkan_driver_imported">Custom driver imported: %1$s</string>
     <string name="custom_vulkan_driver_import_failed">Could not import the custom driver</string>
     <string name="custom_vulkan_driver_no_picker">No file picker available</string>
+    <string name="title_remove_custom_vulkan_driver">Remove the custom driver</string>
+    <string name="summary_remove_custom_vulkan_driver">Deletes the driver file from Starwire\'s storage.</string>
+    <string name="custom_vulkan_driver_removed">Custom driver removed</string>
+    <string name="custom_vulkan_driver_warning_title">Turn on the custom driver?</string>
+    <string name="custom_vulkan_driver_warning_message">This loads a graphics driver file that you choose into Starwire. It\'s only used for PyroWave streams.\n\nThe driver runs as part of Starwire, with the same access as the app: your network, your microphone if you\'ve allowed it, and the keys for your paired PCs. Only use a driver file from a source you trust.\n\nIf the driver can\'t load or can\'t run PyroWave, Starwire goes back to the normal driver. A driver that crashes closes Starwire instead.\n\nThis is experimental and hasn\'t been tried with a real Turnip driver yet.</string>
+    <string name="custom_vulkan_driver_warning_accept">Turn on</string>
     <string name="title_custom_vulkan_driver_toast">Driver loaded toast</string>
     <string name="summary_custom_vulkan_driver_toast">Show a message when the custom Vulkan driver is loaded.</string>
-    <string name="custom_vulkan_driver_loaded">Custom Vulkan driver loaded: %1$s</string>
+    <string name="custom_vulkan_driver_loaded">Custom Vulkan driver loaded: %1$s (SHA-256 %2$s…)</string>
 
     <string name="dithering_off">Off</string>
     <string name="dithering_low">Low</string>
@@ -541,10 +549,13 @@
     <string name="pacing_warp">Warp Drive: 2x FPS from the PC, newest frame shown (Experimental)</string>
     <string name="pacing_warp2">Warp 2: 4x FPS from the PC, newest frame shown (Experimental)</string>
     <string name="title_hide_cursor_mode">Hide PC cursor</string>
-    <string name="summary_hide_cursor_mode">Hide the PC\'s mouse cursor in the video, using Vibepollo\'s Ctrl+Alt+Shift+N toggle. It\'s shown again when the stream ends.</string>
+    <string name="summary_hide_cursor_mode">Hide the PC\'s mouse cursor in the video, using Vibepollo\'s Ctrl+Alt+Shift+N toggle. It\'s shown again when the stream ends, or the next time you connect if Starwire was closed suddenly. If it\'s ever the wrong way round, use Fix PC Cursor in the stream menu.</string>
     <string name="hide_cursor_never">Never</string>
     <string name="hide_cursor_touching">While touching the screen</string>
     <string name="hide_cursor_always">Always</string>
+    <string name="overlay_menu_fix_host_cursor">Fix PC Cursor</string>
+    <string name="host_cursor_fix_sent">Switched the PC cursor. If it\'s still wrong, tap Fix PC Cursor again.</string>
+    <string name="host_cursor_reconciled">The PC cursor was left hidden last time, so Starwire turned it back on.</string>
 
     <!-- Starwire: Cover Glow home screen -->
     <string name="cg_wordmark" translatable="false">Starwire</string>
@@ -683,21 +694,50 @@
     <string name="summary_overlay_menu">Configure custom commands for the in-game overlay menu</string>
     <string name="title_enable_overlay_menu">Enable overlay menu</string>
     <string name="summary_enable_overlay_menu">Hold select button for 5 seconds during streaming to open the overlay menu</string>
-    <!-- Microphone streaming (needs logabell's Apollo build on the PC) -->
+    <!-- Sending the microphone: to Starwire's receiver on the PC (encrypted), to another VBAN
+         receiver (not encrypted), or over the stream (logabell's Apollo build) -->
     <string name="title_checkbox_enable_microphone">Send my microphone</string>
     <string name="summary_checkbox_enable_microphone">Talk in voice chat on the PC. Works with Vibepollo, Sunshine and Apollo through a small receiver on the PC, or over the stream with logabell\'s Apollo build.</string>
     <string name="title_microphone_target">Send my microphone to</string>
     <string name="microphone_target_host">The PC\'s streaming app (logabell\'s Apollo build)</string>
-    <string name="microphone_target_vban">A VBAN receiver on the PC (any host)</string>
+    <string name="microphone_target_starwire">Starwire\'s receiver on the PC (encrypted)</string>
+    <string name="microphone_target_vban">Not encrypted (for Voicemeeter or other VBAN apps)</string>
     <string name="title_vban_setup">Set up the PC</string>
-    <string name="summary_vban_setup">Run Starwire\'s microphone setup on the PC once. It installs VB-Cable (a free virtual microphone) and a small receiver. Then choose CABLE Output as the microphone in Discord or the game. Tap for the guide. Another VBAN receiver works too: stream %2$s from %1$s (or this device\'s VPN address over a VPN), port %3$d.</string>
+    <string name="summary_mic_setup_encrypted">Run Starwire\'s microphone setup on the PC once. It installs VB-Cable (a free virtual microphone) and Starwire\'s receiver. Then pair with the PC below, and choose CABLE Output as the microphone in Discord or the game. Tap for the guide.</string>
+    <string name="summary_vban_setup">Not encrypted: anyone on the same network can listen to your microphone or send sound into the PC\'s microphone. Use it only for Voicemeeter or another VBAN app, on a network you trust. Set it to receive stream %2$s from %1$s (or this device\'s VPN address over a VPN), port %3$d, and play it into CABLE Input; then choose CABLE Output as the microphone in Discord or the game. Tap for the guide.</string>
+    <string name="title_mic_pairing">Pair with the PC</string>
+    <string name="summary_mic_pairing_none">Not paired yet. Tap, then type the code the PC shows.</string>
+    <string name="summary_mic_pairing_done">Paired with %1$s. Tap to pair again, or with another PC.</string>
     <string name="vban_this_device">this device\'s address</string>
     <string name="title_vban_stream_name">VBAN stream name</string>
     <string name="summary_vban_stream_name">%1$s. Must match the stream name on the PC\'s receiver.</string>
-    <string name="title_vban_port">VBAN port</string>
-    <string name="summary_vban_port">%1$s. VBAN normally uses 6980.</string>
+    <string name="title_vban_port">Microphone port</string>
+    <string name="summary_vban_port">%1$s. 6980 unless you changed it on the PC.</string>
     <string name="microphone_vban_not_home">The microphone wasn\'t sent. VBAN isn\'t encrypted, so Starwire only sends it to a PC on your home network or a private VPN.</string>
     <string name="microphone_vban_failed">Couldn\'t start sending the microphone over VBAN</string>
+    <string name="microphone_secure_not_home">The microphone wasn\'t sent. Starwire only sends it to a PC on your home network or a private VPN.</string>
+    <string name="microphone_secure_failed">Couldn\'t start sending the microphone to the PC\'s receiver</string>
+    <string name="microphone_secure_not_paired">Your microphone wasn\'t sent: pair Starwire with this PC first (Settings, Sound and vibration, Send my microphone, Pair with the PC).</string>
+    <string name="microphone_secure_no_answer">The PC\'s microphone receiver isn\'t answering, so your microphone isn\'t being sent. Check the receiver is running and up to date, or pair again.</string>
+    <string name="microphone_secure_busy">The PC is already receiving another device\'s microphone.</string>
+    <string name="microphone_secure_no_output">The PC\'s receiver can\'t find VB-Cable. Run the microphone setup on the PC again.</string>
+    <!-- Pairing with the PC's microphone receiver -->
+    <string name="mic_pair_title">Pair with the PC</string>
+    <string name="mic_pair_message">On the PC, right-click the Starwire microphone icon by the clock and choose Pair a device. Then pick the PC here and type the code it shows.</string>
+    <!-- The hyphens are the code's own, as the PC shows it -->
+    <string name="mic_pair_code_hint" tools:ignore="TypographyDashes">Code, like 2491-650N-2RBH-G690</string>
+    <string name="mic_pair_button">Pair</string>
+    <string name="mic_pair_working">Pairing with %1$s. This takes a few seconds.</string>
+    <string name="mic_pair_no_pcs">Add your PC to Starwire first: find it on the main screen and pair it for streaming. Then come back here.</string>
+    <string name="mic_pair_done">Paired with %1$s. Your microphone is encrypted from now on.</string>
+    <string name="mic_pair_bad_code" tools:ignore="TypographyDashes">The code is 16 letters and numbers, like 2491-650N-2RBH-G690.</string>
+    <string name="mic_pair_wrong_code">That code didn\'t match. It changes each time you open Pair a device on the PC.</string>
+    <string name="mic_pair_not_pairing">The PC isn\'t waiting to pair. Right-click the Starwire microphone icon by the PC\'s clock and choose Pair a device.</string>
+    <string name="mic_pair_expired">That code has expired. Choose Pair a device on the PC again.</string>
+    <string name="mic_pair_no_answer">No answer from the receiver on %1$s. Check its icon is by the PC\'s clock. If you set it up with Starwire 0.2.0, run the new setup from the Windows zip first.</string>
+    <string name="mic_pair_no_address">Starwire doesn\'t know a home-network or VPN address for %1$s. Stream from it once on your home network, then try again.</string>
+    <string name="mic_pair_failed">Pairing didn\'t work. Choose Pair a device on the PC again and type the new code.</string>
+    <string name="mic_pair_not_saved">Paired, but Starwire couldn\'t save the pairing. Try again.</string>
     <string name="title_microphone_host_info">Get the Apollo build for microphone</string>
     <string name="summary_microphone_host_info">Opens logabell\'s Apollo on GitHub. Install it on the PC in place of your current host.</string>
     <string name="title_microphone_device_list">Microphone</string>
@@ -726,27 +766,79 @@
     <string name="impact_jitter_buffer">A bigger buffer rides out patchy Wi-Fi but adds latency.</string>
     <string name="impact_vsync">On removes tearing but adds up to one frame of latency.</string>
     <string name="impact_sync_lfr">On lowers latency by skipping late frames. Motion can look less even under load.</string>
-    <string name="impact_async_decode">On can cut decode delay. Turn it off if video stalls.</string>
+    <string name="impact_async_decode">On can cut decode delay on some devices (not measured in Starwire yet). Turn it off if video stalls.</string>
     <string name="impact_async_lfr">On gives the lowest delay but can drop frames under load.</string>
     <string name="impact_ultra_low_latency">Can lower decode latency on the chips listed. No gain on others; turn it off if video glitches.</string>
     <string name="impact_surround">Surround uses a little more bandwidth. No change to latency.</string>
     <string name="impact_audiofx">Can add audio delay. Leave it off unless you use an equalizer.</string>
     <string name="impact_microphone">Uses a little upload bandwidth and battery. No change to video.</string>
-    <string name="impact_microphone_target">Over the stream it\'s compressed to about 24 kbps. VBAN sends it uncompressed, just under 1 Mbps, and only to a PC on your home network or a private VPN. No change to video.</string>
+    <string name="impact_microphone_target">Over the stream it\'s compressed to about 24 kbps. To a receiver on the PC it goes uncompressed, just under 1 Mbps, and only to a PC on your home network or a private VPN. Starwire\'s receiver gets it encrypted; the other VBAN option isn\'t encrypted. No change to video.</string>
     <string name="impact_audio_haptics">Uses some battery. No change to the stream.</string>
     <string name="impact_deadzone">Lower feels more responsive, but worn sticks may drift.</string>
-    <string name="impact_prevent_packet_loss">Fewer stutters on devices whose Wi-Fi naps between packets. Slightly more battery.</string>
-    <string name="impact_unlock_fps">90 or 120 FPS can lower latency on fast devices but can lag on slower ones.</string>
+    <string name="impact_prevent_packet_loss">For devices whose Wi-Fi naps between packets. Slightly more battery.</string>
     <string name="impact_reduce_refresh_rate">Saves battery but adds some latency.</string>
     <string name="impact_actual_refresh_rate">A wrong value makes pacing stutter. 0 measures it for you.</string>
     <string name="impact_video_format">HEVC and AV1 look better at the same bitrate. Older devices can take longer to decode them.</string>
     <string name="impact_pyrowave_late_frames">Accepting more blur keeps the stream smooth when frames arrive late.</string>
     <string name="impact_video_renderer">Vulkan paces frames more evenly for a small GPU cost. Direct has the least overhead.</string>
-    <string name="impact_custom_vulkan_driver">A newer driver can speed up Vulkan on Adreno GPUs. A bad one can crash the stream.</string>
+    <string name="impact_custom_vulkan_driver">Experimental and not yet tried with a real Turnip driver. A bad driver can close Starwire.</string>
     <string name="impact_spatial_dithering">Small GPU cost. No change to latency.</string>
     <string name="impact_hdr">Uses 10-bit video, which needs hardware HEVC or AV1 decoding. Slower devices may take longer per frame.</string>
     <string name="impact_perf_overlay">Very small. Lite mode draws less.</string>
 
     <!-- Game screen: the slim bar that takes over once the header has scrolled away -->
     <string name="cg_back_to_top">Show the selected game</string>
+
+    <!-- What TalkBack says for game covers, the Play/Resume/Quit buttons and the PC screen's toolbar -->
+    <string name="cg_a11y_hidden">Hidden</string>
+    <string name="cg_a11y_selected">Selected</string>
+    <string name="cg_a11y_play_game">Play %1$s</string>
+    <string name="cg_a11y_resume_game">Resume %1$s</string>
+    <string name="cg_a11y_quit_game">Quit %1$s</string>
+    <string name="cg_a11y_overrides">Turn overrides on or off</string>
+    <string name="cg_a11y_auto_resume">Turn auto-resume on or off</string>
+
+    <!-- Settings > About, and its Credits and Open-source licences pages -->
+    <string name="category_about">About</string>
+    <string name="title_about_version">Version</string>
+    <string name="summary_about_version">%1$s (%2$d) · commit %3$s. Tap to copy it for a bug report.</string>
+    <string name="about_copied">Version details copied for a bug report</string>
+    <string name="title_about_github">Starwire on GitHub</string>
+    <string name="summary_about_github">Releases, the full feature list and discussions</string>
+    <string name="title_about_issues">Report a problem or suggest an idea</string>
+    <string name="summary_about_issues">Opens a new issue on GitHub. Pasting in the version details above helps.</string>
+    <string name="title_about_source">Source code</string>
+    <string name="summary_about_source">Starwire is free software under the GPL-3.0. This opens the code for version %1$s on GitHub.</string>
+    <string name="title_about_credits">Credits</string>
+    <string name="summary_about_credits">The Moonlight versions, people and tools Starwire is built on</string>
+    <string name="title_about_licences">Open-source licences</string>
+    <string name="summary_about_licences">The code from other projects inside Starwire, and its licences</string>
+    <string name="oss_section_app">Starwire</string>
+    <string name="oss_section_java">Libraries</string>
+    <string name="oss_section_native">Native code</string>
+    <string name="oss_section_other">Icons and data</string>
+    <string name="oss_project_page">Project page</string>
+    <string name="oss_licence_missing">This licence text is missing from the app. The project page has it.</string>
+    <string name="credits_section_moonlight">Moonlight versions</string>
+    <string name="credits_section_microphone">Microphone</string>
+    <string name="credits_section_video">Video and drivers</string>
+    <string name="credits_section_hosts">Hosts</string>
+    <string name="credits_section_tools">Tools</string>
+    <string name="credit_moonlight">The original client everything here is built on</string>
+    <string name="credit_moonlight_x">The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch, custom resolutions and frame rates</string>
+    <string name="credit_artemis">Pan/zoom, touch modes, clipboard, server commands, Virtual Display, Warp pacing, floating button, and more (via Artemide)</string>
+    <string name="credit_artemide">Nano Pacer / Fast V-Sync, Sync and Async LFR, async decode, MediaTek low-latency work, and the version of the Artemis features that Starwire ported</string>
+    <string name="credit_axixi">Full keyboard, shortcuts list, Lite overlay, shortcut file format (via Artemis)</string>
+    <string name="credit_turnip">Custom Turnip Vulkan driver for PyroWave</string>
+    <string name="credit_vplus">Ideas: bitrate mid-stream, audio haptics, 1% lows</string>
+    <string name="credit_moonlit">Ideas: monitor switcher, pinch to zoom anytime</string>
+    <string name="credit_fold">Idea: letting the stream follow a foldable\'s inner screen</string>
+    <string name="credit_apollo_microphone">The in-stream microphone: the Android capture, the moonlight-common-c changes, and the Apollo build that receives it</string>
+    <string name="credit_vban">VBAN, the network audio format Starwire\'s microphone uses, and VB-Cable, the virtual microphone the receiver plays into (donationware)</string>
+    <string name="credit_pyrowave">The PyroWave codec</string>
+    <string name="credit_adrenotools">Loading a custom Adreno Vulkan driver</string>
+    <string name="credit_vibepollo">The host Starwire is developed with (fork of Apollo)</string>
+    <string name="credit_apollo_sunshine">The hosts Vibepollo is built on</string>
+    <string name="credit_claude_code">Writing the Starwire code, ports, redesign and tests</string>
+    <string name="credit_rea">Reverse-engineering and analysis</string>
 </resources>

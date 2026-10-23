@@ -73,7 +73,6 @@ public class PreferenceConfiguration {
     private static final String MOUSE_EMULATION_STRING = "checkbox_mouse_emulation";
     private static final String ANALOG_SCROLLING_PREF_STRING = "analog_scrolling";
     private static final String MOUSE_NAV_BUTTONS_STRING = "checkbox_mouse_nav_buttons";
-    static final String UNLOCK_FPS_STRING = "checkbox_unlock_fps";
     private static final String VIBRATE_OSC_PREF_STRING = "checkbox_vibrate_osc";
     private static final String VIBRATE_FALLBACK_PREF_STRING = "checkbox_vibrate_fallback";
     private static final String VIBRATE_FALLBACK_STRENGTH_PREF_STRING = "seekbar_vibrate_fallback_strength";
@@ -92,6 +91,12 @@ public class PreferenceConfiguration {
     private static final String OVERLAY_TRIGGER_BUTTON_PREF_STRING = "overlay_trigger_button";
     private static final String OVERLAY_HOLD_DURATION_PREF_STRING = "overlay_hold_duration";
     private static final String ENABLE_FLOATING_BUTTON_PREF_STRING = "checkbox_enable_floating_button";
+    // Where the floating button was dragged to, one spot for landscape screens and one for
+    // portrait (FloatingButton). Saved by the drag; they aren't on the settings screen.
+    private static final String FLOATING_BUTTON_LANDSCAPE_X_PREF_STRING = "floating_button_landscape_x";
+    private static final String FLOATING_BUTTON_LANDSCAPE_Y_PREF_STRING = "floating_button_landscape_y";
+    private static final String FLOATING_BUTTON_PORTRAIT_X_PREF_STRING = "floating_button_portrait_x";
+    private static final String FLOATING_BUTTON_PORTRAIT_Y_PREF_STRING = "floating_button_portrait_y";
     private static final String TOUCH_SENSITIVITY_PREF_STRING = "seekbar_touch_sensitivity";
     private static final String PERF_OVERLAY_LITE_PREF_STRING = "checkbox_enable_perf_overlay_lite";
     private static final String PREVENT_PACKET_LOSS_PREF_STRING = "checkbox_prevent_packet_loss";
@@ -116,8 +121,13 @@ public class PreferenceConfiguration {
     private static final String SPATIAL_DITHERING_PREF_STRING = "spatial_dithering";
     private static final String JITTER_BUFFER_PREF_STRING = "jitter_buffer";
     private static final String PYROWAVE_LATE_FRAMES_PREF_STRING = "pyrowave_late_frames";
-    private static final String CUSTOM_VULKAN_DRIVER_PREF_STRING = "checkbox_custom_vulkan_driver";
+    static final String CUSTOM_VULKAN_DRIVER_PREF_STRING = "checkbox_custom_vulkan_driver";
     static final String CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING = "text_custom_vulkan_driver_path";
+    // Recorded when the driver is imported, and checked before it's loaded
+    static final String CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING = "custom_vulkan_driver_sha256";
+    // Set once the warning shown when the driver is first turned on has been accepted
+    static final String CUSTOM_VULKAN_DRIVER_WARNED_PREF_STRING = "custom_vulkan_driver_warning_accepted";
+    static final String REMOVE_CUSTOM_VULKAN_DRIVER_PREF_STRING = "remove_custom_vulkan_driver";
     private static final String CUSTOM_VULKAN_DRIVER_TOAST_PREF_STRING = "checkbox_custom_vulkan_driver_toast";
 
     static final String DEFAULT_RESOLUTION = "1280x720";
@@ -151,7 +161,6 @@ public class PreferenceConfiguration {
     private static final boolean DEFAULT_MOUSE_EMULATION = true;
     private static final String DEFAULT_ANALOG_STICK_FOR_SCROLLING = "right";
     private static final boolean DEFAULT_MOUSE_NAV_BUTTONS = false;
-    private static final boolean DEFAULT_UNLOCK_FPS = false;
     private static final boolean DEFAULT_VIBRATE_OSC = true;
     private static final boolean DEFAULT_VIBRATE_FALLBACK = false;
     private static final int DEFAULT_VIBRATE_FALLBACK_STRENGTH = 100;
@@ -160,10 +169,14 @@ public class PreferenceConfiguration {
     private static final String DEFAULT_AUDIO_CONFIG = "2"; // Stereo
     private static final boolean DEFAULT_ENABLE_MICROPHONE = false;
     private static final String DEFAULT_MICROPHONE_DEVICE = "0";
-    static final String MICROPHONE_TARGET_HOST = "host";
-    static final String MICROPHONE_TARGET_VBAN = "vban";
-    // A VBAN receiver works with every host; over the stream only works with logabell's Apollo build
-    private static final String DEFAULT_MICROPHONE_TARGET = MICROPHONE_TARGET_VBAN;
+    // Where the microphone goes: Starwire's receiver on the PC, encrypted (works with every host);
+    // another VBAN receiver, not encrypted; or over the stream (only logabell's Apollo build)
+    public static final String MICROPHONE_TARGET_STARWIRE = "starwire";
+    public static final String MICROPHONE_TARGET_VBAN = "vban";
+    public static final String MICROPHONE_TARGET_HOST = "host";
+    private static final String DEFAULT_MICROPHONE_TARGET = MICROPHONE_TARGET_STARWIRE;
+    // Set once 0.2.1 has moved 0.2.0's "vban" (its default, unencrypted) to the encrypted target
+    static final String MICROPHONE_TARGET_MIGRATED_PREF_STRING = "mic_target_migrated_021";
     private static final boolean DEFAULT_LATENCY_TOAST = false;
     private static final String DEFAULT_FRAME_PACING = "balanced";
     private static final boolean DEFAULT_ABSOLUTE_MOUSE_MODE = false;
@@ -231,7 +244,6 @@ public class PreferenceConfiguration {
     public boolean mouseEmulation;
     public AnalogStickForScrolling analogStickForScrolling;
     public boolean mouseNavButtons;
-    public boolean unlockFps;
     public boolean vibrateOsc;
     public boolean vibrateFallbackToDevice;
     public int vibrateFallbackToDeviceStrength;
@@ -239,8 +251,8 @@ public class PreferenceConfiguration {
     public MoonBridge.AudioConfiguration audioConfiguration;
     public boolean enableMicrophone;
     public int microphoneDeviceId;
-    // Send the microphone to a VBAN receiver on the PC instead of over the stream
-    public boolean microphoneToVban;
+    // MICROPHONE_TARGET_STARWIRE, _VBAN or _HOST
+    public String microphoneTarget;
     public String vbanStreamName;
     public int vbanPort;
     public int framePacing;
@@ -248,6 +260,7 @@ public class PreferenceConfiguration {
     public int pyrowaveLateFrames;
     public boolean customVulkanDriver;
     public String customVulkanDriverPath;
+    public String customVulkanDriverSha256;
     public boolean customVulkanDriverToast;
     public boolean absoluteMouseMode;
     public boolean enableAudioFx;
@@ -561,8 +574,10 @@ public class PreferenceConfiguration {
 
     private static int getJitterBufferValue(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return parseJitterBuffer(prefs.getString(JITTER_BUFFER_PREF_STRING, DEFAULT_JITTER_BUFFER));
+    }
 
-        String str = prefs.getString(JITTER_BUFFER_PREF_STRING, DEFAULT_JITTER_BUFFER);
+    static int parseJitterBuffer(String str) {
         if (str.equals("low-latency")) {
             return JITTER_BUFFER_LOW_LATENCY;
         }
@@ -637,6 +652,7 @@ public class PreferenceConfiguration {
             VIDEO_FORMAT_PREF_STRING, VSYNC_MODE_PREF_STRING, SYNC_LFR_PREF_STRING,
             ASYNC_DECODE_PREF_STRING, ASYNC_LFR_PREF_STRING, VIRTUAL_DISPLAY_MODE_PREF_STRING,
             TOUCHSCREEN_TRACKPAD_PREF_STRING, HIDE_CURSOR_MODE_PREF_STRING, AUDIO_HAPTICS_PREF_STRING,
+            JITTER_BUFFER_PREF_STRING,
     };
 
     /**
@@ -676,6 +692,10 @@ public class PreferenceConfiguration {
                 audioHapticsOutputs = "device".equals(value) ? 1 : "controller".equals(value) ? 2 :
                         "both".equals(value) ? 3 : 0;
                 break;
+            case JITTER_BUFFER_PREF_STRING:
+                // Only used when frame pacing follows the host's frame timing
+                jitterBuffer = parseJitterBuffer(value);
+                break;
         }
     }
 
@@ -705,7 +725,6 @@ public class PreferenceConfiguration {
                 .remove(FPS_PREF_STRING)
                 .remove(VIDEO_FORMAT_PREF_STRING)
                 .remove(ENABLE_HDR_PREF_STRING)
-                .remove(UNLOCK_FPS_STRING)
                 .remove(FULL_RANGE_PREF_STRING)
                 .apply();
     }
@@ -721,6 +740,51 @@ public class PreferenceConfiguration {
         // https://www.nvidia.com/en-us/geforce/forums/notifications/comment/155192/
         return Build.MANUFACTURER.equalsIgnoreCase("NVIDIA") &&
                 Build.FINGERPRINT.contains("PPR1.180610.011/4079208_2235.1395");
+    }
+
+    /**
+     * Once, on the first start of 0.2.1: a saved "vban" (0.2.0's default, which wasn't encrypted)
+     * becomes Starwire's encrypted receiver. Someone who really sends to Voicemeeter or another VBAN
+     * app picks the "Not encrypted" option again, and that choice then stays.
+     */
+    static void migrateMicrophoneTarget(SharedPreferences prefs) {
+        if (prefs.getBoolean(MICROPHONE_TARGET_MIGRATED_PREF_STRING, false)) {
+            return;
+        }
+        SharedPreferences.Editor editor = prefs.edit().putBoolean(MICROPHONE_TARGET_MIGRATED_PREF_STRING, true);
+        if (MICROPHONE_TARGET_VBAN.equals(prefs.getString(MICROPHONE_TARGET_PREF_STRING, null))) {
+            editor.putString(MICROPHONE_TARGET_PREF_STRING, MICROPHONE_TARGET_STARWIRE);
+        }
+        editor.apply();
+    }
+
+    /**
+     * The floating menu button's saved spot for screens of this orientation, as {x, y}: each a
+     * share (0 to 1) of the room the button moves in. A value that isn't saved, or was saved as
+     * another type, comes back as NaN; FloatingButton checks both before using them.
+     */
+    public static float[] readFloatingButtonSpot(SharedPreferences prefs, boolean portrait) {
+        return new float[] {
+                readFloat(prefs, portrait ? FLOATING_BUTTON_PORTRAIT_X_PREF_STRING : FLOATING_BUTTON_LANDSCAPE_X_PREF_STRING),
+                readFloat(prefs, portrait ? FLOATING_BUTTON_PORTRAIT_Y_PREF_STRING : FLOATING_BUTTON_LANDSCAPE_Y_PREF_STRING)
+        };
+    }
+
+    public static void saveFloatingButtonSpot(SharedPreferences prefs, boolean portrait, float x, float y) {
+        prefs.edit()
+                .putFloat(portrait ? FLOATING_BUTTON_PORTRAIT_X_PREF_STRING : FLOATING_BUTTON_LANDSCAPE_X_PREF_STRING, x)
+                .putFloat(portrait ? FLOATING_BUTTON_PORTRAIT_Y_PREF_STRING : FLOATING_BUTTON_LANDSCAPE_Y_PREF_STRING, y)
+                .apply();
+    }
+
+    private static float readFloat(SharedPreferences prefs, String key) {
+        try {
+            return prefs.getFloat(key, Float.NaN);
+        }
+        catch (ClassCastException e) {
+            // Saved as something other than a float
+            return Float.NaN;
+        }
     }
 
     public static PreferenceConfiguration readPreferences(Context context) {
@@ -846,8 +910,11 @@ public class PreferenceConfiguration {
         catch (NumberFormatException e) {
             config.microphoneDeviceId = 0;
         }
-        config.microphoneToVban = MICROPHONE_TARGET_VBAN.equals(
-                prefs.getString(MICROPHONE_TARGET_PREF_STRING, DEFAULT_MICROPHONE_TARGET));
+        migrateMicrophoneTarget(prefs);
+        config.microphoneTarget = prefs.getString(MICROPHONE_TARGET_PREF_STRING, DEFAULT_MICROPHONE_TARGET);
+        if (!MICROPHONE_TARGET_VBAN.equals(config.microphoneTarget) && !MICROPHONE_TARGET_HOST.equals(config.microphoneTarget)) {
+            config.microphoneTarget = MICROPHONE_TARGET_STARWIRE;
+        }
         config.vbanStreamName = prefs.getString(VBAN_STREAM_NAME_PREF_STRING, VbanSender.DEFAULT_STREAM_NAME);
         try {
             config.vbanPort = Integer.parseInt(prefs.getString(VBAN_PORT_PREF_STRING,
@@ -869,6 +936,7 @@ public class PreferenceConfiguration {
         config.pyrowaveLateFrames = getPyrowaveLateFramesValue(context);
         config.customVulkanDriver = prefs.getBoolean(CUSTOM_VULKAN_DRIVER_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER);
         config.customVulkanDriverPath = prefs.getString(CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER_PATH);
+        config.customVulkanDriverSha256 = prefs.getString(CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING, null);
         config.customVulkanDriverToast = prefs.getBoolean(CUSTOM_VULKAN_DRIVER_TOAST_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER_TOAST);
 
         config.analogStickForScrolling = getAnalogStickForScrollingValue(context);
@@ -897,7 +965,6 @@ public class PreferenceConfiguration {
         config.bindAllUsb = prefs.getBoolean(BIND_ALL_USB_STRING, DEFAULT_BIND_ALL_USB);
         config.mouseEmulation = prefs.getBoolean(MOUSE_EMULATION_STRING, DEFAULT_MOUSE_EMULATION);
         config.mouseNavButtons = prefs.getBoolean(MOUSE_NAV_BUTTONS_STRING, DEFAULT_MOUSE_NAV_BUTTONS);
-        config.unlockFps = prefs.getBoolean(UNLOCK_FPS_STRING, DEFAULT_UNLOCK_FPS);
         config.vibrateOsc = prefs.getBoolean(VIBRATE_OSC_PREF_STRING, DEFAULT_VIBRATE_OSC);
         config.vibrateFallbackToDevice = prefs.getBoolean(VIBRATE_FALLBACK_PREF_STRING, DEFAULT_VIBRATE_FALLBACK);
         config.vibrateFallbackToDeviceStrength = prefs.getInt(VIBRATE_FALLBACK_STRENGTH_PREF_STRING, DEFAULT_VIBRATE_FALLBACK_STRENGTH);

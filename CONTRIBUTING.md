@@ -32,15 +32,56 @@ prebuilt libraries.
 
 ## Tests
 
-What exists today: 111 on-device tests (JUnit 4, instrumented) in 22 files under
-`app/src/androidTest`. They run on an Android device and don't need a PC or a host. They're
-written for and run on my RedMagic Astra tablet; I haven't tried them on an emulator.
+Most tests need no device. Only one needs a host: the stream smoke test, which runs only when
+you ask for it.
 
-To run all of them on a connected device:
+- **JVM unit tests** in `app/src/test` run on the computer:
+
+  ```bash
+  ./gradlew testNonRootDebugUnitTest
+  ```
+
+  Lint runs the same way (`./gradlew lintNonRootDebug`). The warnings it already had are listed
+  in `app/lint-baseline.xml`, so only a new one fails it.
+- **Screenshot tests** draw the settings, game, in-stream menu and PC list screens on the
+  computer (Robolectric and Roborazzi) at 8 sizes, from a Fold5 cover screen to a tablet, and
+  compare them pixel for pixel with the pictures in `app/src/test/screenshots`:
+
+  ```bash
+  ./gradlew verifyRoborazziNonRootDebug   # every JVM test, and fails on any changed pixel
+  ./gradlew recordRoborazziNonRootDebug   # after changing a screen on purpose
+  ```
+
+  A failed check leaves each changed screen in `app/build/outputs/roborazzi` as the old picture,
+  the difference and the new one. After recording, look at every picture that changed and commit
+  them with the change. The pictures were recorded on Windows; whether Linux draws exactly the
+  same pixels hasn't been checked yet.
+- **Native tests:** a few C++ simulations of the frame pacer under
+  `app/src/main/jni/vulkan/tests`, inherited from Moonlight X, and `partial_frame_test.sh` under
+  `app/src/main/jni/moonlight-core/tests`, which checks moonlight-common-c's partial frames. The
+  **Native host tests** step in `.github/workflows/build.yml` shows how to build and run them.
+- **On-device tests** (JUnit 4, instrumented) in `app/src/androidTest`, written for and run on my
+  RedMagic Astra tablet. The smoke tests among them use the app the way a person would, with UI
+  Automator. The ones that need a PC skip, and say why, when the device has no paired PC or it
+  isn't online.
+- **The Windows microphone receiver's tests** in `windows/tests`: `run-tests.ps1` checks the
+  encryption and pairing code against the same test vectors as the app, and `e2e-loopback.ps1`
+  pairs a test sender with a receiver on the PC's loopback and streams to it. Both build with the
+  C# compiler that comes with Windows and leave an installed receiver alone.
+
+To run the on-device tests on a connected device, build both APKs, then run `device-test.sh` with
+the serial that `adb devices -l` shows:
 
 ```bash
-./gradlew connectedNonRootDebugAndroidTest
+./gradlew assembleNonRootDebug assembleNonRootDebugAndroidTest
+.github/tools/device-test.sh -s <serial>
 ```
+
+It installs with `adb install -r` and never uninstalls, so the debug app keeps its pairing with
+your PC. After the instrumented suite it runs the smoke tests, saves their screenshots and looks
+for crashes. `--allow-stream` adds a short Desktop stream to the paired PC; without it nothing is
+streamed. `./gradlew connectedNonRootDebugAndroidTest` runs the suite too, but it may not keep the
+pairing.
 
 Or by hand with `am instrument`, which is also how to run one class:
 
@@ -56,18 +97,24 @@ The layout tests (`ScreenWidthTest`, `SettingsWidthTest`) check whatever screen 
 has. To try a narrow screen on a tablet, run `adb shell wm size <width>x<height>` first and
 `adb shell wm size reset` afterwards.
 
-What doesn't exist yet, to be honest about it:
+CI (`.github/workflows/build.yml`) runs the JVM tests, lint, the native tests and
+`.github/tools/check-tools.sh` (which checks the scripts in `.github/tools` still work) on every
+push, and builds the app and the test APK.
 
-- There are no JVM unit tests (`app/src/test`), so every Java test needs a device. The only tests
-  that run on a computer are a few C++ simulations of the frame pacer under
-  `app/src/main/jni/vulkan/tests`, inherited from Moonlight X.
-- CI (`.github/workflows/build.yml`) builds the app and the test APK on every push to `main` and
-  every pull request, but it doesn't run any tests.
-- The Windows microphone receiver has no automated tests. By hand,
-  `StarwireMicReceiver.exe --console` runs it in a window that prints what it receives, and
-  `--check` checks VB-Cable.
+`.github/workflows/devices.yml` runs the on-device tests on emulators shaped like phones,
+foldables, tablets, handhelds and Android TV, from Android 5 up: 5 of them on pull requests, 13
+every Sunday and all 17 for a release tag. The list is `.github/devices/matrix.json`. Each one
+runs `device-test.sh`. Then the foldables fold and unfold with the app open, and other legs
+change the text size, display size, theme, language or orientation, with the layout and smoke
+tests run again after each change. Some end with random input. Emulators have no hardware
+decoder, Adreno GPU, real controller or microphone, so tests that need one skip there
+(`DeviceCaps.assumeHardware`). To run one leg on an emulator you started yourself:
+`.github/tools/device-run.sh --leg <id> -s emulator-5554`. On GitHub the matrix runs by itself on
+the public repo, and on the private repo only when started by hand.
 
-JVM unit tests and tests in CI are being added.
+What the tests don't cover yet, to be honest about it: the custom Turnip driver option with a
+real Turnip driver, hosts other than Vibepollo, and the encrypted microphone from a real device to
+a real PC, which so far has only been checked by hand (from my tablet over Wi-Fi).
 
 ## Pull requests
 
@@ -107,6 +154,13 @@ allows, like `feat/` and `fix/`, pass the check too.
 the same pull request, under Added, Changed, Deprecated, Removed, Fixed or Security. A release
 moves the `[Unreleased]` lines under a new version heading with its date, like
 `## [0.2.1] - YYYY-MM-DD`, and updates the compare links at the bottom.
+
+**Version numbers** follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html), as
+u/stiky21 suggested on Reddit along with the rules above. Every release after 0.2.1 is numbered
+this way (0.2.1 keeps the number it was announced with): a release with only fixes raises the last
+number, and any `feat` or breaking commit raises the middle one while Starwire is below 1.0. There
+are no beta versions like `0.3.0-beta.1`: test builds are shared as debug builds, not releases.
+[RELEASING.md](docs/dev/RELEASING.md#version-numbers) says what counts as breaking for an app.
 
 **The check:** `.github/workflows/commits.yml` runs `.github/tools/check-commits.sh` on the
 commits and branch name of every pull request, and on every push to `main`. It skips merge

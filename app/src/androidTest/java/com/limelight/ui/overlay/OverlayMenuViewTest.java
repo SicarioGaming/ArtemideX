@@ -63,6 +63,7 @@ public class OverlayMenuViewTest {
         @Override public void onShowServerCommands() { events.add("serverCommands"); }
         @Override public void onToggleFullKeyboard() { events.add("fullKeyboard"); }
         @Override public void onChangeBitrate() { events.add("bitrate"); }
+        @Override public void onFixHostCursor() { events.add("fixHostCursor"); }
         @Override public boolean isToggleOn(int toggle) { return on.contains(toggle); }
     }
 
@@ -113,6 +114,14 @@ public class OverlayMenuViewTest {
         View button = findButton(menu, label);
         assertNotNull("Missing menu button: " + label, button);
         onMain(button::performClick);
+    }
+
+    @Test
+    public void talkBackSkipsTheCoverBesideTheGameName() {
+        // The header: the cover, then the game's name and stream line
+        ViewGroup header = (ViewGroup) menu.getChildAt(0);
+        assertEquals(View.IMPORTANT_FOR_ACCESSIBILITY_NO, header.getChildAt(0).getImportantForAccessibility());
+        assertTrue(header.getChildAt(1) instanceof ViewGroup);
     }
 
     @Test
@@ -288,16 +297,31 @@ public class OverlayMenuViewTest {
         press(KeyEvent.KEYCODE_DPAD_DOWN);
         assertTrue(selected(com.limelight.R.string.overlay_menu_close));
 
-        // The grid has five columns: up from the last tile lands one row higher
+        // Up from the last tile lands one row higher. The grid has two to five columns,
+        // depending on the screen's width and font size (the tiles in the first row say how many)
+        int[] tiles = {
+                com.limelight.R.string.overlay_menu_keyboard, com.limelight.R.string.overlay_menu_full_keyboard,
+                com.limelight.R.string.overlay_menu_mouse_emulation, com.limelight.R.string.overlay_menu_toggle_stats,
+                com.limelight.R.string.overlay_menu_guide, com.limelight.R.string.overlay_menu_shortcuts,
+                com.limelight.R.string.overlay_menu_monitors, com.limelight.R.string.overlay_menu_bitrate,
+                com.limelight.R.string.overlay_menu_mouse_mode, com.limelight.R.string.overlay_menu_pan_zoom,
+                com.limelight.R.string.overlay_menu_touch_sensitivity, com.limelight.R.string.overlay_menu_upload_clipboard,
+                com.limelight.R.string.overlay_menu_fetch_clipboard, com.limelight.R.string.overlay_menu_server_commands,
+                com.limelight.R.string.overlay_menu_task_manager, com.limelight.R.string.overlay_menu_rotate_screen,
+                com.limelight.R.string.overlay_menu_onscreen_controller, com.limelight.R.string.overlay_menu_floating_button,
+        };
+        int columns = ((ViewGroup) findButton(menu, str(tiles[0])).getParent()).getChildCount();
+        assertTrue(columns + " columns", columns >= 2 && columns <= 5);
+        int last = tiles.length - 1;
         press(KeyEvent.KEYCODE_DPAD_UP);
         press(KeyEvent.KEYCODE_DPAD_UP);
-        assertTrue(selected(com.limelight.R.string.overlay_menu_fetch_clipboard));
+        assertTrue(selected(tiles[last - columns]));
         press(KeyEvent.KEYCODE_DPAD_LEFT);
-        assertTrue(selected(com.limelight.R.string.overlay_menu_upload_clipboard));
+        assertTrue(selected(tiles[last - columns - 1]));
 
         // Down twice: the bottom row, then Close, which sits above Quit and Disconnect
         press(KeyEvent.KEYCODE_DPAD_DOWN);
-        assertTrue(selected(com.limelight.R.string.overlay_menu_onscreen_controller));
+        assertTrue(selected(tiles[last - 1]));
         press(KeyEvent.KEYCODE_DPAD_DOWN);
         assertTrue(selected(com.limelight.R.string.overlay_menu_close));
         press(KeyEvent.KEYCODE_DPAD_DOWN);
@@ -306,6 +330,25 @@ public class OverlayMenuViewTest {
         assertTrue(selected(com.limelight.R.string.overlay_menu_disconnect));
         press(KeyEvent.KEYCODE_DPAD_CENTER);
         assertEquals(List.of("disconnect", "closed"), listener.events);
+    }
+
+    @Test
+    public void fixPcCursorShowsOnlyWhenOffered() {
+        String fix = str(com.limelight.R.string.overlay_menu_fix_host_cursor);
+        assertNull("Fix PC Cursor shows without being offered", findButton(menu, fix));
+
+        onMain(() -> {
+            menu.setFixHostCursorShown(true);
+            menu.buildMenu();
+        });
+        click(fix);
+        assertEquals(List.of("fixHostCursor", "closed"), listener.events);
+
+        onMain(() -> {
+            menu.setFixHostCursorShown(false);
+            menu.buildMenu();
+        });
+        assertNull(findButton(menu, fix));
     }
 
     @Test

@@ -1,4 +1,17 @@
 apply plugin: 'com.android.application'
+// Screenshot tests on the JVM (Robolectric): gradlew recordRoborazziNonRootDebug / verifyRoborazziNonRootDebug
+apply plugin: 'io.github.takahirom.roborazzi'
+
+// The commit this build comes from, for Settings > About. A copy of the source without its .git
+// folder says "unknown". (The git.properties inside the APK belongs to JmDNS, not Starwire.)
+def gitCommit = 'unknown'
+try {
+    gitCommit = providers.exec {
+        commandLine 'git', 'rev-parse', '--short=12', 'HEAD'
+    }.standardOutput.asText.get().trim()
+}
+catch (Exception ignored) {
+}
 
 android {
     ndkVersion "29.0.14206865"
@@ -13,8 +26,9 @@ android {
 
         // Starwire's own version. The code carries on from Moonlight X's 315 so that builds
         // installed during development can be upgraded in place.
-        versionName "0.2.0"
-        versionCode = 318
+        versionName "0.2.1"
+        versionCode = 319
+        buildConfigField "String", "GIT_COMMIT", "\"${gitCommit}\""
 
         // Generate native debug symbols to allow Google Play to symbolicate our native crashes
         ndk.debugSymbolLevel = 'FULL'
@@ -71,6 +85,41 @@ android {
     lint {
         disable 'MissingTranslation'
         lintConfig file('lint.xml')
+        // Starwire: the warnings already in the code are listed in lint-baseline.xml, and any new
+        // warning or error fails gradlew lintNonRootDebug. After fixing some of the listed ones,
+        // refresh the list with gradlew updateLintBaselineNonRootDebug.
+        baseline = file('lint-baseline.xml')
+        warningsAsErrors = true
+        // These change with what's been released since, not with the code, so they never fail it
+        informational 'NewerVersionAvailable', 'GradleDependency', 'AndroidGradlePluginVersion'
+    }
+
+    testOptions {
+        unitTests {
+            // Plain JVM tests (app/src/test): any call into android.* fails loudly, so they stay pure
+            returnDefaultValues = false
+            // Robolectric screenshot tests (com.limelight.screenshots) read the merged resources
+            includeAndroidResources = true
+            all {
+                // For the tests that check the code against README.md, build files and resources
+                systemProperty 'repo.root', rootProject.projectDir.absolutePath
+                // The docs, release notes and Windows receiver files those tests read are inputs
+                // too, so editing one runs them again instead of leaving the task UP-TO-DATE.
+                // Only the files that exist are listed.
+                inputs.files(
+                        rootProject.files('README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md',
+                                'AGENTS.md').filter { it.isFile() },
+                        rootProject.fileTree('docs'),
+                        rootProject.fileTree('windows') { include '*.md', '*.ps1', '*.cs', 'tests/vectors/**' },
+                        rootProject.fileTree('.github/release-notes'))
+                        .withPropertyName('repoDocs')
+                        .withPathSensitivity(PathSensitivity.RELATIVE)
+                // Robolectric's SDK 36 sandbox reaches into FileDescriptor internals on JDK 17+
+                jvmArgs '--add-opens=java.base/jdk.internal.access=ALL-UNNAMED'
+                // Half-size screenshots: a quarter of the repo space, still clear enough to review
+                systemProperty 'roborazzi.record.resizeScale', '0.5'
+            }
+        }
     }
 
     bundle {
@@ -178,7 +227,8 @@ android {
 
     packaging {
         resources {
-            // BouncyCastle includes duplicate LICENSE.md files
+            // BouncyCastle includes duplicate LICENSE.md files. Its licence is in
+            // assets/licenses with the others, shown in Settings > About.
             excludes += '/META-INF/*.md'
         }
     }
@@ -189,6 +239,11 @@ android {
         main {
             jniLibs.srcDirs += 'src/main/jni/pyrowave/lib'
             jniLibs.srcDirs += 'src/main/jni/adrenotools/lib'
+        }
+        // The encrypted microphone's shared vectors, so the device's own crypto is checked too
+        // (SecureMicDeviceTest)
+        androidTest {
+            resources.srcDirs += 'src/test/resources'
         }
     }
 }
@@ -203,7 +258,25 @@ dependencies {
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
-    // On-device tests (Starwire): gradlew connectedNonRootDebugAndroidTest
+    // JVM tests (Starwire), no device needed: gradlew testNonRootDebugUnitTest
+    testImplementation 'junit:junit:4.13.2'
+    // android.jar only has stubs of these, so the JVM tests get the real ones
+    testImplementation 'org.json:json:20250517'
+    testImplementation 'net.sf.kxml:kxml2:2.3.0'
+    // Screenshot tests: Robolectric runs the real framework (only for tests that ask for it),
+    // Roborazzi saves and compares the pictures
+    testImplementation 'org.robolectric:robolectric:4.17'
+    testImplementation 'io.github.takahirom.roborazzi:roborazzi:1.77.0'
+
+    // On-device tests (Starwire): .github/tools/device-test.sh, which installs over the app with
+    // adb install -r and never uninstalls (connectedAndroidTest may, and the pairing would go too)
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    // The smoke tests drive the app the way a person would (com.limelight.smoke)
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
+}
+
+// Golden images live beside the tests, so a change to them shows up in review
+roborazzi {
+    outputDir = file('src/test/screenshots')
 }
