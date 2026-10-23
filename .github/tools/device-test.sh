@@ -12,6 +12,8 @@
 #   --out DIR         where the results go (default build/device-tests/<date and time>)
 #   --no-install      test what is installed already
 #   --smoke-only      skip the instrumented suite, run only the smoke tests
+#   --only CLASSES    the instrumented suite runs only these test classes, separated by commas
+#                     (the emulator matrix reruns the layout tests this way after each change)
 #   --allow-stream    also run the stream smoke test: it starts Desktop on the paired PC, opens
 #                     and closes the in-stream menu, and disconnects. It never quits the session
 #                     and never starts another app. Without this flag nothing is streamed.
@@ -28,6 +30,7 @@
 # size and being recreated, and the paired PC's games), pull their screenshots, check the Hide PC
 # cursor setting is what it was, then look for crashes and ANRs from the app since the start.
 # Smoke tests that need the PC skip, and say why, when there's no paired PC or it isn't online.
+# On an emulator, tests marked @HardwareOnly (com.limelight.testing) are left out.
 #
 # Exit codes: 0 all good; 1 a test failed or the cursor setting changed; 2 a crash, an ANR, or a
 # test run that didn't finish; 3 an install failed; 4 a device problem (not connected, locked, a
@@ -62,6 +65,7 @@ apk_dir="$ROOT/app/build/outputs/apk"
 out=""
 install=1
 suite=1
+only=""
 allow_stream=false
 monkey=0
 monkey_real=0
@@ -72,6 +76,7 @@ while [ $# -gt 0 ]; do
         --out) [ $# -ge 2 ] || usage; out="$2"; shift 2 ;;
         --no-install) install=0; shift ;;
         --smoke-only) suite=0; shift ;;
+        --only) [[ "${2:-}" =~ ^[A-Za-z0-9_.$,#]+$ ]] || usage; only="$2"; shift 2 ;;
         --allow-stream) allow_stream=true; shift ;;
         --monkey) [[ "${2:-}" =~ ^[0-9]+$ ]] || usage; monkey="$2"; shift 2 ;;
         --monkey-real-device) monkey_real=1; shift ;;
@@ -213,6 +218,10 @@ test_device() {
     fi
     echo "$model, Android API $sdk, $abi, $size at $density dpi, emulator: $emulator" > "$DIR/device.txt"
     echo "Device: $(cat "$DIR/device.txt")"
+    # Tests that need real hardware and can't check for it themselves. (A test APK without the
+    # annotation class runs everything: the runner only logs that it can't find it.)
+    local skip=()
+    if [ "$emulator" = yes ]; then skip=(-e notAnnotation com.limelight.testing.HardwareOnly); fi
 
     # The smoke tests need the screen on and unlocked; this never wakes or unlocks it. (Each
     # dumpsys is read whole first: grep -q stopping early would fail the pipe under pipefail.)
@@ -260,10 +269,12 @@ test_device() {
     start_log=$(sh_ "date '+%m-%d %H:%M:%S.000'")
     start_box=$(sh_ "date '+%Y-%m-%d %H:%M:%S'")
 
-    # 2. The instrumented suite (everything but the smoke tests and the monkey check)
-    local verdict
+    # 2. The instrumented suite (everything but the smoke tests and the monkey check), or the
+    # classes --only names
+    local verdict which=(-e notPackage com.limelight.smoke,com.limelight.devicecheck)
+    if [ -n "$only" ]; then which=(-e class "$only"); fi
     if [ "$suite" = 1 ]; then
-        run_instrument suite "$SUITE_TIMEOUT" -e notPackage com.limelight.smoke,com.limelight.devicecheck
+        run_instrument suite "$SUITE_TIMEOUT" "${which[@]}" ${skip[@]+"${skip[@]}"}
         verdict=$?
         [ $verdict = 1 ] && failed=1
         [ $verdict = 2 ] && crashed=1
@@ -276,12 +287,13 @@ test_device() {
     hidden_before=$(cursor_left_hidden)
     # Each smoke test runs in a process of its own, so a crash in one doesn't stop the others
     # (the list comes from am instrument -e log true, which names the tests without running them)
-    run_instrument smoke-list 120 -e log true -e package com.limelight.smoke
+    run_instrument smoke-list 120 -e log true -e package com.limelight.smoke ${skip[@]+"${skip[@]}"}
     local test i=0
     : > "$DIR/smoke-results.txt"
     for test in $(grep -E '^(PASS|SKIP|FAIL) ' "$DIR/smoke-list-results.txt" | awk '{print $2}'); do
         i=$((i + 1))
-        run_instrument "smoke-$i" "$SMOKE_TIMEOUT" -e class "$test" -e starwire.allowStream "$allow_stream"
+        run_instrument "smoke-$i" "$SMOKE_TIMEOUT" -e class "$test" -e starwire.allowStream "$allow_stream" \
+            ${skip[@]+"${skip[@]}"}
         verdict=$?
         [ $verdict = 1 ] && failed=1
         [ $verdict = 2 ] && crashed=1
@@ -379,7 +391,7 @@ test_device() {
     {
         echo "Device:          $(cat "$DIR/device.txt")"
         if [ "$suite" = 1 ]; then
-            echo "Suite:           $(tail -n 1 "$DIR/suite-results.txt")"
+            echo "Suite:           $(tail -n 1 "$DIR/suite-results.txt")${only:+ (only $only)}"
             grep -E '^(FAIL|RUN PROBLEM)' "$DIR/suite-results.txt" | sed 's/^/                 /'
         fi
         echo "Smoke:           $(tail -n 1 "$DIR/smoke-results.txt")"

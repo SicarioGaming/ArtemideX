@@ -241,9 +241,22 @@ if ! called "shell monkey -p com.starwire.debug -s 20261023" || ! called "airpla
    ! called "airplane-mode disable"; then
     fail "device-test.sh didn't run monkey with the fixed seed in airplane mode on an empty emulator"
 fi
+# @HardwareOnly tests are left out on an emulator only, and --only narrows the suite to its classes
+fake_run 0 -s FAKE-1
+if called "notAnnotation"; then fail "device-test.sh left out @HardwareOnly tests on a real device"; fi
+if ! called "-e notPackage com.limelight.smoke,com.limelight.devicecheck"; then
+    fail "device-test.sh didn't run the whole instrumented suite"
+fi
+fake_run 0 FAKE_ADB_EMULATOR=1 -s FAKE-1 --only com.limelight.ScreenWidthTest,com.limelight.StringsTest
+hw="-e notAnnotation com.limelight.testing.HardwareOnly"
+if ! called "-e class com.limelight.ScreenWidthTest,com.limelight.StringsTest $hw" || called "notPackage" ||
+   ! called "-e starwire.allowStream false $hw"; then
+    fail "device-test.sh --only on an emulator didn't run just those classes, without @HardwareOnly tests"
+fi
+fake_run 4 -s FAKE-1 --only "com.limelight.X; rm -rf /"
 if grep -q uninstall "$work/all-calls"; then fail "device-test.sh uninstalled something"; fi
 rm -rf "$work"
-ok "device-test.sh refuses listed devices, checks before it installs, and guards monkey"
+ok "device-test.sh refuses listed devices, checks before it installs, guards monkey, and filters tests"
 
 if [ $failures -ne 0 ]; then
     echo "$failures problem(s)" >&2
