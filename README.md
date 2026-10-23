@@ -18,6 +18,65 @@
 
 ---
 
+## New in 0.2.0: your microphone on the PC, with any host
+
+Mic passthrough was one of the most requested features, and until now it meant switching your
+PC to a host build with a mic channel. Starwire does it without touching the host: it sends your
+microphone straight to the PC as VBAN (VB-Audio's network audio format), a small receiver plays it
+into VB-Cable, a free virtual microphone, and Discord or the game picks it up as a normal mic.
+Vibepollo, Sunshine and Apollo stay exactly as they are, and the mic starts and stops with the
+stream.
+
+<p align="center">
+<img src="docs/images/mic-signal-path.png" width="820" alt="Diagram of the microphone path: on Android, AudioRecord with echo cancelling and noise suppression feeds VbanSender, which sends 48 kHz 16-bit mono packets over UDP port 6980 to StarwireMicReceiver on the Windows PC, which plays them into VB-Cable's CABLE Input; Discord or the game records from CABLE Output. The Moonlight stream between Starwire and the host is unchanged.">
+</p>
+
+1. On the PC, download **Starwire-Microphone-for-Windows.zip** from the
+   [latest release](https://github.com/SicarioGaming/Starwire/releases/latest), unzip it and
+   double-click `setup-microphone.cmd`. It needs nothing installed first: it downloads VB-Cable
+   from VB-Audio (and checks VB-Audio signed it), builds the receiver with the compiler that comes
+   with Windows, lets it through the firewall for local and private VPN addresses only, starts it
+   when you sign in and checks the virtual mic works. The receiver has no window, just an icon by
+   the clock. [Full guide](windows/README.md).
+2. In Discord or the game, choose **CABLE Output** as the microphone.
+3. In Starwire: **Settings → Sound & vibration → Send my microphone**.
+
+Measured on my tablet over Wi-Fi: 16,880 packets in 90 seconds with none lost, the receiver's
+buffer holding at 30 to 50 ms, and about 0.85 Mbps of upload. The audio isn't encrypted, so
+Starwire only sends it to a PC on your local network or over a private VPN like Tailscale. If your
+PC runs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can
+send it over the stream itself instead.
+
+<details>
+<summary><b>How it works and what I measured</b></summary>
+
+<br>
+
+On the phone, Starwire records with `AudioRecord` using the `VOICE_COMMUNICATION` source and turns
+on the platform echo canceller and noise suppressor where the device has them. It reads 20 ms at a
+time and sends 48 kHz 16-bit mono PCM as VBAN over UDP (port 6980 by default): a 28-byte header
+and 256 samples per packet, 187.5 packets a second. It sends to the PC you're streaming from, so
+there's nothing to type in, and it doesn't ask the host for a mic channel.
+
+On the PC, `StarwireMicReceiver` (one C# file, built on your PC from the source in the zip)
+accepts packets only from local-network or private VPN addresses with the right stream name, and
+plays them into CABLE Input in 10 ms blocks. Playback starts once 40 ms is queued and never falls
+more than 120 ms behind. Phone and PC clocks drift apart (60 ppm in my test), so when the buffer
+stays above 60 ms for 2 seconds it skips a block to keep the delay down.
+
+<p align="center">
+<img src="docs/images/mic-packet.png" width="820" alt="A real VBAN packet from the tablet's microphone as a hexdump, with each header field decoded: the VBAN marker, 48 kHz, 256 samples, mono, 16-bit PCM, the stream name Stream1 and the frame counter, followed by the receiver's rules for accepting and buffering packets.">
+<br>
+<img src="docs/images/mic-measured.png" width="820" alt="Measurements over 90 seconds of Wi-Fi: packet arrival against the ideal schedule (p50 10.9 ms, p99 21 ms, max 38 ms), the receiver's buffer replayed from those arrivals (30 to 50 ms, no underruns, nothing dropped), CABLE Output's level with no dropouts, and the PC-side delay with and without the clock-drift fix.">
+</p>
+
+- On the PC alone, a packet takes about 107 to 119 ms to be heard on CABLE Output: 40 ms of
+  buffer, the rest Windows' audio path. I haven't measured the phone side yet.
+- Echo cancelling is whatever the device provides; if teammates hear the game, wear headphones.
+- The setup and receiver are Windows only for now.
+
+</details>
+
 ## Why I made Starwire
 
 I have been exclusively streaming games from my headless PC to client devices for about five
@@ -54,7 +113,8 @@ name.
 ### 🎮 Everything during a stream, one tap away
 Open the menu with the floating button, a three-finger tap or by holding Select on a
 controller. Keyboard, full on-screen keyboard, mouse modes, zoom, key shortcuts, monitor
-switching, bitrate, clipboard: it's all in one grid, and works with a controller too.
+switching, bitrate, clipboard: it's all in one grid, and works with a controller too. Anything
+that turns on and off has a small switch, so you can see what's on at a glance.
 
 ### ⚡ Fast and smooth
 A Vulkan renderer, the PyroWave codec, and low-latency options like Warp Drive, Fast V-Sync and
@@ -64,7 +124,7 @@ async decoding for when every millisecond counts.
 <td width="50%" valign="top">
 
 <img src="docs/images/stream_menu_aniimo.jpg" alt="The in-stream menu open over a game: the game's name, a grid of tools such as Keyboard, Full Keyboard, Mouse, Shortcuts, Monitors and Bitrate, and buttons to close, quit or disconnect">
-<sub>The in-stream menu over Aniimo on my tablet. Aniimo © Pawprint Studio.</sub>
+<sub>The in-stream menu over Aniimo on my tablet. Stats and the menu button are switched on. Aniimo © Pawprint Studio.</sub>
 
 </td>
 </tr>
@@ -89,6 +149,12 @@ every key, and the option to hide the PC's mouse pointer while you play.
 
 ### 📳 Feel the bass
 Audio haptics turns a game's bass into vibration on your device or controller.
+
+### 🎙 Your microphone on the PC
+Talk in game chat or Discord through your device's microphone, **with Vibepollo, Sunshine or
+Apollo as they are**: one setup script on the PC, one switch in Starwire. See
+[New in 0.2.0](#new-in-020-your-microphone-on-the-pc-with-any-host) for how it works and how to
+set it up.
 
 </td>
 </tr>
@@ -126,6 +192,16 @@ their features work. Every feature is tested on my RedMagic Astra with a GameSir
 goes in.
 
 ## Changelog
+
+**2026/10/22:** [Version 0.2.0](https://github.com/SicarioGaming/Starwire/releases/tag/v0.2.0)
+sends your microphone to the PC with any host (Vibepollo, Sunshine, Apollo), through a small
+receiver and VB-Cable that one setup script installs. It also works on phones and foldables
+(settings were blank on narrow screens like a Galaxy Z Fold's cover screen, and the game screen's
+header now scrolls away), adds a short "Impact:" line to the settings that affect latency and
+performance, tidies the stream menu with on/off switches and a smaller floating button that
+also closes it, puts a Quit button beside Resume, gives each game without cover art its own
+Starwire tile, and fixes a crash when tapping a running Desktop tile. The release page has the full
+list.
 
 **2026/10/22:** [Version 0.1.2](https://github.com/SicarioGaming/Starwire/releases/tag/v0.1.2)
 has been released, and fixes an error that caused the client to crash upon loading the list of
@@ -224,6 +300,11 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Audio haptics: the game's bass becomes vibration on the device and/or the controller | Idea from Moonlight V+ (qiin2333); written new for Starwire |
 | Hide PC cursor (never / while touching / always) **(Vibepollo)** | New in Starwire |
 | Long-press to right-click in gaming trackpad mode | New in Starwire |
+| Settings, the game screen and the stream menu fit phones and foldables (a Galaxy Z Fold's cover screen); the game screen's header scrolls away with the covers | New in Starwire |
+| An "Impact:" line under settings that change latency, smoothness, picture quality or battery | New in Starwire |
+| On a foldable's inner screen, the stream follows the device instead of forcing landscape | Idea from [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) (sblocktechnologies) and [moonlight-android#1613](https://github.com/moonlight-stream/moonlight-android/pull/1613) |
+| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable (home network or private VPN only) | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
+| Or send it over the stream itself, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)); echo-cancelled capture is new in Starwire |
 | Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
 
 </details>
@@ -256,6 +337,8 @@ repos a star:
 | [Moonlight X Turnip](https://github.com/NoCrypt/moonlight-x-turnip) | ncpt (NoCrypt) | Custom Turnip Vulkan driver for PyroWave |
 | [Moonlight V+](https://github.com/qiin2333/moonlight-vplus) | qiin2333 | Ideas: bitrate mid-stream, audio haptics, 1% lows |
 | [Moonlit Artemis](https://github.com/4had45/moonlit-artemis) | Mohammad Forhad (4had45) | Ideas: monitor switcher, pinch to zoom anytime |
+| [Apollo microphone](https://github.com/logabell/apollo-microphone) | logabell | Microphone streaming: the Android capture and the protocol, and the Apollo build that receives it |
+| [VBAN and VB-Cable](https://vb-audio.com/Cable/) | VB-Audio (Vincent Burel) | VBAN, the network audio format Starwire's microphone uses, and VB-Cable, the virtual microphone the receiver plays into (donationware) |
 | [PyroWave](https://github.com/Themaister/pyrowave) | Hans-Kristian Arntzen (Themaister) | The PyroWave codec (MIT) |
 | [libadrenotools](https://github.com/bylaws/libadrenotools) | Billy Laws (bylaws) | Loading a custom Adreno Vulkan driver (BSD-2-Clause) |
 | [Vibepollo](https://github.com/Nonary/Vibepollo) | Chase Payne (Nonary) | The host Starwire is developed with (fork of Apollo) |
