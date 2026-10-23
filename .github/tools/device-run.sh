@@ -196,19 +196,43 @@ DENSITY=$(sh_ wm density | awk -F': ' '/Physical density/ {print $2}' | tail -n 
 } >> "$out/facts.env"
 echo "Leg $LEG_ID ($LEG_NAME): API $SDK, $SIZE at $DENSITY dpi"
 
-# The smoke tests need the screen on and unlocked: keep it on while plugged in, and unlock it
-# before each run (an emulator's lock screen has no PIN)
+# The smoke tests need the screen on and unlocked: keep it on while plugged in, turn the lock
+# screen off, and unlock it before each run (an emulator's lock screen has no PIN). On the 2-vCPU
+# runners an Android 15 or 16 emulator was still locked right after the unlock, so this waits for it.
 stay=$(sh_ settings get global stay_on_while_plugged_in)
 [[ "$stay" =~ ^[0-9]+$ ]] && restore_all+=("settings put global stay_on_while_plugged_in $stay")
 sh_ svc power stayon true > /dev/null 2>&1
-wake() {
+lock_off=$(sh_ locksettings get-disabled 2>/dev/null)
+if [ "$lock_off" = false ]; then
+    restore_all+=("locksettings set-disabled false")
+    sh_ locksettings set-disabled true > /dev/null 2>&1
+fi
+# System UI can stop responding on these runners, and its dialog then takes the input focus from
+# the app for good (every smoke test on the Android 13 handheld failed behind one). Without the
+# dialog Android restarts it instead. The app's own crashes and ANRs are still read from logcat.
+hide=$(sh_ settings get global hide_error_dialogs)
+if [[ "$hide" =~ ^[0-9]+$ ]]; then
+    restore_all+=("settings put global hide_error_dialogs $hide")
+else
+    restore_all+=("settings delete global hide_error_dialogs")
+fi
+sh_ settings put global hide_error_dialogs 1 > /dev/null 2>&1
+locked() {
     local state
-    sh_ input keyevent KEYCODE_WAKEUP > /dev/null 2>&1
     state=$(sh_ dumpsys window)
-    if grep -qE 'isKeyguardShowing=true|mShowingLockscreen=true|mDreamingLockscreen=true' <<< "$state"; then
+    grep -qE 'isKeyguardShowing=true|mShowingLockscreen=true|mDreamingLockscreen=true' <<< "$state"
+}
+wake() {
+    local i
+    sh_ input keyevent KEYCODE_WAKEUP > /dev/null 2>&1
+    # Closes a dialog that's already up, such as System UI's "isn't responding"
+    sh_ am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null 2>&1
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        locked || return 0
         sh_ wm dismiss-keyguard > /dev/null 2>&1
         sh_ input keyevent 82 > /dev/null 2>&1
-    fi
+        sleep 2
+    done
 }
 open_app() {
     sh_ am force-stop "$PKG" > /dev/null
@@ -228,7 +252,7 @@ clear_logs() {
 crashed_since_clear() {  # dir: true when the app crashed or stopped responding since clear_logs
     local pkg_re="${PKG//./\\.}"
     adb_ logcat -d -b crash 2>/dev/null | tr -d '\r' > "$1/change-logcat-crash.txt"
-    adb_ logcat -d -b main,system,events 2>/dev/null | tr -d '\r' > "$1/change-logcat.txt"
+    adb_ logcat -d -b main -b system -b events 2>/dev/null | tr -d '\r' > "$1/change-logcat.txt"
     grep -hE "^Process: $pkg_re\$|Process: $pkg_re,|>>> $pkg_re <<<|ANR in $pkg_re( |\$)|am_anr.*,$pkg_re," \
         "$1/change-logcat-crash.txt" "$1/change-logcat.txt" > "$1/change-crashes.txt"
     [ -s "$1/change-crashes.txt" ]

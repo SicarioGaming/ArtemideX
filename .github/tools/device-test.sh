@@ -363,7 +363,7 @@ test_device() {
     # the system's dropbox is read too.
     local pkg_re="${PKG//./\\.}" tag
     adb_ logcat -d -b crash -T "$start_log" 2>/dev/null | tr -d '\r' > "$DIR/logcat-crash.txt"
-    adb_ logcat -d -b main,system,events -T "$start_log" 2>/dev/null | tr -d '\r' > "$DIR/logcat.txt"
+    adb_ logcat -d -b main -b system -b events -T "$start_log" 2>/dev/null | tr -d '\r' > "$DIR/logcat.txt"
     : > "$DIR/dropbox.txt"
     for tag in data_app_crash data_app_anr data_app_native_crash; do
         sh_ dumpsys dropbox --print "$tag" >> "$DIR/dropbox.txt" 2>/dev/null

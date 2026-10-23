@@ -254,6 +254,11 @@ if ! called "-e class com.limelight.ScreenWidthTest,com.limelight.StringsTest $h
     fail "device-test.sh --only on an emulator didn't run just those classes, without @HardwareOnly tests"
 fi
 fake_run 4 -s FAKE-1 --only "com.limelight.X; rm -rf /"
+# The logs are read the way Android 6 understands too: one buffer per -b
+fake_run 0 FAKE_ADB_SDK=23 -s FAKE-1
+if grep -q 'Unable to open log device' "$work/out/FAKE-1/logcat.txt" || ! grep -q 'ActivityManager: fake' "$work/out/FAKE-1/logcat.txt"; then
+    fail "device-test.sh didn't read the main, system and events logs the way Android 6 takes them"
+fi
 if grep -q uninstall "$work/all-calls"; then fail "device-test.sh uninstalled something"; fi
 ok "device-test.sh refuses listed devices, checks before it installs, guards monkey, and filters tests"
 
@@ -355,14 +360,14 @@ else
        ! grep -qx 'hw.lcd.width=1920' "$work/config-once.ini" || grep -qx 'hw.lcd.width=1080' "$work/config-once.ini" ||
        [ "$(grep -c '^hw.ramSize=' "$work/config-once.ini")" != 1 ] || ! grep -qx 'hw.ramSize=2G' "$work/config-once.ini" ||
        [ "$(grep -c '^disk.dataPartition.size=' "$work/config-once.ini")" != 1 ] ||
-       ! grep -qx 'disk.dataPartition.size=4096M' "$work/config-once.ini" || ! grep -qx 'hw.cpu.ncore=2' "$work/config-once.ini"; then
+       ! grep -qx 'disk.dataPartition.size=6442450944' "$work/config-once.ini" || ! grep -qx 'hw.cpu.ncore=2' "$work/config-once.ini"; then
         cat "$work/config-once.ini" >&2
         fail "device-matrix.py avd-config didn't set the handheld's screen and data partition once, keeping the rest"
     fi
     printf 'hw.ramSize=2048M\n' > "$work/avd/legacy-23.avd/config.ini"
     echo '{"id": "legacy-23"}' > "$work/legacy.json"
     dm avd-config "$work/legacy.json" --avd-home "$work/avd" > /dev/null
-    grep -qx 'disk.dataPartition.size=4096M' "$work/avd/legacy-23.avd/config.ini" ||
+    grep -qx 'disk.dataPartition.size=6442450944' "$work/avd/legacy-23.avd/config.ini" ||
         fail "device-matrix.py avd-config didn't set the data partition of a leg with no hardware overrides"
     # The AVD cache key follows the system image's revision
     mkdir -p "$work/sdk/system-images/android-33/google_apis/x86_64" "$work/sdk/emulator"
@@ -373,7 +378,7 @@ else
     key18=$(dm cache-key "$work/leg.json" --sdk "$work/sdk" | sed -n 's/^key=//p')
     case "$key17" in avd-v1-handheld-33-img17-emu36.1.9-*) ;; *) fail "device-matrix.py cache-key gave $key17" ;; esac
     [ "$key17" != "$key18" ] || fail "device-matrix.py cache-key didn't change with the image's revision"
-    sed 's/"id": "handheld-33",/&\n      "disk": "6144M",/' .github/devices/matrix.json > "$work/matrix.json"
+    sed 's/"id": "handheld-33",/&\n      "disk": "8192M",/' .github/devices/matrix.json > "$work/matrix.json"
     [ "$(dm --matrix "$work/matrix.json" cache-key "$work/leg.json" --sdk "$work/sdk" | sed -n 's/^key=//p')" != "$key18" ] ||
         fail "device-matrix.py cache-key didn't change with the data partition's size"
     # --check-sdk reads sdkmanager --list from command-line tools 22.0 (a table) and from 23.0 (the
@@ -539,6 +544,14 @@ else
     fi
     leg_run 0 FAKE_ADB_EMULATOR=1 FAKE_ADB_ABI=fail -s emulator-5554 --leg arm64-translated-30 --out "$work/legs/abi"
     [ "$(result abi base)" = SKIP ] || fail "device-run.sh didn't skip arm64 code on an image that can't run it"
+    # An emulator still locked right after the unlock gets a few tries; the lock screen and the
+    # system's error dialogs are off for the leg, and come back after it
+    leg_run 0 FAKE_ADB_EMULATOR=1 FAKE_ADB_LOCKED=slow -s emulator-5554 --leg legacy-23 --out "$work/legs/locked"
+    if [ "$(result locked base)" != PASS ] || ! called "locksettings set-disabled true" ||
+       ! called "locksettings set-disabled false" || ! called "settings put global hide_error_dialogs 1" ||
+       ! called "settings delete global hide_error_dialogs"; then
+        fail "device-run.sh didn't wait out a slow unlock, or didn't turn the lock screen and error dialogs off and back"
+    fi
     leg_run 1 FAKE_ADB_EMULATOR=1 FAKE_ADB_FAIL=suite -s emulator-5554 --leg legacy-23 --out "$work/legs/fail"
     grep -q '^base: FAIL ' "$work/legs/fail/failed-tests.txt" || fail "device-run.sh didn't list the failed test"
     # What the workflow shows: a leg's verdict, and the table for all of them
@@ -556,7 +569,7 @@ else
     rm "$work/legs/noboot/emulator-quit.txt"
     table=$(dm summary "$work/legs")
     for want in "| Small phone, Android 15 | small_phone, 1600x2560 at 320 dpi | API 35 google_apis | 2 / 0 / 0 |" \
-                "**Galaxy Z Fold shape, Android 16**: CRASH" "3 of 7 legs passed or were skipped."; do
+                "**Galaxy Z Fold shape, Android 16**: CRASH" "4 of 8 legs passed or were skipped."; do
         grep -qF -- "$want" <<< "$table" || { printf '%s\n' "$table" >&2; fail "device-matrix.py summary has no \"$want\""; }
     done
 fi

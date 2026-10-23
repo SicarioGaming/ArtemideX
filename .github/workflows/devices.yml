@@ -203,7 +203,7 @@ jobs:
       # The runner's disk has little room left once the system image is in (3.6 to 8.6 GB on the
       # first private run), and the emulator quit at once on every leg with "Not enough space to
       # create userdata partition". Now the AVD's data partition has a set size (disk in
-      # matrix.json, 4096M unless a leg says otherwise), and toolchains this job doesn't use go first:
+      # matrix.json, 6144M unless a leg says otherwise), and toolchains this job doesn't use go first:
       # the NDKs, .NET, Swift, Haskell and CodeQL, about 20 GB. Then the emulator checks that it
       # can use KVM, before anything waits on it to boot.
       - name: Emulator and system image
@@ -223,8 +223,8 @@ jobs:
           eval "$(python3 .github/tools/device-matrix.py leg-env --leg-json "$RUNNER_TEMP/leg.json")"
           mkdir -p "$HOME/.android/avd"
           free=$(df -Pm "$HOME/.android/avd" | awk 'NR == 2 {print $4}')
-          # The emulator wants more than the data partition itself free to make it (12288 MB when it
-          # was unset), and the RAM snapshot needs room too
+          # The emulator wants 1.2 times the data partition free to make it (12288 MB for the 10G
+          # avdmanager sets), and the RAM snapshot needs room too
           need=$(( ${LEG_DISK%M} * 12 / 10 + ${LEG_RAM%M} + 2048 ))
           echo "$free MB free for the AVD; this leg needs about $need MB (data partition $LEG_DISK, RAM $LEG_RAM)"
           if [ "$free" -lt "$need" ]; then
@@ -255,10 +255,16 @@ jobs:
             ~/.android/adbkey.pub
           key: ${{ steps.sdk.outputs.key }}
 
+      # The emulator saves the snapshot when it's told to stop, but gives up after 20 s, and an
+      # Android 15 or 16 snapshot takes longer on these runners: on the first run that booted, only
+      # Android 13's (16.5 s) was saved. A minute's wait after the boot lets the system finish
+      # starting, so the snapshot isn't of a phone still busy booting.
       - name: Make the AVD and its snapshot
         id: snapshot
         if: matrix.cache && steps.avd.outputs.cache-hit != 'true'
-        timeout-minutes: 20
+        timeout-minutes: 25
+        env:
+          ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL: 300
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: ${{ matrix.api }}
@@ -275,23 +281,35 @@ jobs:
           pre-emulator-launch-script: |
             python3 .github/tools/device-matrix.py avd-config "$RUNNER_TEMP/leg.json"
             bash .github/tools/device-watch.sh --out "$OUT"
-          script: echo "Saving the snapshot of ${{ matrix.id }}"
+          script: |
+            sleep 60
+            adb -s emulator-5554 shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null 2>&1 || true
+            echo "Saving the snapshot of ${{ matrix.id }}"
 
-      # adb emu kill returns before the emulator has finished writing the snapshot
+      # adb emu kill returns before the emulator has finished writing the snapshot. Only an AVD
+      # with a whole snapshot is worth caching.
       - name: Wait for the snapshot
+        id: saved
         if: matrix.cache && steps.avd.outputs.cache-hit != 'true' && steps.snapshot.outcome == 'success'
+        env:
+          AVD: ${{ matrix.id }}
         run: |
-          for _ in $(seq 90); do
-            if ! pgrep -f 'qemu-system-' > /dev/null; then
-              du -sh "$HOME"/.android/avd/*.avd
-              exit 0
-            fi
+          for _ in $(seq 150); do
+            pgrep -f '/emulator/emulator |qemu-system-' > /dev/null || break
             sleep 2
           done
-          echo "::warning title=Snapshot::the emulator was still running 3 minutes after it was told to stop, so the saved snapshot may be incomplete"
+          snap="$HOME/.android/avd/$AVD.avd/snapshots/default_boot"
+          du -sh "$HOME/.android/avd/$AVD.avd" "$snap" 2>&1 || true
+          if pgrep -f '/emulator/emulator |qemu-system-' > /dev/null; then
+            echo "::warning title=Snapshot::the emulator was still running 5 minutes after it was told to stop; not caching its AVD"
+          elif [ -s "$snap/ram.bin" ] || [ -s "$snap/snapshot.pb" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning title=Snapshot::the emulator saved no snapshot, so its AVD isn't cached and this leg boots cold"
+          fi
 
       - name: Save the AVD
-        if: matrix.cache && steps.avd.outputs.cache-hit != 'true' && steps.snapshot.outcome == 'success'
+        if: matrix.cache && steps.avd.outputs.cache-hit != 'true' && steps.saved.outputs.ok == 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |

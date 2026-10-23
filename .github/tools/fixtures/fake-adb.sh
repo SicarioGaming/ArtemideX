@@ -6,7 +6,7 @@
 #   EMULATOR=1        say it's an emulator
 #   SDK, SIZE, DENSITY   its API level (35), screen (1600x2560) and density (320)
 #   OFFLINE=1         not connected
-#   LOCKED=1          the lock screen is up
+#   LOCKED=1          the lock screen is up; slow: it goes on the second wm dismiss-keyguard
 #   STREAMING=1       a Starwire stream is in front
 #   INSTALL=fail      installs fail the way a differently signed APK does
 #   ABI=fail          installing with --abi fails the way an image without ARM translation does
@@ -46,8 +46,15 @@ case "$call" in
     *"wm density "[0-9]*) echo "${call##* }" > "$state/density"; [ "${FAKE_ADB_CRASH_ON:-}" = density ] && crash ;;
     *"dumpsys power") echo "  mWakefulness=Awake" ;;
     *"dumpsys window")
-        if [ "${FAKE_ADB_LOCKED:-0}" = 1 ]; then echo "    isKeyguardShowing=true"; else echo "    isKeyguardShowing=false"; fi
+        if [ "${FAKE_ADB_LOCKED:-0}" = 1 ] ||
+           { [ "${FAKE_ADB_LOCKED:-0}" = slow ] && [ "$(cat "$state/unlocks" 2>/dev/null || echo 0)" -lt 2 ]; }; then
+            echo "    isKeyguardShowing=true"
+        else
+            echo "    isKeyguardShowing=false"
+        fi
         ;;
+    *"wm dismiss-keyguard") echo $(( $(cat "$state/unlocks" 2>/dev/null || echo 0) + 1 )) > "$state/unlocks" ;;
+    *"locksettings get-disabled") echo false ;;
     *"dumpsys activity activities")
         if [ "${FAKE_ADB_STREAMING:-0}" = 1 ]; then
             echo "  topResumedActivity=ActivityRecord{1 u0 com.starwire.debug/com.limelight.Game t9}"
@@ -89,6 +96,7 @@ case "$call" in
     *"run-as "*"host_cursor"*) echo end ;;
     *"settings get global airplane_mode_on") echo 0 ;;
     *"settings get global stay_on_while_plugged_in") echo 0 ;;
+    *"settings get global hide_error_dialogs") echo null ;;
     *"settings get system font_scale") echo 1.0 ;;
     *"settings get system user_rotation") echo 0 ;;
     *"settings get system accelerometer_rotation") echo 1 ;;
@@ -98,6 +106,9 @@ case "$call" in
     *" logcat -c"|*" logcat -b crash -c") rm -f "$state/crash" ;;
     *" logcat -d -b crash"*)
         [ -f "$state/crash" ] && echo "01-01 00:00:01.000  1234  1234 E AndroidRuntime: Process: com.starwire.debug, PID: 1234" ;;
+    # Android 6's logcat takes one buffer per -b, not a list
+    *" logcat -d -b "*,*) echo "Unable to open log device '${call#*-b }'" ;;
+    *" logcat -d -b main -b system -b events"*) echo "01-01 00:00:01.000  1000  1000 I ActivityManager: fake" ;;
     *" exec-out screencap -p") printf '\x89PNG\r\n\x1a\n' ;;
     *" emu fold"|*" emu unfold")
         if [ "${FAKE_ADB_NOFOLD:-0}" = 1 ]; then echo "KO: unknown command, try 'help'"; exit 0; fi

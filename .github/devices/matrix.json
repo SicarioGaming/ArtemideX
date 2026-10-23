@@ -5,7 +5,7 @@
     "profile is an avdmanager device id (avdmanager list device -c, command-line tools 23.0).",
     "api, target and arch make the system image: system-images;android-<api>;<target>;<arch>.",
     "hardware overrides the AVD's config.ini after it's made (the handhelds have no stock profile).",
-    "disk is the AVD's data partition (disk.dataPartition.size), 4096M unless a leg sets it. Unset, the emulator wanted 12288 MB free on the runner to make it and quit.",
+    "disk is the AVD's data partition (disk.dataPartition.size), 6144M unless a leg sets it; the emulator raised 4 GB to 6 GB on the Android 13, 15 and 16 images. ram is at least what the emulator raises it to: 2560M for Android 15 and 4096M for Android 16.",
     "postures (foldables): folded, half-open, unfolded, each changed with the app open.",
     "variants: font-<scale>, display-largest, dark, rtl-<language>, landscape, portrait, gamepad, dpad, tv-launcher.",
     "After each posture, and each variant but the input ones (gamepad, dpad, tv-launcher), device-test.sh reruns variant_tests and the smoke tests.",
@@ -28,7 +28,7 @@
       "why": "360 dp wide, the narrow case (close to a Galaxy Z Fold cover screen's width); biggest text and display size",
       "profile": "small_phone",
       "api": "35", "target": "google_apis", "arch": "x86_64",
-      "ram": "2048M",
+      "ram": "2560M",
       "cache": true,
       "monkey": 1000,
       "variants": ["font-1.3", "display-largest"]
@@ -40,7 +40,7 @@
       "why": "337 dp cover screen and 674x841 dp inner screen; folds, half-opens and unfolds with the app open; Android 16 ignores orientation locks on large screens",
       "profile": "7.6in Foldable",
       "api": "36", "target": "google_apis", "arch": "x86_64",
-      "ram": "3072M",
+      "ram": "4096M",
       "cache": true,
       "postures": ["folded", "half-open", "unfolded"]
     },
@@ -95,7 +95,7 @@
       "why": "big modern phone (448x997 dp); Android 14+ non-linear text scaling up to 200%",
       "profile": "pixel_9_pro_xl",
       "api": "36", "target": "google_apis", "arch": "x86_64",
-      "ram": "3072M",
+      "ram": "4096M",
       "cache": false,
       "monkey": 3000,
       "variants": ["font-2.0", "display-largest", "landscape"]

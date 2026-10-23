@@ -40,9 +40,13 @@ ARCHES = {"x86", "x86_64"}  # what KVM on the ubuntu runners can run
 VARIANT = re.compile(r"^(font-\d(\.\d+)?|display-largest|dark|rtl-[a-z]{2,3}|landscape|portrait|gamepad|dpad|tv-launcher)$")
 POSTURES = ("folded", "half-open", "unfolded")
 HARDWARE_KEY = re.compile(r"^hw\.[A-Za-z0-9_.]+$")
-# The AVD's data partition. Left unset, the emulator 37 on the runners wanted 12288 MB free to make it,
-# more than a 2-vCPU runner has, and quit with "Not enough space to create userdata partition".
-DISK = "4096M"
+# The AVD's data partition. avdmanager 23.0 makes it 10G, and the emulator wants 1.2 times that free
+# to make it (12288 MB), more than a 2-vCPU runner has: it quit with "Not enough space to create
+# userdata partition". On the Android 13, 15 and 16 images it raised 4 GB to 6 GB in config.ini as it
+# booted, and then wouldn't load the snapshot ("different AVD configuration"). So the AVD gets 6 GB,
+# in bytes as the emulator writes it, and config.ini stays the same from the boot that saves a
+# snapshot to the one that loads it.
+DISK = "6144M"
 QUIT_NOTE = "emulator-quit.txt"  # device-watch.sh leaves it when the emulator quits before booting
 LEG_ID = re.compile(r"^[a-z0-9][a-z0-9-]{1,40}$")
 CLASS = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*\.[A-Z][A-Za-z0-9_]*$")
@@ -339,7 +343,7 @@ def cmd_avd_config(a):
     so a key can be there twice; the last one is the one that was meant, and only that one is kept."""
     leg = leg_by_id(a.matrix, read_entry(a.leg_json)["id"])
     settings = dict(leg.get("hardware", {}))
-    settings["disk.dataPartition.size"] = leg.get("disk", DISK)
+    settings["disk.dataPartition.size"] = str(int(leg.get("disk", DISK)[:-1]) * 1024 * 1024)
     home = a.avd_home or os.environ.get("ANDROID_AVD_HOME") or os.path.expanduser("~/.android/avd")
     config = os.path.join(home, f"{leg['id']}.avd", "config.ini")
     if not os.path.exists(config):
