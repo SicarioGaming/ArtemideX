@@ -359,6 +359,31 @@ else
     key18=$(dm cache-key "$work/leg.json" --sdk "$work/sdk" | sed -n 's/^key=//p')
     case "$key17" in avd-v1-handheld-33-img17-emu36.1.9-*) ;; *) fail "device-matrix.py cache-key gave $key17" ;; esac
     [ "$key17" != "$key18" ] || fail "device-matrix.py cache-key didn't change with the image's revision"
+    # --check-sdk reads sdkmanager --list from command-line tools 22.0 (a table) and from 23.0 (the
+    # Android CLI's list): every leg's image is there, Android 16 Google APIs for x86 isn't, and a
+    # listing with no images at all fails instead of reading as missing images
+    bin="$work/check-sdk/cmdline-tools/latest/bin"
+    mkdir -p "$bin"
+    for t in avdmanager sdkmanager; do
+        printf '#!/bin/sh\ncat "$(dirname "$0")/%s.txt"\n' "$t" > "$bin/$t"
+        printf '@type "%%~dp0%s.txt"\r\n' "$t" > "$bin/$t.bat"
+        chmod +x "$bin/$t"
+    done
+    cp .github/tools/fixtures/avdmanager-devices.txt "$bin/avdmanager.txt"
+    sed '/"id": "fold-z-36"/,/"arch"/s/"arch": "x86_64"/"arch": "x86"/' .github/devices/matrix.json > "$work/matrix.json"
+    for listing in sdkmanager-list-22.txt sdkmanager-list-23.txt; do
+        cp ".github/tools/fixtures/$listing" "$bin/sdkmanager.txt"
+        exits 0 dm plan --tier release --check-sdk "$work/check-sdk"
+        exits 2 dm --matrix "$work/matrix.json" plan --tier core --check-sdk "$work/check-sdk"
+        if [ "$(grep -c 'has no' "$work/dm-output")" != 1 ] ||
+           ! grep -Eq 'fold-z-36: sdkmanager has no system-images;android-36;google_apis;x86\s*$' "$work/dm-output"; then
+            cat "$work/dm-output" >&2
+            fail "device-matrix.py --check-sdk with $listing didn't find just fold-z-36's image missing"
+        fi
+    done
+    cp .github/tools/fixtures/avdmanager-devices.txt "$bin/sdkmanager.txt"
+    exits 2 dm plan --tier core --check-sdk "$work/check-sdk"
+    grep -q 'named no system images' "$work/dm-output" || fail "device-matrix.py --check-sdk took a listing with no images"
 fi
 ok "device-matrix.py validates the matrix, plans the tiers and picks each event's tier"
 
