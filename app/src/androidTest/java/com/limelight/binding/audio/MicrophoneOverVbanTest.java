@@ -10,6 +10,8 @@ import android.os.Build;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.limelight.testing.DeviceCaps;
+
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,6 +55,7 @@ public class MicrophoneOverVbanTest {
     @Test
     public void realMicrophoneStreamsOverVban() throws Exception {
         Assume.assumeTrue("needs runtime permission granting", Build.VERSION.SDK_INT >= Build.VERSION_CODES.P);
+        DeviceCaps.assumeHardware("a microphone", DeviceCaps.hasMicrophone());
         Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .grantRuntimePermission(target.getPackageName(), Manifest.permission.RECORD_AUDIO);
