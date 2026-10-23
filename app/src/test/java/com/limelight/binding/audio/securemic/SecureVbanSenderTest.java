@@ -376,6 +376,62 @@ public class SecureVbanSenderTest {
         assertEquals(Arrays.asList(0L, 1L, 2L, 3L, 4L, 0L, 1L, 2L), receiver.playedCounters);
     }
 
+    // The receiver restarts while it says "busy", with audio going, and none of its REHELLOs get
+    // through. The HELLO the sender repeats every 2 s is answered with another session, so the
+    // sender asks with a new HELLO, and audio plays again by itself with no key used twice
+    @Test
+    public void aRestartWhileBusyRecoversWithoutRehellos() throws Exception {
+        restartWhileNotReadyWithRehellosLost(SwmcCodec.STATUS_BUSY, SecureVbanSender.STATUS_BUSY);
+    }
+
+    // The same while it says "no output"
+    @Test
+    public void aRestartWithNoOutputRecoversWithoutRehellos() throws Exception {
+        restartWhileNotReadyWithRehellosLost(SwmcCodec.STATUS_NO_OUTPUT, SecureVbanSender.STATUS_NO_OUTPUT);
+    }
+
+    private void restartWhileNotReadyWithRehellosLost(int status, int told) throws Exception {
+        sender(15);
+        connectReceiver();
+        receiver.status = status;
+        FakeNetwork.Responder answer = net.responder;
+        net.responder = (sent, now) -> {
+            byte[] reply = answer.answer(sent, now);
+            boolean rehello = reply != null && SwmcCodec.typeOf(reply, reply.length) == SwmcCodec.TYPE_REHELLO;
+            return rehello ? null : reply;
+        };
+        assertEquals(0, sender.open());
+        runUntil(10);
+        writePackets(3);
+
+        // A packet every 20 ms, through the restart and on until 10 s
+        receiver.restart();
+        while (net.now < 10_000) {
+            writePackets(1);
+            runUntil(net.now + 20);
+        }
+
+        assertArrayEquals("an answer to the first HELLO", Arrays.copyOfRange(answers.get(0), 16, 24), Arrays.copyOfRange(answers.get(1), 16, 24));
+        assertFalse("with another session", Arrays.equals(Arrays.copyOfRange(answers.get(0), 24, 32), Arrays.copyOfRange(answers.get(1), 24, 32)));
+        // The first HELLO, again at 2 s; then one new HELLO, repeated every 2 s while not ready
+        assertEquals(Arrays.asList(0L, 2000L, 2001L, 4001L, 6001L, 8001L, 10001L), helloTimes());
+        List<FakeNetwork.Sent> hellos = net.ofType(SwmcCodec.TYPE_HELLO);
+        assertArrayEquals(hellos.get(0).bytes, hellos.get(1).bytes);
+        assertFalse(Arrays.equals(hellos.get(0).bytes, hellos.get(2).bytes));
+        for (FakeNetwork.Sent s : hellos.subList(2, hellos.size())) {
+            assertArrayEquals("one new HELLO, repeated", hellos.get(2).bytes, s.bytes);
+        }
+        assertEquals("the first session, then the new HELLO's", 2, assertNoKeyAndNonceUsedTwice().size());
+        // Only the 100 packets of the 2 s before the repeated HELLO were lost; every one after it
+        // played, in the new session
+        assertEquals(100, receiver.unknownSession);
+        assertEquals(403, receiver.played.size());
+        assertEquals(2, receiver.playedSessions.stream().distinct().count());
+        assertEquals(0, receiver.replayedOrLate + receiver.forged);
+        assertStatuses(new long[] {0, SecureVbanSender.STATUS_CONNECTING}, new long[] {1, told},
+                new long[] {2001, SecureVbanSender.STATUS_CONNECTING}, new long[] {2002, told});
+    }
+
     @Test
     public void rehellosForOtherSessionsOrTooOftenAreIgnored() throws Exception {
         sender(9);
