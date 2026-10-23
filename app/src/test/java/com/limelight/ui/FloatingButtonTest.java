@@ -3,9 +3,11 @@ package com.limelight.ui;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.Shadows.shadowOf;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -21,11 +23,14 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
+import java.time.Duration;
+
 /**
  * The floating menu button remembers where it was dragged, in the app's real preferences, and is
  * put back there when the next stream screen is laid out, and after a turn or a resize. The real
  * button (floating_menu_button.xml) sits in a frame standing in for the stream screen's window,
- * so sizes are exact pixels. FloatingButtonDeviceTest does the same on a device.
+ * so sizes are exact pixels. FloatingButtonDeviceTest drags it and recreates the screen on a
+ * device, and GameFloatingButtonTest checks the stream screen's own button.
  */
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 36)
@@ -78,6 +83,15 @@ public class FloatingButtonTest {
             touch(MotionEvent.ACTION_MOVE, x + dx * i / 4, y + dy * i / 4);
         }
         touch(MotionEvent.ACTION_UP, x + dx, y + dy);
+    }
+
+    // The button goes from one alpha to another over this long, not at once. Robolectric runs an
+    // animation to its end in the first frame, so the length is read from the button's animator.
+    private void assertFades(float from, float to, long ms) {
+        assertEquals("changed at once", from, button.getAlpha(), 0);
+        assertEquals(ms, button.animate().getDuration());
+        shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(ms));
+        assertEquals(to, button.getAlpha(), 0);
     }
 
     private void assertInLayoutSpot() {
@@ -274,5 +288,66 @@ public class FloatingButtonTest {
         // TalkBack's double-tap is a click
         button.performClick();
         assertEquals(2, taps);
+    }
+
+    @Test
+    public void aCancelledDragKeepsItsSpot() {
+        startStream(true);
+        layOut(WIDE, TALL);
+        float x = button.getX() + 20;
+        float y = button.getY() + 20;
+
+        // A touch that's cancelled before it moves is neither a tap nor a drag
+        touch(MotionEvent.ACTION_DOWN, x, y);
+        touch(MotionEvent.ACTION_CANCEL, x, y);
+        assertEquals(0, taps);
+        assertFalse("a cancelled tap saved a spot", prefs.contains("floating_button_landscape_x"));
+
+        // The system can cancel a drag partway, when the notifications are pulled down over it
+        // say. The button stays where the drag left it, and that's the spot saved.
+        touch(MotionEvent.ACTION_DOWN, x, y);
+        touch(MotionEvent.ACTION_MOVE, x + 600, y + 300);
+        touch(MotionEvent.ACTION_CANCEL, x + 600, y + 300);
+        float draggedX = button.getX();
+        float draggedY = button.getY();
+        assertEquals(x - 20 + 600, draggedX, 0.01f);
+        assertEquals(y - 20 + 300, draggedY, 0.01f);
+        assertEquals("a drag isn't a tap", 0, taps);
+        float[] spot = PreferenceConfiguration.readFloatingButtonSpot(prefs, false);
+        assertEquals(draggedX / (WIDE - button.getWidth()), spot[0], 1e-6f);
+        assertEquals(draggedY / (TALL - button.getHeight()), spot[1], 1e-6f);
+
+        startStream(true);
+        layOut(WIDE, TALL);
+        assertAt(draggedX, draggedY);
+    }
+
+    @Test
+    public void itLightsUpWhileTouchedAndFadesAfter() {
+        startStream(true);
+        layOut(WIDE, TALL);
+        float x = button.getX() + 20;
+        float y = button.getY() + 20;
+        assertEquals("faded over the game", 0.55f, button.getAlpha(), 0);
+
+        // Lights up over 120 ms, and fades back over 400 ms when the drag ends
+        touch(MotionEvent.ACTION_DOWN, x, y);
+        assertFades(0.55f, 1f, 120);
+        touch(MotionEvent.ACTION_MOVE, x + 600, y + 300);
+        touch(MotionEvent.ACTION_UP, x + 600, y + 300);
+        assertFades(1f, 0.55f, 400);
+
+        // The same for a tap, and for a cancelled touch
+        x = button.getX() + 20;
+        y = button.getY() + 20;
+        touch(MotionEvent.ACTION_DOWN, x, y);
+        assertFades(0.55f, 1f, 120);
+        touch(MotionEvent.ACTION_UP, x, y);
+        assertEquals(1, taps);
+        assertFades(1f, 0.55f, 400);
+        touch(MotionEvent.ACTION_DOWN, x, y);
+        assertFades(0.55f, 1f, 120);
+        touch(MotionEvent.ACTION_CANCEL, x, y);
+        assertFades(1f, 0.55f, 400);
     }
 }
