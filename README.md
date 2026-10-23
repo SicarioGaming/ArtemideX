@@ -18,6 +18,65 @@
 
 ---
 
+## New in 0.2.0: your microphone on the PC, with any host
+
+Mic passthrough was one of the most requested features, and until now it meant switching your
+PC to a host build with a mic channel. Starwire does it without touching the host: it sends your
+microphone straight to the PC as VBAN (VB-Audio's network audio format), a small receiver plays it
+into VB-Cable, a free virtual microphone, and Discord or the game picks it up as a normal mic.
+Vibepollo, Sunshine and Apollo stay exactly as they are, and the mic starts and stops with the
+stream.
+
+<p align="center">
+<img src="docs/images/mic-signal-path.png" width="820" alt="Diagram of the microphone path: on Android, AudioRecord with echo cancelling and noise suppression feeds VbanSender, which sends 48 kHz 16-bit mono packets over UDP port 6980 to StarwireMicReceiver on the Windows PC, which plays them into VB-Cable's CABLE Input; Discord or the game records from CABLE Output. The Moonlight stream between Starwire and the host is unchanged.">
+</p>
+
+1. On the PC, download **Starwire-Microphone-for-Windows.zip** from the
+   [latest release](https://github.com/SicarioGaming/Starwire/releases/latest), unzip it and
+   double-click `setup-microphone.cmd`. It needs nothing installed first: it downloads VB-Cable
+   from VB-Audio (and checks VB-Audio signed it), builds the receiver with the compiler that comes
+   with Windows, lets it through the firewall for local and private VPN addresses only, starts it
+   when you sign in and checks the virtual mic works. The receiver has no window, just an icon by
+   the clock. [Full guide](windows/README.md).
+2. In Discord or the game, choose **CABLE Output** as the microphone.
+3. In Starwire: **Settings → Sound & vibration → Send my microphone**.
+
+Measured on my tablet over Wi-Fi: 16,880 packets in 90 seconds with none lost, the receiver's
+buffer holding at 30 to 50 ms, and about 0.85 Mbps of upload. The audio isn't encrypted, so
+Starwire only sends it to a PC on your local network or over a private VPN like Tailscale. If your
+PC runs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can
+send it over the stream itself instead.
+
+<details>
+<summary><b>How it works and what I measured</b></summary>
+
+<br>
+
+On the phone, Starwire records with `AudioRecord` using the `VOICE_COMMUNICATION` source and turns
+on the platform echo canceller and noise suppressor where the device has them. It reads 20 ms at a
+time and sends 48 kHz 16-bit mono PCM as VBAN over UDP (port 6980 by default): a 28-byte header
+and 256 samples per packet, 187.5 packets a second. It sends to the PC you're streaming from, so
+there's nothing to type in, and it doesn't ask the host for a mic channel.
+
+On the PC, `StarwireMicReceiver` (one C# file, built on your PC from the source in the zip)
+accepts packets only from local-network or private VPN addresses with the right stream name, and
+plays them into CABLE Input in 10 ms blocks. Playback starts once 40 ms is queued and never falls
+more than 120 ms behind. Phone and PC clocks drift apart (60 ppm in my test), so when the buffer
+stays above 60 ms for 2 seconds it skips a block to keep the delay down.
+
+<p align="center">
+<img src="docs/images/mic-packet.png" width="820" alt="A real VBAN packet from the tablet's microphone as a hexdump, with each header field decoded: the VBAN marker, 48 kHz, 256 samples, mono, 16-bit PCM, the stream name Stream1 and the frame counter, followed by the receiver's rules for accepting and buffering packets.">
+<br>
+<img src="docs/images/mic-measured.png" width="820" alt="Measurements over 90 seconds of Wi-Fi: packet arrival against the ideal schedule (p50 10.9 ms, p99 21 ms, max 38 ms), the receiver's buffer replayed from those arrivals (30 to 50 ms, no underruns, nothing dropped), CABLE Output's level with no dropouts, and the PC-side delay with and without the clock-drift fix.">
+</p>
+
+- On the PC alone, a packet takes about 107 to 119 ms to be heard on CABLE Output: 40 ms of
+  buffer, the rest Windows' audio path. I haven't measured the phone side yet.
+- Echo cancelling is whatever the device provides; if teammates hear the game, wear headphones.
+- The setup and receiver are Windows only for now.
+
+</details>
+
 ## Why I made Starwire
 
 I have been exclusively streaming games from my headless PC to client devices for about five
@@ -93,21 +152,9 @@ Audio haptics turns a game's bass into vibration on your device or controller.
 
 ### 🎙 Your microphone on the PC
 Talk in game chat or Discord through your device's microphone, **with Vibepollo, Sunshine or
-Apollo as they are**. Starwire sends your voice to a small receiver on the PC, which plays it into
-VB-Cable, a free virtual microphone.
-
-1. On the PC, download **Starwire-Microphone-for-Windows.zip** from the
-   [latest release](https://github.com/SicarioGaming/Starwire/releases/latest), unzip it, and
-   double-click `setup-microphone.cmd`. It installs VB-Cable and the receiver (no window, just an
-   icon by the clock), starts it when you sign in and checks it works. [Full guide](windows/README.md).
-2. In Discord or the game, choose **CABLE Output** as the microphone.
-3. In Starwire: **Settings → Sound & vibration → Send my microphone**.
-
-Starwire turns on the device's echo cancelling and noise reduction where it has them. The audio
-isn't encrypted, so Starwire only sends it to a PC on your local network or over a private VPN
-like Tailscale. If your PC runs
-[logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can send it
-over the stream itself instead.
+Apollo as they are**: one setup script on the PC, one switch in Starwire. See
+[New in 0.2.0](#new-in-020-your-microphone-on-the-pc-with-any-host) for how it works and how to
+set it up.
 
 </td>
 </tr>
@@ -291,6 +338,7 @@ repos a star:
 | [Moonlight V+](https://github.com/qiin2333/moonlight-vplus) | qiin2333 | Ideas: bitrate mid-stream, audio haptics, 1% lows |
 | [Moonlit Artemis](https://github.com/4had45/moonlit-artemis) | Mohammad Forhad (4had45) | Ideas: monitor switcher, pinch to zoom anytime |
 | [Apollo microphone](https://github.com/logabell/apollo-microphone) | logabell | Microphone streaming: the Android capture and the protocol, and the Apollo build that receives it |
+| [VBAN and VB-Cable](https://vb-audio.com/Cable/) | VB-Audio (Vincent Burel) | VBAN, the network audio format Starwire's microphone uses, and VB-Cable, the virtual microphone the receiver plays into (donationware) |
 | [PyroWave](https://github.com/Themaister/pyrowave) | Hans-Kristian Arntzen (Themaister) | The PyroWave codec (MIT) |
 | [libadrenotools](https://github.com/bylaws/libadrenotools) | Billy Laws (bylaws) | Loading a custom Adreno Vulkan driver (BSD-2-Clause) |
 | [Vibepollo](https://github.com/Nonary/Vibepollo) | Chase Payne (Nonary) | The host Starwire is developed with (fork of Apollo) |
