@@ -103,12 +103,14 @@ android {
             all {
                 // For the tests that check the code against README.md, build files and resources
                 systemProperty 'repo.root', rootProject.projectDir.absolutePath
-                // The docs those tests read are inputs too, so a docs-only edit runs them again
-                // instead of leaving the task UP-TO-DATE. Only the files that exist are listed.
+                // The docs, release notes and Windows receiver files those tests read are inputs
+                // too, so editing one runs them again instead of leaving the task UP-TO-DATE.
+                // Only the files that exist are listed.
                 inputs.files(
                         rootProject.files('README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md',
-                                'AGENTS.md', 'windows/README.md').filter { it.isFile() },
-                        rootProject.fileTree('docs') { include '**/*.md' },
+                                'AGENTS.md').filter { it.isFile() },
+                        rootProject.fileTree('docs'),
+                        rootProject.fileTree('windows') { include '*.md', '*.ps1', '*.cs', 'tests/vectors/**' },
                         rootProject.fileTree('.github/release-notes'))
                         .withPropertyName('repoDocs')
                         .withPathSensitivity(PathSensitivity.RELATIVE)

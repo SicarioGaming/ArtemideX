@@ -435,7 +435,7 @@ public class VersionNumbersTest {
         assertEquals(none, changelogProblems(noUnreleased));
         assertEquals("0.3.0", newestVersion(noUnreleased));
 
-        // A test build's heading goes below the release it leads up to
+        // A pre-release heading (Starwire uses none, but SemVer allows them) goes below its release
         String beta = replaced(replaced(GOOD, "## [0.2.1] -", "## [0.3.0-beta.1] - 2026-10-30\n\n## [0.2.1] -"),
                 "[0.2.1]:", "[0.3.0-beta.1]: " + REPO + "compare/v0.2.1...v0.3.0-beta.1\n[0.2.1]:");
         assertEquals(none, changelogProblems(beta));
