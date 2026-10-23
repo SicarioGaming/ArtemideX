@@ -492,7 +492,8 @@ Starwire's native code from source. A few parts are committed already built inst
 - `app/src/main/jni/pyrowave/lib`: PyroWave, 64-bit ARM only. This is Moonlight X's file,
   unchanged. `SOURCE` names the upstream commit Moonlight X recorded for it.
   `build_libpyrowave.sh` builds that commit, but with the newer NDK this repo uses, so the
-  result isn't byte-for-byte the same file. It hasn't been proven byte for byte yet.
+  result isn't byte-for-byte the same file. Rebuilt with Moonlight X's NDK 27 instead, it comes
+  out the same apart from its build ID (checked on GitHub).
 - `app/src/main/jni/adrenotools/lib`: libadrenotools and its four hook libraries, 64-bit ARM
   only, used only by the custom driver option. They were built with `build_libadrenotools.sh`
   from the upstream commits in `SOURCE`. Rebuilt from those commits with the original folder

@@ -69,11 +69,11 @@ seen from a different folder, and got the same result.
 | `driver.h`, `priv.h`, `pyrowave.h` | Same as the upstream files |
 | `shaders_spv.h` | `MATCH`, regenerated from the shaders in the repo |
 | `gradle-wrapper.jar` | `MATCH` with the checksum Gradle publishes for 7.4.2 |
-| `libpyrowave-shared.so` | **Not proven yet.** See [PyroWave](#pyrowave-from-moonlight-x) |
+| `libpyrowave-shared.so` | `MATCH EXCEPT BUILD ID` on GitHub with NDK 27.0.12077973 (not installed on my PC). See [PyroWave](#pyrowave-from-moonlight-x) |
 | OpenSSL and Opus static libraries | Identical to official Moonlight's files. Not rebuilt here |
 
-The proven results above are from rebuilds on my PC. The first run of `prebuilts.yml` on
-GitHub happens when this file is published, so GitHub's own runs haven't been checked yet.
+The first run of `prebuilts.yml` on GitHub, on 23 October 2026 when this page was published,
+gave the same results for everything above and proved PyroWave too: [run 39909763472](https://github.com/SicarioGaming/Starwire/actions/runs/39909763472).
 
 ## Every binary file in the repo
 
@@ -119,14 +119,15 @@ until it moved to PyroWave 1.0 on 20 October 2026 (commit `fd2e0c4b`). The libra
 29 at the time. So that script isn't how this exact file was made, and the folders the build ran
 in weren't recorded.
 
-That's why this one is **not proven yet**. What is known: it exports the same 44 `pyrowave_*`
+So the best a rebuild can show is `MATCH EXCEPT BUILD ID`, and that's what GitHub's first run
+of `prebuilts.yml` got: rebuilt from the pinned commit with NDK 27.0.12077973, every byte is the
+same apart from the 20-byte build ID ([run 39909763472](https://github.com/SicarioGaming/Starwire/actions/runs/39909763472)). It also exports the same 44 `pyrowave_*`
 functions as a fresh build of the pinned commit, and it contains upstream PyroWave's compiled
 shaders byte for byte. `verify.sh pyrowave` rebuilds it with NDK 27.0.12077973; the best that
 can come out is `MATCH EXCEPT BUILD ID` or `SAME CODE`, because the original folders are
 unknown. That NDK wasn't installed on the PC used for this page, so the PyroWave job in
-`prebuilts.yml` is the first place it gets tried. Until it passes, that job only warns. If it
-never passes, the honest fix is to rebuild PyroWave from the pinned commit with the repo's NDK
-and commit that file instead.
+`prebuilts.yml` checks it on GitHub. If that check ever fails, the honest fix is to rebuild
+PyroWave from the pinned commit with the repo's NDK and commit that file instead.
 
 `app/src/main/jni/pyrowave/pyrowave.h` is an unchanged copy of the upstream header.
 
