@@ -255,7 +255,6 @@ if ! called "-e class com.limelight.ScreenWidthTest,com.limelight.StringsTest $h
 fi
 fake_run 4 -s FAKE-1 --only "com.limelight.X; rm -rf /"
 if grep -q uninstall "$work/all-calls"; then fail "device-test.sh uninstalled something"; fi
-rm -rf "$work"
 ok "device-test.sh refuses listed devices, checks before it installs, guards monkey, and filters tests"
 
 # 9. Every action the workflows use is pinned to a full commit hash with its release in a
@@ -273,6 +272,204 @@ for action in $(grep -hoE 'uses:[[:space:]]*[^ ]+@[0-9a-f]{40}' .github/workflow
     fail "$action is pinned to different commits in different workflows"
 done
 ok "the workflows' actions are pinned to commits"
+
+# 10. device-matrix.py: the matrix is valid, the tiers nest, and each event gets the tier it should
+begin
+py=""
+for candidate in python3 python py; do
+    if "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 8))' > /dev/null 2>&1; then py=$candidate; break; fi
+done
+dm() {
+    "$py" .github/tools/device-matrix.py "$@"
+}
+exits() {  # expected exit code, then a command
+    local expected=$1 status
+    shift
+    set +e
+    "$@" > "$work/dm-output" 2>&1
+    status=$?
+    set -e
+    [ $status -eq "$expected" ] || { cat "$work/dm-output" >&2; fail "$*: exit $status, expected $expected"; }
+}
+if [ -z "$py" ]; then
+    if [ -n "${CI:-}" ]; then fail "no Python 3 for device-matrix.py"; else echo "skipped: device-matrix.py (no Python 3)"; fi
+else
+    count() { dm plan --tier "$1" | sed -n 's/^count=//p'; }
+    legs=$("$py" -c 'import json, sys; print(len(json.load(open(sys.argv[1], encoding="utf-8"))["legs"]))' \
+        .github/devices/matrix.json)
+    core=$(count core) wide=$(count wide) release=$(count release)
+    if [ "$(count none)" != 0 ] || [ "$core" -lt 1 ] || [ "$core" -gt "$wide" ] || [ "$wide" -gt "$release" ] ||
+       [ "$release" != "$legs" ]; then
+        fail "device-matrix.py plan: tiers none/core/wide/release gave $(count none)/$core/$wide/$release of $legs legs"
+    fi
+    [ "$(dm plan --tier core --legs tv-30,fold-z-36 | sed -n 's/^legs=//p')" = "fold-z-36,tv-30" ] ||
+        fail "device-matrix.py plan --legs didn't pick just those legs"
+    exits 2 dm plan --tier core --legs no-such-leg
+    # Matrices it has to refuse: an unknown variant, random input where the network stays on,
+    # two legs with one id, an ARM image the runners can't accelerate, a missing layout test
+    for change in 's/"font-1.3"/"font-huge"/' \
+                  's/"api": "23", "target": "default", "arch": "x86_64",/&\n      "monkey": 50,/' \
+                  's/"id": "tv-34"/"id": "tv-30"/' \
+                  's/"api": "21", "target": "default", "arch": "x86_64"/"api": "21", "target": "default", "arch": "arm64-v8a"/' \
+                  's/"com.limelight.StringsTest"/"com.limelight.NoSuchTest"/'; do
+        sed "$change" .github/devices/matrix.json > "$work/matrix.json"
+        if cmp -s "$work/matrix.json" .github/devices/matrix.json; then fail "the matrix change $change changed nothing"; fi
+        exits 2 dm --matrix "$work/matrix.json" plan --tier release
+    done
+    tier_is() {  # expected tier, then device-matrix.py tier's options
+        local want=$1 got
+        shift
+        got=$(dm tier "$@" 2>/dev/null | sed -n 's/^tier=//p')
+        [ "$got" = "$want" ] || fail "device-matrix.py tier $*: ${got:-nothing}, expected $want"
+    }
+    pub=SicarioGaming/Starwire priv=SicarioGaming/Starwire-private
+    tier_is core    --event pull_request --action opened --repo $pub
+    tier_is none    --event pull_request --action synchronize --repo $priv
+    tier_is core    --event pull_request --action synchronize --repo $priv --labels '["bug", "device-tests"]'
+    tier_is core    --event pull_request --action labeled --label device-tests --repo $priv
+    tier_is none    --event pull_request --action labeled --label bug --repo $pub
+    tier_is none    --event pull_request --action opened --repo someone/Starwire
+    tier_is none    --event pull_request --action opened --repo $pub --switch off
+    tier_is wide    --event schedule --repo $pub
+    tier_is none    --event schedule --repo $priv
+    tier_is release --event push --repo $pub
+    tier_is none    --event push --repo $priv
+    tier_is core    --event workflow_dispatch --repo $priv
+    tier_is release --event workflow_dispatch --input-tier release --repo $priv
+    tier_is core    --event workflow_dispatch --input-tier core --repo $priv --switch off
+    exits 2 dm tier --event workflow_dispatch --input-tier everything
+    # The handhelds' screens go into the AVD's config.ini, the same way every time
+    mkdir -p "$work/avd/handheld-33.avd"
+    printf 'hw.lcd.width=1080\nhw.lcd.height=2400\nhw.ramSize=2G\n' > "$work/avd/handheld-33.avd/config.ini"
+    echo '{"id": "handheld-33"}' > "$work/leg.json"
+    dm avd-config "$work/leg.json" --avd-home "$work/avd" > /dev/null
+    cp "$work/avd/handheld-33.avd/config.ini" "$work/config-once.ini"
+    dm avd-config "$work/leg.json" --avd-home "$work/avd" > /dev/null
+    if ! cmp -s "$work/config-once.ini" "$work/avd/handheld-33.avd/config.ini" ||
+       ! grep -qx 'hw.lcd.width=1920' "$work/config-once.ini" || grep -qx 'hw.lcd.width=1080' "$work/config-once.ini" ||
+       ! grep -qx 'hw.ramSize=2G' "$work/config-once.ini"; then
+        fail "device-matrix.py avd-config didn't set the handheld's screen once, keeping the rest"
+    fi
+    # The AVD cache key follows the system image's revision
+    mkdir -p "$work/sdk/system-images/android-33/google_apis/x86_64" "$work/sdk/emulator"
+    echo 'Pkg.Revision=36.1.9' > "$work/sdk/emulator/source.properties"
+    echo 'Pkg.Revision=17' > "$work/sdk/system-images/android-33/google_apis/x86_64/source.properties"
+    key17=$(dm cache-key "$work/leg.json" --sdk "$work/sdk" | sed -n 's/^key=//p')
+    echo 'Pkg.Revision=18' > "$work/sdk/system-images/android-33/google_apis/x86_64/source.properties"
+    key18=$(dm cache-key "$work/leg.json" --sdk "$work/sdk" | sed -n 's/^key=//p')
+    case "$key17" in avd-v1-handheld-33-img17-emu36.1.9-*) ;; *) fail "device-matrix.py cache-key gave $key17" ;; esac
+    [ "$key17" != "$key18" ] || fail "device-matrix.py cache-key didn't change with the image's revision"
+fi
+ok "device-matrix.py validates the matrix, plans the tiers and picks each event's tier"
+
+# 11. device-sdk.sh puts command-line tools 23.0 in cmdline-tools/latest once, over the runner's
+# 12.0 (whose avdmanager has no pixel_fold), against a stand-in for sdkmanager
+begin
+sdk="$work/fake-sdk"
+mkdir -p "$sdk/cmdline-tools/latest/bin"
+echo 'Pkg.Revision=12.0' > "$sdk/cmdline-tools/latest/source.properties"
+cat > "$sdk/cmdline-tools/latest/bin/sdkmanager" <<'EOF'
+#!/usr/bin/env bash
+sdk="$(cd "$(dirname "$0")/../../.." && pwd)"
+echo "$*" >> "$sdk/sdkmanager.log"
+for arg in "$@"; do
+    case "$arg" in
+        "cmdline-tools;"*)
+            v=${arg#*;}
+            mkdir -p "$sdk/cmdline-tools/$v/bin"
+            echo "Pkg.Revision=$v" > "$sdk/cmdline-tools/$v/source.properties"
+            cp "$0" "$sdk/cmdline-tools/$v/bin/sdkmanager"
+            printf '#!/bin/sh\n' > "$sdk/cmdline-tools/$v/bin/avdmanager"
+            chmod +x "$sdk/cmdline-tools/$v/bin/"* ;;
+    esac
+done
+EOF
+chmod +x "$sdk/cmdline-tools/latest/bin/sdkmanager"
+first=$(ANDROID_HOME="$sdk" bash .github/tools/device-sdk.sh cmdline-tools 2>&1 || true)
+again=$(ANDROID_HOME="$sdk" bash .github/tools/device-sdk.sh cmdline-tools 2>&1 || true)
+if [ "$first" != "command-line tools 12.0 -> 23.0" ] || [ "$again" != "command-line tools 23.0" ] ||
+   ! grep -qx 'Pkg.Revision=23.0' "$sdk/cmdline-tools/latest/source.properties" ||
+   [ -e "$sdk/cmdline-tools/23.0" ] || [ "$(grep -c -- '--install' "$sdk/sdkmanager.log")" != 1 ]; then
+    printf '%s\n%s\n' "$first" "$again" >&2
+    fail "device-sdk.sh didn't swap command-line tools 12.0 for 23.0 exactly once"
+fi
+ok "device-sdk.sh swaps in command-line tools 23.0"
+
+# 12. device-run.sh, against the fake adb: on a real device it only does the normal run and
+# sends nothing itself; on an emulator it folds, changes text and display size, puts each
+# setting back, runs the random input last, and its results read as they should
+begin
+if [ -z "$py" ]; then
+    if [ -n "${CI:-}" ]; then fail "no Python 3 for device-run.sh"; else echo "skipped: device-run.sh (no Python 3)"; fi
+else
+    leg_run() {  # expected exit code, NAME=value settings, then device-run.sh's arguments
+        local expected=$1 status state
+        shift
+        local settings=()
+        while [[ "${1:-}" =~ ^[A-Z_][A-Z0-9_]*= ]]; do settings+=("$1"); shift; done
+        : > "$work/calls"
+        state=$(mktemp -d "$work/state.XXXXXX")
+        set +e
+        env ${settings[@]+"${settings[@]}"} FAKE_ADB_LOG="$work/calls" FAKE_ADB_STATE="$state" ADB="$work/adb" \
+            bash .github/tools/device-run.sh --apk-dir "$work/apk" "$@" > "$work/output" 2>&1
+        status=$?
+        set -e
+        cat "$work/calls" >> "$work/all-calls"
+        if [ $status -ne "$expected" ]; then
+            cat "$work/output" >&2
+            fail "device-run.sh ${settings[*]} $*: exit $status, expected $expected"
+        fi
+    }
+    result() {  # leg folder, pass name: that pass's result
+        awk -F'\t' -v n="$2" '$1 == n {print $2}' "$work/legs/$1/passes.tsv"
+    }
+    leg_run 0 -s FAKE-1 --leg tablet-35 --out "$work/legs/real"
+    for sent in "settings put" "wm density " " emu " "uimode" "set-app-locales" "svc power" "am start" "logcat -c"; do
+        if called "$sent"; then fail "device-run.sh sent a real device '$sent'"; fi
+    done
+    if [ "$(result real base)" != PASS ] || [ "$(result real dark)" != SKIP ]; then
+        fail "device-run.sh on a real device didn't do just the normal run"
+    fi
+    leg_run 4 STARWIRE_DENY_DEVICES=FAKE-DENIED -s FAKE-DENIED --leg tablet-35 --out "$work/legs/denied"
+    if called "-s FAKE-DENIED"; then fail "device-run.sh sent a refused device a command"; fi
+    leg_run 4 FAKE_ADB_OFFLINE=1 -s emulator-5554 --leg legacy-23 --out "$work/legs/offline"
+    [ -e "$work/legs/offline/infra-failure" ] || fail "device-run.sh didn't mark a missing emulator for a retry"
+    leg_run 2 FAKE_ADB_EMULATOR=1 FAKE_ADB_CRASH_ON=fold FAKE_ADB_SIZE=1768x2208 FAKE_ADB_DENSITY=420 \
+        -s emulator-5554 --leg fold-z-36 --out "$work/legs/fold"
+    if ! called "emu fold" || ! called "cmd device_state state 1" || ! called "emu unfold" ||
+       ! called "cmd device_state state reset" || ! called "-e class com.limelight.ScreenWidthTest," ||
+       [ "$(result fold folded)" != CRASH ] || [ "$(result fold half-open)" != PASS ]; then
+        fail "device-run.sh didn't fold, half-open and unfold the emulator, or missed the crash on folding"
+    fi
+    leg_run 0 FAKE_ADB_EMULATOR=1 FAKE_ADB_MONKEY_CHECK=pass -s emulator-5554 --leg phone-small-35 --out "$work/legs/small"
+    if ! called "settings put system font_scale 1.3" || ! called "settings put system font_scale 1.0" ||
+       ! called "wm density 480" || ! called "wm density reset" ||
+       ! called "settings put global stay_on_while_plugged_in 0" ||
+       ! grep -qE 'shell monkey -p com.starwire.debug -s 20261023 .* 1000$' "$work/calls" ||
+       [ "$(tail -n 1 "$work/legs/small/passes.tsv" | cut -f 1,2)" != "$(printf 'monkey\tPASS')" ]; then
+        fail "device-run.sh didn't change and put back text and display size, or run monkey last"
+    fi
+    leg_run 0 FAKE_ADB_EMULATOR=1 FAKE_ADB_ABI=fail -s emulator-5554 --leg arm64-translated-30 --out "$work/legs/abi"
+    [ "$(result abi base)" = SKIP ] || fail "device-run.sh didn't skip arm64 code on an image that can't run it"
+    leg_run 1 FAKE_ADB_EMULATOR=1 FAKE_ADB_FAIL=suite -s emulator-5554 --leg legacy-23 --out "$work/legs/fail"
+    grep -q '^base: FAIL ' "$work/legs/fail/failed-tests.txt" || fail "device-run.sh didn't list the failed test"
+    # What the workflow shows: a leg's verdict, and the table for all of them
+    exits 0 dm verdict "$work/legs/small"
+    exits 1 dm verdict "$work/legs/fail"
+    exits 0 dm verdict "$work/legs/abi"
+    mkdir -p "$work/legs/noboot"
+    echo '{"id": "tv-30", "name": "Android TV 11", "profile": "tv_1080p", "api": "30", "target": "android-tv"}' > "$work/noboot.json"
+    exits 1 dm verdict "$work/legs/noboot" --leg-json "$work/noboot.json"
+    grep -q 'did not boot' "$work/dm-output" || fail "device-matrix.py verdict didn't say the leg never booted"
+    table=$(dm summary "$work/legs")
+    for want in "| Small phone, Android 15 | small_phone, 1600x2560 at 320 dpi | API 35 google_apis | 2 / 0 / 0 |" \
+                "**Galaxy Z Fold shape, Android 16**: CRASH" "3 of 7 legs passed or were skipped."; do
+        grep -qF -- "$want" <<< "$table" || { printf '%s\n' "$table" >&2; fail "device-matrix.py summary has no \"$want\""; }
+    done
+fi
+if grep -q uninstall "$work/all-calls"; then fail "device-test.sh or device-run.sh uninstalled something"; fi
+rm -rf "$work"
+ok "device-run.sh runs a leg's passes on emulators only, and reports them"
 
 if [ $failures -ne 0 ]; then
     echo "$failures problem(s)" >&2
