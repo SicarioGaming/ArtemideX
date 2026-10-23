@@ -206,11 +206,15 @@ dates are in UTC.
    bash .github/tools/check-publish.sh public/main vX.Y.Z
    ```
 
-6. Push, `main` first and the tag last, and to the public repo one ref at a time:
+6. Push `main` first, wait for its tests, then push the tag, to the public repo one ref at a time.
+   The Release workflow runs no tests of its own, so the tag waits until the **Build** workflow has
+   passed on that commit of public `main`:
 
    ```
-   git push origin main vX.Y.Z
+   git push origin main
    git push public main
+   gh run watch --repo SicarioGaming/Starwire --exit-status "$(gh run list --repo SicarioGaming/Starwire --workflow Build --branch main --limit 1 --json databaseId --jq '.[0].databaseId')"
+   git push origin vX.Y.Z
    git push public vX.Y.Z
    ```
 

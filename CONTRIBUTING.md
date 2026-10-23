@@ -109,7 +109,8 @@ change the text size, display size, theme, language or orientation, with the lay
 tests run again after each change. Some end with random input. Emulators have no hardware
 decoder, Adreno GPU, real controller or microphone, so tests that need one skip there
 (`DeviceCaps.assumeHardware`). To run one leg on an emulator you started yourself:
-`.github/tools/device-run.sh --leg <id> -s emulator-5554`. The matrix hasn't run on GitHub yet.
+`.github/tools/device-run.sh --leg <id> -s emulator-5554`. On GitHub the matrix runs by itself on
+the public repo, and on the private repo only when started by hand.
 
 What the tests don't cover yet, to be honest about it: the custom Turnip driver option with a
 real Turnip driver, hosts other than Vibepollo, and the encrypted microphone from a real device to
