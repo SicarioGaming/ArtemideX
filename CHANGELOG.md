@@ -87,8 +87,7 @@ already live on GitHub.
 Known issues: right-to-left languages (Hebrew, Persian) show translated text, but the layout
 doesn't mirror yet. On very narrow screens, the Quit and Disconnect buttons can cut their labels
 short. The custom Turnip driver option still hasn't been tried with a real Turnip driver. Custom
-resolutions and frame rates haven't been tried in a stream with Starwire yet, and the encrypted
-microphone hasn't been tested from a real phone to a real PC over Wi-Fi yet.
+resolutions and frame rates haven't been tried in a stream with Starwire yet.
 
 ## [0.2.0] - 2026-10-23
 

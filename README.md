@@ -153,7 +153,7 @@ What's tested so far: the app and the receiver give the same bytes for a shared 
 vectors, the app's pairing and sender work against the receiver on one PC's loopback (every packet
 played in order, a replayed, a late, two forged and one plain VBAN packet refused), and the app's
 side runs on my tablet, where encrypting took about 6.5 microseconds per packet in a benchmark. Sending
-from a real phone to a real PC over Wi-Fi hasn't been tested yet. The format is in
+from my tablet to my PC over Wi-Fi works too. The format is in
 [docs/dev/mic-protocol.md](docs/dev/mic-protocol.md).
 
 <details>

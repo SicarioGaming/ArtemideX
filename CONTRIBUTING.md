@@ -112,8 +112,7 @@ decoder, Adreno GPU, real controller or microphone, so tests that need one skip 
 `.github/tools/device-run.sh --leg <id> -s emulator-5554`. The matrix hasn't run on GitHub yet.
 
 What the tests don't cover yet, to be honest about it: the custom Turnip driver option with a
-real Turnip driver, hosts other than Vibepollo, and the encrypted microphone from a real phone to
-a real PC over Wi-Fi.
+real Turnip driver, and hosts other than Vibepollo.
 
 ## Pull requests
 
