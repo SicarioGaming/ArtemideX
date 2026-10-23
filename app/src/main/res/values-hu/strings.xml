@@ -22,7 +22,6 @@
     <string name="category_host_settings">Gazdagép beállítások</string>
     <string name="summary_checkbox_small_icon_mode">Az alkalmazásrács kisebbik rajza lehetővé teszi, hogy több alkalmazás is látható legyen a képernyőn</string>
     <string name="title_checkbox_small_icon_mode">Kis dobozos rajzok használata</string>
-    <string name="summary_language_list">A Moonlight-hoz használt nyelv</string>
     <string name="title_language_list">Nyelv</string>
     <string name="summary_checkbox_enable_pip">Lehetővé teszi a stream megtekintését (de nem vezérlését) miközben mást csinálsz</string>
     <string name="title_checkbox_enable_pip">Kép a képben megfigyelő mód engedélyezése</string>
@@ -49,7 +48,7 @@
     <string name="title_checkbox_mouse_nav_buttons">Az előre és hátra gombok engedélyezése</string>
     <string name="summary_checkbox_mouse_emulation">A Start gomb hosszan tartó megnyomásával egér üzemmódba kapcsol a gamepad</string>
     <string name="title_checkbox_mouse_emulation">Az egér emulációja a gamepadon keresztül</string>
-    <string name="summary_checkbox_usb_bind_all">A Moonlight USB-illesztőprogramjának használata az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox-vezérlő támogatás van jelen</string>
+    <string name="summary_checkbox_usb_bind_all">A Starwire USB-illesztőprogramjának használata az összes támogatott játékvezérlőhöz, még akkor is, ha natív Xbox-vezérlő támogatás van jelen</string>
     <string name="title_checkbox_usb_bind_all">Natív Xbox játéktámogatás felülbírálása</string>
     <string name="summary_checkbox_xb1_driver">Beépített USB-illesztőprogramot engedélyez natív Xbox-vezérlő támogatás nélküli eszközökhöz</string>
     <string name="title_checkbox_xb1_driver">Xbox 360/One USB gamepad illesztőprogram</string>
@@ -135,7 +134,7 @@
     <string name="error_usb_prohibited">Az USB-hozzáférést az eszköz rendszergazdája tiltja. Ellenőrizze a Knox vagy az MDM beállításait.</string>
     <string name="message_decoding_reset">Az eszköz videodekóderje továbbra is összeomlik a kiválasztott adatfolyam-beállításoknál. A streamelési beállítások vissza lettek állítva az alapértelmezettre.</string>
     <string name="title_decoding_reset">Videóbeállítások visszaállítása</string>
-    <string name="message_decoding_error">A Moonlight összeomlott az eszköz videódekóderével való inkompatibilitás miatt. Próbáld meg módosítani a streamelési beállításokat, ha az összeomlások továbbra is fennállnak.</string>
+    <string name="message_decoding_error">A Starwire összeomlott az eszköz videódekóderével való inkompatibilitás miatt. Próbáld meg módosítani a streamelési beállításokat, ha az összeomlások továbbra is fennállnak.</string>
     <string name="title_decoding_error">A videó dekóder összeomlott</string>
     <string name="error_404">A GFE HTTP 404 hibát adott vissza. Győződj meg arról, hogy a számítógépen támogatott GPU fut. A távoli asztali szoftver használata szintén ezt a hibát okozhatja. Próbáld újraindítani a gépet, vagy telepítsd újra a GFE-t.</string>
     <string name="conn_error_title">Csatlakozási hiba</string>
@@ -161,12 +160,9 @@
     <string name="pair_pairing_msg">Kérjük, adja meg a következő PIN-kódot a cél számítógépen:</string>
     <string name="pair_pc_ingame">A számítógép jelenleg játékban van. A párosítás előtt be kell zárni a játékot.</string>
     <string name="pair_pc_offline">A számítógép nem elérhető</string>
-    <string name="nettest_text_blocked">Az eszköz jelenlegi hálózati kapcsolata blokkolja a Moonlight-ot. Előfordulhat, hogy az interneten keresztüli streamelés nem működik, ha csatlakozik ehhez a hálózathoz.</string>
-    <string name="nettest_text_failure">Úgy tűnik, hogy az eszköz jelenlegi hálózati kapcsolata blokkolja a Moonlight-ot. Előfordulhat, hogy az interneten keresztüli streamelés nem működik, ha csatlakozik ehhez a hálózathoz.\n\nA következő hálózati portokat blokkolták:\n</string>
     <string name="nettest_text_inconclusive">A hálózati tesztet nem sikerült elvégezni, mert a Moonlight egyik kapcsolat tesztelő szervere sem volt elérhető. Ellenőrizd az internetkapcsolatot, vagy próbáld újra később.</string>
-    <string name="nettest_text_success">Úgy tűnik, a hálózatod nem blokkolja a Moonlightot. Ha továbbra is problémáid vannak a csatlakozással, ellenőrizd a számítógép tűzfalbeállításait.\n\nHa az interneten keresztül szeretnél streamelni, telepítsd a Moonlight Internet Hosting Toolt a számítógépedre, és futtassd a mellékelt Internet Streaming Testert a számítógép internetkapcsolatának ellenőrzéséhez.</string>
     <string name="nettest_title_done">Hálózati kapcsolat tesztelése befejeződött</string>
-    <string name="nettest_text_waiting">A Moonlight teszteli a hálózati kapcsolatot, hogy megállapítsa, nem blokkoltak-e szükséges portokat.\n\nEz eltarthat néhány másodpercig…</string>
+    <string name="nettest_text_waiting">A Starwire teszteli a hálózati kapcsolatot, hogy megállapítsa, nem blokkoltak-e szükséges portokat.\n\nEz eltarthat néhány másodpercig…</string>
     <string name="pcview_menu_test_network">Hálózati kapcsolat tesztelése</string>
     <string name="nettest_title_waiting">Hálózati kapcsolat tesztelése</string>
     <string name="pcview_menu_details">Részletek megtekintése</string>
@@ -219,7 +215,7 @@
     <string name="fps_90">90 FPS</string>
     <string name="summary_checkbox_gamepad_motion_sensors">Lehetővé teszi a támogatott gazdagépek számára, hogy mozgásérzékelős adatokat kérjenek, amikor mozgásérzékelőkkel ellátott gamepadot emulálnak. A letiltás némileg csökkentheti az energia- és hálózathasználatot, ha a játékban nem használnak mozgásérzékelőket.</string>
     <string name="resolution_1080p">1080p</string>
-    <string name="summary_seekbar_deadzone">Megjegyzés: Egyes játékok nagyobb holtteret kényszeríthetnek ki, mint amire a Moonlight be van állítva.</string>
+    <string name="summary_seekbar_deadzone">Megjegyzés: Egyes játékok nagyobb holtteret kényszeríthetnek ki, mint amire a Starwire be van állítva.</string>
     <string name="audioconf_stereo">Sztereó</string>
     <string name="videoformat_h264always">H.264 előnyben részesítése</string>
     <string name="title_privacy_policy">Adatvédelmi irányelvek</string>

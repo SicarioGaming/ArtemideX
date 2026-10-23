@@ -42,7 +42,7 @@
     <string name="error_unknown_host"> 無法解析主機位址 </string>
     <string name="error_404">GFE 傳回了 HTTP 404 錯誤，請確保你的電腦 GPU 支援串流。使用遠端桌面軟體同樣會引起此錯誤，請嘗試重啟電腦或重新安裝 GFE。</string>
     <string name="title_decoding_error">視訊解碼器已當機</string>
-    <string name="message_decoding_error">由於與這個裝置的視訊解碼器不相容，Moonlight 已當機。若當機持續，請嘗試調整串流設定。</string>
+    <string name="message_decoding_error">由於與這個裝置的視訊解碼器不相容，Starwire 已當機。若當機持續，請嘗試調整串流設定。</string>
     <string name="title_decoding_reset">重設視訊設定</string>
     <string name="message_decoding_reset">由於裝置的視訊解碼器在你選取的串流設定上持續當機，已重設你的串流設定。</string>
     <string name="error_usb_prohibited">裝置管理員已禁止 USB 訪問。請檢查您的 Knox 或 MDM 設定。</string>
@@ -133,7 +133,7 @@
     <string name="title_checkbox_xb1_driver">Xbox 360/One USB 手把驅動程式</string>
     <string name="summary_checkbox_xb1_driver">為缺少原生 Xbox 控制器支援的裝置啟用內建 USB 驅動程式</string>
     <string name="title_checkbox_usb_bind_all">覆寫原生 Xbox 手把支援</string>
-    <string name="summary_checkbox_usb_bind_all">強制 Moonlight 的 USB 驅動程式接管所有受支援的原生 Xbox 控制器</string>
+    <string name="summary_checkbox_usb_bind_all">強制 Starwire 的 USB 驅動程式接管所有受支援的原生 Xbox 控制器</string>
     <string name="title_checkbox_mouse_emulation">透過手把仿真滑鼠</string>
     <string name="summary_checkbox_mouse_emulation">長按開始鍵將手把切換為滑鼠模式</string>
     <string name="title_checkbox_mouse_nav_buttons"> 啟用前進後退滑鼠鍵 </string>
@@ -154,7 +154,7 @@
     <string name="toast_reset_osc_success">螢幕控制按鈕已重設為預設值</string>
     <string name="category_ui_settings">使用者介面設定</string>
     <string name="title_language_list"> 語言 </string>
-    <string name="summary_language_list">選擇 Moonlight 顯示的語言</string>
+    <string name="summary_language_list">選擇 Starwire 顯示的語言</string>
     <string name="title_checkbox_small_icon_mode"> 使用小圖示 </string>
     <string name="summary_checkbox_small_icon_mode">使用小圖示以在螢幕上顯示更多應用程式</string>
     <string name="category_host_settings">主機設定</string>
@@ -195,17 +195,17 @@
     <string name="no_frame_received_error">您的網路連線品質不佳。降低視訊位元速率設定或更換更快的連線。</string>
     <string name="no_video_received_error">沒有接收到來自主機的視訊。</string>
     <string name="video_decoder_init_failed">無法初始化視訊解碼器，您的裝置可能不支援選取的解析度或影格速率。</string>
-    <string name="nettest_text_blocked">您裝置目前的網路連線封鎖了 Moonlight。連線到該網路時可能無法透過網際網路串流。</string>
-    <string name="nettest_text_failure">您裝置目前的網路連線似乎封鎖了 Moonlight。連線到該網路時可能無法透過網際網路串流。
+    <string name="nettest_text_blocked">您裝置目前的網路連線封鎖了 Starwire。連線到該網路時可能無法透過網際網路串流。</string>
+    <string name="nettest_text_failure">您裝置目前的網路連線似乎封鎖了 Starwire。連線到該網路時可能無法透過網際網路串流。
 \n
 \n以下網路通訊埠被封鎖：
 \n</string>
     <string name="nettest_text_inconclusive">由於沒有 Moonlight 連線測試伺服器可供訪問，因此無法執行網路測試。請檢查您的 Internet 連線或稍後再試。</string>
-    <string name="nettest_text_success">您的網路似乎沒有封鎖 Moonlight。如果仍然無法連線，請檢查您電腦的防火牆設定。
+    <string name="nettest_text_success">您的網路似乎沒有封鎖 Starwire。如果仍然無法連線，請檢查您電腦的防火牆設定。
 \n
 \n如果您是嘗試透過網際網路串流，請在您的電腦上安裝 Moonlight Internet Hosting Tool，然後執行裡面的 Internet Streaming Tester 來檢查電腦的網際網路連線。</string>
     <string name="nettest_title_done">網路檢測完畢</string>
-    <string name="nettest_text_waiting">Moonlight 正在測試您的網路連線以確認必要連接埠是否被封鎖。
+    <string name="nettest_text_waiting">Starwire 正在測試您的網路連線以確認必要連接埠是否被封鎖。
 \n
 \n可能需要等待一些時間…</string>
     <string name="nettest_title_waiting">正在測試網路連線</string>
@@ -245,7 +245,7 @@
     <string name="title_setup_guide">設定指南</string>
     <string name="summary_troubleshooting">檢視診斷和修正常見串流問題的提示</string>
     <string name="summary_privacy_policy">檢視 Moonlight 的隱私權政策</string>
-    <string name="summary_seekbar_deadzone">注意：有些遊戲可以強制執行一個比 Moonlight 設定大的死區。</string>
+    <string name="summary_seekbar_deadzone">注意：有些遊戲可以強制執行一個比 Starwire 設定大的死區。</string>
     <string name="title_checkbox_absolute_mouse_mode">遠端桌面滑鼠模式</string>
     <string name="summary_checkbox_absolute_mouse_mode">這可以讓滑鼠在遠端桌面使用中的加速表現更加自然，但與很多遊戲不相容。</string>
     <string name="title_checkbox_enable_audiofx">啟用系統等化器支援</string>

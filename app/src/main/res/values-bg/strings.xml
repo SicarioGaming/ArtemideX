@@ -46,11 +46,11 @@
     <string name="pcview_menu_header_offline">Извън линия</string>
     <string name="pcview_menu_app_list">Преглед на всички приложения</string>
     <string name="pcview_menu_unpair_pc">Раздвояване</string>
-    <string name="nettest_text_waiting">Moonlight тества мрежовата връзка, за да определи дали някой от необходимите портове не е блокиран.\n\nТова може да отнеме няколко секунди…</string>
-    <string name="nettest_text_success">Вашата мрежа изглежда не блокира Moonlight. Ако все още имате проблеми със свързването, проверете настройките на защитната стена на компютъра си.\n\nАко се опитвате да осъществите достъп през Интернет, инсталирайте „Moonlight Internet Hosting Tool“ на компютъра си и стартирайте включения тестер за достъп през Интернет, за да проверите връзката на компютъра си с Интернет.</string>
+    <string name="nettest_text_waiting">Starwire тества мрежовата връзка, за да определи дали някой от необходимите портове не е блокиран.\n\nТова може да отнеме няколко секунди…</string>
+    <string name="nettest_text_success">Вашата мрежа изглежда не блокира Starwire. Ако все още имате проблеми със свързването, проверете настройките на защитната стена на компютъра си.\n\nАко се опитвате да осъществите достъп през Интернет, инсталирайте „Moonlight Internet Hosting Tool“ на компютъра си и стартирайте включения тестер за достъп през Интернет, за да проверите връзката на компютъра си с Интернет.</string>
     <string name="nettest_text_inconclusive">Мрежовият тест не може да бъде извършен, защото нито един от сървърите за проверка на връзката на Moonlight не е достъпен. Проверете връзката си с Интернет или опитайте отново по-късно.</string>
-    <string name="nettest_text_failure">Текущата мрежова връзка на устройството изглежда блокира Moonlight. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.\n\nСледните мрежови портове са блокирани:\n</string>
-    <string name="nettest_text_blocked">Текущата мрежова връзка на устройството блокира Moonlight. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.</string>
+    <string name="nettest_text_failure">Текущата мрежова връзка на устройството изглежда блокира Starwire. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.\n\nСледните мрежови портове са блокирани:\n</string>
+    <string name="nettest_text_blocked">Текущата мрежова връзка на устройството блокира Starwire. Достъпът през Интернет може да не работи, докато компютърът е свързан към тази мрежа.</string>
     <string name="pair_pairing_msg">Моля, въведете следния ПИН на избрания компютър:</string>
     <string name="pair_fail">Неуспешно сдвояване</string>
     <string name="pair_already_in_progress">Сдвояването вече е в ход</string>
@@ -63,7 +63,7 @@
     <string name="video_decoder_init_failed">Видео декодерът не успя да се инициализира. Вашето устройство може да не поддържа избраната резолюция или честота на кадрите.</string>
     <string name="error_manager_not_running">Услугата ComputerManager не работи. Моля, изчакайте няколко секунди или рестартирайте приложението.</string>
     <string name="error_404">GFE върна грешка HTTP 404. Уверете се, че видео картата на компютъра се поддържа. Използването на софтуер за отдалечен работен плот също може да причини тази грешка. Опитайте да рестартирате машината си или да преинсталирате GFE.</string>
-    <string name="message_decoding_error">Moonlight претърпя срив поради несъвместимост с декодера за видео на това устройство. Опитайте да коригирате настройките за поточно предаване, ако сривовете продължат.</string>
+    <string name="message_decoding_error">Starwire претърпя срив поради несъвместимост с декодера за видео на това устройство. Опитайте да коригирате настройките за поточно предаване, ако сривовете продължат.</string>
     <string name="title_decoding_reset">Нулиране на видео настройките</string>
     <string name="message_decoding_reset">Видео декодерът на устройството продължава да претърпява сривове при избраните от Вас настройки за поточно предаване. Настройките бяха нулирани до стандартните.</string>
     <string name="audioconf_stereo">Стерео</string>
@@ -145,7 +145,7 @@
     <string name="category_gamepad_settings">Настройки на контролера</string>
     <string name="suffix_seekbar_vibrate_fallback_strength">%</string>
     <string name="title_checkbox_usb_bind_all">Замяна на собствената поддръжка на контролери за Xbox</string>
-    <string name="summary_checkbox_usb_bind_all">Използване на USB драйвера на Moonlight за всички поддържани контролери, дори ако е налична собствена поддръжка на контролери за Xbox</string>
+    <string name="summary_checkbox_usb_bind_all">Използване на USB драйвера на Starwire за всички поддържани контролери, дори ако е налична собствена поддръжка на контролери за Xbox</string>
     <string name="summary_checkbox_flip_face_buttons">Разменя бутоните в дясната част на контролера – A/B и X/Y – това важи както за контролерите, така и за екранните елементи за управление</string>
     <string name="error_unknown_host">Отдалеченият компютър не може да бъде намерен</string>
     <string name="unable_to_pin_shortcut">Текущата пускова програма не разрешава създаването на преки пътища.</string>
@@ -156,7 +156,7 @@
     <string name="summary_checkbox_xb1_driver">Включва вградения USB драйвер за устройства без собствена поддръжка на контролери за Xbox</string>
     <string name="title_seekbar_deadzone">Настройване на мъртвата зона на аналоговите стикове</string>
     <string name="title_checkbox_xb1_driver">USB драйвер за контролери за Xbox 360/One</string>
-    <string name="summary_seekbar_deadzone">Забележка: някои игри може да налагат по-голяма мъртва зона от тази, която е настроена в Moonlight.</string>
+    <string name="summary_seekbar_deadzone">Забележка: някои игри може да налагат по-голяма мъртва зона от тази, която е настроена в Starwire.</string>
     <string name="title_checkbox_mouse_emulation">Симулиране на мишка чрез контролер</string>
     <string name="pair_pairing_help">Ако на отдалечения компютър работи Sunshine, отворете уеб интерфейса на Sunshine и въведете ПИН кода.</string>
     <string name="frame_conversion_error">Отдалеченият компютър докладва критична грешка при кодиране на видеото.\n\nОпитайте да изключите режима HDR, да промените резолюцията на потока или резолюцията на екрана на отдалечения компютър.</string>
@@ -183,7 +183,7 @@
     <string name="title_checkbox_enable_pip">Включване на режима за наблюдаване „картина в картината“</string>
     <string name="summary_checkbox_enable_pip">Позволява поточното предаване да бъде наблюдавано (но не и управлявано) докато извършвате други задачи на устройството</string>
     <string name="title_language_list">Език</string>
-    <string name="summary_language_list">Езикът, който да ползва Moonlight</string>
+    <string name="summary_language_list">Езикът, който да ползва Starwire</string>
     <string name="title_checkbox_small_icon_mode">Използване на малки обложки</string>
     <string name="summary_checkbox_small_icon_mode">По-малките обложки в списъка с приложения позволяват да се виждат повече приложения едновременно на екрана</string>
     <string name="category_host_settings">Настройки на отдалечения компютър</string>

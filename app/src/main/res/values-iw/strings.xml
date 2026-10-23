@@ -6,7 +6,7 @@
     <string name="pcview_menu_header_online">פעיל</string>
     <string name="pcview_menu_unpair_pc">הסר אימות</string>
     <string name="pcview_menu_details">הראה פרטים</string>
-    <string name="nettest_text_waiting">מונלייט בודק את הרשת שלך ובודק אם ישנם פורטים הכרחיים חסומים
+    <string name="nettest_text_waiting">Starwire בודק את הרשת שלך ובודק אם ישנם פורטים הכרחיים חסומים
 \n
 \nהמתן כמה שניות…</string>
     <string name="wol_no_mac">לא מצליח להעיר את המחשב, אין כתובת MAC</string>
@@ -25,11 +25,11 @@
     <string name="nettest_title_waiting">בודק חיבור רשת</string>
     <string name="nettest_title_done">בדיקת רשת הושלמה</string>
     <string name="nettest_text_inconclusive">בדיקת הרשת לא התבצעה בגלל שאין קישוריות לשרתי הבדיקה של מונלייט. בבקשה בדוק את החיבור לאינטרנט או נסה שוב מאוחר יותר.</string>
-    <string name="nettest_text_failure">גישה של מונלייט לרשת חסומה במכשיר הנוכחי. הזרמה על גבי האינטרנט לא יכוה לעבוד כל עוד מונלייט מחובר לרשת הנוכחית.
+    <string name="nettest_text_failure">גישה של Starwire לרשת חסומה במכשיר הנוכחי. הזרמה על גבי האינטרנט לא יכוה לעבוד כל עוד Starwire מחובר לרשת הנוכחית.
 \n
 \nהפורטים הבאים חסומים:
 \n</string>
-    <string name="nettest_text_blocked">חיבור הרשת הנוכחי חוסם את מונלייט. הזרמה על גבי האינטרנט אינה אפשרית כל עוד מונלייט מחובר לרשת הנוכחית.</string>
+    <string name="nettest_text_blocked">חיבור הרשת הנוכחי חוסם את Starwire. הזרמה על גבי האינטרנט אינה אפשרית כל עוד Starwire מחובר לרשת הנוכחית.</string>
     <string name="pair_pc_offline">מחשב לא פעיל</string>
     <string name="pair_pairing_title">מחבר</string>
     <string name="pair_pairing_msg">אנא הזן את הקוד PIN הבא במחשב המארח:</string>
@@ -72,7 +72,7 @@
     <string name="title_native_res_dialog">אזהרת רזולוצייה טבעית</string>
     <string name="title_fps_list">פריימים לשניה</string>
     <string name="wol_waking_msg">ייקחו כמה שניות להפעיל את המחשב. אם הוא לא, אנא וודא שהוא מוגדר נכון לפונקציית Wake-On-LAN.</string>
-    <string name="nettest_text_success">הרשת שלך איננה חוסמת את מונלייט, בבקשה בדוק את הגדרות חומת האש במחשב המארח.
+    <string name="nettest_text_success">הרשת שלך איננה חוסמת את Starwire, בבקשה בדוק את הגדרות חומת האש במחשב המארח.
 \n
 \nאם אתה מנסה להזרים דרך האינטרנט, אנא התקן את הכל Moonlight Internet Hosting Tool על המחשב והפעל את כלי הבדיקה המצורף בכדי לבדוק את חיבור האינטרנט.</string>
     <string name="pairing">מאמת…</string>
@@ -83,7 +83,7 @@
     <string name="title_decoding_reset">הגדרות וידיאו אופסו</string>
     <string name="error_404">GFE החזיר שגיאת 404. אנא וודא שהמחשב עם כרטיס מסך נתמך. שימוש בתוכנת חיבור מרוחק יכולה לגרום לשגיאה זו. נסה להפעיל מחדש את המחשב או להתקין GFE.</string>
     <string name="error_usb_prohibited">גישה למכשירי USB נעולה על ידי מנהל המחשב. בדוק הגדרות knox או MDM.</string>
-    <string name="message_decoding_error">מונלייט קרס עקב אי-תאימות עם המפענח. נסה לשנות את הגדרות ההזרמה אם הקריסות נמשכות.</string>
+    <string name="message_decoding_error">Starwire קרס עקב אי-תאימות עם המפענח. נסה לשנות את הגדרות ההזרמה אם הקריסות נמשכות.</string>
     <string name="message_decoding_reset">המפענח ממשיך לקרוס בהגדרות הנוכחיות. הגדרות ההזרמה אופסו לברירת המחדל.</string>
     <string name="video_decoder_init_failed">נכשלה טעינת מפענח הוידיאו. המכשיר שלך כנראה אינו תומך ברזולוציה או פריימים לשניה שנבחרו.</string>
     <string name="no_frame_received_error">חיבור הרשת של אינו מתפקד כראוי. הורד את הגדרות ה-Bitrate או נסה חיבור מהיר יותר.</string>
@@ -133,7 +133,7 @@
 \n
 \nיש לקרוא ולהבין את ההנחיות של NVIDIA לגבי אי יציבות ונזקים אם מגדירים רזולוציה מותאמת אישית דרך פאנל הניהול.
 \n
-\nמונלייט אינו אחראי לבעיות או נזקים שנגרמים כתוצאה משימוש ברזולוציה מותאמת אישית.
+\nStarwire אינו אחראי לבעיות או נזקים שנגרמים כתוצאה משימוש ברזולוציה מותאמת אישית.
 \n
 \nהמכשיר שלך כנראה ואינו תומך ברזולוציה טבעית.</string>
     <string name="summary_seekbar_bitrate">הגבר לשיפור איכות התמונה. הנמך בכדי לשפר ביצועים על גבי חיבור רשת איטי.</string>
