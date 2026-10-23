@@ -66,13 +66,11 @@ public final class SecureVbanSender implements MicrophoneSink {
 
     private static final class Session {
         final Aead aead;
-        final byte[] clientRandom;
         final byte[] id;
         long next;
 
-        Session(Aead aead, byte[] clientRandom, byte[] id, long first) {
+        Session(Aead aead, byte[] id, long first) {
             this.aead = aead;
-            this.clientRandom = clientRandom;
             this.id = id;
             this.next = first;
         }
@@ -104,6 +102,8 @@ public final class SecureVbanSender implements MicrophoneSink {
     // The receive thread's (or the test's) own
     private byte[] clientRandom;
     private byte[] hello;
+    // The session the receiver first answered this HELLO with; null until then
+    private byte[] helloSession;
     private long helloStart;
     private int hellosSent;
     private boolean acked;
@@ -227,6 +227,7 @@ public final class SecureVbanSender implements MicrophoneSink {
         helloStart = now;
         hellosSent = 0;
         acked = false;
+        helloSession = null;
         setStatus(STATUS_CONNECTING);
     }
 
@@ -311,14 +312,22 @@ public final class SecureVbanSender implements MicrophoneSink {
             return;
         }
         byte[] serverRandom = Arrays.copyOfRange(p, SwmcCodec.HEADER, SwmcCodec.HEADER + SwmcCodec.ID_LENGTH);
-        boolean fresh;
-        synchronized (lock) {
-            fresh = session == null || !Arrays.equals(session.clientRandom, clientRandom) || !Arrays.equals(session.id, serverRandom);
-            if (fresh) {
+        if (helloSession != null && !Arrays.equals(helloSession, serverRandom)) {
+            // Another session for the same HELLO: the receiver restarted, or someone sent an
+            // older answer again, whose key may already have sealed audio from counter 0. A HELLO
+            // only ever gets one session, so ask with a new one; until it's answered, audio goes
+            // on in the current session
+            startHandshake(clock.nowMs());
+            return;
+        }
+        if (helloSession == null) {
+            // The first answer to this HELLO, and the only one it ever gets a session from
+            synchronized (lock) {
                 Aead aead = new Aead(SwmcCodec.audioKey(pairKey, deviceId, clientRandom, serverRandom));
-                session = new Session(aead, clientRandom, serverRandom, firstCounter);
+                session = new Session(aead, serverRandom, firstCounter);
                 LimeLog.info("Encrypted microphone: session started (AES-GCM from " + aead.providerName() + ")");
             }
+            helloSession = serverRandom;
         }
         acked = true;
         ackStatus = p[SwmcCodec.ACK_STATUS_AT] & 0xFF;
