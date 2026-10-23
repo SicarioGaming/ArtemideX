@@ -2,7 +2,10 @@ package com.limelight;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -249,6 +252,85 @@ public class AppViewTest {
                     throw new AssertionError(e);
                 }
             });
+        }
+    }
+
+    @Test
+    public void newSizeClassRebuildsTheScreenInPlace() throws Exception {
+        // Folding, unfolding, split screen or turning a phone can move the game screen into
+        // another set of sizes (values-w480dp, values-w480dp-h520dp). It used to recreate itself
+        // then, and on the RedMagic tablet the phone maker's game mode crashed the app in 3 of 4
+        // runs when it did. The same screen now builds its layout again and keeps its game.
+        try (ActivityScenario<AppView> scenario = ActivityScenario.launch(cachedPc())) {
+            for (int i = 0; i < 3; i++) {
+                SystemClock.sleep(1000);
+                scenario.onActivity(AppViewTest::drawOffscreen);
+            }
+            AppView[] screen = new AppView[1];
+            Object[] game = new Object[1];
+            Object[] glow = new Object[1];
+            android.view.View[] cover = new android.view.View[1];
+            int[] coverWidth = new int[1];
+            scenario.onActivity(activity -> {
+                screen[0] = activity;
+                game[0] = field(activity, "selectedApp");
+                assertNotNull("hero picked no game", game[0]);
+                glow[0] = field(activity, "glowAnimator");
+                cover[0] = activity.findViewById(R.id.heroCover);
+                coverWidth[0] = cover[0].getLayoutParams().width;
+            });
+
+            // A phone held upright: narrower than 480 dp
+            android.content.res.Configuration original = SizeChange.apply(screen[0], 400, 860);
+            try {
+                SystemClock.sleep(1500);
+                scenario.onActivity(AppViewTest::drawOffscreen);
+                scenario.onActivity(activity -> {
+                    assertSame("the screen was recreated instead of rebuilt", screen[0], activity);
+                    assertFalse("app list closed", activity.isFinishing());
+                    android.view.View narrowCover = activity.findViewById(R.id.heroCover);
+                    assertNotSame("the layout wasn't built again", cover[0], narrowCover);
+                    int narrowWidth = narrowCover.getLayoutParams().width;
+                    assertEquals(activity.getResources().getDimensionPixelSize(R.dimen.cg_hero_cover_width), narrowWidth);
+                    assertNotEquals("the phone's cover size didn't apply", coverWidth[0], narrowWidth);
+                    checkStillShowing(activity, game[0]);
+                    // The old views' endless animations stop with them
+                    assertFalse("the old glow still runs", ((android.animation.Animator) glow[0]).isStarted());
+                });
+            }
+            finally {
+                SizeChange.restore(screen[0], original);
+            }
+
+            // And back to the tablet's sizes
+            SystemClock.sleep(1500);
+            scenario.onActivity(AppViewTest::drawOffscreen);
+            scenario.onActivity(activity -> {
+                assertSame("the screen was recreated instead of rebuilt", screen[0], activity);
+                assertEquals(coverWidth[0], activity.findViewById(R.id.heroCover).getLayoutParams().width);
+                checkStillShowing(activity, game[0]);
+            });
+        }
+    }
+
+    // The rebuilt screen has its four tiles and the same game in the hero
+    private static void checkStillShowing(AppView activity, Object game) {
+        assertSame("the selected game changed", game, field(activity, "selectedApp"));
+        android.widget.AbsListView grid = findGrid(activity.getWindow().getDecorView());
+        assertNotNull("no game grid", grid);
+        assertEquals("all four tiles", 4, grid.getAdapter().getCount());
+        assertEquals(((AppView.AppObject) game).app.getAppName(),
+                ((android.widget.TextView) activity.findViewById(R.id.heroTitle)).getText().toString());
+    }
+
+    private static Object field(AppView activity, String name) {
+        try {
+            java.lang.reflect.Field field = AppView.class.getDeclaredField(name);
+            field.setAccessible(true);
+            return field.get(activity);
+        }
+        catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
         }
     }
 

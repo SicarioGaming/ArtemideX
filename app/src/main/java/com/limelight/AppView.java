@@ -208,11 +208,14 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        // Folding, unfolding or turning the phone into another set of sizes needs the layout
-        // built again; this screen otherwise keeps its views through size changes
-        if (sizesFor(newConfig) != builtSizes) {
-            recreate();
-            return;
+        // Folding, unfolding, split screen or turning the phone into another set of sizes needs
+        // the layout built again. It's built again on this same screen, not with recreate(): on
+        // the RedMagic tablet recreating crashed the app in 3 of 4 tries, inside the phone
+        // maker's game mode (com.zte.gameassist GameActivityStub stops an observer it has already
+        // cleared when a screen is paused and destroyed back to back).
+        boolean newSizes = sizesFor(newConfig) != builtSizes;
+        if (newSizes) {
+            buildScreen(newConfig);
         }
 
         // If appGridAdapter is initialized, let it know about the configuration change.
@@ -229,6 +232,11 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             } catch (IllegalStateException e) {
                 e.printStackTrace();
             }
+        }
+
+        // The new hero shows the game that was selected, with its cover, chips and Play button
+        if (newSizes && selectedApp != null) {
+            selectApp(selectedApp, false);
         }
     }
 
@@ -346,15 +354,10 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         UiHelper.setLocale(this);
 
-        setContentView(R.layout.activity_app_view);
-        builtSizes = sizesFor(getResources().getConfiguration());
-
         // Allow floating expanded PiP overlays while browsing apps
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             setShouldDockBigOverlays(false);
         }
-
-        UiHelper.notifyNewRootView(this);
 
         showHiddenApps = getIntent().getBooleanExtra(SHOW_HIDDEN_APPS_EXTRA, false);
         uuidString = getIntent().getStringExtra(UUID_EXTRA);
@@ -364,12 +367,8 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             hiddenAppIds.add(Integer.parseInt(hiddenAppIdStr));
         }
 
-        String computerName = getIntent().getStringExtra(NAME_EXTRA);
-
-        TextView label = findViewById(R.id.appListText);
-        setTitle(computerName);
-        label.setText(computerName);
-        setUpHero(computerName);
+        setTitle(getIntent().getStringExtra(NAME_EXTRA));
+        buildScreen(getResources().getConfiguration());
 
         // Bind to the computer manager service
         bindService(new Intent(this, ComputerManagerService.class), serviceConnection,
@@ -421,18 +420,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         SpinnerDialog.closeDialogs(this);
         Dialog.closeDialogs(this);
 
-        if (tintAnimator != null) {
-            tintAnimator.cancel();
-        }
-        if (glowAnimator != null) {
-            glowAnimator.cancel();
-        }
-        if (coverFloat != null) {
-            coverFloat.cancel();
-        }
-        if (wordmarkRainbow != null) {
-            wordmarkRainbow.cancel();
-        }
+        cancelAnimations();
 
         if (managerBinder != null) {
             unbindService(serviceConnection);
@@ -832,6 +820,33 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         }
         registerForContextMenu(listView);
         listView.requestFocus();
+    }
+
+    // Inflates the screen for the current set of sizes and wires it up. It runs again on the same
+    // screen when the sizes change; the games, the selected game and the PC stay as they are.
+    private void buildScreen(Configuration config) {
+        // The endless animations move the views being replaced
+        cancelAnimations();
+
+        setContentView(R.layout.activity_app_view);
+        builtSizes = sizesFor(config);
+        UiHelper.notifyNewRootView(this);
+
+        String computerName = getIntent().getStringExtra(NAME_EXTRA);
+        TextView label = findViewById(R.id.appListText);
+        label.setText(computerName);
+        setUpHero(computerName);
+
+        // Built while out of sight, the new loops wait for onResume
+        setLoopsRunning(inForeground);
+    }
+
+    private void cancelAnimations() {
+        for (android.animation.Animator animator : new android.animation.Animator[] {tintAnimator, glowAnimator, coverFloat, wordmarkRainbow}) {
+            if (animator != null) {
+                animator.cancel();
+            }
+        }
     }
 
     private void setUpHero(String computerName) {
