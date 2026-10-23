@@ -11,6 +11,7 @@
 #   INSTALL=fail      installs fail the way a differently signed APK does
 #   ABI=fail          installing with --abi fails the way an image without ARM translation does
 #   MONKEY_CHECK=pass|fail   what MonkeyPreconditionTest reports (default fail)
+#   MONKEY=other|app  a system process crashes during monkey, or the app does
 #   FAIL=suite        the instrumented suite (or the classes --only names) has a failing test
 #   CRASH_ON=fold|font|density   the app crashes when that changes
 #   NOFOLD=1          a phone: no fold commands and no device states
@@ -102,7 +103,13 @@ case "$call" in
     *"settings get system accelerometer_rotation") echo 1 ;;
     *"settings put system font_scale "*)
         [ "${FAKE_ADB_CRASH_ON:-}" = font ] && [ "${call##* }" != 1.0 ] && crash ;;
-    *"shell monkey "*) echo "// Monkey finished" ;;
+    *"shell monkey "*)
+        case "${FAKE_ADB_MONKEY:-}" in
+            other) echo "// CRASH: com.google.android.bluetooth (pid 1110)"; echo "// Short Msg: Native crash" ;;
+            app) echo "// CRASH: com.starwire.debug (pid 4321)"; echo "// Short Msg: java.lang.IllegalStateException"
+                 echo "** Monkey aborted due to error."; exit 0 ;;
+        esac
+        echo "// Monkey finished" ;;
     *" logcat -c"|*" logcat -b crash -c") rm -f "$state/crash" ;;
     *" logcat -d -b crash"*)
         [ -f "$state/crash" ] && echo "01-01 00:00:01.000  1234  1234 E AndroidRuntime: Process: com.starwire.debug, PID: 1234" ;;

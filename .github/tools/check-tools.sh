@@ -241,6 +241,14 @@ if ! called "shell monkey -p com.starwire.debug -s 20261023" || ! called "airpla
    ! called "airplane-mode disable"; then
     fail "device-test.sh didn't run monkey with the fixed seed in airplane mode on an empty emulator"
 fi
+# Monkey goes on through another process's crash (the emulator's Bluetooth stack) and only the
+# app's own crash fails the run
+fake_run 0 FAKE_ADB_EMULATOR=1 FAKE_ADB_MONKEY_CHECK=pass FAKE_ADB_MONKEY=other -s FAKE-1 --monkey 50
+if ! called "--ignore-native-crashes" || ! grep -q 'no crash or ANR (other processes crashed 1 times' "$work/out/FAKE-1/summary.txt"; then
+    fail "device-test.sh counted another process's crash during monkey as the app's"
+fi
+fake_run 2 FAKE_ADB_EMULATOR=1 FAKE_ADB_MONKEY_CHECK=pass FAKE_ADB_MONKEY=app -s FAKE-1 --monkey 50
+grep -q 'found a crash or ANR' "$work/out/FAKE-1/summary.txt" || fail "device-test.sh missed the app crashing during monkey"
 # @HardwareOnly tests are left out on an emulator only, and --only narrows the suite to its classes
 fake_run 0 -s FAKE-1
 if called "notAnnotation"; then fail "device-test.sh left out @HardwareOnly tests on a real device"; fi

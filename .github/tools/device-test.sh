@@ -337,23 +337,34 @@ test_device() {
                     airplane_was=$(sh_ settings get global airplane_mode_on)
                     sh_ cmd connectivity airplane-mode enable > /dev/null 2>&1
                 fi
+                # Monkey reports a crash or ANR in any process, and used to stop at the first: on
+                # the Android 15 emulator, its Bluetooth stack crashing as airplane mode went on
+                # ended the run at event 4. It now goes on through other processes' crashes, and
+                # only the app's own count.
+                local keep_going=(--ignore-crashes --ignore-timeouts --ignore-native-crashes)
                 if command -v timeout >/dev/null 2>&1; then
                     timeout 1800 "$ADB" -s "$SERIAL" shell monkey -p "$PKG" -s "$SEED" --throttle 150 \
-                        --pct-syskeys 2 --pct-appswitch 2 --ignore-security-exceptions \
+                        --pct-syskeys 2 --pct-appswitch 2 --ignore-security-exceptions "${keep_going[@]}" \
                         --monitor-native-crashes -v -v "$monkey" 2>&1 | tr -d '\r' > "$DIR/monkey.txt"
                 else
                     adb_ shell monkey -p "$PKG" -s "$SEED" --throttle 150 --pct-syskeys 2 --pct-appswitch 2 \
-                        --ignore-security-exceptions --monitor-native-crashes -v -v "$monkey" 2>&1 |
+                        --ignore-security-exceptions "${keep_going[@]}" --monitor-native-crashes -v -v "$monkey" 2>&1 |
                         tr -d '\r' > "$DIR/monkey.txt"
                 fi
                 if [ -n "$airplane_was" ] && [ "$airplane_was" != 1 ]; then
                     sh_ cmd connectivity airplane-mode disable > /dev/null 2>&1
                 fi
-                if grep -qiE '^// (CRASH|NOT RESPONDING)|monkey aborted' "$DIR/monkey.txt"; then
+                local others
+                others=$(grep -E '^// (CRASH|NOT RESPONDING): ' "$DIR/monkey.txt" | grep -vcE ": ${PKG//./\\.}( |\$)" || true)
+                if grep -qE "^// (CRASH|NOT RESPONDING): ${PKG//./\\.}( |\$)" "$DIR/monkey.txt"; then
                     crashed=1
                     monkey_line="$monkey events, seed $SEED: found a crash or ANR (monkey.txt)"
+                elif ! grep -q '^// Monkey finished' "$DIR/monkey.txt"; then
+                    crashed=1
+                    monkey_line="$monkey events, seed $SEED: monkey didn't finish (monkey.txt)"
                 else
                     monkey_line="$monkey events, seed $SEED: no crash or ANR"
+                    [ "${others:-0}" -gt 0 ] && monkey_line="$monkey_line (other processes crashed $others times: monkey.txt)"
                 fi
             fi
         fi
