@@ -7,6 +7,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
+import android.app.UiAutomation;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.SystemClock;
@@ -15,6 +16,7 @@ import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -22,6 +24,7 @@ import android.widget.TextView;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.Configurator;
 import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
@@ -44,6 +47,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
  * The screens a person goes through, driven the way they'd drive them (UI Automator): the app
@@ -254,11 +258,40 @@ public class SmokeTest {
         smoke.backToPcList();
     }
 
+    // The first time a big screen letterboxes the app (it asked for an orientation the screen won't
+    // turn to), Android lays a one-time "See and do more" card over it, and a tap anywhere
+    // closes the card without reaching the app. On the Android 15 tablet emulator that
+    // tap was the one on the settings button, so settings never opened in the first pass after a
+    // fresh start, and did in every later one. A tap counts once the app reports the click; one
+    // the system took is made again, at most three in all.
     private void openSettings() {
         UiObject2 settings = smoke.device.wait(Until.findObject(smoke.id("settingsButton")), Smoke.WAIT_MS);
         assertNotNull("no settings button", settings);
-        settings.click();
+        for (int taps = 1; !tapReachesApp(settings); taps++) {
+            if (Smoke.resumedActivity() instanceof StreamSettings) {
+                break;
+            }
+            assertTrue("a window over the PC list took " + taps + " taps on the settings button", taps < 3);
+            android.util.Log.i("SmokeTest", "A window over the PC list took the tap on the settings button; tapping again");
+        }
         assertTrue("settings didn't open", Smoke.waitFor(() -> Smoke.resumedActivity() instanceof StreamSettings, Smoke.WAIT_MS));
+    }
+
+    // Taps the view and waits for the app to report the click (every view's click sends one to
+    // accessibility, which UI Automator turns on). False when something else took the tap.
+    private boolean tapReachesApp(UiObject2 view) {
+        UiAutomation automation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation(Configurator.getInstance().getUiAutomationFlags());
+        try {
+            automation.executeAndWaitForEvent(view::click,
+                    event -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED
+                            && smoke.pkg.equals(String.valueOf(event.getPackageName())),
+                    Smoke.WAIT_MS);
+            return true;
+        }
+        catch (TimeoutException e) {
+            return false;
+        }
     }
 
     private static boolean zteGameMode() {
