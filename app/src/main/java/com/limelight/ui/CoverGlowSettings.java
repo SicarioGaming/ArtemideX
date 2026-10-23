@@ -360,6 +360,17 @@ public final class CoverGlowSettings {
             pinned = index;
             highlight(index);
             list.smoothScrollToPositionFromTop(position, 0, 300);
+            // Over rows of different heights the smooth scroll can stop well off the heading (the
+            // On-screen controls heading ended up at the bottom of the screen every time), so stop
+            // it and land on the heading exactly, unless the list was dragged or another pill
+            // tapped since
+            list.postDelayed(() -> {
+                if (pinned == index) {
+                    // A zero scroll stops what's left of the smooth one
+                    list.smoothScrollBy(0, 0);
+                    list.setSelectionFromTop(position, 0);
+                }
+            }, 450);
         }
 
         void follow(int firstVisible) {
