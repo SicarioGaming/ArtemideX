@@ -3,10 +3,12 @@ package com.limelight.smoke;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.SystemClock;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
@@ -27,6 +29,7 @@ import androidx.test.uiautomator.Until;
 import com.limelight.AppView;
 import com.limelight.PcView;
 import com.limelight.R;
+import com.limelight.SizeChange;
 import com.limelight.computers.ComputerDatabaseManager;
 import com.limelight.nvstream.http.ComputerDetails;
 import com.limelight.preferences.StreamSettings;
@@ -44,10 +47,10 @@ import java.util.Map;
 
 /**
  * The screens a person goes through, driven the way they'd drive them (UI Automator): the app
- * opens to the PC list, every settings section opens from its pill, the screens survive being
- * recreated as on a rotation, and a paired PC shows its games. Nothing here streams or changes a
- * setting. The step that needs the PC skips when no paired PC is online. device-test.sh runs
- * these and pulls the screenshots.
+ * opens to the PC list, every settings section opens from its pill, the screens survive rotating,
+ * changing size and being recreated, and a paired PC shows its games. Nothing here streams or
+ * changes a setting. The step that needs the PC skips when no paired PC is online.
+ * device-test.sh runs these and pulls the screenshots.
  */
 @RunWith(AndroidJUnit4.class)
 public class SmokeTest {
@@ -218,25 +221,57 @@ public class SmokeTest {
         return null;
     }
 
-    // Through the app, not the device's rotation setting, which is left alone. Screens that
-    // handle rotation themselves aren't recreated by it, so each is also recreated outright, as
-    // the games screen does itself when the screen changes size. On the RedMagic tablet this
-    // crashed the app in 3 of 4 runs: the phone maker's game mode, which runs code inside apps
-    // that say they're games (com.zte.gameassist GameActivityStub), stops an observer that's null.
+    // Through the app, not the device's rotation setting, which is left alone. Then each screen
+    // is handed a phone's size and its own back, as folding, unfolding or split screen would
+    // hand them, and has to rebuild in place: the same screen, still open, with its content.
+    // No screen recreates itself any more. The games screen used to when its set of sizes
+    // changed, and this test recreated each screen the same way; on the RedMagic tablet that
+    // crashed the app in 3 of 4 runs, in the phone maker's game mode (see the next test).
     @Test
-    public void screensSurviveRotationAndBeingRecreated() {
+    public void screensSurviveRotationAndSizeChanges() {
         smoke.launchApp();
-        checkSurvives(PcView.class, R.id.pcFragmentContainer, "04-recreated-pc-list");
+        checkResized(PcView.class, R.id.pcFragmentContainer, "04-resized-pc-list");
 
+        openSettings();
+        checkResized(StreamSettings.class, R.id.stream_settings, "04-resized-settings");
+        smoke.backToPcList();
+    }
+
+    // Android itself still recreates a screen for a change the app doesn't take on, such as a new
+    // display size or language. That's skipped where the phone maker's game mode runs inside the
+    // app, as on the RedMagic tablet: when a screen is paused and destroyed back to back, its
+    // com.zte.gameassist GameActivityStub stops an observer it has already cleared, which crashed
+    // the app in 3 of 4 runs there. That code is the phone's, not Starwire's.
+    @Test
+    public void screensSurviveBeingRecreated() {
+        Assume.assumeFalse("the phone maker's game mode crashes recreated screens on this device (com.zte.gameassist)",
+                zteGameMode());
+        smoke.launchApp();
+        checkRecreated(PcView.class, R.id.pcFragmentContainer, "04-recreated-pc-list");
+
+        openSettings();
+        checkRecreated(StreamSettings.class, R.id.stream_settings, "04-recreated-settings");
+        smoke.backToPcList();
+    }
+
+    private void openSettings() {
         UiObject2 settings = smoke.device.wait(Until.findObject(smoke.id("settingsButton")), Smoke.WAIT_MS);
         assertNotNull("no settings button", settings);
         settings.click();
         assertTrue("settings didn't open", Smoke.waitFor(() -> Smoke.resumedActivity() instanceof StreamSettings, Smoke.WAIT_MS));
-        checkSurvives(StreamSettings.class, R.id.stream_settings, "04-recreated-settings");
-        smoke.backToPcList();
     }
 
-    private void checkSurvives(Class<? extends Activity> screen, int mainView, String shotName) {
+    private static boolean zteGameMode() {
+        try {
+            Class.forName("com.zte.gameassist.app.GameActivityStub");
+            return true;
+        }
+        catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    private void checkResized(Class<? extends Activity> screen, int mainView, String shotName) {
         Activity before = Smoke.resumedActivity();
         assertTrue(screen.getSimpleName() + " isn't in front", screen.isInstance(before));
         for (int orientation : new int[] {ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE,
@@ -244,6 +279,36 @@ public class SmokeTest {
             InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> before.setRequestedOrientation(orientation));
             SystemClock.sleep(700);
         }
+        checkStillOpen(screen, before, mainView);
+
+        // A phone held upright, narrower than 480 dp, then the screen's own size again
+        Configuration own = SizeChange.apply(before, 400, 860);
+        try {
+            SystemClock.sleep(700);
+            checkStillOpen(screen, before, mainView);
+            smoke.shot(shotName + "-phone");
+        }
+        finally {
+            SizeChange.restore(before, own);
+        }
+        SystemClock.sleep(700);
+        checkStillOpen(screen, before, mainView);
+        smoke.shot(shotName);
+    }
+
+    // The same screen is in front, not closing, with its content
+    private static void checkStillOpen(Class<? extends Activity> screen, Activity expected, int mainView) {
+        Activity now = Smoke.resumedActivity();
+        assertSame(screen.getSimpleName() + " was replaced", expected, now);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            assertFalse(screen.getSimpleName() + " is closing", now.isFinishing());
+            assertNotNull(screen.getSimpleName() + " lost its content", now.findViewById(mainView));
+        });
+    }
+
+    private void checkRecreated(Class<? extends Activity> screen, int mainView, String shotName) {
+        Activity before = Smoke.resumedActivity();
+        assertTrue(screen.getSimpleName() + " isn't in front", screen.isInstance(before));
         InstrumentationRegistry.getInstrumentation().runOnMainSync(before::recreate);
         assertTrue(screen.getSimpleName() + " didn't come back", Smoke.waitFor(() -> {
             Activity now = Smoke.resumedActivity();

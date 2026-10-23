@@ -24,10 +24,10 @@
 #
 # For each device, in order: install the debug app and then its tests with adb install -r (it
 # never uninstalls anything: that would lose the pairing with the PC), run the instrumented
-# suite, run the smoke tests (UI Automator: the PC list, every settings section, screens being
-# recreated, and the paired PC's games), pull their screenshots, check the Hide PC cursor setting
-# is what it was, then look for crashes and ANRs from the app since the start. Smoke tests that
-# need the PC skip, and say why, when there's no paired PC or it isn't online.
+# suite, run the smoke tests (UI Automator: the PC list, every settings section, screens changing
+# size and being recreated, and the paired PC's games), pull their screenshots, check the Hide PC
+# cursor setting is what it was, then look for crashes and ANRs from the app since the start.
+# Smoke tests that need the PC skip, and say why, when there's no paired PC or it isn't online.
 #
 # Exit codes: 0 all good; 1 a test failed or the cursor setting changed; 2 a crash, an ANR, or a
 # test run that didn't finish; 3 an install failed; 4 a device problem (not connected, locked, a
