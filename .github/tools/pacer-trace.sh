@@ -1,44 +1,51 @@
 #!/usr/bin/env bash
 # Records and analyses frame pacing traces from the Vulkan renderer over adb.
 #
-#   tools/pacer-trace.sh session         switch tracing on, wait while you stream, then pull the
-#                                        trace, analyse it and switch tracing off
-#   tools/pacer-trace.sh on | off        switch tracing on or off for streams started afterwards
-#   tools/pacer-trace.sh live            follow the pacer's 10 second summaries in logcat
-#   tools/pacer-trace.sh pull [--clear]  copy traces off the device (and delete them there)
-#   tools/pacer-trace.sh analyze [file...]
-#                                        analyse traces (the newest pulled one by default), and
-#                                        replay them through the pacer as it is in this checkout
+#   .github/tools/pacer-trace.sh session   switch tracing on, wait while you stream, then pull
+#                                          the trace, analyse it and switch tracing off
+#   .github/tools/pacer-trace.sh on | off  switch tracing on or off for streams started afterwards
+#   .github/tools/pacer-trace.sh live      follow the pacer's 10 second summaries in logcat
+#   .github/tools/pacer-trace.sh pull [--clear]
+#                                          copy traces off the device (and delete them there)
+#   .github/tools/pacer-trace.sh analyze [file...]
+#                                          analyse traces (the newest pulled one by default), and
+#                                          replay them through the pacer as it is in this checkout
 #
-# Environment: MOONLIGHT_PACKAGE (default com.limelight.mlsoft.debug), ADB, CXX (default g++),
-# PACER_TRACE_DIR (default ./pacer-traces).
+# Environment: MOONLIGHT_PACKAGE (default com.starwire.debug), ADB, CXX (default g++),
+# PACER_TRACE_DIR (default pacer-traces in the repository). analyze needs no device or adb.
+# check-tools.sh runs analyze on a sample trace, so a move or a rename can't break it unseen.
 
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PKG="${MOONLIGHT_PACKAGE:-com.limelight.mlsoft.debug}"
+# This script is in .github/tools, two folders below the repository
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+PKG="${MOONLIGHT_PACKAGE:-com.starwire.debug}"
 OUT="${PACER_TRACE_DIR:-$ROOT/pacer-traces}"
 REMOTE="/sdcard/Android/data/$PKG/files/pacer-traces"
 SRC="$ROOT/app/src/main/jni/vulkan"
 PROPERTY="debug.moonlight.pacer_trace"
 
-if [ -n "${ADB:-}" ]; then
-    :
-elif command -v adb >/dev/null 2>&1; then
-    ADB=adb
-elif [ -n "${LOCALAPPDATA:-}" ] && [ -x "$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe" ]; then
-    ADB="$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe"
-elif [ -n "${ANDROID_HOME:-}" ] && [ -x "$ANDROID_HOME/platform-tools/adb" ]; then
-    ADB="$ANDROID_HOME/platform-tools/adb"
-else
-    echo "adb not found; set ADB to its path" >&2
-    exit 1
-fi
+# adb, looked for when a command first needs it
+find_adb() {
+    if [ -n "${ADB:-}" ]; then
+        :
+    elif command -v adb >/dev/null 2>&1; then
+        ADB=adb
+    elif [ -n "${LOCALAPPDATA:-}" ] && [ -x "$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe" ]; then
+        ADB="$LOCALAPPDATA/Android/Sdk/platform-tools/adb.exe"
+    elif [ -n "${ANDROID_HOME:-}" ] && [ -x "$ANDROID_HOME/platform-tools/adb" ]; then
+        ADB="$ANDROID_HOME/platform-tools/adb"
+    else
+        echo "adb not found; set ADB to its path" >&2
+        exit 1
+    fi
+}
 
 # Git Bash rewrites arguments that look like Unix paths (/sdcard/...) into Windows paths
 # before handing them to native programs like adb.exe. Device paths must reach adb untouched.
 # (Not switched off for the whole script: the MSYS2 compiler needs its paths converted.)
 adb_() {
+    find_adb
     MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' "$ADB" "$@"
 }
 
@@ -178,5 +185,6 @@ case "${1:-}" in
     pull) shift; cmd_pull "$@" ;;
     analyze) shift; cmd_analyze "$@" ;;
     session) cmd_session ;;
-    *) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+    # The comment at the top, however long it gets
+    *) sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac

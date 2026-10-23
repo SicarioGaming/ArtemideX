@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+# Checks that the scripts in .github/tools still work, so a moved file or a renamed app ID can't
+# break one without anyone noticing (moving the tools here in 0a95c91a broke pacer-trace.sh that
+# way). CI runs it on every push. It needs no device and no network.
+#
+#   .github/tools/check-tools.sh                      run the checks
+#   .github/tools/check-tools.sh --make-pacer-sample  rewrite fixtures/pacer-trace-sample.csv
+#
+# Replaying the sample trace needs a C++17 compiler (CXX, or g++ or clang++ on PATH). Without one
+# that check is skipped with a note, except when CI is set, where it fails.
+
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$HERE/../.." && pwd)"
+SAMPLE="$HERE/fixtures/pacer-trace-sample.csv"
+failures=0
+
+fail() {
+    echo "FAIL: $*" >&2
+    failures=$((failures + 1))
+}
+
+# Each check starts with begin, and ends with ok, which says so if it found nothing wrong
+section=0
+begin() {
+    section=$failures
+}
+ok() {
+    if [ $failures -eq $section ]; then echo "ok: $*"; fi
+}
+
+# A made-up trace in the format pacer_trace.h describes: 4 s of 60 fps on a 60 Hz screen, each
+# frame arriving 6 to 10 ms before the vsync it's shown at. Fixed numbers, nothing random.
+make_pacer_sample() {
+    awk 'BEGIN {
+        period = 16666667; start = 10000000000; host = 5000000000; frames = 240
+        print "# moonlight pacer trace v1"
+        print "# Made up, not recorded: 4 s of a 60 fps stream on a 60 Hz screen, each frame arriving"
+        print "# 6 to 10 ms before its vsync. check-tools.sh replays it to show that pacer-trace.sh and"
+        print "# pacer_replay still work, and makes it again with: check-tools.sh --make-pacer-sample"
+        print "C,mode=4,jitterBuffer=1,presentAhead=0,streamFps=60,width=1920,height=1080,periodNs=" period \
+              ",refreshHz=60.000,tenBit=0,dither=0,device=sample"
+        print "R," period
+        for (i = 0; i < frames; i++) {
+            vsync = start + i * period
+            pts = host + i * period
+            early = 6000000 + ((i * 7) % 5) * 1000000
+            printf "F,%.0f,%.0f,%.0f,1,0\n", vsync - early, pts, vsync
+            printf "V,%.0f,1,0,%.0f,%d,1,0,0,%.0f,%.0f,0.0,100000,0,0\n", vsync, pts, i >= 30, early, period
+        }
+    }'
+}
+
+if [ "${1:-}" = "--make-pacer-sample" ]; then
+    mkdir -p "$(dirname "$SAMPLE")"
+    make_pacer_sample > "$SAMPLE"
+    echo "Wrote $SAMPLE"
+    exit 0
+fi
+
+cd "$ROOT"
+
+# 1. Every shell script in the repository parses
+begin
+scripts=$(git ls-files '*.sh' 2>/dev/null || find . -name '*.sh' -not -path './.git/*')
+count=0
+for f in $scripts; do
+    count=$((count + 1))
+    bash -n "$f" || fail "$f doesn't parse"
+done
+ok "$count shell scripts parse"
+
+# 2. The workflows and the tools only call tools that exist. Docs only get a note: they may name
+# a script that's still being written.
+begin
+missing() {
+    grep -oh '\.github/tools/[A-Za-z0-9_./-]*' "$@" 2>/dev/null | sed 's/[.]*$//' | sort -u |
+        while read -r path; do [ -e "$path" ] || echo "$path"; done
+}
+for path in $(missing .github/workflows/*.yml $(git ls-files .github/tools)); do
+    fail "the workflows or tools use $path, which doesn't exist"
+done
+for path in $(missing $(git ls-files '*.md')); do
+    echo "note: a doc mentions $path, which doesn't exist (yet)"
+done
+ok "the workflows and tools only use tools that exist"
+
+# 3. App IDs the tools default to are ones the build makes (pacer-trace.sh kept Moonlight X's)
+begin
+ids=$(grep -o 'applicationId "[^"]*"' app/build.gradle | cut -d'"' -f2 | tr '\n' ' ' | sed 's/ $//')
+suffix=$(grep -o 'applicationIdSuffix "[^"]*"' app/build.gradle | cut -d'"' -f2 | head -n 1)
+for tool in .github/tools/*.sh; do
+    for id in $(grep -o ':-com\.[A-Za-z0-9_.]*}' "$tool" | sed 's/^:-//; s/}$//'); do
+        known=no
+        for app in $ids; do
+            case "$id" in "$app" | "$app$suffix" | "$app$suffix.test") known=yes ;; esac
+        done
+        [ "$known" = yes ] || fail "$tool defaults to $id, which the build doesn't make ($ids, and $suffix)"
+    done
+done
+ok "the tools' default app IDs are this app's"
+
+# 4. pacer-trace.sh prints its help without a device
+begin
+set +e
+help=$(bash .github/tools/pacer-trace.sh 2>&1)
+status=$?
+set -e
+if [ $status -ne 2 ] || ! printf '%s\n' "$help" | grep -q 'analyze \[file'; then
+    fail "pacer-trace.sh without a command should print its help and exit 2 (exit $status)"
+else
+    ok "pacer-trace.sh prints its help"
+fi
+
+# 5. The sample trace is the one make_pacer_sample makes
+begin
+if make_pacer_sample | diff -q --strip-trailing-cr - "$SAMPLE" >/dev/null; then
+    ok "the sample trace is up to date"
+else
+    fail "$SAMPLE differs from what --make-pacer-sample makes"
+fi
+
+# 6. pacer-trace.sh builds the replay tool from this checkout and replays the sample
+begin
+cxx="${CXX:-}"
+if [ -z "$cxx" ]; then
+    for candidate in g++ clang++; do
+        if command -v "$candidate" >/dev/null 2>&1; then cxx="$candidate"; break; fi
+    done
+fi
+if [ -z "$cxx" ]; then
+    if [ -n "${CI:-}" ]; then
+        fail "no C++ compiler to build the pacer replay tool"
+    else
+        echo "skipped: replaying the sample trace (no C++ compiler; set CXX)"
+    fi
+else
+    work="$(mktemp -d)"
+    set +e
+    replay=$(CXX="$cxx" PACER_TRACE_DIR="$work" ADB=/nonexistent/adb \
+        bash .github/tools/pacer-trace.sh analyze "$SAMPLE" 2>&1)
+    status=$?
+    set -e
+    rm -rf "$work"
+    if [ $status -ne 0 ]; then
+        printf '%s\n' "$replay" >&2
+        fail "pacer-trace.sh analyze failed on the sample trace (exit $status)"
+    elif ! printf '%s\n' "$replay" | grep -q 'Replayed through the current pacer' ||
+         ! printf '%s\n' "$replay" | grep -q ' of 240 vsync decisions differ'; then
+        printf '%s\n' "$replay" >&2
+        fail "pacer-trace.sh analyze didn't replay all 240 vsyncs of the sample trace"
+    else
+        ok "pacer-trace.sh replays the sample trace"
+    fi
+fi
+
+if [ $failures -ne 0 ]; then
+    echo "$failures problem(s)" >&2
+    exit 1
+fi
+echo "All tool checks passed"

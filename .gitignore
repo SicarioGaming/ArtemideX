@@ -42,7 +42,7 @@ app/.externalNativeBuild/
 
 # NDK stuff
 .cxx/
-# Frame pacing traces pulled from devices (tools/pacer-trace.sh)
+# Frame pacing traces pulled from devices (.github/tools/pacer-trace.sh)
 pacer-traces/
 
 # ArtemideX: the release signing key and its passwords stay private

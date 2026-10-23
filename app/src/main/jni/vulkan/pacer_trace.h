@@ -14,7 +14,7 @@ namespace vkr {
 // every 10 seconds, whether or not a trace file is being written.
 //
 // Traces are written when the debug.moonlight.pacer_trace system property is 1, which adb can
-// set: adb shell setprop debug.moonlight.pacer_trace 1 (see tools/pacer-trace.sh).
+// set: adb shell setprop debug.moonlight.pacer_trace 1 (see .github/tools/pacer-trace.sh).
 //
 // The file is CSV, one event per line, in the order the pacer saw them:
 //   C,key=value,...                  session configuration
