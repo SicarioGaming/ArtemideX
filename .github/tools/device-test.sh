@@ -50,10 +50,15 @@ SEED=20261023
 SUITE_TIMEOUT=2400
 SMOKE_TIMEOUT=900
 
-# Devices refused before anything is sent to them: a phone kept for other work. It's listed by
-# the SHA-256 of its serial and of the model adb shows, so the IDs themselves aren't published.
-# Add more with STARWIRE_DENY_DEVICES: serials, models or sha256:<hash of one>, space separated.
+# Devices refused before anything is sent to them, like a phone kept for other work. List them
+# in private/deny-devices.txt (git-ignored, so the IDs stay on your PC), or in the file named by
+# STARWIRE_DENY_FILE, one per line, or in STARWIRE_DENY_DEVICES, space separated: serials, models
+# or sha256:<hash of one>. Lines starting with # are comments.
+DENY_FILE=${STARWIRE_DENY_FILE:-$(cd "$(dirname "$0")/../.." && pwd)/private/deny-devices.txt}
 DENY_DEVICES=""
+if [ -f "$DENY_FILE" ]; then
+    DENY_DEVICES=$(tr -d '\r' < "$DENY_FILE" | sed 's/#.*//' | tr -s ' \t\n' ' ')
+fi
 
 usage() {
     sed -n '2,/^$/p' "$0" | sed 's/^# \{0,1\}//'

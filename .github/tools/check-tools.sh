@@ -213,10 +213,15 @@ for deny in FAKE-DENIED Fake_Phone "$denied_hash"; do
 done
 fake_run 4 STARWIRE_DENY_DEVICES=FAKESER -s adb-FAKESER-x1y2._adb-tls-connect._tcp
 if called "-s adb-FAKESER"; then fail "device-test.sh sent a refused wireless device a command"; fi
-if sed -n '/^DENY_DEVICES="/,/"$/p' .github/tools/device-test.sh | tr -d '"' | sed 's/^DENY_DEVICES=//' |
-        grep -vqE '^sha256:[0-9a-f]{64}$'; then
-    fail "device-test.sh's own list of refused devices has an entry that isn't sha256:<64 hex digits>"
+# The refused devices come from a git-ignored file, so no device IDs are published in the script
+if ! grep -qx 'DENY_DEVICES=""' .github/tools/device-test.sh || grep -qE 'sha256:[0-9a-f]{64}' .github/tools/device-test.sh; then
+    fail "device-test.sh lists device IDs itself; they belong in private/deny-devices.txt"
 fi
+printf '# a comment\n  FAKE-DENIED  \r\n' > "$work/deny-devices.txt"
+fake_run 4 STARWIRE_DENY_FILE="$work/deny-devices.txt" -s FAKE-DENIED
+if called "-s FAKE-DENIED"; then fail "device-test.sh sent a device listed in its deny file a command"; fi
+fake_run 0 STARWIRE_DENY_FILE="$work/no-such-file.txt" -s FAKE-1
+if ! called "-s FAKE-1 install"; then fail "device-test.sh didn't test a device when its deny file is missing"; fi
 # Several devices in one run: the refused one is skipped, the other tested, the worst exit wins
 fake_run 4 STARWIRE_DENY_DEVICES=FAKE-DENIED -s FAKE-1 -s FAKE-DENIED
 if ! called "-s FAKE-1 install"; then fail "device-test.sh didn't test the allowed device of two"; fi
