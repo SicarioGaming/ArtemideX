@@ -41,6 +41,7 @@ import com.limelight.preferences.AppPreferences;
 import com.limelight.preferences.GlPreferences;
 import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.BrightnessSliderView;
+import com.limelight.ui.FloatingButton;
 import com.limelight.ui.GameGestures;
 import com.limelight.ui.PanZoomHandler;
 import com.limelight.ui.StreamView;
@@ -192,13 +193,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     // Floating menu button (from Artemide): tap opens the overlay menu, drag moves it
     private ImageButton floatingMenuButton;
+    private FloatingButton floatingButton;
     private boolean floatingButtonShown;
-    private boolean floatingButtonMoving;
-    private float floatingButtonDX, floatingButtonDY;
-    private float floatingButtonStartX, floatingButtonStartY;
-    private static final int FLOATING_BUTTON_DRAG_THRESHOLD = 10;
-    // Matches android:alpha on floatingMenuButton in activity_game.xml
-    private static final float FLOATING_BUTTON_IDLE_ALPHA = 0.55f;
 
     // Tracks the on-screen controller's visibility for the overlay menu toggle
     private boolean onscreenControllerShown;
@@ -447,7 +443,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         overlayMenuView.setFlipFaceButtons(prefConfig.flipFaceButtons);
 
         floatingMenuButton = findViewById(R.id.floatingMenuButton);
-        initFloatingButton();
+        // Kept within the window, as the drag always was
+        floatingButton = new FloatingButton(floatingMenuButton, getWindow().getDecorView(),
+                this::toggleOverlayMenu);
         setFloatingButtonShown(prefConfig.enableFloatingButton);
 
         inputCaptureProvider = InputCaptureManager.getInputCaptureProvider(this, this);
@@ -4129,51 +4127,6 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
         }
         return com.limelight.ui.AppIcons.tile(this, appName);
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private void initFloatingButton() {
-        // Tap opens the overlay menu, or closes it when it's open; drag moves the button, kept
-        // within the screen (from Artemide). The button sits above the menu, so it stays tappable.
-        floatingMenuButton.setOnTouchListener((view, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    floatingButtonStartX = event.getRawX();
-                    floatingButtonStartY = event.getRawY();
-                    floatingButtonDX = view.getX() - event.getRawX();
-                    floatingButtonDY = view.getY() - event.getRawY();
-                    floatingButtonMoving = false;
-                    // The button sits faded over the game and lights up while touched
-                    view.animate().alpha(1f).setDuration(120).start();
-                    return true;
-                case MotionEvent.ACTION_MOVE:
-                    if (Math.abs(event.getRawX() - floatingButtonStartX) > FLOATING_BUTTON_DRAG_THRESHOLD ||
-                            Math.abs(event.getRawY() - floatingButtonStartY) > FLOATING_BUTTON_DRAG_THRESHOLD) {
-                        floatingButtonMoving = true;
-                    }
-
-                    float maxX = getWindow().getDecorView().getWidth() - view.getWidth();
-                    float maxY = getWindow().getDecorView().getHeight() - view.getHeight();
-                    view.setX(Math.max(0, Math.min(event.getRawX() + floatingButtonDX, maxX)));
-                    view.setY(Math.max(0, Math.min(event.getRawY() + floatingButtonDY, maxY)));
-                    return true;
-                case MotionEvent.ACTION_UP:
-                    if (!floatingButtonMoving) {
-                        toggleOverlayMenu();
-                    }
-                    floatingButtonMoving = false;
-                    view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
-                    return true;
-                case MotionEvent.ACTION_CANCEL:
-                    floatingButtonMoving = false;
-                    view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
-                    return true;
-                default:
-                    return false;
-            }
-        });
-        // TalkBack's double-tap arrives as a click, not as touches
-        floatingMenuButton.setOnClickListener(view -> toggleOverlayMenu());
     }
 
     private void toggleOverlayMenu() {
