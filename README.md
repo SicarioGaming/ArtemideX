@@ -292,6 +292,8 @@ Turnip driver option with a real Turnip driver, and hosts other than Vibepollo.
 
 ## Changelog
 
+The full list of changes in every version, and what's coming next, is in [CHANGELOG.md](CHANGELOG.md).
+
 **2026/10/22:** [Version 0.2.0](https://github.com/SicarioGaming/Starwire/releases/tag/v0.2.0)
 sends your microphone to the PC with any host (Vibepollo, Sunshine, Apollo), through a small
 receiver and VB-Cable that one setup script installs. It also fits more Android devices
