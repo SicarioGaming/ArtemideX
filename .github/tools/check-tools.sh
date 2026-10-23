@@ -671,6 +671,19 @@ if grep -q 'identity\|timezone' <<< "$published"; then fail "check-publish.sh fa
 rm -rf "$work"
 ok "check-publish.sh accepts real upstream cherry-picks and nothing that only looks like one"
 
+# 14. check-commits.sh sorts its planted commit messages, branch names and commits (in a throwaway
+# repo of its own) the way CONTRIBUTING.md's rules say
+begin
+set +e
+commits_out=$(bash "$HERE/check-commits.sh" --self-test 2>&1)
+status=$?
+set -e
+if [ $status -ne 0 ]; then
+    printf '%s\n' "$commits_out" | grep -v '^ok ' >&2 || true
+    fail "check-commits.sh --self-test exited $status"
+fi
+ok "check-commits.sh tells good commit messages and branch names from bad ones"
+
 if [ $failures -ne 0 ]; then
     echo "$failures problem(s)" >&2
     exit 1
