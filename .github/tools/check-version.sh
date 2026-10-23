@@ -2,20 +2,29 @@
 # Checks a release tag against Semantic Versioning 2.0.0 (https://semver.org/spec/v2.0.0.html) and
 # the rules in docs/dev/RELEASING.md ("Version numbers"), before the tag becomes a release.
 #
-#   bash .github/tools/check-version.sh --tag vX.Y.Z     (from the repo root)
+#   bash .github/tools/check-version.sh --tag vX.Y.Z [--first-release]     (from the repo root)
 #   bash .github/tools/check-version.sh --self-test
 #
-#   --tag        checks the commit checked out as release vX.Y.Z:
+#   --tag        checks the commit of release vX.Y.Z: the tag's commit if the tag exists (and then
+#                it has to be the one checked out), or else HEAD's. The files are read from that
+#                commit, so changes that aren't committed don't count.
 #                - the tag is "v" and a SemVer version. Build metadata (a "+..." part) isn't used.
 #                - versionName in app/build.gradle is X.Y.Z, and versionCode is a whole number
 #                  higher than it was at the previous release.
 #                - CHANGELOG.md has a "## [X.Y.Z] - YYYY-MM-DD" heading and a "[X.Y.Z]: https://..."
-#                  link, and .github/release-notes/vX.Y.Z-notes.md exists. A pre-release, like
-#                  v0.3.0-beta.1, skips this.
+#                  link. A pre-release, like v0.3.0-beta.1, skips this.
+#                - .github/release-notes/vX.Y.Z-notes.md exists and isn't empty, for a pre-release
+#                  too: the Release workflow publishes it for every tag.
 #                - the bump fits the commits since the last release: a feat commit needs at least a
 #                  MINOR bump, and so does a breaking one ("!" before the colon, or a
 #                  "BREAKING CHANGE:" footer) while MAJOR is 0. From 1.0.0 on a breaking one needs
-#                  MAJOR. A pre-release counts as the bump of the version it leads to.
+#                  MAJOR. A pre-release counts as the bump of the version it leads to. Commits with
+#                  no type (upstream Moonlight X ones keep their own messages) can't be sorted, so
+#                  a PATCH release gets a warning that lists them. A warning doesn't fail the check.
+#                - the history is all there: a shallow clone, or no earlier release tag, is a
+#                  problem, since then versionCode and the bump can't be compared.
+#   --first-release  says there's no earlier release tag because this is the first release. It's a
+#                problem if there is one.
 #   --self-test  runs planted tags, versions and releases (in a throwaway repo in a temporary
 #                folder) and says if any is classified wrong.
 #
@@ -38,6 +47,9 @@ GRADLE=app/build.gradle
 CHANGELOG=CHANGELOG.md
 NOTES_DIR=.github/release-notes
 
+# The commit types check-commits.sh allows
+TYPES="feat fix docs test ci build refactor perf chore revert"
+
 # SemVer's own regex (semver.org, "Is there a suggested regular expression"), in the POSIX form
 # bash's =~ takes: \d is [0-9] and (?:...) is (...). Its build metadata part is left out.
 RE_NUM='(0|[1-9][0-9]*)'
@@ -49,22 +61,24 @@ RE_GRADLE_NAME='^[[:space:]]*versionName([[:space:]]+|[[:space:]]*=[[:space:]]*)
 RE_GRADLE_CODE='^[[:space:]]*versionCode([[:space:]]+|[[:space:]]*=[[:space:]]*)([^[:space:]]*)'
 RE_FEAT='^[Ff][Ee][Aa][Tt](\([^()]*\))?!?:'
 RE_BANG='^[A-Za-z]+(\([^()]*\))?!:'
+RE_TYPE='^([A-Za-z]+)(\([^()]*\))?!?:'
 
 usage() {
-  echo "usage: check-version.sh --tag vX.Y.Z" >&2
+  echo "usage: check-version.sh --tag vX.Y.Z [--first-release]" >&2
   echo "       check-version.sh --self-test" >&2
   exit 2
 }
 
-# GitHub Actions annotation, so the problem shows on the run's page too.
-gh_error() {
+# GitHub Actions annotation (error or warning), so it shows on the run's page too.
+gh_annotate() {
   [ "${GITHUB_ACTIONS:-}" = true ] || return 0
-  local m=$2
+  local m=$3
   m=${m//%/%25}; m=${m//$'\r'/%0D}; m=${m//$'\n'/%0A}
-  printf '::error title=%s::%s\n' "$1" "$m"
+  printf '::%s title=%s::%s\n' "$1" "$2" "$m"
 }
 
-problem() { echo "$1"; gh_error "Version check" "$1"; NPROB=$((NPROB + 1)); }
+problem() { echo "$1"; gh_annotate error "Version check" "$1"; NPROB=$((NPROB + 1)); }
+warn() { echo "warning: $1"; gh_annotate warning "Version check" "$1"; NWARN=$((NWARN + 1)); }
 note() { echo "note: $1"; }
 
 is_version() { [[ $1 =~ $RE_VERSION ]]; }
@@ -207,14 +221,26 @@ commit_kind() {
   if [[ $subject =~ $RE_FEAT ]]; then KIND=feat; fi
 }
 
+# has_type SUBJECT is true if SUBJECT starts with one of TYPES, in any case, and a colon. Upstream
+# Moonlight X commits keep their own messages, so most of them don't.
+has_type() {
+  local found=1
+  [[ $1 =~ $RE_TYPE ]] || return 1
+  shopt -s nocasematch
+  case " $TYPES " in *" ${BASH_REMATCH[1]} "*) found=0 ;; esac
+  shopt -u nocasematch
+  return $found
+}
+
 # --- one tag --------------------------------------------------------------------------------------
-# check_tag TAG checks the commit checked out as release TAG, prints one line per problem and a
-# summary, and returns 1 if there was a problem.
+# check_tag TAG FIRST checks the commit of release TAG, prints one line per problem and a summary,
+# and returns 1 if there was a problem. FIRST is 1 for --first-release.
 check_tag() {
-  local tag=$1 v pre="" t line d heading=0 link=0 bad_heading="" notes what need sug
-  local n_feat=0 n_break=0 first_feat="" first_break="" rec sha msg code="" prev_text
+  local tag=$1 first_release=$2 v pre="" t line d heading=0 link=0 bad_heading="" notes what need sug
+  local n_feat=0 n_break=0 n_untyped=0 first_feat="" first_break="" untyped="" rec sha msg subject
+  local code="" prev_text prev_commit text tag_list tags_ok=1 log shallow head_commit tag_commit rev at
   local -a tags nv nb
-  NPROB=0 LEVEL=""
+  NPROB=0 NWARN=0 LEVEL=""
 
   check_tag_name "$tag"
   if [ -n "$TAG_PROBLEM" ]; then
@@ -225,36 +251,76 @@ check_tag() {
   v=${tag#v}
   case $v in *-*) pre=${v#*-} ;; esac
 
+  # The commit to check: the tag's once it's made, or else HEAD's. Files are read as <hash>:<path>,
+  # since Git for Windows' bash turns refs/tags/<tag>:.github/... into a list of Windows paths.
+  head_commit=$(git rev-parse -q --verify 'HEAD^{commit}')
+  if tag_commit=$(git rev-parse -q --verify "refs/tags/$tag^{commit}"); then
+    at=$tag
+  else
+    at=HEAD tag_commit=$head_commit
+  fi
+  rev=$tag_commit
+
   tags=()
-  while IFS= read -r t; do tags+=("$t"); done < <(git tag -l)
+  if tag_list=$(git tag -l); then
+    while IFS= read -r t; do [ -z "$t" ] || tags+=("$t"); done <<< "$tag_list"
+  else
+    tags_ok=0
+  fi
   pick_previous "$v" ${tags[@]+"${tags[@]}"}
   if [ -z "$PREV" ]; then
-    echo "checking $tag at $(git rev-parse --short=10 HEAD), with no earlier release tag"
+    echo "checking $tag at ${tag_commit:0:10}, with no earlier release tag"
   elif [ "$PREV" = "$BASE" ]; then
-    echo "checking $tag at $(git rev-parse --short=10 HEAD), after $PREV"
+    echo "checking $tag at ${tag_commit:0:10}, after $PREV"
   elif [ -n "$BASE" ]; then
-    echo "checking $tag at $(git rev-parse --short=10 HEAD), after $PREV (the last release that isn't a pre-release is $BASE)"
+    echo "checking $tag at ${tag_commit:0:10}, after $PREV (the last release that isn't a pre-release is $BASE)"
   else
-    echo "checking $tag at $(git rev-parse --short=10 HEAD), after $PREV (no earlier release that isn't a pre-release)"
+    echo "checking $tag at ${tag_commit:0:10}, after $PREV (no earlier release that isn't a pre-release)"
+  fi
+  if [ $at = HEAD ]; then
+    note "there's no tag $tag yet, so this checks HEAD's commit, without any changes that aren't committed"
+  elif [ "$tag_commit" != "$head_commit" ]; then
+    problem "$tag points at ${tag_commit:0:10}, not at HEAD ${head_commit:0:10}: check out the tag, or move it before you push it"
+  fi
+
+  # The history: the earlier releases and the commits since them have to be here
+  if ! shallow=$(git rev-parse --is-shallow-repository); then
+    problem "can't tell if this is a shallow clone, which would leave out earlier releases and commits"
+  elif [ "$shallow" = true ]; then
+    problem "this is a shallow clone, so earlier releases and commits can't be compared: fetch with full history and tags (git fetch --unshallow --tags, or fetch-depth: 0 in actions/checkout)"
+  fi
+  if [ $tags_ok = 0 ]; then
+    problem "can't list the tags, so the previous release isn't known"
+  elif [ -z "$PREV" ] && [ $first_release = 1 ]; then
+    note "no earlier release tag, as --first-release says, so versionCode and the bump aren't compared with one"
+  elif [ -z "$PREV" ]; then
+    problem "there's no earlier release tag, so versionCode and the bump can't be compared with one: fetch the tags, or pass --first-release if $tag is the first release"
+  elif [ $first_release = 1 ]; then
+    problem "--first-release was given, but $PREV is an earlier release"
   fi
 
   # versionName and versionCode
-  read_gradle "$(cat "$GRADLE")"
-  if [ $HAS_NAME = 0 ]; then
-    problem "$GRADLE has no versionName line"
-  elif [ "$GRADLE_NAME" != "$v" ]; then
-    problem "versionName in $GRADLE is \"$GRADLE_NAME\", not \"$v\""
-  fi
-  if [ $HAS_CODE = 0 ]; then
-    problem "$GRADLE has no versionCode line"
-  elif [[ ! $GRADLE_CODE =~ $RE_CODE ]]; then
-    problem "versionCode in $GRADLE is \"$GRADLE_CODE\", not a whole number above 0"
+  if ! text=$(git cat-file blob "$rev:$GRADLE" 2>/dev/null); then
+    problem "there's no $GRADLE at $at"
   else
-    code=$GRADLE_CODE
+    read_gradle "$text"
+    if [ $HAS_NAME = 0 ]; then
+      problem "$GRADLE has no versionName line"
+    elif [ "$GRADLE_NAME" != "$v" ]; then
+      problem "versionName in $GRADLE is \"$GRADLE_NAME\", not \"$v\""
+    fi
+    if [ $HAS_CODE = 0 ]; then
+      problem "$GRADLE has no versionCode line"
+    elif [[ ! $GRADLE_CODE =~ $RE_CODE ]]; then
+      problem "versionCode in $GRADLE is \"$GRADLE_CODE\", not a whole number above 0"
+    else
+      code=$GRADLE_CODE
+    fi
   fi
   if [ -z "$PREV" ]; then
-    note "no earlier release tag, so versionCode and the bump aren't compared with one"
-  elif ! prev_text=$(git cat-file blob "refs/tags/$PREV:$GRADLE" 2>/dev/null); then
+    :
+  elif ! prev_commit=$(git rev-parse -q --verify "refs/tags/$PREV^{commit}") ||
+       ! prev_text=$(git cat-file blob "$prev_commit:$GRADLE" 2>/dev/null); then
     problem "can't read $GRADLE at $PREV, to compare versionCode with"
   else
     read_gradle "$prev_text"
@@ -266,33 +332,33 @@ check_tag() {
     fi
   fi
 
-  # The changelog and the release notes, for a release
+  # The changelog, for a release
   if [ -n "$pre" ]; then
-    note "$tag is a pre-release, so CHANGELOG.md and the release notes aren't checked"
+    note "$tag is a pre-release, so CHANGELOG.md isn't checked"
+  elif ! text=$(git cat-file blob "$rev:$CHANGELOG" 2>/dev/null); then
+    problem "there's no $CHANGELOG at $at"
   else
-    if [ ! -f "$CHANGELOG" ]; then
-      problem "there's no $CHANGELOG"
-    else
-      while IFS= read -r line || [ -n "$line" ]; do
-        line=${line%$'\r'}
-        case $line in
-          "## [$v] - "*)
-            d=${line#"## [$v] - "}
-            if [[ $d =~ $RE_DATE ]]; then heading=1; else bad_heading=$line; fi ;;
-          "[$v]: https://"*) link=1 ;;
-        esac
-      done < "$CHANGELOG"
-      if [ $heading = 0 ] && [ -n "$bad_heading" ]; then
-        problem "$CHANGELOG's heading \"$bad_heading\" isn't \"## [$v] - YYYY-MM-DD\""
-      elif [ $heading = 0 ]; then
-        problem "$CHANGELOG has no \"## [$v] - YYYY-MM-DD\" heading"
-      fi
-      [ $link = 1 ] || problem "$CHANGELOG has no \"[$v]: https://...\" link at the bottom"
+    while IFS= read -r line || [ -n "$line" ]; do
+      line=${line%$'\r'}
+      case $line in
+        "## [$v] - "*)
+          d=${line#"## [$v] - "}
+          if [[ $d =~ $RE_DATE ]]; then heading=1; else bad_heading=$line; fi ;;
+        "[$v]: https://"*) link=1 ;;
+      esac
+    done <<< "$text"
+    if [ $heading = 0 ] && [ -n "$bad_heading" ]; then
+      problem "$CHANGELOG's heading \"$bad_heading\" isn't \"## [$v] - YYYY-MM-DD\""
+    elif [ $heading = 0 ]; then
+      problem "$CHANGELOG has no \"## [$v] - YYYY-MM-DD\" heading"
     fi
-    notes=$NOTES_DIR/$tag-notes.md
-    if [ ! -f "$notes" ]; then problem "$notes doesn't exist"
-    elif [ ! -s "$notes" ]; then problem "$notes is empty"
-    fi
+    [ $link = 1 ] || problem "$CHANGELOG has no \"[$v]: https://...\" link at the bottom"
+  fi
+
+  # The release notes, which the Release workflow publishes for every tag, pre-releases too
+  notes=$NOTES_DIR/$tag-notes.md
+  if ! git cat-file -e "$rev:$notes" 2>/dev/null; then problem "$notes doesn't exist at $at"
+  elif [ "$(git cat-file -s "$rev:$notes")" = 0 ]; then problem "$notes is empty at $at"
   fi
 
   # The bump
@@ -306,28 +372,38 @@ check_tag() {
   else
     IFS=. read -r -a nv <<< "${v%%-*}"
     IFS=. read -r -a nb <<< "${BASE#v}"
+    what="a $LEVEL release"
+    [ -z "$pre" ] || what="a pre-release of a $LEVEL release"
     # SemVer items 7 and 8: raising a number sets the ones after it back to 0
     if [ $LEVEL = MAJOR ] && [ "${nv[1]}.${nv[2]}" != 0.0 ]; then
       problem "$tag raises MAJOR over $BASE, so MINOR and PATCH go back to 0: v${nv[0]}.0.0"
     elif [ $LEVEL = MINOR ] && [ "${nv[2]}" != 0 ]; then
       problem "$tag raises MINOR over $BASE, so PATCH goes back to 0: v${nv[0]}.${nv[1]}.0"
     fi
-    while IFS= read -r -d '' rec || [ -n "$rec" ]; do
+    # Each commit ends with an ASCII record separator (bash can't keep the NULs of git log -z)
+    if ! log=$(git log --reverse --no-merges --no-show-signature --format='%H%n%B%x1e' "refs/tags/$BASE..$rev"); then
+      problem "can't list the commits since $BASE, so the bump isn't checked"
+      log=""
+    fi
+    while IFS= read -r -d $'\x1e' rec; do
+      rec=${rec#$'\n'}
       sha=${rec%%$'\n'*} msg=${rec#*$'\n'}
       commit_kind "$msg"
-      msg=${msg%%$'\n'*}
+      subject=${msg%%$'\n'*} subject=${subject%$'\r'}
       case $KIND in
         breaking)
           n_break=$((n_break + 1))
-          [ -n "$first_break" ] || first_break="${sha:0:10} \"${msg%$'\r'}\"" ;;
+          [ -n "$first_break" ] || first_break="${sha:0:10} \"$subject\"" ;;
         feat)
           n_feat=$((n_feat + 1))
-          [ -n "$first_feat" ] || first_feat="${sha:0:10} \"${msg%$'\r'}\"" ;;
+          [ -n "$first_feat" ] || first_feat="${sha:0:10} \"$subject\"" ;;
+        *)
+          if ! has_type "$subject"; then
+            n_untyped=$((n_untyped + 1))
+            [ $n_untyped -gt 5 ] || untyped="$untyped"$'\n'"  ${sha:0:10} \"$subject\""
+          fi ;;
       esac
-      rec=""
-    done < <(git log -z --reverse --no-merges --no-show-signature --format='%H%n%B' "refs/tags/$BASE..HEAD")
-    what="a $LEVEL release"
-    [ -z "$pre" ] || what="a pre-release of a $LEVEL release"
+    done <<< "$log"
     if [ $n_break -gt 0 ]; then
       if [ "${nb[0]}" = 0 ]; then need=MINOR; else need=MAJOR; fi
       if [ "$(rank $LEVEL)" -lt "$(rank $need)" ]; then
@@ -342,6 +418,11 @@ check_tag() {
     if [ $n_feat -gt 0 ] && [ "$(rank $LEVEL)" -lt 2 ]; then
       problem "$tag is $what, but $n_feat commit(s) since $BASE add a feature (the first is $first_feat), so it needs at least a MINOR bump: v${nb[0]}.$((nb[1] + 1)).0"
     fi
+    # A commit with no type could be a fix or a feature. Only a PATCH release has to know.
+    if [ $n_untyped -gt 0 ] && [ $LEVEL = PATCH ]; then
+      [ $n_untyped -le 5 ] || untyped="$untyped"$'\n'"  and $((n_untyped - 5)) more"
+      warn "$n_untyped commit(s) since $BASE have no type, so they can't be checked. $tag is $what, so make sure none adds a feature or a breaking change:$untyped"
+    fi
   fi
 
   # The summary
@@ -355,15 +436,23 @@ check_tag() {
     what="release after the pre-release $PREV"
     [ -z "$pre" ] || what="pre-release after the pre-release $PREV"
   fi
-  if [ $NPROB -eq 0 ]; then echo "$tag: $what, fine"; return 0; fi
+  if [ $NPROB -eq 0 ]; then
+    if [ $NWARN -eq 0 ]; then echo "$tag: $what, fine"; else echo "$tag: $what, fine, but read the warning above"; fi
+    return 0
+  fi
   echo "$tag: $what, $NPROB problem(s) to fix"
   return 1
 }
 
 # --- self-test ------------------------------------------------------------------------------------
+# Git variables from the caller (a hook, say) would send the planted commits to another repo
+forget_git_vars() { unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY; }
+
 self_test() {
-  local total=0 wrong=0 tmp root s when=1792800000 i
+  local total=0 wrong=0 tmp root s when=1792800000 i want real_git
   local -a spec
+
+  forget_git_vars
 
   result() { # expected got label
     total=$((total + 1))
@@ -382,6 +471,10 @@ self_test() {
   kind() { # expected message
     commit_kind "$2"
     result "$1" "$KIND" "commit: ${2//$'\n'/\\n}"
+  }
+  typed() { # expected subject
+    if has_type "$2"; then s=typed; else s=untyped; fi
+    result "$1" "$s" "type: $2"
   }
   previous() { # expected-previous expected-base version tags...
     local p=$1 b=$2
@@ -462,6 +555,16 @@ self_test() {
   kind other $'fix: change the settings format\n\nbreaking change: written in lower case'
   kind other $'fix: change the settings format\n\nRefs: BREAKING CHANGE: not at the start'
   kind other "fix: stop the crash!: really"
+  typed typed "fix: stop the crash"
+  typed typed "docs(readme): explain the mic"
+  typed typed "Chore: tidy up"
+  typed typed "revert: put the old menu back"
+  typed untyped "Add an Instant jitter buffer"
+  typed untyped "Fixed the crash on resume"
+  typed untyped "style: line up the settings"
+  typed untyped "Revert \"feat: add custom resolutions\""
+  typed untyped "fix : a space before the colon"
+  typed untyped "Merge pull request #12 from someone/fix"
 
   # Releases, in a throwaway repo
   tmp=$(mktemp -d) || { echo "self-test: can't make a temporary folder" >&2; return 2; }
@@ -478,7 +581,7 @@ self_test() {
   commit() { at commit -q --allow-empty -m "$@"; }
   release() { at add -A && at commit -q --allow-empty -m "chore: release $1" && at tag -a -m "Starwire $1" "v$1"; }
   files() { # version versionCode, then what to leave out or get wrong: no-heading, bad-date,
-            # no-link, no-notes, empty-notes, old-gradle
+            # no-link, no-notes, empty-notes, old-gradle. They're committed, unless one is uncommitted.
     local v=$1 code=$2 opts=" ${*:3} " date=2026-10-24 eq="= "
     mkdir -p "$root/app" "$root/$NOTES_DIR"
     case $opts in *" old-gradle "*) eq="" ;; esac
@@ -501,27 +604,72 @@ self_test() {
       *" empty-notes "*) : > "$root/$NOTES_DIR/v$v-notes.md" ;;
       *) echo "What's new." > "$root/$NOTES_DIR/v$v-notes.md" ;;
     esac
+    case $opts in
+      *" uncommitted "*) ;;
+      *) at add -A && at commit -q --allow-empty -m "chore: set the version to $v" ;;
+    esac
   }
-  check() { # expected-exit tag label [text the output must have]
-    local out status
-    out=$(cd "$root" && unset GIT_DIR GIT_WORK_TREE && GIT_CONFIG_NOSYSTEM=1 \
-      GIT_CONFIG_GLOBAL=/dev/null GITHUB_ACTIONS= bash "$SELF" --tag "$2" 2>&1)
+  # check [-C folder] [-a] [-f] [-g what] expected-exit tag label [text the output must have]
+  #       [text it mustn't have]
+  # -C runs it in another folder, -a as on GitHub Actions, -f with --first-release, and -g with a
+  # git that fails when its arguments have "what" in them.
+  check() {
+    local dir=$root gha="" opts="" path=$PATH fail="" out status
+    while :; do
+      case $1 in
+        -C) dir=$2; shift 2 ;;
+        -a) gha=true; shift ;;
+        -f) opts=--first-release; shift ;;
+        -g) path=$tmp/bin:$PATH fail=$2; shift 2 ;;
+        *) break ;;
+      esac
+    done
+    out=$(cd "$dir" && unset GIT_DIR GIT_WORK_TREE && GIT_CONFIG_NOSYSTEM=1 \
+      GIT_CONFIG_GLOBAL=/dev/null GITHUB_ACTIONS=$gha PATH=$path FAIL_GIT=$fail \
+      bash "$SELF" --tag "$2" $opts 2>&1)
     status=$?
-    result "$1" "$status" "--tag $2: $3"
+    result "$1" "$status" "--tag $2${opts:+ $opts}${fail:+ (git $fail fails)}: $3"
     if [ -n "${4:-}" ]; then
       case $out in *"$4"*) s=says-so ;; *) s=doesnt; printf '%s\n' "$out" | sed 's/^/         | /' ;; esac
-      result says-so "$s" "  and says: $4"
+      result says-so "$s" "  and says: ${4//$'\n'/\\n}"
+    fi
+    if [ -n "${5:-}" ]; then
+      case $out in *"$5"*) s=says-it; printf '%s\n' "$out" | sed 's/^/         | /' ;; *) s=doesnt ;; esac
+      result doesnt "$s" "  and doesn't say: $5"
     fi
   }
   if ! GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null git -c init.defaultBranch=main init -q "$root"; then
     rm -rf "$tmp"; echo "self-test: git init failed" >&2; return 2
   fi
+  # The planted commits go into the throwaway repo, whatever git variables were set outside
+  want=".git .git .git/objects .git/index true "
+  s=$(g rev-parse --git-dir --git-common-dir --git-path objects --git-path index --is-inside-work-tree | tr '\n' ' ')
+  result "$want" "$s" "the planted repo is the throwaway one"
+  if [ "$s" != "$want" ]; then
+    rm -rf "$tmp"; echo "self-test: stopped before writing to another repo" >&2; return 1
+  fi
+  # and would stay there if the caller's git variables named another one
+  s=$(export GIT_DIR=$tmp/other/.git GIT_WORK_TREE=$tmp/other GIT_INDEX_FILE=$tmp/other/index \
+        GIT_COMMON_DIR=$tmp/other/.git GIT_OBJECT_DIRECTORY=$tmp/other/objects
+      forget_git_vars
+      g rev-parse --git-dir --git-common-dir --git-path objects --git-path index --is-inside-work-tree 2>&1 |
+        tr '\n' ' ')
+  result "$want" "$s" "the caller's GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE and the like are dropped"
+  # A git that fails when its arguments have $FAIL_GIT in them, and works as git otherwise
+  real_git=$(command -v git)
+  mkdir "$tmp/bin"
+  printf '%s\n' '#!/bin/sh' \
+    'case " $* " in *" $FAIL_GIT "*) echo "fatal: planted failure" >&2; exit 128 ;; esac' \
+    "exec '$real_git' \"\$@\"" > "$tmp/bin/git"
+  chmod +x "$tmp/bin/git"
 
   # The first release, with tags around it that aren't Starwire releases
   files 0.1.0 1 old-gradle
-  at add -A && commit "chore: start the project"
+  commit "chore: start the project"
   for s in v0.3-beta1 starwire-v0.2.0 v12.1-turnip v9.9.9+build.1 moonlightx/v0.0.1 Release; do g tag "$s"; done
-  check 0 v0.1.0 "the first release" "v0.1.0: first release, fine"
+  check 1 v0.1.0 "no earlier release tag, without --first-release" "there's no earlier release tag"
+  check -f 0 v0.1.0 "the first release" "v0.1.0: first release, fine"
+  check -f -g "tag -l" 1 v0.1.0 "the first release, when the tags can't be listed" "can't list the tags"
   release 0.1.0
 
   # A PATCH release with only fixes, and what can be wrong in one
@@ -534,19 +682,50 @@ self_test() {
   files 0.1.1 2 no-link;      check 1 v0.1.1 "no changelog link" 'no "[0.1.1]: https://..." link'
   files 0.1.1 2 no-notes;     check 1 v0.1.1 "no release notes" "v0.1.1-notes.md doesn't exist"
   files 0.1.1 2 empty-notes;  check 1 v0.1.1 "empty release notes" "v0.1.1-notes.md is empty"
-  files 0.1.1 2;              check 0 v0.1.1 "fixes only" "v0.1.1: PATCH release after v0.1.0, fine"
+  files 0.1.1 2;              check 0 v0.1.1 "fixes only" "v0.1.1: PATCH release after v0.1.0, fine" "warning:"
   check 1 v0.1.1+build.2 "build metadata" "build metadata"
   check 1 v0.1 "no PATCH number" "isn't \"v\" and a SemVer version"
   check 1 v0.01.1 "a leading zero" "isn't \"v\" and a SemVer version"
+  check -f 1 v0.1.1 "--first-release after a release" "--first-release was given, but v0.1.0 is an earlier release"
+  check -g --is-shallow-repository 1 v0.1.1 "fixes only, when git can't say if it's a shallow clone" \
+    "can't tell if this is a shallow clone"
+  check -g log 1 v0.1.1 "fixes only, when the commits can't be listed" "can't list the commits since v0.1.0"
+
+  # What's checked is the commit, not the working tree
+  files 0.1.1 2 no-notes
+  files 0.1.0 2
+  files 0.1.1 2 uncommitted
+  check 1 v0.1.1 "versionName right only in the working tree" 'versionName in app/build.gradle is "0.1.0", not "0.1.1"'
+  check 1 v0.1.1 "a changelog heading only in the working tree" 'no "## [0.1.1] - YYYY-MM-DD" heading'
+  check 1 v0.1.1 "release notes only in the working tree" "v0.1.1-notes.md doesn't exist at HEAD"
+  files 0.1.1 2
+
+  # Commits with no type, like upstream Moonlight X ones: a PATCH release lists the first 5
+  for i in 1 2 3 4 5 6; do commit "Fix the stream stutter, part $i"; done
+  check 0 v0.1.1 "6 commits with no type" "warning: 6 commit(s) since v0.1.0 have no type"
+  check 0 v0.1.1 "  and the first 5 of them" $'"Fix the stream stutter, part 5"\n  and 1 more' "part 6"
+  check -a 0 v0.1.1 "6 commits with no type, on GitHub Actions" \
+    "::warning title=Version check::6 commit(s) since v0.1.0 have no type"
   release 0.1.1
+  check 0 v0.1.1 "the tag, checked out" "v0.1.1: PATCH release after v0.1.0, fine"
+  if GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null git clone -q --no-local --depth 1 "$root" "$tmp/shallow"; then
+    check -C "$tmp/shallow" 1 v0.1.1 "the tag, in a shallow clone" "this is a shallow clone"
+  else
+    result cloned failed "a shallow clone of the throwaway repo"
+  fi
 
   # A feat commit needs at least MINOR
   commit "feat(mic): add a mute button"
-  files 0.1.2 3;              check 1 v0.1.2 "a feat commit in a PATCH release" "so it needs at least a MINOR bump: v0.2.0"
-  files 0.1.2-beta.1 3 no-heading no-link no-notes
+  files 0.1.2 3
+  check 1 v0.1.1 "the tag after more commits" "v0.1.1 points at " 'versionName in app/build.gradle is "0.1.2"'
+  check 1 v0.1.1 "  is still checked at its own commit" "v0.1.1: PATCH release after v0.1.0, 1 problem(s) to fix"
+  check 1 v0.1.2 "a feat commit in a PATCH release" "so it needs at least a MINOR bump: v0.2.0"
+  files 0.1.2-beta.1 3 no-heading no-link
   check 1 v0.1.2-beta.1 "a feat commit in a pre-release of a PATCH release" "needs at least a MINOR bump"
   files 0.2.5 3;              check 1 v0.2.5 "MINOR raised but PATCH not back to 0" "so PATCH goes back to 0: v0.2.0"
-  files 0.2.0 3;              check 0 v0.2.0 "a feat commit in a MINOR release" "v0.2.0: MINOR release after v0.1.1, fine"
+  commit "Add an Instant jitter buffer"
+  files 0.2.0 3;              check 0 v0.2.0 "a feat commit, and one with no type, in a MINOR release" \
+                                "v0.2.0: MINOR release after v0.1.1, fine" "warning:"
   release 0.2.0
 
   # Merge commits don't count, but what they bring in does. v0.2.1 is exempt from the bump check.
@@ -559,15 +738,19 @@ self_test() {
   commit "feat: add custom resolutions"
   at checkout -q main
   at merge -q --no-ff -m "Merge branch 'side'" side
-  files 0.2.2 4;              check 1 v0.2.2 "a feat commit brought in by a merge" "1 commit(s) since v0.2.0 add a feature"
-  files 0.2.1 4;              check 0 v0.2.1 "the changes v0.2.2 failed on, but v0.2.1 is exempt" "v0.2.1 skips the bump check"
+  check 1 v0.2.2 "a feat commit brought in by a merge" "1 commit(s) since v0.2.0 add a feature" "have no type"
+  commit "Bring in an upstream fix"
+  files 0.2.1 4;              check 0 v0.2.1 "the changes v0.2.2 failed on, but v0.2.1 is exempt" \
+                                "v0.2.1 skips the bump check" "warning:"
   files 0.3.0-beta.1 4 no-heading no-link no-notes
+  check 1 v0.3.0-beta.1 "a pre-release without release notes" "v0.3.0-beta.1-notes.md doesn't exist"
+  files 0.3.0-beta.1 4 no-heading no-link
   check 0 v0.3.0-beta.1 "a pre-release without a changelog entry" "v0.3.0-beta.1: pre-release of a MINOR release after v0.2.0, fine"
-  at add -A && at commit -q -m "chore: release 0.3.0-beta.1" && at tag -a -m "Starwire 0.3.0-beta.1" v0.3.0-beta.1
+  release 0.3.0-beta.1
 
   # After a pre-release: versionCode goes up from it, the bump is measured from v0.2.0
   commit "fix: polish the new screen"
-  files 0.3.0-beta.2 5 no-notes
+  files 0.3.0-beta.2 5
   check 0 v0.3.0-beta.2 "the next pre-release" "after v0.3.0-beta.1 (the last release that isn't a pre-release is v0.2.0)"
   files 0.3.0 4;              check 1 v0.3.0 "versionCode the same as the pre-release's" "isn't higher than 4 at v0.3.0-beta.1"
   files 0.3.0 5;              check 0 v0.3.0 "the release after its pre-release" "v0.3.0: MINOR release after v0.2.0, fine"
@@ -591,13 +774,14 @@ self_test() {
   release 1.1.0
   commit "feat(ui)!: replace the stream menu"
   files 1.2.0 9;              check 1 v1.2.0 "a breaking commit in a 1.x MINOR release" "so it needs a MAJOR bump: v2.0.0"
-  files 2.0.0-rc.1 9 no-heading no-link no-notes
+  files 2.0.0-rc.1 9 no-heading no-link
   check 0 v2.0.0-rc.1 "a breaking commit in a pre-release of MAJOR"
   files 2.0.0 9;              check 0 v2.0.0 "a breaking commit in a 1.x MAJOR release" "v2.0.0: MAJOR release after v1.1.0, fine"
 
   # Usage errors
   (cd "$root" && bash "$SELF" >/dev/null 2>&1); result 2 "$?" "no arguments exits 2"
   (cd "$root" && bash "$SELF" --tag >/dev/null 2>&1); result 2 "$?" "--tag without a tag exits 2"
+  (cd "$root" && bash "$SELF" --first-release >/dev/null 2>&1); result 2 "$?" "--first-release without --tag exits 2"
   (cd "$root" && bash "$SELF" --tag v1.0.0 --what >/dev/null 2>&1); result 2 "$?" "an unknown option exits 2"
   mkdir "$tmp/empty"
   (cd "$tmp/empty" && GIT_CEILING_DIRECTORIES=$tmp bash "$SELF" --tag v1.0.0 >/dev/null 2>&1)
@@ -611,11 +795,12 @@ self_test() {
 
 # --- main -----------------------------------------------------------------------------------------
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-tag="" have_tag=0 self_test=0
+tag="" have_tag=0 self_test=0 first_release=0
 while [ $# -gt 0 ]; do
   case $1 in
     --tag) [ $# -ge 2 ] || usage; tag=$2; have_tag=1; shift 2 ;;
     --tag=*) tag=${1#*=}; have_tag=1; shift ;;
+    --first-release) first_release=1; shift ;;
     --self-test) self_test=1; shift ;;
     -h|--help) sed -n '2,/^$/s/^# \{0,1\}//p' "$SELF"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; usage ;;
@@ -626,4 +811,4 @@ if [ $self_test = 1 ]; then self_test; exit $?; fi
 [ $have_tag = 1 ] || usage
 git rev-parse -q --verify HEAD >/dev/null 2>&1 || { echo "not in a git repository with a commit" >&2; exit 2; }
 [ -f "$GRADLE" ] || { echo "no $GRADLE here: run this from the repo root" >&2; exit 2; }
-check_tag "$tag"
+check_tag "$tag" "$first_release"
