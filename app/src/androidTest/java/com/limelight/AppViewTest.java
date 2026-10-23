@@ -300,6 +300,44 @@ public class AppViewTest {
     }
 
     @Test
+    public void offscreenDrawingShowsGpuBitmaps() {
+        // The tests above draw the screen by hand, and box art can be a GPU bitmap, which a
+        // canvas made on a bitmap refuses: appListOpensWithoutClosing failed that way on every
+        // emulator
+        org.junit.Assume.assumeTrue("GPU bitmaps start with Android 8",
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O);
+        int green = android.graphics.Color.rgb(40, 160, 90);
+        android.graphics.Bitmap[] drawn = new android.graphics.Bitmap[1];
+        RuntimeException[] failed = new RuntimeException[1];
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            android.graphics.Bitmap soft = android.graphics.Bitmap.createBitmap(
+                    120, 160, android.graphics.Bitmap.Config.ARGB_8888);
+            soft.eraseColor(green);
+            android.widget.ImageView image = new android.widget.ImageView(target);
+            image.setScaleType(android.widget.ImageView.ScaleType.FIT_XY);
+            image.setImageBitmap(soft.copy(android.graphics.Bitmap.Config.HARDWARE, false));
+            image.measure(android.view.View.MeasureSpec.makeMeasureSpec(240, android.view.View.MeasureSpec.EXACTLY),
+                    android.view.View.MeasureSpec.makeMeasureSpec(320, android.view.View.MeasureSpec.EXACTLY));
+            image.layout(0, 0, 240, 320);
+            try {
+                drawn[0] = drawToBitmap(image, 240, 320);
+            }
+            catch (RuntimeException e) {
+                // Thrown here it would stop the whole run, not just this test
+                failed[0] = e;
+            }
+        });
+        if (failed[0] != null) {
+            throw new AssertionError("drawing a GPU bitmap offscreen failed", failed[0]);
+        }
+        assertEquals(android.graphics.Bitmap.Config.ARGB_8888, drawn[0].getConfig());
+        int middle = drawn[0].getPixel(120, 160);
+        assertEquals("red", android.graphics.Color.red(green), android.graphics.Color.red(middle), 2);
+        assertEquals("green", android.graphics.Color.green(green), android.graphics.Color.green(middle), 2);
+        assertEquals("blue", android.graphics.Color.blue(green), android.graphics.Color.blue(middle), 2);
+    }
+
+    @Test
     public void newSizeClassRebuildsTheScreenInPlace() throws Exception {
         // Folding, unfolding, split screen or turning a phone can move the game screen into
         // another set of sizes (values-w480dp, values-w480dp-h520dp). It used to recreate itself
@@ -324,19 +362,22 @@ public class AppViewTest {
                 coverWidth[0] = cover[0].getLayoutParams().width;
             });
 
-            // A phone held upright: narrower than 480 dp
-            android.content.res.Configuration original = SizeChange.apply(screen[0], 400, 860);
+            // A size from another set than the screen's own: a phone held upright (narrower than
+            // 480 dp) when the screen starts wider, else an unfolded foldable's inner screen
+            int[] otherSize = screen[0].getResources().getConfiguration().screenWidthDp >= 480 ?
+                    new int[] {400, 860} : new int[] {840, 700};
+            android.content.res.Configuration original = SizeChange.apply(screen[0], otherSize[0], otherSize[1]);
             try {
                 SystemClock.sleep(1500);
                 scenario.onActivity(AppViewTest::drawOffscreen);
                 scenario.onActivity(activity -> {
                     assertSame("the screen was recreated instead of rebuilt", screen[0], activity);
                     assertFalse("app list closed", activity.isFinishing());
-                    android.view.View narrowCover = activity.findViewById(R.id.heroCover);
-                    assertNotSame("the layout wasn't built again", cover[0], narrowCover);
-                    int narrowWidth = narrowCover.getLayoutParams().width;
-                    assertEquals(activity.getResources().getDimensionPixelSize(R.dimen.cg_hero_cover_width), narrowWidth);
-                    assertNotEquals("the phone's cover size didn't apply", coverWidth[0], narrowWidth);
+                    android.view.View newCover = activity.findViewById(R.id.heroCover);
+                    assertNotSame("the layout wasn't built again", cover[0], newCover);
+                    int newWidth = newCover.getLayoutParams().width;
+                    assertEquals(activity.getResources().getDimensionPixelSize(R.dimen.cg_hero_cover_width), newWidth);
+                    assertNotEquals("the new size's cover size didn't apply", coverWidth[0], newWidth);
                     checkStillShowing(activity, game[0]);
                     // The old views' endless animations stop with them
                     assertFalse("the old glow still runs", ((android.animation.Animator) glow[0]).isStarted());
@@ -346,7 +387,7 @@ public class AppViewTest {
                 SizeChange.restore(screen[0], original);
             }
 
-            // And back to the tablet's sizes
+            // And back to the screen's own sizes
             SystemClock.sleep(1500);
             scenario.onActivity(AppViewTest::drawOffscreen);
             scenario.onActivity(activity -> {
@@ -388,8 +429,7 @@ public class AppViewTest {
         root.measure(android.view.View.MeasureSpec.makeMeasureSpec(width, android.view.View.MeasureSpec.EXACTLY),
                 android.view.View.MeasureSpec.makeMeasureSpec(height, android.view.View.MeasureSpec.EXACTLY));
         root.layout(0, 0, width, height);
-        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888);
-        root.draw(new android.graphics.Canvas(bitmap));
+        android.graphics.Bitmap bitmap = drawToBitmap(root, width, height);
         try (java.io.FileOutputStream out = new java.io.FileOutputStream(
                 new java.io.File(activity.getExternalFilesDir(null), fileName))) {
             bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
@@ -397,5 +437,31 @@ public class AppViewTest {
         catch (java.io.IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    // A canvas made on a bitmap draws in software, and Android never lets software drawing touch
+    // a GPU (HARDWARE) bitmap, such as the box art appListOpensWithoutClosing hands the hero.
+    // From Android 9 the screen is recorded instead and the recording drawn by the GPU, as the
+    // real screen is. Android 8 has no public way, so it gets the canvas's hidden switch (not
+    // tried on an Android 8 device).
+    private static android.graphics.Bitmap drawToBitmap(android.view.View root, int width, int height) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            android.graphics.Picture picture = new android.graphics.Picture();
+            root.draw(picture.beginRecording(width, height));
+            picture.endRecording();
+            return android.graphics.Bitmap.createBitmap(picture, width, height, android.graphics.Bitmap.Config.ARGB_8888);
+        }
+        android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            try {
+                android.graphics.Canvas.class.getMethod("setHwBitmapsInSwModeEnabled", boolean.class).invoke(canvas, true);
+            }
+            catch (ReflectiveOperationException e) {
+                // Then a GPU bitmap fails the draw, as it did before
+            }
+        }
+        root.draw(canvas);
+        return bitmap;
     }
 }
