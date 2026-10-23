@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.text.Layout;
 import android.os.Looper;
 import android.view.LayoutInflater;
@@ -122,6 +123,14 @@ public class ActivityScreensTest {
         cover.setVisibility(View.VISIBLE);
         ((TextView) activity.findViewById(R.id.coverRowLabel))
                 .setText(activity.getString(R.string.cg_on_pc, "GAMING-PC"));
+        // The chips AppView shows for a game streamed in HEVC at 1080p and 120 FPS with HDR
+        ViewGroup chips = activity.findViewById(R.id.heroChips);
+        for (String chip : new String[] {activity.getString(R.string.cg_chip_hevc),
+                activity.getString(R.string.cg_chip_resolution, 1080, 120), activity.getString(R.string.cg_chip_hdr)}) {
+            TextView view = (TextView) LayoutInflater.from(activity).inflate(R.layout.cg_hero_chip, chips, false);
+            view.setText(chip);
+            chips.addView(view);
+        }
         CollapsingHeader header = new CollapsingHeader(activity.findViewById(R.id.appHeader),
                 activity.findViewById(R.id.heroSection), activity.findViewById(R.id.miniBar));
         shadowOf(Looper.getMainLooper()).idle();
@@ -134,6 +143,20 @@ public class ActivityScreensTest {
         // Attached after the header's first layout, as in AppView: attaching it in the same frame
         // leaves the header half scrolled away on phones and handhelds
         header.attach(grid);
+        shadowOf(Looper.getMainLooper()).idle();
+
+        // On a wide, short screen (a phone held sideways, a small handheld) the header leaves a
+        // whole row of covers showing, 375 dp high and up
+        Configuration config = activity.getResources().getConfiguration();
+        if (config.screenWidthDp >= 480 && config.screenHeightDp < 520) {
+            View decor = activity.getWindow().getDecorView();
+            View firstCover = grid.getChildAt(0);
+            int[] at = new int[2];
+            firstCover.getLocationInWindow(at);
+            int bottom = at[1] + firstCover.getHeight();
+            assertTrue("the first row of covers ends at " + bottom + " px, below the screen's "
+                    + decor.getHeight(), bottom <= decor.getHeight());
+        }
         capture(activity.getWindow().getDecorView(), "gameScreen");
     }
 

@@ -3,14 +3,17 @@
      foldable's inner screen): the sizes it has always had -->
 <resources>
     <dimen name="cg_content_padding">36dp</dimen>
+    <dimen name="cg_content_padding_top">20dp</dimen>
     <dimen name="cg_wordmark_size">34sp</dimen>
     <dimen name="cg_hero_cover_width">180dp</dimen>
     <dimen name="cg_hero_cover_height">240dp</dimen>
     <dimen name="cg_hero_gap">32dp</dimen>
     <dimen name="cg_hero_title_size">44sp</dimen>
+    <dimen name="cg_hero_title_margin_top">6dp</dimen>
     <dimen name="cg_hero_top_margin">16dp</dimen>
     <dimen name="cg_hero_button_height">56dp</dimen>
     <integer name="cg_hero_title_lines">2</integer>
+    <dimen name="cg_cover_row_margin_top">22dp</dimen>
 
     <style name="CgWordmarkPlace">
         <item name="android:layout_gravity">center</item>
@@ -18,9 +21,17 @@
 
     <style name="CgHeroButtons">
         <item name="android:orientation">horizontal</item>
+        <item name="android:layout_below">@id/heroChips</item>
+        <item name="android:layout_marginTop">18dp</item>
     </style>
     <style name="CgHeroSettingsButton">
         <item name="android:layout_marginStart">12dp</item>
         <item name="android:layout_marginTop">0dp</item>
+    </style>
+
+    <!-- The chips sit under the title, over the buttons -->
+    <style name="CgHeroChipsPlace">
+        <item name="android:layout_below">@id/heroTitle</item>
+        <item name="android:layout_marginTop">14dp</item>
     </style>
 </resources>

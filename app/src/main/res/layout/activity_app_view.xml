@@ -33,7 +33,7 @@
         android:layout_height="match_parent"
         android:paddingStart="@dimen/cg_content_padding"
         android:paddingEnd="@dimen/cg_content_padding"
-        android:paddingTop="20dp">
+        android:paddingTop="@dimen/cg_content_padding_top">
 
         <FrameLayout
             android:id="@+id/appFragmentContainer"
@@ -102,13 +102,14 @@
                     android:layout_height="0dp"
                     android:importantForAccessibility="no" />
 
-                <LinearLayout
+                <!-- The label, the title, then the chips over the buttons; on wide, short
+                     screens the chips sit beside the buttons instead (cover_glow_dimens.xml) -->
+                <RelativeLayout
                     android:id="@+id/heroDetails"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="@dimen/cg_hero_gap"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:layout_weight="1">
 
                     <TextView
                         android:id="@+id/heroLabel"
@@ -124,7 +125,8 @@
                         android:id="@+id/heroTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
+                        android:layout_below="@id/heroLabel"
+                        android:layout_marginTop="@dimen/cg_hero_title_margin_top"
                         android:ellipsize="end"
                         android:fontFamily="sans-serif-black"
                         android:gravity="bottom"
@@ -132,20 +134,20 @@
                         android:textColor="#FFFFFFFF"
                         android:textSize="@dimen/cg_hero_title_size" />
 
-                    <LinearLayout
+                    <!-- Chips that don't fit whole are left out rather than squeezed -->
+                    <com.limelight.ui.ChipRow
                         android:id="@+id/heroChips"
+                        style="@style/CgHeroChipsPlace"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:minHeight="34dp"
-                        android:layout_marginTop="14dp"
-                        android:orientation="horizontal" />
+                        android:minHeight="34dp" />
 
                     <!-- Side by side, or stacked on narrow screens (cover_glow_dimens.xml) -->
                     <LinearLayout
+                        android:id="@+id/heroButtons"
                         style="@style/CgHeroButtons"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp">
+                        android:layout_height="wrap_content">
 
                         <!-- Quit sits beside Play/Resume, so showing it never changes the
                              header's height (CollapsingHeader relies on that) -->
@@ -202,14 +204,14 @@
                             android:textColor="#FFFFFFFF"
                             android:textSize="16sp" />
                     </LinearLayout>
-                </LinearLayout>
+                </RelativeLayout>
             </LinearLayout>
 
             <TextView
                 android:id="@+id/coverRowLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="@dimen/cg_cover_row_margin_top"
                 android:layout_marginBottom="4dp"
                 android:textColor="#FFE2E8F0"
                 android:textSize="16sp"

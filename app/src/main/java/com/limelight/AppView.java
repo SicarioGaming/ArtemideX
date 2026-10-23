@@ -1098,17 +1098,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         }
 
         for (String chip : chips) {
-            TextView view = new TextView(this);
+            TextView view = (TextView) getLayoutInflater().inflate(R.layout.cg_hero_chip, heroChips, false);
             view.setText(chip);
-            view.setTextColor(0xFFFFFFFF);
-            view.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-            view.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            view.setBackgroundResource(R.drawable.cg_chip);
-            view.setPadding((int) dp(14), (int) dp(7), (int) dp(14), (int) dp(7));
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-            params.setMarginEnd((int) dp(8));
-            heroChips.addView(view, params);
+            heroChips.addView(view);
         }
     }
 
