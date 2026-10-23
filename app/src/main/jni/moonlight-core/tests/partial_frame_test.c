@@ -40,6 +40,13 @@ int LbqPeekQueueElement(PLINKED_BLOCKING_QUEUE queueHead, void** data) { (void)q
 void LbqSignalQueueShutdown(PLINKED_BLOCKING_QUEUE queueHead) { (void)queueHead; }
 void LbqSignalQueueUserWake(PLINKED_BLOCKING_QUEUE queueHead) { (void)queueHead; }
 int LbqGetItemCount(PLINKED_BLOCKING_QUEUE queueHead) { (void)queueHead; return 0; }
+// No partial frame deadline (2465f10 in moonlight-common-c added it; without this the test
+// didn't link): frames are only cut short by what's lost
+bool getPartialFrameDeadline(int64_t* offsetUs, int* minReceivedPercent) {
+    *offsetUs = 0;
+    *minReceivedPercent = 0;
+    return false;
+}
 
 #define PACKET_SIZE 1392
 #define PAYLOAD_SIZE (PACKET_SIZE - (int)sizeof(NV_VIDEO_PACKET))
