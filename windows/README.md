@@ -130,16 +130,23 @@ Pairing is how the PC knows the audio really comes from your device, and it give
 a key that nobody else on the network has.
 
 1. On the PC, right-click the Starwire microphone icon by the clock (it may be under the ^ arrow)
-   and choose **Pair a device...**. A window shows a code of 16 letters and numbers, like
-   `2491-650N-2RBH-G690`.
+   and choose **Pair a device...**, then **Show the code**. The window shows a code of 16 letters
+   and numbers, like `2491-650N-2RBH-G690`.
 2. In Starwire on your Android device: **Settings → Sound & vibration → Send my microphone →
    Pair with the PC**. Pick the PC and type the code. Capitals, spaces and dashes don't matter.
-3. The PC's window says **Paired with** your device. That's it: the device stays paired.
+3. The PC's window says **Paired with** your device, and the address it paired from. That's it:
+   the device stays paired.
 
 The code works once, for 5 minutes. After 10 wrong codes it stops working; choose **Pair a
 device...** again for a new one. Pair each device you use (a phone and a tablet, say) the same
 way. If two paired devices send at once, the first one keeps the microphone until it has been
 quiet for 3 seconds.
+
+Anyone who sees the code before you've typed it could pair instead of you, so don't show it
+while your screen is shared. If the window says **Paired with** a device before you've typed the
+code, or one that isn't yours, choose **Unpair it** there. And if a second device uses the same
+code, the PC undoes the pairing and says the code was used twice; choose **Pair a device...**
+again for a new code.
 
 To unpair a device (if it's lost, say), right-click the icon → **Paired devices** → the device →
 **Unpair**. It can't send its microphone to the PC again until you pair it again.
@@ -189,7 +196,8 @@ doesn't understand the new app, which says the receiver isn't answering.
   the virtual microphone** (tests VB-Cable), **Play a test tone** (for Discord's mic test), open
   this guide (**Setup guide**), or **Quit**. The menu also shows how it plays into VB-Cable.
   Problems show up as Windows notifications, like audio from a device that isn't paired, or
-  unencrypted audio from Starwire 0.2.0.
+  unencrypted audio from Starwire 0.2.0. Each kind shows at most once every 10 minutes, saying how
+  many other addresses it came from in between; `--console` lists the addresses.
 - **Troubleshooting:** add `--pair` to `--console` to have the receiver print a pairing code too.
 - **Less delay:** the receiver plays into VB-Cable through WASAPI in 2.7 ms steps, instead of the
   10 ms blocks of the older waveOut it used up to 0.2.0. In testing that took about 7 ms off the
