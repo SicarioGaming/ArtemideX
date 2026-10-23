@@ -155,6 +155,96 @@ else
     fi
 fi
 
+# 7. parse-instrument.sh gives the right verdict on am instrument output recorded on a tablet
+begin
+verdict() {  # fixture, expected exit code, a line its summary must have
+    local out status
+    set +e
+    out=$(bash .github/tools/parse-instrument.sh "$HERE/fixtures/$1" 2>&1)
+    status=$?
+    set -e
+    if [ $status -ne "$2" ] || ! grep -qxF "$3" <<< "$out"; then
+        printf '%s\n' "$out" >&2
+        fail "parse-instrument.sh on $1: exit $status (expected $2), or no line \"$3\""
+    fi
+}
+verdict instrument-pass.txt 0 "1 passed, 0 failed, 0 skipped"
+verdict instrument-mixed.txt 1 "SKIP com.limelight.devicecheck.MonkeyPreconditionTest#noSavedPc (only for device-test.sh --monkey)"
+verdict instrument-mixed.txt 1 "1 passed, 1 failed, 1 skipped"
+verdict instrument-crash.txt 2 "RUN PROBLEM: Process crashed."
+verdict instrument-none.txt 2 "RUN PROBLEM: no tests ran"
+ok "parse-instrument.sh reads passes, skips, failures, a crash and an empty run"
+
+# 8. device-test.sh, against a stand-in for adb (fixtures/fake-adb.sh): it refuses listed
+# devices without sending them anything, stops for a locked screen or an open stream, never
+# uninstalls, and sends random input only where MonkeyPreconditionTest passed
+begin
+work="$(mktemp -d)"
+printf '#!/usr/bin/env bash\nexec bash "%s" "$@"\n' "$HERE/fixtures/fake-adb.sh" > "$work/adb"
+chmod +x "$work/adb"
+mkdir -p "$work/apk/nonRoot/debug" "$work/apk/androidTest/nonRoot/debug"
+touch "$work/apk/nonRoot/debug/app-nonRoot-debug.apk" \
+      "$work/apk/androidTest/nonRoot/debug/app-nonRoot-debug-androidTest.apk"
+: > "$work/all-calls"
+fake_run() {  # expected exit code, NAME=value settings, then device-test.sh's arguments
+    local expected=$1 status
+    shift
+    local settings=()
+    while [[ "${1:-}" =~ ^[A-Z_][A-Z0-9_]*= ]]; do settings+=("$1"); shift; done
+    : > "$work/calls"
+    set +e
+    env "${settings[@]}" FAKE_ADB_LOG="$work/calls" ADB="$work/adb" \
+        bash .github/tools/device-test.sh --apk-dir "$work/apk" --out "$work/out" "$@" > "$work/output" 2>&1
+    status=$?
+    set -e
+    cat "$work/calls" >> "$work/all-calls"
+    if [ $status -ne "$expected" ]; then
+        cat "$work/output" >&2
+        fail "device-test.sh ${settings[*]} $*: exit $status, expected $expected"
+    fi
+}
+called() {
+    grep -qF -- "$1" "$work/calls"
+}
+denied_hash="sha256:$(printf '%s' FAKE-DENIED | sha256sum | cut -d' ' -f1)"
+for deny in FAKE-DENIED Fake_Phone "$denied_hash"; do
+    fake_run 4 STARWIRE_DENY_DEVICES="$deny" -s FAKE-DENIED
+    if called "-s FAKE-DENIED"; then fail "device-test.sh sent a refused device (by $deny) a command"; fi
+done
+fake_run 4 STARWIRE_DENY_DEVICES=FAKESER -s adb-FAKESER-x1y2._adb-tls-connect._tcp
+if called "-s adb-FAKESER"; then fail "device-test.sh sent a refused wireless device a command"; fi
+if sed -n '/^DENY_DEVICES="/,/"$/p' .github/tools/device-test.sh | tr -d '"' | sed 's/^DENY_DEVICES=//' |
+        grep -vqE '^sha256:[0-9a-f]{64}$'; then
+    fail "device-test.sh's own list of refused devices has an entry that isn't sha256:<64 hex digits>"
+fi
+# Several devices in one run: the refused one is skipped, the other tested, the worst exit wins
+fake_run 4 STARWIRE_DENY_DEVICES=FAKE-DENIED -s FAKE-1 -s FAKE-DENIED
+if ! called "-s FAKE-1 install"; then fail "device-test.sh didn't test the allowed device of two"; fi
+if called "-s FAKE-DENIED"; then fail "device-test.sh sent a refused device a command in a run of two"; fi
+fake_run 4 FAKE_ADB_LOCKED=1 -s FAKE-1
+if called " install "; then fail "device-test.sh installed on a locked device"; fi
+fake_run 4 FAKE_ADB_STREAMING=1 -s FAKE-1
+if called " install "; then fail "device-test.sh went on while a stream was open"; fi
+fake_run 3 FAKE_ADB_INSTALL=fail -s FAKE-1
+# A real device: random input needs --monkey-real-device as well, so nothing is checked or sent
+fake_run 0 FAKE_ADB_MONKEY_CHECK=pass -s FAKE-1 --monkey 50
+if called "MonkeyPreconditionTest" || called "shell monkey"; then
+    fail "device-test.sh ran monkey on a real device without --monkey-real-device"
+fi
+# An emulator where the app knows a PC: the check fails, so no random input
+fake_run 0 FAKE_ADB_EMULATOR=1 FAKE_ADB_MONKEY_CHECK=fail -s FAKE-1 --monkey 50
+if ! called "-e starwire.monkeyCheck true"; then fail "device-test.sh didn't run MonkeyPreconditionTest"; fi
+if called "shell monkey"; then fail "device-test.sh ran monkey although MonkeyPreconditionTest failed"; fi
+# An emulator that knows no PC: monkey runs with the fixed seed, in airplane mode, put back after
+fake_run 0 FAKE_ADB_EMULATOR=1 FAKE_ADB_MONKEY_CHECK=pass -s FAKE-1 --monkey 50
+if ! called "shell monkey -p com.starwire.debug -s 20261023" || ! called "airplane-mode enable" ||
+   ! called "airplane-mode disable"; then
+    fail "device-test.sh didn't run monkey with the fixed seed in airplane mode on an empty emulator"
+fi
+if grep -q uninstall "$work/all-calls"; then fail "device-test.sh uninstalled something"; fi
+rm -rf "$work"
+ok "device-test.sh refuses listed devices, checks before it installs, and guards monkey"
+
 if [ $failures -ne 0 ]; then
     echo "$failures problem(s)" >&2
     exit 1
