@@ -18,14 +18,65 @@
 
 ---
 
-> **Latest (23 Oct):** after a [code review on Reddit](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5/starwire_020_mic_passthrough_wo_needing_to_modify/19rigium2zrt0/),
-> this repo now has its real commit history, every prebuilt library is
-> [traced to its source](docs/PROVENANCE.md), the 0.2.0 mic measurements are published with
-> [their data](docs/measurements/2026-10-22-mic/), and there's a [SECURITY.md](SECURITY.md).
-> **Coming in 0.2.1:** an encrypted microphone (pair once, no VPN needed for the encryption), less mic
-> delay, custom resolutions and frame rates, and a lot of fixes and new tests.
-> [The full notes are on Reddit](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5/starwire_020_mic_passthrough_wo_needing_to_modify/19rjkz6wv9xms/).
+## Update (23 Oct)
 
+Hey everyone - thank you so much for giving Starwire a chance, and for all of the meaningful feedback I've received thus far. I may never beat the "AI/Vibecoded Slop" allegations fully, but I promise to keep trying with my chin up haha.
+
+After [u/rambo3349](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5/starwire_020_mic_passthrough_wo_needing_to_modify/19rigium2zrt0/) reviewed Starwire's code and GitHub repo, I made a bunch of changes to hopefully resolve some of those issues. If there are any further issues with the code or Github repo, I will prepare a smaller release to address them (ex. 0.2.2) as opposed to making you guys wait for the next major release (0.3.0, which I am targeting for early next week).
+
+In the longer-term pipeline (0.4.0), I noticed a lot of users are connecting from an Ayn Thor or similar DS device. I'm actually super jealous, my Thor should arrive in the next month and on that front I'm wondering what you guys would like to see in terms of "DS features" in future Starwire releases.
+
+Aside from that, here are the draft release notes for 0.2.1 which should go live tonight:
+
+<details open>
+<summary><b>Draft release notes for 0.2.1</b></summary>
+
+**Following u/rambo3349's code review (already live on GitHub):**
+
+- **Real commit history:** every commit now has its own description, and the repo shares history with Moonlight X again, so upstream updates can be merged properly.
+- **Prebuilt libraries:** every one is traced back to its source and rebuilt byte for byte by GitHub ([PROVENANCE.md](docs/PROVENANCE.md)).
+- **Clearer about what's experimental:** the custom Turnip driver is now described as an experimental option, not listed with the speed features.
+- **Mic measurements:** the 0.2.0 numbers are published with the raw data and a script that recomputes them ([here](docs/measurements/2026-10-22-mic/)), with two rounded numbers corrected.
+- **Security and contributing:** a [SECURITY.md](SECURITY.md) with private vulnerability reporting, and a [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Checksums** are on the release pages, so you can check your download.
+
+**What's new in 0.2.1:**
+
+- **Encrypted microphone:** the mic is now encrypted, and only devices you've paired can send audio to your PC. Being on the same network is no longer enough, and encryption no longer requires Tailscale or a similar VPN.
+- **Less mic delay:** the PC side plays through a faster Windows audio path. In my tests the median delay dropped from about 114 to 98 ms, with far fewer dropouts.
+- **The mic setup window** fits small screens, like a 1280x720 stream.
+- **Custom resolutions and frame rates,** in the main settings and per game. These come from Moonlight X, credited to them.
+- **An about page** with credits and the full open-source licences.
+- **The custom driver option** is marked experimental, with a plain warning before you turn it on.
+- Various other small cleanups to the Github repo and changes to wording for transparency.
+
+**Fixes**
+
+- The PC's cursor comes back if Starwire is closed or crashes while it's hidden, and there's a "Fix PC cursor" button in the stream menu.
+- No more "PC not paired" flicker on the games screen.
+- No more crash on RedMagic devices when the games screen resizes.
+- No more crashes from some unusual host replies, or on the resume button on Android 5 and 6.
+- A rare video mix-up with async decoding after a hiccup is fixed.
+- On Android 5 to 7, the background animations now stop when animations are turned off (saves battery).
+- The in-stream menu and the games screen fit small screens better.
+
+**Testing and Development**
+
+- 273 unit tests (from none), about 135 on-device tests and 32 screenshot tests.
+- The same tests also run on 5 virtual devices, including a Fold shape folded, half-open and unfolded. (Thank you to u/MickeyBronson)
+- Checks run automatically on every change.
+
+**Known issues**
+
+- Right-to-left languages (Hebrew, Persian) show translated text, but the layout doesn't mirror yet.
+- On very narrow screens, the Quit and Disconnect buttons can cut their labels short.
+- The custom Turnip driver option still hasn't been tried with a real Turnip driver.
+
+</details>
+
+Thank you all for your continued trust and engagement. Please keep an eye out for announcements re: 0.2.1. Cheers!
+
+---
 ## New in 0.2.0: your microphone on the PC, with any host
 
 Mic passthrough was a highly requested feature after the 0.1.0 launch, and one of the last things
