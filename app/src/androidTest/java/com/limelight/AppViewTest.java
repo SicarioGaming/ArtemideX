@@ -92,8 +92,10 @@ public class AppViewTest {
                     android.widget.ImageView image = tile.findViewById(R.id.grid_image);
                     android.graphics.Bitmap picture = AppView.shortcutBitmap(image);
                     assertNotNull(name + " tile has no shortcut picture", picture);
+                    // (GPU bitmaps start with Android 8; Config.HARDWARE doesn't exist before)
                     assertFalse(name + " shortcut picture is a GPU bitmap",
-                            picture.getConfig() == android.graphics.Bitmap.Config.HARDWARE);
+                            android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                                    picture.getConfig() == android.graphics.Bitmap.Config.HARDWARE);
                 }
                 assertEquals("Desktop and Steam Big Picture tiles", 2, opened);
                 assertFalse("app list closed", activity.isFinishing());
@@ -222,13 +224,14 @@ public class AppViewTest {
                 scenario.onActivity(AppViewTest::drawOffscreen);
             }
 
-            // A host sends real box art, which arrives as a GPU (HARDWARE) bitmap
+            // A host sends real box art, which arrives as a GPU (HARDWARE) bitmap from Android 8
             scenario.onActivity(activity -> {
                 android.graphics.Bitmap soft = android.graphics.Bitmap.createBitmap(
                         120, 160, android.graphics.Bitmap.Config.ARGB_8888);
                 soft.eraseColor(android.graphics.Color.rgb(40, 160, 90));
                 ((android.widget.ImageView) activity.findViewById(R.id.heroCover)).setImageBitmap(
-                        soft.copy(android.graphics.Bitmap.Config.HARDWARE, false));
+                        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O ?
+                                soft.copy(android.graphics.Bitmap.Config.HARDWARE, false) : soft);
             });
             SystemClock.sleep(1000);
             scenario.onActivity(AppViewTest::drawOffscreen);

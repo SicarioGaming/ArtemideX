@@ -3,11 +3,13 @@ package com.limelight.ui;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.os.Build;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,7 +69,8 @@ public class CoverGlowTest {
     @Test
     public void aHardwareCoverTintsWithoutCrashing() {
         // Box art is decoded straight to GPU memory, where its pixels can't be read directly
-        // (0.1.0 crashed on the first cover that loaded)
+        // (0.1.0 crashed on the first cover that loaded). GPU bitmaps start with Android 8.
+        assumeTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O);
         Bitmap soft = Bitmap.createBitmap(120, 160, Bitmap.Config.ARGB_8888);
         soft.eraseColor(Color.rgb(200, 30, 40));
         Bitmap cover = soft.copy(Bitmap.Config.HARDWARE, false);
