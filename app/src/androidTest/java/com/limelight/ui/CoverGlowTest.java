@@ -353,8 +353,11 @@ public class CoverGlowTest {
         assertTrue(CoverGlowSettings.creditFor("checkbox_async_decode").contains("derflacco"));
         assertTrue(CoverGlowSettings.creditFor("list_audio_haptics").contains("Moonlight V+"));
         assertTrue(CoverGlowSettings.creditFor("checkbox_custom_vulkan_driver").contains("NoCrypt"));
+        // Moonlight's own resolution and frame rate settings take any value, from Moonlight X
+        assertTrue(CoverGlowSettings.creditFor("list_resolution").contains("Moonlight X"));
+        assertTrue(CoverGlowSettings.creditFor("list_fps").contains("MoreOrLessSoftware"));
         // Moonlight's own and Starwire's new settings have no credit line
-        assertEquals(null, CoverGlowSettings.creditFor("list_resolution"));
+        assertEquals(null, CoverGlowSettings.creditFor("seekbar_bitrate_kbps"));
         assertEquals(null, CoverGlowSettings.creditFor("hide_cursor_mode"));
     }
 

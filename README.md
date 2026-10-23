@@ -348,6 +348,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Feature | Source |
 | --- | --- |
 | Vulkan renderer with host frame timing, PyroWave codec | From Moonlight X (MoreOrLessSoftware) |
+| Coming in 0.2.1: custom resolutions and frame rates. A Custom button in the resolution and frame rate lists takes any size up to 7680x4320 and any frame rate, in Settings and per game. It replaces Unlock FPS, and a saved value the device doesn't list is kept instead of being reset. Not yet tried in a stream with Starwire | From Moonlight X (MoreOrLessSoftware) |
 | Custom Vulkan driver (Turnip) for PyroWave: experimental and off by default, and not yet tried with a real Turnip driver | Ported from Moonlight X Turnip (ncpt / NoCrypt), uses libadrenotools (Billy Laws / bylaws). The libadrenotools libraries in the repo were built from the upstream commit in `SOURCE`, not copied from the fork. Starwire refuses files that aren't 64-bit ARM libraries, and goes back to the system driver when one can't load or can't run PyroWave (tested with a broken file, not a real driver) |
 | Warp Drive / Warp 2 frame pacing (2x / 4x FPS from the PC, newest frame shown) | Ported from Artemis (Yukino Song), via Artemide |
 | Fast V-Sync (Artemide's Nano Pacer) | Ported from Artemide (derflacco) |
@@ -377,7 +378,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | On a foldable's inner screen, the stream follows the device instead of forcing landscape | Idea from [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) (sblocktechnologies) and [moonlight-android#1613](https://github.com/moonlight-stream/moonlight-android/pull/1613) |
 | Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable. Not encrypted or authenticated in 0.2.0, so only for networks you trust ([see above](#new-in-020-your-microphone-on-the-pc-with-any-host)). The receiver has no window, just an icon by the clock with a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
 | Or send it over the stream itself, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)); echo-cancelled capture is new in Starwire |
-| Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics) | Extends Moonlight X's per-app settings (MoreOrLessSoftware) |
+| Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics, and the jitter buffer coming in 0.2.1) | Extends Moonlight X's per-app settings (MoreOrLessSoftware); the per-game jitter buffer is from Moonlight X too |
 
 </details>
 
@@ -402,7 +403,7 @@ repos a star:
 | Project | Author | Used for |
 | --- | --- | --- |
 | [Moonlight Android](https://github.com/moonlight-stream/moonlight-android) | Cameron Gutman and contributors | The original client everything here is built on |
-| [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android) | MoreOrLessSoftware | The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch |
+| [Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android) | MoreOrLessSoftware | The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch, custom resolutions and frame rates |
 | [Artemis](https://github.com/ClassicOldSong/moonlight-android) | Yukino Song (ClassicOldSong) | Pan/zoom, touch modes, clipboard, server commands, Virtual Display, Warp pacing, floating button, and more (via Artemide) |
 | [Artemide](https://github.com/derflacco/moonlight-android) | derflacco | Nano Pacer / Fast V-Sync, Sync and Async LFR, async decode, MediaTek low-latency work, and the version of all the Artemis features above that Starwire ported |
 | [Moonlight (Axixi2233 fork)](https://github.com/Axixi2233/moonlight-android) | Axixi2233 | Full keyboard, shortcuts list, Lite overlay, shortcut file format (via Artemis) |

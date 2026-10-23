@@ -825,7 +825,7 @@
     <string name="credits_section_hosts">Hosts</string>
     <string name="credits_section_tools">Tools</string>
     <string name="credit_moonlight">The original client everything here is built on</string>
-    <string name="credit_moonlight_x">The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch</string>
+    <string name="credit_moonlight_x">The base of Starwire: Vulkan renderer, PyroWave, overlay menu, per-app settings, Quick Launch, custom resolutions and frame rates</string>
     <string name="credit_artemis">Pan/zoom, touch modes, clipboard, server commands, Virtual Display, Warp pacing, floating button, and more (via Artemide)</string>
     <string name="credit_artemide">Nano Pacer / Fast V-Sync, Sync and Async LFR, async decode, MediaTek low-latency work, and the version of the Artemis features that Starwire ported</string>
     <string name="credit_axixi">Full keyboard, shortcuts list, Lite overlay, shortcut file format (via Artemis)</string>

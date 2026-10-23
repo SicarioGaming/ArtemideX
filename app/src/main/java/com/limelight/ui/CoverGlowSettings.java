@@ -277,6 +277,9 @@ public final class CoverGlowSettings {
                 "video_format", "video_renderer", "pyrowave_late_frames"}) {
             CREDITS.put(key, moonlightX);
         }
+        // The settings are Moonlight's own; entering any value is from Moonlight X
+        CREDITS.put("list_resolution", "Custom resolutions from Moonlight X by MoreOrLessSoftware");
+        CREDITS.put("list_fps", "Custom frame rates from Moonlight X by MoreOrLessSoftware");
         CREDITS.put("import_shortcuts_file", "File format from Axixi2233 and Artemis by Yukino Song");
         CREDITS.put("clear_imported_shortcuts", "File format from Axixi2233 and Artemis by Yukino Song");
         CREDITS.put("checkbox_pinch_to_zoom", "Idea from Moonlit Artemis by 4had45");
