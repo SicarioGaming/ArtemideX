@@ -18,9 +18,9 @@ are plain tags on it, and a check runs before anything goes public.
 
 ## Once: switch the public repo to the real history
 
-Private `main` has exactly the same files as public `main`. `.github/tools/join-history.sh` builds
-one merge commit with those files, private `main` as its first parent and public `main` as its
-second. Public `main` then moves forward to it with an ordinary push:
+`.github/tools/join-history.sh` builds one merge commit with private `main`'s files, private
+`main` as its first parent and public `main` as its second. (When it was run, private `main` also
+had the new docs, tools and measurements, so the switch published those too.) Public `main` then moves forward to it with an ordinary push:
 
 - no force push, so clones and the two forks keep working (`git pull`, or **Sync fork**)
 - the release tags v0.1.0, v0.1.2 and v0.2.0 and their release pages stay exactly as they are
@@ -41,14 +41,14 @@ reachable, and a trial merge of the latest Moonlight X gives 17 files to resolve
 "unrelated histories". A fresh clone grows from about 22 MiB to about 156 MiB (`--depth 1` avoids
 that).
 
-Before running it, decide:
+What was decided before running it (23 Oct):
 
 - **The check's hits.** On the dry run the pre-publish check stopped on 6 commits of the real
-  history that were never public. Either accept them (add `allow` lines for those commits to the
-  patterns file, see below) or rewrite those commits first, which means force-pushing the private
-  repo once and rebasing the work branches.
-- **What else becomes public:** the old names ArtemideX and Voidlink, draft release notes, and the
-  `Co-Authored-By: Claude` lines on about 100 commits.
+  history that were never public. Those commits were rewritten first to take out an old account
+  name and the PC's name, keeping every message, author and date, and the private repo was
+  force-pushed once, with a backup branch of the old history kept there.
+- **What else became public:** the old names ArtemideX and Voidlink, draft release notes, and the
+  `Co-Authored-By: Claude` lines on about 125 commits (Starwire's and some of Moonlight X's).
 
 ## The pre-publish check
 
@@ -62,7 +62,7 @@ if it finds:
   address outside the test files, in an added line, a file name or a commit message
 - anything matching `private/privacy-patterns.txt`: my real name and personal accounts, the PC's
   name, addresses and folder layout, and the test devices' serials. That file is in `private/`,
-  which git ignores, so the patterns are never published.
+  which `.gitignore` excludes, so the patterns are never published.
 - placeholder words left in the README, docs or release notes
 
 It reads the repo only, needs no network, gives the same answer every time and runs in a few

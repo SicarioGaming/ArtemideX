@@ -22,7 +22,7 @@ with: `sdkmanager "ndk;29.0.14206865" "ndk;27.0.12077973" "cmake;3.31.6"`. The h
 
 To check the libraries inside an APK you downloaded, for example from a release:
 
-    sh .github/tools/prebuilts/verify.sh --apk Starwire-0.2.1.apk
+    sh .github/tools/prebuilts/verify.sh --apk Starwire-0.2.0.apk
 
 The app's Gradle build puts these files into the APK untouched, so the copies in a Starwire APK
 have the same SHA-256 as the files here. I checked that with the 0.2.0 debug APK, a current
@@ -40,7 +40,7 @@ Each file gets one of these results:
 
 GitHub runs the same checks ([`prebuilts.yml`](../.github/workflows/prebuilts.yml)) on its
 Windows machines whenever a change touches one of these files, and every Monday. Anyone can
-read those runs' logs.
+read those runs' logs on the repo's Actions tab, once the first one has run.
 
 ### Why Windows, and what the build ID is
 
@@ -72,8 +72,8 @@ seen from a different folder, and got the same result.
 | `libpyrowave-shared.so` | **Not proven yet.** See [PyroWave](#pyrowave-from-moonlight-x) |
 | OpenSSL and Opus static libraries | Identical to official Moonlight's files. Not rebuilt here |
 
-The first run of `prebuilts.yml` on GitHub hasn't happened yet. Until it has, the GitHub
-results above are untested.
+The proven results above are from rebuilds on my PC. The first run of `prebuilts.yml` on
+GitHub happens when this file is published, so GitHub's own runs haven't been checked yet.
 
 ## Every binary file in the repo
 
@@ -85,7 +85,7 @@ results above are untested.
 `aa3975893d83ef1bc84c321ec60c65fbf1287887`. Both are BSD-2-Clause. Built for arm64-v8a only
 (libadrenotools supports no other Android ABI) by
 `app/src/main/jni/adrenotools/build_libadrenotools.sh`, with NDK 29.0.14206865 and CMake 3.31.6
-on Windows, and added in commit `775d9abd`.
+on Windows, and added in commit `2fc931d1`.
 
 | File in `app/src/main/jni/adrenotools/lib/arm64-v8a/` | Bytes | SHA-256 |
 | --- | --- | --- |
@@ -190,7 +190,7 @@ makes that possible.
 
 ### When it runs
 
-It's **off by default** (Settings > Advanced Settings > Custom Vulkan driver). libadrenotools
+It's **off by default** (Settings > Advanced > Custom Vulkan driver). libadrenotools
 is only opened when all of these are true:
 
 - you turned the option on and picked a driver file;

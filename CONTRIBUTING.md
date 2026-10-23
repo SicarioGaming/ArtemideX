@@ -58,7 +58,9 @@ has. To try a narrow screen on a tablet, run `adb shell wm size <width>x<height>
 
 What doesn't exist yet, to be honest about it:
 
-- There are no JVM unit tests (`app/src/test`), so every test needs a device.
+- There are no JVM unit tests (`app/src/test`), so every Java test needs a device. The only tests
+  that run on a computer are a few C++ simulations of the frame pacer under
+  `app/src/main/jni/vulkan/tests`, inherited from Moonlight X.
 - CI (`.github/workflows/build.yml`) builds the app and the test APK on every push to `main` and
   every pull request, but it doesn't run any tests.
 - The Windows microphone receiver has no automated tests. By hand,

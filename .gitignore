@@ -52,3 +52,6 @@ keystore.properties
 
 # AI tool working folders
 .claude-flow/
+
+# Maintainer-only notes, drafts and patterns; never published
+private/

@@ -80,7 +80,7 @@ changing if you changed them on the PC too.
   local-network address or over a private VPN, and the receiver only accepts audio from those
   addresses. That's a filter, not protection: see
   [the security note](#please-read-first-it-isnt-secure-yet) at the top.
-- **About 0.8 Mbps** of upload while you stream, uncompressed.
+- **About 0.85 Mbps** of upload while you stream, uncompressed.
 - **If teammates hear the game,** wear headphones. Starwire turns on the device's echo
   cancelling and noise reduction where it has them, but some phones only cancel echo on calls.
 - **CABLE Input must never be your default speakers.** VB-Cable sometimes takes over when it

@@ -1,1 +1,5 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: https://github.com/SicarioGaming/Starwire/blob/main/SECURITY.md
+    about: Please read this first, and don't post details of a security problem in a public issue.
