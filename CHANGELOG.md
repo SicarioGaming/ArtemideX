@@ -17,6 +17,7 @@ already live on GitHub.
 
 - **Custom resolutions and frame rates,** in the main settings and per game. These come from
   Moonlight X, credited to them.
+- **A jitter buffer per game,** also from Moonlight X. It's used with host frame timing pacing.
 - **An about page** with credits and the full open-source licences.
 - **Prebuilt libraries:** every one is traced back to its source and rebuilt byte for byte by
   GitHub ([PROVENANCE.md](docs/PROVENANCE.md)).
@@ -39,11 +40,24 @@ already live on GitHub.
   median delay dropped from about 114 to 98 ms, with far fewer dropouts.
 - **The mic setup window** fits small screens, like a 1280x720 stream.
 - **The custom driver option** is marked experimental, with a plain warning before you turn it on.
+  Starwire now checks each driver file before it loads it, so a driver imported in 0.2.0 has to
+  be chosen again.
 - **Clearer about what's experimental:** the custom Turnip driver is now described as an
   experimental option, not listed with the speed features.
+- **Send my microphone to** has a third choice, **Not encrypted**, for Voicemeeter and other VBAN
+  apps. If you used 0.2.0's default, Starwire switches you to the encrypted receiver once.
+- The app says Starwire, not Moonlight, where it talks about itself, like the network test and the
+  decoder crash message. In Czech, Hungarian, Turkish and Tamil those few lines show in English
+  for now.
 - **Real commit history:** every commit now has its own description, and the repo shares history
   with Moonlight X again, so upstream updates can be merged properly.
 - Various other small cleanups to the GitHub repo and changes to wording for transparency.
+
+### Removed
+
+- The Unlock FPS setting. The Custom frame rate takes its place.
+- The 360p and 480p presets (you can still enter them as custom resolutions), and the native
+  resolution and frame rate warnings.
 
 ### Fixed
 
@@ -56,16 +70,25 @@ already live on GitHub.
 - On Android 5 to 7, the background animations now stop when animations are turned off (saves
   battery).
 - The in-stream menu and the games screen fit small screens better.
+- Each section button at the top of Settings scrolls all the way to its heading. On-screen
+  controls, and now and then About, used to stop short.
+- TalkBack can read the game covers and PC cards, and the Play, Resume and Quit buttons say which
+  game they're for.
 
 ### Security
 
 - **Encrypted microphone:** the mic is now encrypted, and only devices you've paired can send
   audio to your PC. Being on the same network is no longer enough, and encryption no longer
   requires Tailscale or a similar VPN.
+- **Updating from 0.2.0** needs both sides: update the app, run the new setup on the PC, then pair
+  once. Until both are updated the mic doesn't work, because the new receiver refuses 0.2.0's
+  unencrypted audio and a 0.2.0 receiver doesn't understand the new app.
 
 Known issues: right-to-left languages (Hebrew, Persian) show translated text, but the layout
 doesn't mirror yet. On very narrow screens, the Quit and Disconnect buttons can cut their labels
-short. The custom Turnip driver option still hasn't been tried with a real Turnip driver.
+short. The custom Turnip driver option still hasn't been tried with a real Turnip driver. Custom
+resolutions and frame rates haven't been tried in a stream with Starwire yet, and the encrypted
+microphone hasn't been tested from a real phone to a real PC over Wi-Fi yet.
 
 ## [0.2.0] - 2026-10-23
 
@@ -143,7 +166,7 @@ same app renamed; it installs separately, so you can uninstall Voidlink afterwar
 
 ### Added
 
-- The best features of the Android Moonlight clients in one app: Moonlight X's fast video, the
+- The best features of the Android Moonlight clients in one app: Moonlight X's video pipeline, the
   touchscreen tools from Artemide and Artemis, and favourites from Moonlight V+, Moonlit Artemis
   and Moonlight X Turnip. It installs next to any Moonlight you already have.
 - **A new look:** the screens take their colour from the game you pick, over a starfield. Apps
