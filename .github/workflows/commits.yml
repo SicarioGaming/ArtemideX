@@ -1,0 +1,61 @@
+name: Commits
+
+# Checks that new commit messages follow Conventional Commits and that pull request branch names
+# follow Conventional Branch, with .github/tools/check-commits.sh. CONTRIBUTING.md has the rules.
+# Merge commits, commits cherry-picked from upstream and commits from before the rules started
+# are skipped. "edited" is there so changing a pull request's base branch checks it again.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: commits-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Commit messages and branch name
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: The checker's own tests
+        run: bash .github/tools/check-commits.sh --self-test
+
+      # Names and SHAs go through env, never straight into the script, so a branch name can't
+      # inject shell code.
+      - name: The pull request's commits and branch name
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          # If the base branch was force-pushed since, its old tip may be gone: use the branch.
+          git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null || BASE_SHA="origin/$BASE_REF"
+          bash .github/tools/check-commits.sh --branch "$HEAD_REF" "$BASE_SHA..$HEAD_SHA"
+
+      - name: The pushed commits
+        if: github.event_name == 'push'
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.event.after }}
+        run: |
+          if [ -n "${BEFORE//0/}" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            bash .github/tools/check-commits.sh "$BEFORE..$AFTER"
+          else
+            # A new branch (before is all zeros), or a force push whose old tip is gone: check
+            # the commits that no other branch has.
+            bash .github/tools/check-commits.sh -- "$AFTER" --not \
+              --exclude="refs/remotes/origin/${GITHUB_REF_NAME}" --remotes=origin
+          fi
