@@ -1,5 +1,6 @@
 package com.limelight.repo;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -22,7 +23,8 @@ import java.util.regex.Pattern;
  */
 public class ClaimsTest {
     private static final String[][] UNBACKED = {
-            {"(?i)turnip[^.\\n]*(faster|speed)", "the custom Turnip driver hasn't been measured"},
+            // "not listed with the speed features" says the opposite, so it doesn't count
+            {"(?i)turnip[^.\\n]*(faster|(?<!not listed with the )speed)", "the custom Turnip driver hasn't been measured"},
             {"(?i)(faster|speeds? up)[^.\\n]*turnip", "the custom Turnip driver hasn't been measured"},
             {"(?i)speed up vulkan", "the custom Turnip driver hasn't been measured"},
             {"(?i)faster video", "the video options haven't been measured in Starwire"},
@@ -54,16 +56,33 @@ public class ClaimsTest {
         return m.group(1);
     }
 
+    // Why each unbacked claim in the line is one, or nothing when it makes none
+    private static List<String> claimsIn(String line) {
+        List<String> reasons = new ArrayList<>();
+        for (String[] claim : UNBACKED) {
+            if (Pattern.compile(claim[0]).matcher(line).find()) {
+                reasons.add(claim[1]);
+            }
+        }
+        return reasons;
+    }
+
     @Test
     public void noClaimsThatNothingBacks() throws Exception {
+        // The 0.2.1 notes say the driver is no longer listed with the speed features. That line
+        // mustn't count as the claim it takes back, and the claim itself still must.
+        assertEquals(0, claimsIn("- **Clearer about what's experimental:** the custom Turnip driver is now"
+                + " described as an experimental option, not listed with the speed features.").size());
+        assertEquals(1, claimsIn("The custom Turnip driver is listed with the speed features.").size());
+        assertEquals(1, claimsIn("A custom Turnip driver for more speed.").size());
+        assertEquals(1, claimsIn("Load a Turnip driver for faster PyroWave.").size());
+
         List<String> found = new ArrayList<>();
         for (String path : textFiles()) {
             String[] lines = RepoFiles.read(path).split("\n", -1);
             for (int i = 0; i < lines.length; i++) {
-                for (String[] claim : UNBACKED) {
-                    if (Pattern.compile(claim[0]).matcher(lines[i]).find()) {
-                        found.add(path + ":" + (i + 1) + " (" + claim[1] + "): " + lines[i].trim());
-                    }
+                for (String reason : claimsIn(lines[i])) {
+                    found.add(path + ":" + (i + 1) + " (" + reason + "): " + lines[i].trim());
                 }
             }
         }
