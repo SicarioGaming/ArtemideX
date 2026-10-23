@@ -17,9 +17,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Claims in the README, the roadmap, the release notes and the app's own text that no test or
- * measurement backed, reworded after the 0.2.0 code review. These checks keep them from coming
- * back. Once something really is measured or tested, change the wording and this test together.
+ * Claims in the README, the changelog, the roadmap, the release notes and the app's own text that
+ * no test or measurement backed, reworded after the 0.2.0 code review. These checks keep them from
+ * coming back. Once something really is measured or tested, change the wording and this test
+ * together.
  */
 public class ClaimsTest {
     private static final String[][] UNBACKED = {
@@ -40,7 +41,7 @@ public class ClaimsTest {
     };
 
     private static List<String> textFiles() {
-        List<String> files = new ArrayList<>(Arrays.asList("README.md", "docs/ROADMAP.md",
+        List<String> files = new ArrayList<>(Arrays.asList("README.md", "CHANGELOG.md", "docs/ROADMAP.md",
                 "app/src/main/res/values/strings.xml"));
         File[] notes = RepoFiles.file(".github/release-notes").listFiles((d, name) -> name.endsWith(".md"));
         assertNotNull(notes);
