@@ -198,7 +198,12 @@ Rules for Starwire:
 - Audio captured before the HELLO_ACK is dropped, not kept for later.
 - Every status starts the session (the key doesn't depend on it). While the status is 1 or 2,
   Starwire sends the same HELLO again every 2000 ms to see when the PC is ready; the receiver
-  answers the same HELLO with the same session.
+  answers the same HELLO with the same session for as long as it keeps running.
+- A HELLO gets one session: the one its first valid HELLO_ACK names. A later valid HELLO_ACK for
+  the same clientRandom that names another session (the receiver restarted, or someone sent an
+  old answer again) starts no session. Starwire sends a new HELLO with a new clientRandom, and
+  audio goes on in the current session until the new HELLO_ACK. So Starwire never goes back to an
+  earlier session, and no key starts again at counter 0.
 - A REHELLO that names the current session, with a MAC that checks out, starts a new HELLO (a new
   clientRandom), at most once every 2 s. Audio goes on in the old session until the new
   HELLO_ACK. A REHELLO for any other session is ignored.
