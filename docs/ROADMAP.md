@@ -185,6 +185,20 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       on-device layout tests at phone and foldable sizes (the tablet's display resized with
       `adb shell wm size`)
 
+## 0.2.1: after the 0.2.0 code review
+
+- [x] Custom PyroWave driver: the setting says it's experimental, and the first time it's turned
+      on, a warning says what a driver file can do and asks first. Imports are checked (a plain
+      file name, at most 64 MB, a 64-bit ARM library, or an archive of at most 64 files holding
+      one) and replace the earlier driver; a refused file keeps it. The SHA-256 is recorded at
+      import, shown under the setting and checked before every load, and only files inside
+      Starwire's driver folder are loaded (a symlink out of it is refused). Archives unpack into
+      a folder named after their SHA-256, which fixes a different archive with the same library
+      name reusing the old library. The driver can be removed, and it's left out of backups.
+      JVM tests in `CustomVulkanDriverImportTest`, device tests in `CustomVulkanDriverTest`. A
+      driver imported by 0.2.0 has no recorded SHA-256, so it has to be chosen again. Still not
+      tried with a real Turnip driver
+
 ## Open questions
 
 - Artemide has no option named "Tight Vsync"; its V-Sync options are V-Sync,

@@ -737,7 +737,7 @@
     <string name="impact_jitter_buffer">A bigger buffer rides out patchy Wi-Fi but adds latency.</string>
     <string name="impact_vsync">On removes tearing but adds up to one frame of latency.</string>
     <string name="impact_sync_lfr">On lowers latency by skipping late frames. Motion can look less even under load.</string>
-    <string name="impact_async_decode">On can cut decode delay. Turn it off if video stalls.</string>
+    <string name="impact_async_decode">On can cut decode delay on some devices (not measured in Starwire yet). Turn it off if video stalls.</string>
     <string name="impact_async_lfr">On gives the lowest delay but can drop frames under load.</string>
     <string name="impact_ultra_low_latency">Can lower decode latency on the chips listed. No gain on others; turn it off if video glitches.</string>
     <string name="impact_surround">Surround uses a little more bandwidth. No change to latency.</string>
@@ -746,7 +746,7 @@
     <string name="impact_microphone_target">Over the stream it\'s compressed to about 24 kbps. VBAN sends it uncompressed, just under 1 Mbps, and only to a PC on your home network or a private VPN. No change to video.</string>
     <string name="impact_audio_haptics">Uses some battery. No change to the stream.</string>
     <string name="impact_deadzone">Lower feels more responsive, but worn sticks may drift.</string>
-    <string name="impact_prevent_packet_loss">Fewer stutters on devices whose Wi-Fi naps between packets. Slightly more battery.</string>
+    <string name="impact_prevent_packet_loss">For devices whose Wi-Fi naps between packets. Slightly more battery.</string>
     <string name="impact_unlock_fps">90 or 120 FPS can lower latency on fast devices but can lag on slower ones.</string>
     <string name="impact_reduce_refresh_rate">Saves battery but adds some latency.</string>
     <string name="impact_actual_refresh_rate">A wrong value makes pacing stutter. 0 measures it for you.</string>

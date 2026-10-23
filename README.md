@@ -52,6 +52,9 @@ like WO Mic or AudioRelay to open on your Android device each time.
 <sub>All of this is automatic: one double-click runs the PowerShell setup, which builds and starts the receiver, installs VB-Cable if it's missing, adds the firewall rule and checks the virtual mic. This is it finishing on my PC.</sub>
 </p>
 
+<!-- TODO (encrypted mic): when it ships, update "Please read this before you use it" below, the
+receiver line under "How it works", the microphone row under "Input and feel", docs/ROADMAP.md,
+SECURITY.md and ClaimsTest.theMicrophoneSaysItIsntEncrypted. -->
 The receiver has no window: right-click its icon by the clock to check the virtual mic, play a test
 tone for Discord's mic test or quit (or end it in Task Manager). Measured on my tablet over Wi-Fi:
 16,880 packets in 90 seconds with none lost, no gaps in the receiver's buffer (usually 30 to 50
@@ -123,7 +126,7 @@ Artemis/Artemide has. I also missed some QoL features that the recent Windows fo
 that seem to be lagging in terms of an Android client equivalent.
 
 Back-end development started from
-[Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android)'s fast video pipeline, adds
+[Moonlight X](https://github.com/MoreOrLessSoftware/moonlight-android)'s video pipeline, adds
 the touchscreen tools from [Artemide](https://github.com/derflacco/moonlight-android) and
 [Artemis](https://github.com/ClassicOldSong/moonlight-android), and picks up favourite features
 from [Moonlight V+](https://github.com/qiin2333/moonlight-vplus),
@@ -226,8 +229,8 @@ Vibepollo. I decided what the app should do and how it should look, and
 [Claude Code](https://claude.com/claude-code) wrote the code. I also
 used [REA](https://github.com/morluto/rea) by morluto to look inside the other apps and see how
 their features work. I test on my RedMagic Astra (Snapdragon 8 Elite, Android 16) with a GameSir
-G8+, streaming from Vibepollo, and on my Galaxy Z Fold 6. There are 111 on-device tests in
-`app/src/androidTest` that run on the tablet. Some things haven't been tried yet: the custom
+G8+, streaming from Vibepollo, and on my Galaxy Z Fold 6. The on-device tests in
+`app/src/androidTest` run on the tablet. Some things haven't been tried yet: the custom
 Turnip driver option with a real Turnip driver, and hosts other than Vibepollo.
 [CONTRIBUTING.md](CONTRIBUTING.md) says how to build Starwire and run the tests.
 
