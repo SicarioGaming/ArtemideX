@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.CheckBoxPreference;
@@ -44,17 +45,16 @@ import com.limelight.binding.audio.MicrophoneCaptureManager;
 import com.limelight.binding.audio.VbanSender;
 import com.limelight.ui.CoverGlowSettings;
 import com.limelight.ui.overlay.ImportedShortcuts;
+import com.limelight.binding.video.CustomVulkanDriver;
 import com.limelight.binding.video.MediaCodecHelper;
 import com.limelight.utils.Dialog;
 import com.limelight.utils.HelpLauncher;
 import com.limelight.utils.UiHelper;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -751,8 +751,22 @@ public class StreamSettings extends Activity {
                 });
             }
 
+            // A custom driver is native code that runs inside Starwire, so the first time it's
+            // turned on, say what that means and only turn it on if the user agrees
+            Preference driverEnablePref = findPreference(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PREF_STRING);
+            if (driverEnablePref != null) {
+                driverEnablePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                    if (!(Boolean) newValue || PreferenceManager.getDefaultSharedPreferences(getActivity())
+                            .getBoolean(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_WARNED_PREF_STRING, false)) {
+                        return true;
+                    }
+                    showCustomDriverWarning((CheckBoxPreference) preference);
+                    return false;
+                });
+            }
+
             // The custom Vulkan driver is a file chosen with the system document picker, then
-            // copied into app-private storage where libadrenotools can load it from
+            // checked and copied into app-private storage where libadrenotools can load it from
             Preference driverPref = findPreference(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING);
             if (driverPref != null) {
                 driverPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -772,6 +786,19 @@ public class StreamSettings extends Activity {
                     }
                 });
                 updateCustomDriverSummary();
+            }
+            Preference removeDriverPref = findPreference(PreferenceConfiguration.REMOVE_CUSTOM_VULKAN_DRIVER_PREF_STRING);
+            if (removeDriverPref != null) {
+                removeDriverPref.setOnPreferenceClickListener(preference -> {
+                    CustomVulkanDriver.removeAll(CustomVulkanDriver.directory(getActivity()));
+                    PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+                            .remove(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING)
+                            .remove(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING)
+                            .apply();
+                    updateCustomDriverSummary();
+                    Toast.makeText(getActivity(), R.string.custom_vulkan_driver_removed, Toast.LENGTH_SHORT).show();
+                    return true;
+                });
             }
 
             // Shortcuts imported from a file in Artemide's format, for the Shortcuts page
@@ -867,14 +894,33 @@ public class StreamSettings extends Activity {
             if (pref == null || getActivity() == null) {
                 return;
             }
-            String path = PreferenceManager.getDefaultSharedPreferences(getActivity())
-                    .getString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, "");
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String path = prefs.getString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, "");
+            String sha256 = prefs.getString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING, "");
             if (path == null || path.isEmpty()) {
                 pref.setSummary(R.string.summary_custom_vulkan_driver_path);
             }
-            else {
-                pref.setSummary(new File(path).getName());
+            else if (sha256 == null || sha256.isEmpty()) {
+                // Imported by 0.2.0, which didn't record the SHA-256, so it isn't loaded
+                pref.setSummary(getString(R.string.summary_custom_vulkan_driver_unchecked, new File(path).getName()));
             }
+            else {
+                pref.setSummary(getString(R.string.summary_custom_vulkan_driver_file, new File(path).getName(), sha256));
+            }
+        }
+
+        private void showCustomDriverWarning(CheckBoxPreference pref) {
+            new AlertDialog.Builder(getActivity())
+                    .setTitle(R.string.custom_vulkan_driver_warning_title)
+                    .setMessage(R.string.custom_vulkan_driver_warning_message)
+                    .setPositiveButton(R.string.custom_vulkan_driver_warning_accept, (dialog, which) -> {
+                        PreferenceManager.getDefaultSharedPreferences(getActivity()).edit()
+                                .putBoolean(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_WARNED_PREF_STRING, true)
+                                .apply();
+                        pref.setChecked(true);
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
         }
 
         // The About section: the version (a tap copies it for a bug report), the code for this
@@ -1131,44 +1177,28 @@ public class StreamSettings extends Activity {
                 return;
             }
 
-            String name = queryDisplayName(context, uri);
-            if (name == null || name.isEmpty()) {
-                name = "custom_driver.so";
-            }
-            name = new File(name).getName();
-
-            File dir = new File(context.getFilesDir(), "custom_vulkan_driver");
-            if (!dir.exists() && !dir.mkdirs()) {
-                Toast.makeText(context, R.string.custom_vulkan_driver_import_failed, Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            File out = new File(dir, name);
-            try (InputStream in = context.getContentResolver().openInputStream(uri);
-                    OutputStream os = new FileOutputStream(out)) {
+            // Checked as it's copied (name, size, 64-bit ARM library); a file that fails keeps
+            // the driver imported before
+            CustomVulkanDriver.Imported imported;
+            try (InputStream in = context.getContentResolver().openInputStream(uri)) {
                 if (in == null) {
                     throw new IOException("could not open the file");
                 }
-                byte[] buffer = new byte[65536];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    os.write(buffer, 0, read);
-                }
+                imported = CustomVulkanDriver.importDriver(CustomVulkanDriver.directory(context),
+                        queryDisplayName(context, uri), in);
             }
             catch (Exception e) {
-                out.delete();
                 Toast.makeText(context, context.getString(R.string.custom_vulkan_driver_import_failed) + ": " + e.getMessage(),
                         Toast.LENGTH_LONG).show();
                 return;
             }
-            out.setReadable(true, true);
-            out.setExecutable(true, true);
 
             PreferenceManager.getDefaultSharedPreferences(context).edit()
-                    .putString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, out.getAbsolutePath())
+                    .putString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, imported.file.getAbsolutePath())
+                    .putString(PreferenceConfiguration.CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING, imported.sha256)
                     .apply();
             updateCustomDriverSummary();
-            Toast.makeText(context, context.getString(R.string.custom_vulkan_driver_imported, name),
+            Toast.makeText(context, context.getString(R.string.custom_vulkan_driver_imported, imported.file.getName()),
                     Toast.LENGTH_SHORT).show();
         }
 

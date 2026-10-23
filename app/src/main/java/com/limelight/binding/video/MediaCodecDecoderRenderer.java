@@ -407,7 +407,7 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
 
         // Decide on the driver before anything probes Vulkan, since the loader is opened once
         VulkanRendererBridge.configureCustomDriver(context,
-                prefs.customVulkanDriver ? prefs.customVulkanDriverPath : null);
+                prefs.customVulkanDriver ? prefs.customVulkanDriverPath : null, prefs.customVulkanDriverSha256);
 
         // The Vulkan renderer is experimental, so Automatic keeps the direct renderer for now.
         // It needs Android 10 for the NDK image reader and Choreographer APIs it uses.
@@ -688,8 +688,10 @@ public class MediaCodecDecoderRenderer extends VideoDecoderRenderer implements C
             if (pyrowave && prefs.customVulkanDriver && prefs.customVulkanDriverToast &&
                     VulkanRendererBridge.isCustomDriverActive()) {
                 final String name = VulkanRendererBridge.getCustomDriverName();
+                final String sha256 = VulkanRendererBridge.getCustomDriverSha256();
                 final String message = activity.getString(R.string.custom_vulkan_driver_loaded,
-                        name != null ? name : "custom driver");
+                        name != null ? name : "custom driver",
+                        sha256 != null ? sha256.substring(0, Math.min(16, sha256.length())) : "?");
                 activity.runOnUiThread(() -> Toast.makeText(activity, message, Toast.LENGTH_LONG).show());
             }
         }

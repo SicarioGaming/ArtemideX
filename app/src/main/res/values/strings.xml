@@ -321,16 +321,24 @@
     <string name="title_video_renderer">Video renderer</string>
     <string name="summary_video_renderer">Vulkan adds dithering and native frame pacing. Automatic uses the direct renderer.</string>
 
-    <string name="title_custom_vulkan_driver">Custom Vulkan driver</string>
-    <string name="summary_custom_vulkan_driver">Load a custom Vulkan driver (for example Turnip) through libadrenotools, for arm64 devices on Android 10+. Used by PyroWave; other codecs keep the system Vulkan driver. If the driver doesn\'t work, the system one is used instead. Restart Starwire after changing it.</string>
+    <string name="title_custom_vulkan_driver">Custom Vulkan driver (experimental)</string>
+    <string name="summary_custom_vulkan_driver">Not yet tried with a real Turnip driver. Loads a Vulkan driver file you choose, such as Turnip, for PyroWave on 64-bit ARM devices with Android 10 or newer; other codecs keep the system driver. If the driver can\'t load or can\'t run PyroWave, the system driver is used instead, but a driver that crashes closes Starwire. Restart Starwire after changing it.</string>
     <string name="title_custom_vulkan_driver_path">Custom driver file</string>
-    <string name="summary_custom_vulkan_driver_path">Tap to choose the driver (.so, .zip, or .adpkg). It is copied into the app\'s private storage.</string>
+    <string name="summary_custom_vulkan_driver_path">Tap to choose the driver (.so, .zip or .adpkg). Starwire checks it\'s a 64-bit ARM library, then copies it into its own storage.</string>
+    <string name="summary_custom_vulkan_driver_file">%1$s\nSHA-256: %2$s</string>
+    <string name="summary_custom_vulkan_driver_unchecked">%1$s was imported by an older Starwire that didn\'t record its SHA-256, so it isn\'t used. Tap to choose it again.</string>
     <string name="custom_vulkan_driver_imported">Custom driver imported: %1$s</string>
     <string name="custom_vulkan_driver_import_failed">Could not import the custom driver</string>
     <string name="custom_vulkan_driver_no_picker">No file picker available</string>
+    <string name="title_remove_custom_vulkan_driver">Remove the custom driver</string>
+    <string name="summary_remove_custom_vulkan_driver">Deletes the driver file from Starwire\'s storage.</string>
+    <string name="custom_vulkan_driver_removed">Custom driver removed</string>
+    <string name="custom_vulkan_driver_warning_title">Turn on the custom driver?</string>
+    <string name="custom_vulkan_driver_warning_message">This loads a graphics driver file that you choose into Starwire. It\'s only used for PyroWave streams.\n\nThe driver runs as part of Starwire, with the same access as the app: your network, your microphone if you\'ve allowed it, and the keys for your paired PCs. Only use a driver file from a source you trust.\n\nIf the driver can\'t load or can\'t run PyroWave, Starwire goes back to the normal driver. A driver that crashes closes Starwire instead.\n\nThis is experimental and hasn\'t been tried with a real Turnip driver yet.</string>
+    <string name="custom_vulkan_driver_warning_accept">Turn on</string>
     <string name="title_custom_vulkan_driver_toast">Driver loaded toast</string>
     <string name="summary_custom_vulkan_driver_toast">Show a message when the custom Vulkan driver is loaded.</string>
-    <string name="custom_vulkan_driver_loaded">Custom Vulkan driver loaded: %1$s</string>
+    <string name="custom_vulkan_driver_loaded">Custom Vulkan driver loaded: %1$s (SHA-256 %2$s…)</string>
 
     <string name="dithering_off">Off</string>
     <string name="dithering_low">Low</string>
@@ -745,7 +753,7 @@
     <string name="impact_video_format">HEVC and AV1 look better at the same bitrate. Older devices can take longer to decode them.</string>
     <string name="impact_pyrowave_late_frames">Accepting more blur keeps the stream smooth when frames arrive late.</string>
     <string name="impact_video_renderer">Vulkan paces frames more evenly for a small GPU cost. Direct has the least overhead.</string>
-    <string name="impact_custom_vulkan_driver">A newer driver can speed up Vulkan on Adreno GPUs. A bad one can crash the stream.</string>
+    <string name="impact_custom_vulkan_driver">Experimental and not yet tried with a real Turnip driver. A bad driver can close Starwire.</string>
     <string name="impact_spatial_dithering">Small GPU cost. No change to latency.</string>
     <string name="impact_hdr">Uses 10-bit video, which needs hardware HEVC or AV1 decoding. Slower devices may take longer per frame.</string>
     <string name="impact_perf_overlay">Very small. Lite mode draws less.</string>

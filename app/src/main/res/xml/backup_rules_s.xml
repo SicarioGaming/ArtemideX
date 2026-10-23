@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <data-extraction-rules>
   <!-- Don't sync preferences because it often contains device-specific data -->
+  <!-- An imported custom Vulkan driver is native code; never restore one from a backup -->
   <cloud-backup disableIfNoEncryptionCapabilities="true">
     <exclude domain="sharedpref" path="."/>
+    <exclude domain="file" path="custom_vulkan_driver"/>
   </cloud-backup>
   <device-transfer>
     <exclude domain="sharedpref" path="."/>
+    <exclude domain="file" path="custom_vulkan_driver"/>
   </device-transfer>
 </data-extraction-rules>

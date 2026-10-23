@@ -490,6 +490,11 @@
             android:dependency="checkbox_custom_vulkan_driver"
             android:title="@string/title_custom_vulkan_driver_path"
             android:summary="@string/summary_custom_vulkan_driver_path" />
+        <Preference
+            android:key="remove_custom_vulkan_driver"
+            android:dependency="checkbox_custom_vulkan_driver"
+            android:title="@string/title_remove_custom_vulkan_driver"
+            android:summary="@string/summary_remove_custom_vulkan_driver" />
         <CheckBoxPreference
             android:key="checkbox_custom_vulkan_driver_toast"
             android:dependency="checkbox_custom_vulkan_driver"

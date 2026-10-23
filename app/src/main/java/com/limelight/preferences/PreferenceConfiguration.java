@@ -116,8 +116,13 @@ public class PreferenceConfiguration {
     private static final String SPATIAL_DITHERING_PREF_STRING = "spatial_dithering";
     private static final String JITTER_BUFFER_PREF_STRING = "jitter_buffer";
     private static final String PYROWAVE_LATE_FRAMES_PREF_STRING = "pyrowave_late_frames";
-    private static final String CUSTOM_VULKAN_DRIVER_PREF_STRING = "checkbox_custom_vulkan_driver";
+    static final String CUSTOM_VULKAN_DRIVER_PREF_STRING = "checkbox_custom_vulkan_driver";
     static final String CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING = "text_custom_vulkan_driver_path";
+    // Recorded when the driver is imported, and checked before it's loaded
+    static final String CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING = "custom_vulkan_driver_sha256";
+    // Set once the warning shown when the driver is first turned on has been accepted
+    static final String CUSTOM_VULKAN_DRIVER_WARNED_PREF_STRING = "custom_vulkan_driver_warning_accepted";
+    static final String REMOVE_CUSTOM_VULKAN_DRIVER_PREF_STRING = "remove_custom_vulkan_driver";
     private static final String CUSTOM_VULKAN_DRIVER_TOAST_PREF_STRING = "checkbox_custom_vulkan_driver_toast";
 
     static final String DEFAULT_RESOLUTION = "1280x720";
@@ -248,6 +253,7 @@ public class PreferenceConfiguration {
     public int pyrowaveLateFrames;
     public boolean customVulkanDriver;
     public String customVulkanDriverPath;
+    public String customVulkanDriverSha256;
     public boolean customVulkanDriverToast;
     public boolean absoluteMouseMode;
     public boolean enableAudioFx;
@@ -869,6 +875,7 @@ public class PreferenceConfiguration {
         config.pyrowaveLateFrames = getPyrowaveLateFramesValue(context);
         config.customVulkanDriver = prefs.getBoolean(CUSTOM_VULKAN_DRIVER_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER);
         config.customVulkanDriverPath = prefs.getString(CUSTOM_VULKAN_DRIVER_PATH_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER_PATH);
+        config.customVulkanDriverSha256 = prefs.getString(CUSTOM_VULKAN_DRIVER_SHA256_PREF_STRING, null);
         config.customVulkanDriverToast = prefs.getBoolean(CUSTOM_VULKAN_DRIVER_TOAST_PREF_STRING, DEFAULT_CUSTOM_VULKAN_DRIVER_TOAST);
 
         config.analogStickForScrolling = getAnalogStickForScrollingValue(context);
