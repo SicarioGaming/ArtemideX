@@ -14,7 +14,8 @@ SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 [ -n "$SDK" ] || { echo "set ANDROID_HOME" >&2; exit 4; }
 WANT=23.0
 sdkmanager() { "$SDK/cmdline-tools/latest/bin/sdkmanager" "$@"; }
-licenses() { yes | sdkmanager --licenses > /dev/null 2>&1 || true; }
+# yes says "Broken pipe" on stderr when sdkmanager stops reading; that's expected, so keep it quiet.
+licenses() { yes 2>/dev/null | sdkmanager --licenses > /dev/null 2>&1 || true; }
 
 case "${1:-}" in
     cmdline-tools)
