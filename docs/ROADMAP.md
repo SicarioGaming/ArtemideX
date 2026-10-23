@@ -187,6 +187,20 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 
 ## 0.2.1: after the 0.2.0 code review
 
+- [x] GitHub repo cleanup, after
+      [u/rambo3349's code review](https://www.reddit.com/r/MoonlightStreaming/comments/1xd12x5/starwire_020_mic_passthrough_wo_needing_to_modify/19rigium2zrt0/)
+      in the 0.2.0 Reddit thread. The public repo now carries the real history, every commit with
+      its own description and sharing history with Moonlight X, so upstream changes can be merged
+      again. Before, it had one commit per folder with the same few messages. The switch on
+      23 Oct was a plain fast-forward, so clones, forks and the release tags kept working; an old
+      account name and the PC's name were taken out of the maintainer's commits first. Also:
+      every prebuilt library is traced to its source and rebuilt byte for byte on GitHub
+      (`docs/PROVENANCE.md`, `prebuilts.yml`), the 0.2.0 mic measurements are published with
+      their raw data and a script that recomputes them (`docs/measurements/`), untested claims
+      came out of the README and the release pages, `SECURITY.md` (with private vulnerability
+      reporting) and `CONTRIBUTING.md` were added, and `.github/tools/check-publish.sh` keeps
+      secrets and personal details out of anything pushed to the public repo. This part is
+      already live; it didn't need a release
 - [x] Custom PyroWave driver: the setting says it's experimental, and the first time it's turned
       on, a warning says what a driver file can do and asks first. Imports are checked (a plain
       file name, at most 64 MB, a 64-bit ARM library, or an archive of at most 64 files holding
