@@ -245,7 +245,10 @@ dependencies {
     testImplementation 'org.json:json:20250517'
     testImplementation 'net.sf.kxml:kxml2:2.3.0'
 
-    // On-device tests (Starwire): gradlew connectedNonRootDebugAndroidTest
+    // On-device tests (Starwire): .github/tools/device-test.sh, which installs over the app with
+    // adb install -r and never uninstalls (connectedAndroidTest may, and the pairing would go too)
     androidTestImplementation 'androidx.test:runner:1.6.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    // The smoke tests drive the app the way a person would (com.limelight.smoke)
+    androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.3.0'
 }
