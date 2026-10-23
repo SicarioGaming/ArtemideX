@@ -197,18 +197,24 @@ Rules for Starwire:
   has come by 3000 ms it tells the user the receiver isn't answering, and keeps trying.
 - Audio captured before the HELLO_ACK is dropped, not kept for later.
 - Every status starts the session (the key doesn't depend on it). While the status is 1 or 2,
-  Starwire sends the same HELLO again every 2000 ms to see when the PC is ready; the receiver
-  answers the same HELLO with the same session for as long as it keeps running.
+  Starwire sends the same HELLO again every 2000 ms to see when the PC is ready. The receiver
+  answers it with the same session while it still has that session, current or pending. It
+  doesn't after a restart, or once it has forgotten or replaced that session, for example a
+  pending one that carried no audio for 30 s (see the rules for the receiver).
 - A HELLO gets one session: the one its first valid HELLO_ACK names. A later valid HELLO_ACK for
-  the same clientRandom that names another session (the receiver restarted, or someone sent an
-  old answer again) starts no session. Starwire sends a new HELLO with a new clientRandom, and
-  audio goes on in the current session until the new HELLO_ACK. So Starwire never goes back to an
-  earlier session, and no key starts again at counter 0.
+  the same clientRandom that names another session (the receiver restarted or forgot that
+  session, or someone sent an old answer again) starts no session. Starwire sends a new HELLO
+  with a new clientRandom, and audio goes on in the current session until the new HELLO_ACK. So
+  Starwire never goes back to an earlier session, and no key starts again at counter 0.
 - A REHELLO that names the current session, with a MAC that checks out, starts a new HELLO (a new
   clientRandom), at most once every 2 s. Audio goes on in the old session until the new
-  HELLO_ACK. A REHELLO for any other session is ignored.
+  HELLO_ACK. A REHELLO for any other session is ignored, and so is every REHELLO while a new
+  HELLO waits for its HELLO_ACK.
 - The counter starts at 0 in each session and goes up by one per packet. It never wraps: after
   0xFFFFFFFF (265 days of audio) Starwire starts a new session.
+- So Starwire never seals two packets with the same key and nonce: each HELLO has a new
+  clientRandom from a secure random generator, a HELLO gets at most one session, and a session's
+  counter only goes up.
 
 Rules for the receiver:
 
