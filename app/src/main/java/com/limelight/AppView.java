@@ -46,7 +46,10 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -469,6 +472,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
 
+        if (!(menuInfo instanceof AdapterContextMenuInfo)) {
+            return;
+        }
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
         AppObject selectedApp = (AppObject) appGridAdapter.getItem(info.position);
 
@@ -500,19 +506,44 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         menu.add(Menu.NONE, APP_SETTINGS_ID, 5, "App Settings");
         menu.add(Menu.NONE, ADD_QUICK_LAUNCH_ID, 6, getResources().getString(R.string.applist_menu_add_quick_launch));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Only add an option to create shortcut if box art is loaded
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && info.targetView != null) {
+            // Only add an option to create shortcut if the tile's picture is loaded
             // and when we're in grid-mode (not list-mode).
             ImageView appImageView = info.targetView.findViewById(R.id.grid_image);
-            if (appImageView != null) {
-                // We have a grid ImageView, so we must be in grid-mode
-                BitmapDrawable drawable = (BitmapDrawable)appImageView.getDrawable();
-                if (drawable != null && drawable.getBitmap() != null) {
-                    // We have a bitmap loaded too
-                    menu.add(Menu.NONE, CREATE_SHORTCUT_ID, 6, getResources().getString(R.string.applist_menu_scut));
-                }
+            if (appImageView != null && shortcutBitmap(appImageView) != null) {
+                menu.add(Menu.NONE, CREATE_SHORTCUT_ID, 6, getResources().getString(R.string.applist_menu_scut));
             }
         }
+    }
+
+    // The tile's picture as a bitmap a pinned shortcut can use. Desktop and the other icon tiles are
+    // drawn, not bitmaps (casting them to BitmapDrawable crashed the menu), and box art can be a GPU
+    // (HARDWARE) bitmap, which shortcut icons can't take, so both are redrawn into a normal one.
+    // Null while there's nothing to show.
+    static Bitmap shortcutBitmap(ImageView view) {
+        Drawable drawable = view == null ? null : view.getDrawable();
+        if (drawable == null) {
+            return null;
+        }
+        if (drawable instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+            if (bitmap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && bitmap.getConfig() == Bitmap.Config.HARDWARE) {
+                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
+            }
+            return bitmap;
+        }
+        int width = view.getWidth() > 0 ? view.getWidth() : drawable.getIntrinsicWidth();
+        int height = view.getHeight() > 0 ? view.getHeight() : drawable.getIntrinsicHeight();
+        if (width <= 0 || height <= 0) {
+            return null;
+        }
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Rect bounds = drawable.copyBounds();
+        drawable.setBounds(0, 0, width, height);
+        drawable.draw(new Canvas(bitmap));
+        drawable.setBounds(bounds);
+        return bitmap;
     }
 
     @Override
@@ -521,6 +552,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
+        if (!(item.getMenuInfo() instanceof AdapterContextMenuInfo)) {
+            return super.onContextItemSelected(item);
+        }
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         final AppObject app = (AppObject) appGridAdapter.getItem(info.position);
         switch (item.getItemId()) {
@@ -602,9 +636,8 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 return true;
 
             case CREATE_SHORTCUT_ID:
-                ImageView appImageView = info.targetView.findViewById(R.id.grid_image);
-                Bitmap appBits = ((BitmapDrawable)appImageView.getDrawable()).getBitmap();
-                if (!shortcutHelper.createPinnedGameShortcut(computer, app.app, appBits)) {
+                Bitmap appBits = shortcutBitmap((ImageView) info.targetView.findViewById(R.id.grid_image));
+                if (appBits == null || !shortcutHelper.createPinnedGameShortcut(computer, app.app, appBits)) {
                     Toast.makeText(AppView.this, getResources().getString(R.string.unable_to_pin_shortcut), Toast.LENGTH_LONG).show();
                 }
                 return true;
