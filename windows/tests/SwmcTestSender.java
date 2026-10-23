@@ -1,7 +1,8 @@
 // Test sender for e2e-loopback.ps1 (GPL-3.0, part of Starwire): plays Starwire's part against a
 // receiver running on this PC. It pairs with the code the receiver printed, checks the answers to
-// wrong and repeated pairing requests, streams a quiet tone in real time, and then sends packets
-// the receiver must refuse. It isn't the app's code: the app has its own implementation of the
+// wrong and repeated pairing requests, streams a quiet tone in real time, sends packets the
+// receiver must refuse, and last has a second device use the same code, which must undo the
+// pairing. It isn't the app's code: the app has its own implementation of the
 // same format, and both are held to tests/vectors/swmc-v1-vectors.txt. Based on the research
 // prototype; Java 8 and its standard library only.
 //
@@ -328,9 +329,6 @@ public class SwmcTestSender {
             check("its confirmation matches the pairing key worked out here", same(confirm, 0, accept, HEADER + 65 + 9 + nameLen, MAC));
             System.out.println("INFO paired with " + new String(accept, HEADER + 65 + 9, nameLen, StandardCharsets.UTF_8));
             check("the same request again gets the same PAIR_ACCEPT", Arrays.equals(exchange(sock, lo, port, request, 1000, T_PAIR_ACCEPT), accept));
-            byte[] other = pairRequest(kCode, random(rng, 8), random(rng, 8), encodePoint(newKeyPair()), "e2e second device");
-            check("another request with the same code gets PAIR_REJECT 1: a code works once",
-                    reason(exchange(sock, lo, port, other, 2000, T_PAIR_REJECT)) == 1);
 
             // A device that isn't paired gets no answer
             byte[] strangerId = random(rng, 8);
@@ -386,7 +384,14 @@ public class SwmcTestSender {
             byte[] plain = vbanPacket(packets + 300, amplitude);
             sock.send(new DatagramPacket(plain, plain.length, lo, port));
             System.out.println("INFO sent " + packets + " audio packets in " + (System.nanoTime() - start) / 1000000 + " ms, then 5 that must be refused");
-            System.out.println(String.format(Locale.ROOT, "SENT played=%d pcm=%016x replayed_or_late=2 forged=2 unencrypted=1 unpaired=1 unknown_session=1 wrong_codes=1",
+
+            // Another device using the same code: someone else saw it, so this pairing is undone
+            byte[] other = pairRequest(kCode, random(rng, 8), random(rng, 8), encodePoint(newKeyPair()), "e2e second device");
+            check("another device using the same code gets PAIR_REJECT 3: a code works once",
+                    reason(exchange(sock, lo, port, other, 2000, T_PAIR_REJECT)) == 3);
+            check("and that undoes this device's pairing: its HELLO gets no answer",
+                    exchange(sock, lo, port, hello(kAuth, deviceId, random(rng, 8)), 700, -1) == null);
+            System.out.println(String.format(Locale.ROOT, "SENT played=%d pcm=%016x replayed_or_late=2 forged=2 unencrypted=1 unpaired=2 unknown_session=1 wrong_codes=1",
                     packets, hash));
         }
         System.out.println(failures == 0 ? "sender: all passed" : "sender: " + failures + " FAILED");

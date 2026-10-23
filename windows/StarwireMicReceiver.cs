@@ -511,6 +511,8 @@ sealed class Tray
     readonly ToolStripMenuItem output = new ToolStripMenuItem();
     readonly ToolStripMenuItem paired = new ToolStripMenuItem("Paired devices");
     readonly SynchronizationContext ui = new WindowsFormsSynchronizationContext();
+    readonly ReportQueue reports = new ReportQueue();
+    readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
     readonly string device;
     readonly string streamName;
     readonly int port;
@@ -561,7 +563,8 @@ sealed class Tray
         }
 
         // Back to "waiting" a few seconds after the device stops sending, and kept up to date
-        // while waiting, since devices get paired and unpaired
+        // while waiting, since devices get paired and unpaired. Also shows the notifications that
+        // waited their turn.
         System.Windows.Forms.Timer idle = new System.Windows.Forms.Timer();
         idle.Interval = 1000;
         idle.Tick += delegate {
@@ -572,6 +575,7 @@ sealed class Tray
             else if (waiting) {
                 ShowWaiting();
             }
+            ShowNote();
         };
         idle.Start();
     }
@@ -590,19 +594,32 @@ sealed class Tray
         }
     }
 
-    // Called from the receive thread
+    // Called from the receive thread. However many reports come, at most one call waits for the
+    // UI thread, and notifications come a few seconds apart (ReportQueue).
     public void Show(string text, bool important)
     {
-        ui.Post(delegate {
-            if (important) {
-                icon.ShowBalloonTip(8000, "Starwire microphone", text, ToolTipIcon.Warning);
-            }
-            else {
-                receiving = text.StartsWith("Receiving");
-                waiting = false;
-                SetStatus(text);
-            }
-        }, null);
+        if (reports.Add(text, important)) {
+            ui.Post(delegate { ShowReports(); }, null);
+        }
+    }
+
+    void ShowReports()
+    {
+        string text = reports.TakeStatus();
+        if (text != null) {
+            receiving = text.StartsWith("Receiving");
+            waiting = false;
+            SetStatus(text);
+        }
+        ShowNote();
+    }
+
+    void ShowNote()
+    {
+        string note = reports.TakeNote(clock.ElapsedMilliseconds);
+        if (note != null) {
+            icon.ShowBalloonTip(8000, "Starwire microphone", note, ToolTipIcon.Warning);
+        }
     }
 
     public void OpenPairing()
@@ -721,18 +738,27 @@ sealed class Tray
     }
 }
 
-// "Pair a device...": shows a one-time code until a device pairs with it, it runs out, or the
-// window is closed, which stops it working
+// "Pair a device...": shows a one-time code, once asked to, until a device pairs with it, it runs
+// out, or the window is closed, which stops it working. Anyone who sees the code before the user
+// has typed it can pair first, so the code only shows when asked, and the window then says where
+// the pairing came from and can undo it. It keeps watching after that: if another device uses the
+// code too, the receiver undoes the pairing (SecureMic.cs), and the window says so.
 sealed class PairingForm : Form
 {
     readonly SecureMicEndpoint endpoint;
     readonly Label intro = new Label();
+    readonly Label caution = new Label();
+    readonly Button showCode = new Button();
     readonly Label code = new Label();
     readonly Label time = new Label();
     readonly Label pc = new Label();
+    readonly Label notMine = new Label();
+    readonly Button unpair = new Button();
     readonly Button close = new Button();
     readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-    bool finished;
+    bool started;
+    PairingState shown = PairingState.Open;
+    byte[] pairedId;
 
     public PairingForm(SecureMicEndpoint endpoint)
     {
@@ -763,13 +789,26 @@ sealed class PairingForm : Form
         intro.MaximumSize = new Size(440, 0);
         intro.Margin = new Padding(0, 0, 0, 10);
         intro.Text = "In Starwire on your Android device: Settings > Sound & vibration > Send my microphone > "
-            + "Pair with the PC, then type this code.";
+            + "Pair with the PC, then type the code this window shows.";
+        caution.AutoSize = true;
+        caution.UseMnemonic = false;
+        caution.MaximumSize = new Size(440, 0);
+        caution.Margin = new Padding(0, 0, 0, 6);
+        caution.Text = "Anyone who sees the code before you've typed it could pair instead of you, so don't show it "
+            + "while your screen is shared.";
+        showCode.Text = "Show the code";
+        showCode.AutoSize = true;
+        showCode.Anchor = AnchorStyles.None;
+        showCode.Margin = new Padding(0, 6, 0, 12);
+        showCode.Click += delegate { Begin(); };
+        AcceptButton = showCode;
         // The code in big letters that can't be confused (no I, L, O or U), centred
         code.AutoSize = true;
         code.UseMnemonic = false;
         code.Anchor = AnchorStyles.None;
         code.Margin = new Padding(0, 6, 0, 12);
         code.Font = new Font("Consolas", 26f, FontStyle.Bold);
+        code.Visible = false;
         time.AutoSize = true;
         time.UseMnemonic = false;
         time.MaximumSize = new Size(440, 0);
@@ -778,6 +817,18 @@ sealed class PairingForm : Form
         pc.MaximumSize = new Size(440, 0);
         pc.ForeColor = SystemColors.GrayText;
         pc.Text = "This PC: " + Environment.MachineName + Addresses();
+        notMine.AutoSize = true;
+        notMine.UseMnemonic = false;
+        notMine.MaximumSize = new Size(440, 0);
+        notMine.Margin = new Padding(0, 12, 0, 0);
+        notMine.Text = "If you haven't typed the code yet, or that isn't your device, someone else saw the code:";
+        notMine.Visible = false;
+        unpair.Text = "Unpair it";
+        unpair.AutoSize = true;
+        unpair.Anchor = AnchorStyles.Left;
+        unpair.Margin = new Padding(0, 6, 0, 0);
+        unpair.Visible = false;
+        unpair.Click += delegate { UnpairIt(); };
         close.Text = "Cancel";
         close.AutoSize = true;
         close.Anchor = AnchorStyles.Right;
@@ -785,27 +836,43 @@ sealed class PairingForm : Form
         close.Click += delegate { Close(); };
         CancelButton = close;
         layout.Controls.Add(intro);
+        layout.Controls.Add(caution);
+        layout.Controls.Add(showCode);
         layout.Controls.Add(code);
         layout.Controls.Add(time);
         layout.Controls.Add(pc);
+        layout.Controls.Add(notMine);
+        layout.Controls.Add(unpair);
         layout.Controls.Add(close);
         Controls.Add(layout);
 
-        code.Text = endpoint.BeginPairing();
-        ShowState();
         timer.Interval = 250;
         timer.Tick += delegate { ShowState(); };
-        timer.Start();
         FormClosed += delegate {
             timer.Stop();
-            endpoint.CancelPairing();
+            if (started) {
+                endpoint.CancelPairing();
+            }
         };
+    }
+
+    // The code is made when it's shown, so its 5 minutes start then
+    void Begin()
+    {
+        started = true;
+        code.Text = endpoint.BeginPairing();
+        code.Visible = true;
+        showCode.Visible = false;
+        caution.Visible = false;
+        AcceptButton = null;
+        ShowState();
+        timer.Start();
     }
 
     void ShowState()
     {
         PairingStatus s = endpoint.Pairing;
-        if (s == null || finished) {
+        if (!started || s == null) {
             return;
         }
         if (s.State == PairingState.Open) {
@@ -813,17 +880,32 @@ sealed class PairingForm : Form
             time.Text = "It works once, for the next " + seconds / 60 + ":" + (seconds % 60).ToString("00") + ".";
             return;
         }
+        if (s.State == shown) {
+            return;
+        }
         // The outcome in big letters where the instructions were, then what it means
-        finished = true;
-        timer.Stop();
+        shown = s.State;
         code.Visible = false;
         pc.Visible = false;
+        notMine.Visible = false;
+        unpair.Visible = false;
         close.Text = "Close";
         intro.Font = new Font(Font.FontFamily, 14f, FontStyle.Bold);
         if (s.State == PairingState.Paired) {
+            // Still watching, in case another device uses the code too
+            pairedId = s.DeviceId;
             intro.Text = "Paired with " + s.DeviceName + ".";
-            time.Text = "Its microphone comes to this PC encrypted from now on. To unpair it, right-click the "
-                + "Starwire microphone icon > Paired devices.";
+            time.Text = "From " + s.Address + ". Its microphone comes to this PC encrypted from now on. To unpair it "
+                + "later, right-click the Starwire microphone icon > Paired devices.";
+            notMine.Visible = true;
+            unpair.Visible = true;
+            return;
+        }
+        timer.Stop();
+        if (s.State == PairingState.UsedTwice) {
+            intro.Text = "The code was used twice.";
+            time.Text = "So someone else may have seen it. To be safe, no device is paired with it. Choose Pair a "
+                + "device again for a new code.";
         }
         else if (s.State == PairingState.Expired) {
             intro.Text = "That code has expired.";
@@ -836,6 +918,24 @@ sealed class PairingForm : Form
         else {
             Close();
         }
+    }
+
+    // Someone else paired with the code: they go, like any unpaired device
+    void UnpairIt()
+    {
+        try {
+            endpoint.Unpair(pairedId);
+        }
+        catch (Exception e) {
+            MessageBox.Show("Couldn't unpair it: " + e.Message, "Starwire microphone", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        timer.Stop();
+        notMine.Visible = false;
+        unpair.Visible = false;
+        intro.Text = "Unpaired.";
+        time.Text = "It can't send sound to this PC. Choose Pair a device again for a new code, and show it only where "
+            + "nobody else can see it.";
     }
 
     // This PC's IPv4 addresses, to tell it apart in Starwire's list of PCs

@@ -6,6 +6,7 @@
 // - Pairing: the receiver shows a one-time code (16 characters, 80 bits) that the user types into
 //   Starwire. The code authenticates an ECDH P-256 exchange, which gives the device and this PC a
 //   32-byte pairing key. A code works once, for 5 minutes, and pairing stops after 10 wrong codes.
+//   If a second device uses the same code, someone else saw it, so the pairing it made is undone.
 // - Each time the device starts sending, a HELLO / HELLO_ACK exchange (authenticated with the
 //   pairing key) makes a fresh AES-256-GCM key for that session.
 // - Each audio packet is the original VBAN packet, encrypted and authenticated, with a counter
@@ -986,8 +987,9 @@ sealed class MicPairingStore
     }
 }
 
-// How a "Pair a device" window stands
-enum PairingState { Open, Paired, Expired, TooManyTries, Cancelled }
+// How a "Pair a device" window stands. UsedTwice: after it paired, another device used the code
+// too, so someone else saw it and the pairing was undone.
+enum PairingState { Open, Paired, Expired, TooManyTries, Cancelled, UsedTwice }
 
 sealed class PairingStatus
 {
@@ -995,10 +997,18 @@ sealed class PairingStatus
     public string Code;
     public long RemainingMs;
     public string DeviceName;   // once paired
+    public string Address;      // where the pairing came from
+    public byte[] DeviceId;
 }
 
 // One "Pair a device" window: a code that works once, for LifetimeMs, and stops working after
-// MaxWrongCodes requests made with another code
+// MaxWrongCodes requests made with another code.
+//
+// Anyone who sees the code before the user has typed it can pair first: someone watching a screen
+// share, say, or reading a stream that isn't encrypted. Then the user's own device uses the code
+// too, and two devices having it shows it was seen, so the first pairing is undone and the user is
+// told. The same goes for anyone using it after the user, until the next code. A request with a
+// wrong code can't undo anything.
 sealed class PairingSession
 {
     public const long LifetimeMs = 5 * 60 * 1000;
@@ -1023,7 +1033,8 @@ sealed class PairingSession
     readonly List<string> wrongRequests = new List<string>();
     byte[] acceptedRequest, accept;
     long pairedAt;
-    string deviceName;
+    MicPairing made;
+    string madeFrom;
 
     public PairingSession(byte[] code, long now, byte[] receiverId, string pcName, Func<ECDiffieHellmanCng> newKey,
         Func<DateTime> utcNow, Func<MicPairing, string> keep)
@@ -1054,7 +1065,11 @@ sealed class PairingSession
         s.State = State(now);
         s.Code = Swmc.EncodeCode(code);
         s.RemainingMs = s.State == PairingState.Open ? started + LifetimeMs - now : 0;
-        s.DeviceName = deviceName;
+        if (made != null) {
+            s.DeviceName = made.Name;
+            s.Address = madeFrom;
+            s.DeviceId = (byte[]) made.DeviceId.Clone();
+        }
         return s;
     }
 
@@ -1065,15 +1080,23 @@ sealed class PairingSession
         }
     }
 
-    // The answer to a PAIR_REQUEST already checked by Swmc.ParsePairRequest: a PAIR_ACCEPT, a
-    // PAIR_REJECT, or null for none. paired is set when this request made a new pairing.
-    public byte[] Handle(byte[] p, int length, long now, out MicPairing paired)
+    // The answer to a PAIR_REQUEST from `from`, already checked by Swmc.ParsePairRequest: a
+    // PAIR_ACCEPT, a PAIR_REJECT, or null for none. paired is set when this request made a new
+    // pairing, and undo when it showed the code was seen, so the pairing made with it has to go.
+    public byte[] Handle(byte[] p, int length, long now, string from, out MicPairing paired, out MicPairing undo)
     {
         paired = null;
+        undo = null;
         PairingState current = State(now);
         if (current == PairingState.Paired) {
-            if (now - pairedAt < RepeatMs && length == acceptedRequest.Length && Swmc.ConstantTimeEquals(p, 0, acceptedRequest, 0, length)) {
-                return (byte[]) accept.Clone();
+            if (length == acceptedRequest.Length && Swmc.ConstantTimeEquals(p, 0, acceptedRequest, 0, length)) {
+                // The device that paired, asking again
+                return now - pairedAt < RepeatMs ? (byte[]) accept.Clone() : Swmc.PairReject(p, Swmc.RejectNotPairing);
+            }
+            if (Swmc.MacOk(codeKey, p, length)) {
+                state = PairingState.UsedTwice;
+                undo = made;
+                return Swmc.PairReject(p, Swmc.RejectExpired);
             }
             return Swmc.PairReject(p, Swmc.RejectNotPairing);
         }
@@ -1081,6 +1104,7 @@ sealed class PairingSession
             return Swmc.PairReject(p, Swmc.RejectNotPairing);
         }
         if (current != PairingState.Open) {
+            // Expired, too many wrong codes, or used twice: a new code is needed
             return Swmc.PairReject(p, Swmc.RejectExpired);
         }
         if (!Swmc.MacOk(codeKey, p, length)) {
@@ -1124,26 +1148,31 @@ sealed class PairingSession
         accept = Swmc.PairAccept(codeKey, pairing.Key, deviceId, nonce, receiverPoint, receiverId, pcName);
         acceptedRequest = Swmc.Slice(p, 0, length);
         pairedAt = now;
-        deviceName = pairing.Name;
+        made = pairing;
+        madeFrom = from;
         state = PairingState.Paired;
         paired = pairing;
         return (byte[]) accept.Clone();
     }
 }
 
-// When each key (an address, a device) was last let through, for at most `capacity` keys, so
-// warnings about many addresses can't use up memory
+// Lets each key (a kind of warning, an address) through at most once every intervalMs, keeping
+// at most `capacity` keys. When it's full, keys whose time is up make room; if none has, a new key
+// is refused, so faked addresses can neither use up memory nor push out the keys already there.
 sealed class RateLimit
 {
     readonly Dictionary<string, long> last = new Dictionary<string, long>();
     readonly int capacity;
+    readonly long intervalMs;
+    long fullUntil = long.MinValue;   // while full: when the oldest key's time is up
 
-    public RateLimit(int capacity)
+    public RateLimit(int capacity, long intervalMs)
     {
         this.capacity = capacity;
+        this.intervalMs = intervalMs;
     }
 
-    public bool Allow(string key, long now, long intervalMs)
+    public bool Allow(string key, long now)
     {
         long then;
         if (last.TryGetValue(key, out then)) {
@@ -1152,17 +1181,25 @@ sealed class RateLimit
             }
         }
         else if (last.Count >= capacity) {
+            if (now < fullUntil) {
+                return false;
+            }
             List<string> old = new List<string>();
+            long oldest = long.MaxValue;
             foreach (KeyValuePair<string, long> kv in last) {
                 if (now - kv.Value >= intervalMs) {
                     old.Add(kv.Key);
+                }
+                else {
+                    oldest = Math.Min(oldest, kv.Value);
                 }
             }
             foreach (string k in old) {
                 last.Remove(k);
             }
             if (last.Count >= capacity) {
-                last.Clear();
+                fullUntil = oldest + intervalMs;
+                return false;
             }
         }
         last[key] = now;
@@ -1170,11 +1207,79 @@ sealed class RateLimit
     }
 }
 
+// What the receiver has to show on its icon, gathered from other threads. However many reports
+// come, at most one call waits for the UI thread (Add says when to post one), the status shows
+// only the latest, and notifications come at least GapMs apart: a few wait their turn, and when
+// more come the oldest waiting one is dropped.
+sealed class ReportQueue
+{
+    public const long GapMs = 4000;
+    public const int MaxWaiting = 4;
+
+    readonly object gate = new object();
+    readonly Queue<string> notes = new Queue<string>();
+    string status;
+    bool posted;
+    long lastNote = long.MinValue / 2;
+
+    // From any thread. True when the caller has to post a call to TakeStatus and TakeNote to the
+    // UI thread; false when one is already waiting.
+    public bool Add(string text, bool important)
+    {
+        lock (gate) {
+            if (!important) {
+                status = text;
+            }
+            else if (!notes.Contains(text)) {
+                if (notes.Count >= MaxWaiting) {
+                    notes.Dequeue();
+                }
+                notes.Enqueue(text);
+            }
+            if (posted) {
+                return false;
+            }
+            posted = true;
+            return true;
+        }
+    }
+
+    // On the UI thread, in the posted call: the status to show, or null if it hasn't changed
+    public string TakeStatus()
+    {
+        lock (gate) {
+            posted = false;
+            string s = status;
+            status = null;
+            return s;
+        }
+    }
+
+    // On the UI thread, in the posted call and every second or so: the notification to show now,
+    // or null
+    public string TakeNote(long now)
+    {
+        lock (gate) {
+            if (notes.Count == 0 || now - lastNote < GapMs) {
+                return null;
+            }
+            lastNote = now;
+            return notes.Dequeue();
+        }
+    }
+}
+
 // The receiver's side of the network: takes each datagram and says whether it's audio to play.
 // Only audio from a paired device, decrypted and in order, plays, and only from one device at a
 // time. Plain VBAN only plays with AllowUnencrypted. Everything an attacker can send is checked
 // cheaply, nothing makes the state grow beyond a few sessions per paired device, the receiver
-// only answers packets it can check (or with short ones), and its warnings are rate-limited.
+// only answers packets it can check (or with short ones), and its warnings are rate-limited by
+// kind, not by address, since addresses can be faked.
+//
+// A recorded HELLO passes its MAC check for as long as the pairing lasts (v1 has nothing in it
+// that changes), so anyone who once saw one can send it again. That only ever makes a waiting
+// session, which can't carry audio without the pairing key; the limits below keep it from
+// crowding out the device's own sessions.
 //
 // Thread-safe: the receive thread calls Handle, the icon's menu calls the pairing methods.
 // Everything outside (clock, random bytes, sending, reporting) is passed in, so the tests run it
@@ -1184,11 +1289,14 @@ sealed class SecureMicEndpoint
     public const long FloorMs = 3000;       // the device playing keeps the microphone until it's quiet this long
     public const long PendingMs = 30000;    // a session that hasn't carried audio by then is forgotten
     public const int MaxPending = 2;        // sessions waiting for their first audio, per device
+    public const long PendingKeepMs = 2000; // a waiting session this young isn't pushed out by a new HELLO
     public const long RehelloMs = 1000;     // at most one REHELLO a second per device
     public const long WarnMs = 10 * 60 * 1000;   // the same warning at most this often
-    const int MaxAcksPerSecond = 10;        // per device
+    public const int MaxAcksPerSecond = 8;  // per session: the device repeats its HELLO 4 times a second
+    const int MaxSpent = 1024;              // HELLO random numbers remembered per device
     const int MaxPairingRepliesPerSecond = 20;
     const long OutputCheckMs = 2000;
+    const long SaveWarnMs = 30000;
 
     sealed class Session : IDisposable
     {
@@ -1197,6 +1305,20 @@ sealed class SecureMicEndpoint
         public CngAesGcm Aead;
         public readonly ReplayGuard Guard = new ReplayGuard();
         public long Created;
+        public bool Spent;              // made by a HELLO the device had used before: most likely recorded
+        long ackSecond = -1;
+        int acksThisSecond;
+
+        // HELLO_ACKs are limited for each session, so a recorded HELLO sent again and again only
+        // uses up its own
+        public bool AllowAck(long now)
+        {
+            if (now / 1000 != ackSecond) {
+                ackSecond = now / 1000;
+                acksThisSecond = 0;
+            }
+            return ++acksThisSecond <= MaxAcksPerSecond;
+        }
 
         public void Dispose() { Aead.Dispose(); }
     }
@@ -1208,8 +1330,25 @@ sealed class SecureMicEndpoint
         public Session Current;
         public readonly List<Session> Pending = new List<Session>();
         public long LastRehello = long.MinValue / 2;
-        public long AckSecond = -1;
-        public int AcksThisSecond;
+        // The random numbers of the device's HELLOs whose sessions have ended or been dropped, the
+        // last MaxSpent of them. The device makes a new one for each stream, so such a HELLO coming
+        // again is most likely recorded and sent again by someone else.
+        readonly HashSet<long> spent = new HashSet<long>();
+        readonly Queue<long> spentOrder = new Queue<long>();
+
+        public void Spend(Session s)
+        {
+            long r = BitConverter.ToInt64(s.ClientRandom, 0);
+            if (spent.Add(r)) {
+                spentOrder.Enqueue(r);
+                if (spentOrder.Count > MaxSpent) {
+                    spent.Remove(spentOrder.Dequeue());
+                }
+            }
+            s.Dispose();
+        }
+
+        public bool IsSpent(byte[] p, int at) { return spent.Contains(BitConverter.ToInt64(p, at)); }
 
         public void Drop()
         {
@@ -1231,7 +1370,14 @@ sealed class SecureMicEndpoint
     readonly Action<byte[], int, EndPoint> send;
     readonly Action<string, bool> report;
     readonly Dictionary<string, Device> devices = new Dictionary<string, Device>();
-    readonly RateLimit warnings = new RateLimit(256);
+    // Notifications: each kind at most once every WarnMs, however many addresses it's about. The
+    // kinds are fixed, apart from "busy" for each paired device.
+    readonly RateLimit notices = new RateLimit(1024, WarnMs);
+    // Lines for --console about each address, at most once every WarnMs and for 256 at a time
+    readonly RateLimit details = new RateLimit(256, WarnMs);
+    // For each kind of warning, the other addresses since its last notification
+    readonly Dictionary<string, int> othersSince = new Dictionary<string, int>();
+    long saveWarnedAt = long.MinValue / 2;
     PairingSession pairing;
     PairingState pairingReported = PairingState.Open;
     Device floor;
@@ -1281,7 +1427,7 @@ sealed class SecureMicEndpoint
             catch (Exception e) {
                 // Shouldn't happen (the fuzz tests look for it); keep the receiver going if it does
                 Errors++;
-                if (warnings.Allow("error", nowMs(), WarnMs)) {
+                if (notices.Allow("error", nowMs())) {
                     report("Ignored a packet that couldn't be handled: " + e.Message, false);
                 }
                 vbanLength = 0;
@@ -1302,9 +1448,7 @@ sealed class SecureMicEndpoint
         IPAddress source = Vban.Source(from);
         if (!Vban.IsHomeNetwork(source)) {
             NotHome++;
-            if (warnings.Allow("home " + source, now, WarnMs)) {
-                report("Ignoring audio from " + source + ": not on the home network.", true);
-            }
+            Warn("home", source, now, "Ignoring audio from ", ": not on the home network.");
             return false;
         }
         if (plain) {
@@ -1321,7 +1465,7 @@ sealed class SecureMicEndpoint
                 encrypted = true;
                 return true;
             case Swmc.TPairRequest:
-                HandlePairRequest(p, length, from, now);
+                HandlePairRequest(p, length, from, source, now);
                 return false;
             default:
                 // Not v1, or a type only the device receives
@@ -1330,14 +1474,31 @@ sealed class SecureMicEndpoint
         }
     }
 
+    // A warning about packets from an address. A source address costs nothing to fake, so each
+    // kind is a notification at most once every WarnMs, naming one address and how many others
+    // there were since the last; each address is a line for --console at most once every WarnMs.
+    // Both are capped, and neither can push out what the other warnings remember.
+    void Warn(string kind, IPAddress source, long now, string before, string after)
+    {
+        bool newAddress = details.Allow(kind + " " + source, now);
+        int others;
+        othersSince.TryGetValue(kind, out others);
+        if (notices.Allow(kind, now)) {
+            othersSince[kind] = 0;
+            report(before + source + (others == 0 ? "" : " and " + others + (others == 1 ? " other address" : " other addresses")) + after, true);
+        }
+        else if (newAddress) {
+            othersSince[kind] = others + 1;
+            report(before + source + after, false);
+        }
+    }
+
     bool HandlePlain(byte[] p, int length, IPAddress source, long now, byte[] vbanOut, ref int vbanLength, ref string sender)
     {
         if (!AllowUnencrypted) {
             Unencrypted++;
-            if (warnings.Allow("plain " + source, now, WarnMs)) {
-                report("Ignored unencrypted microphone audio from " + source
-                    + ". If that's Starwire, update it and pair it: right-click this icon > Pair a device.", true);
-            }
+            Warn("plain", source, now, "Ignored unencrypted microphone audio from ",
+                ". If that's Starwire, update it and pair it: right-click this icon > Pair a device.");
             return false;
         }
         if (length <= Vban.HeaderSize || length > vbanOut.Length || !Vban.NameMatches(p, StreamName)) {
@@ -1358,10 +1519,8 @@ sealed class SecureMicEndpoint
             return d;
         }
         Unpaired++;
-        if (warnings.Allow("unpaired " + source, now, WarnMs)) {
-            report("A device this PC hasn't paired tried to send its microphone (from " + source
-                + "). To allow it, right-click this icon > Pair a device.", true);
-        }
+        Warn("unpaired", source, now, "A device this PC hasn't paired tried to send its microphone (from ",
+            "). To allow it, right-click this icon > Pair a device.");
         return null;
     }
 
@@ -1392,25 +1551,22 @@ sealed class SecureMicEndpoint
         }
         if (s == null) {
             // A new session, kept aside until its first audio: a HELLO someone recorded and sent
-            // again can't push the current session off
+            // again can't push the current session off. If there's no room, nothing is made and
+            // the device asks again.
+            bool spent = d.IsSpent(p, 16);
+            if (!MakeRoom(d, spent, now)) {
+                return;
+            }
             s = new Session();
             s.ClientRandom = Swmc.Slice(p, 16, 8);
             s.Id = new byte[8];
             random(s.Id);
             s.Aead = new CngAesGcm(Swmc.AudioKey(d.Pairing.Key, d.Pairing.DeviceId, s.ClientRandom, s.Id));
             s.Created = now;
-            if (d.Pending.Count >= MaxPending) {
-                d.Pending[0].Dispose();
-                d.Pending.RemoveAt(0);
-            }
+            s.Spent = spent;
             d.Pending.Add(s);
         }
-        long second = now / 1000;
-        if (second != d.AckSecond) {
-            d.AckSecond = second;
-            d.AcksThisSecond = 0;
-        }
-        if (++d.AcksThisSecond > MaxAcksPerSecond) {
+        if (!s.AllowAck(now)) {
             return;
         }
         int status = Swmc.StatusReady;
@@ -1439,11 +1595,42 @@ sealed class SecureMicEndpoint
         return outputReady;
     }
 
+    // Room for a new waiting session, if there is or can be some. Recorded HELLOs, however many
+    // and however often, mustn't keep the device's new session out or make a session for every
+    // packet. So a HELLO the device has used before (spent) only takes a free place; a new one can
+    // push out a waiting session made by a spent HELLO, or else the oldest once it's PendingKeepMs
+    // old, by when the device would have used it. Someone with recordings this receiver hasn't
+    // seen (it restarted) can keep the device waiting about a second for each, once.
+    bool MakeRoom(Device d, bool spent, long now)
+    {
+        if (d.Pending.Count < MaxPending) {
+            return true;
+        }
+        if (spent) {
+            return false;
+        }
+        Session victim = null;
+        foreach (Session w in d.Pending) {
+            if (victim == null && w.Spent) {
+                victim = w;
+            }
+        }
+        if (victim == null && now - d.Pending[0].Created >= PendingKeepMs) {
+            victim = d.Pending[0];
+        }
+        if (victim == null) {
+            return false;
+        }
+        d.Pending.Remove(victim);
+        d.Spend(victim);
+        return true;
+    }
+
     void ExpirePending(Device d, long now)
     {
         for (int i = d.Pending.Count - 1; i >= 0; i--) {
             if (now - d.Pending[i].Created >= PendingMs) {
-                d.Pending[i].Dispose();
+                d.Spend(d.Pending[i]);
                 d.Pending.RemoveAt(i);
             }
         }
@@ -1494,14 +1681,14 @@ sealed class SecureMicEndpoint
         if (s != d.Current) {
             // The device's first audio on a new session: it replaces the old one
             if (d.Current != null) {
-                d.Current.Dispose();
+                d.Spend(d.Current);
             }
             d.Current = s;
             d.Pending.Remove(s);
         }
         if (HasFloor(d, now)) {
             Busy++;
-            if (warnings.Allow("busy " + d.Pairing.Id, now, WarnMs)) {
+            if (notices.Allow("busy " + d.Pairing.Id, now)) {
                 report(floor.Pairing.Name + " is sending its microphone; ignoring " + d.Pairing.Name + " until it stops.", true);
             }
             return false;
@@ -1515,7 +1702,7 @@ sealed class SecureMicEndpoint
         return true;
     }
 
-    void HandlePairRequest(byte[] p, int length, EndPoint from, long now)
+    void HandlePairRequest(byte[] p, int length, EndPoint from, IPAddress source, long now)
     {
         int nameLength;
         if (!Swmc.ParsePairRequest(p, length, out nameLength)) {
@@ -1527,11 +1714,14 @@ sealed class SecureMicEndpoint
             reply = Swmc.PairReject(p, Swmc.RejectNotPairing);
         }
         else {
-            MicPairing made;
-            reply = pairing.Handle(p, length, now, out made);
+            MicPairing made, undo;
+            reply = pairing.Handle(p, length, now, source.ToString(), out made, out undo);
             if (made != null) {
                 AddDevice(made);
-                report("Paired with " + made.Name + ".", true);
+                report("Paired with " + made.Name + " (from " + source + ").", true);
+            }
+            if (undo != null) {
+                Undo(undo);
             }
             ReportPairing(now);
         }
@@ -1576,12 +1766,49 @@ sealed class SecureMicEndpoint
         catch (Exception e) {
             if (e is IOException || e is UnauthorizedAccessException || e is CryptographicException) {
                 // The device asks again every half second; one notification is enough
-                if (warnings.Allow("save", nowMs(), 30000)) {
+                long now = nowMs();
+                if (now - saveWarnedAt >= SaveWarnMs) {
+                    saveWarnedAt = now;
                     report("Couldn't save the pairing with " + made.Name + " (" + e.Message + "). Try again.", true);
                 }
                 return e.Message;
             }
             throw;
+        }
+    }
+
+    // The pairing window found its code was used twice: the device that paired with it goes, as
+    // if unpaired. If the file can't be written, it's still refused until the receiver restarts.
+    void Undo(MicPairing made)
+    {
+        string trouble = null;
+        try {
+            store.Remove(made.DeviceId);
+        }
+        catch (Exception e) {
+            if (!(e is IOException || e is UnauthorizedAccessException)) {
+                throw;
+            }
+            trouble = e.Message;
+        }
+        Forget(made.DeviceId);
+        report("The pairing code was used twice, so someone else may have seen it. To be safe, " + made.Name
+            + " isn't paired any more. Choose Pair a device again for a new code."
+            + (trouble == null ? "" : " (Couldn't update the paired devices file: " + trouble + ". Unpair " + made.Name
+                + " from this icon's Paired devices.)"), true);
+    }
+
+    // Ends a device's sessions and refuses its audio from now on
+    void Forget(byte[] deviceId)
+    {
+        Device d;
+        string id = Swmc.Hex(deviceId);
+        if (devices.TryGetValue(id, out d)) {
+            d.Drop();
+            devices.Remove(id);
+            if (floor == d) {
+                floor = null;
+            }
         }
     }
 
@@ -1676,15 +1903,7 @@ sealed class SecureMicEndpoint
             if (!store.Remove(deviceId)) {
                 return false;
             }
-            Device d;
-            string id = Swmc.Hex(deviceId);
-            if (devices.TryGetValue(id, out d)) {
-                d.Drop();
-                devices.Remove(id);
-                if (floor == d) {
-                    floor = null;
-                }
-            }
+            Forget(deviceId);
             return true;
         }
     }

@@ -102,6 +102,9 @@ static class SecureMicTests
         public readonly Random Fill = new Random(7);
         public readonly List<byte[]> Sent = new List<byte[]>();
         public readonly List<string> Reports = new List<string>();
+        // The important reports, which the icon shows as notifications
+        public readonly List<string> Notices = new List<string>();
+        public int RandomCalls;
         public readonly MicPairingStore Store;
         public readonly SecureMicEndpoint Endpoint;
         public EndPoint From = new IPEndPoint(IPAddress.Parse("192.168.1.20"), 40000);
@@ -122,7 +125,12 @@ static class SecureMicTests
                 Store.Devices.Add(d);
             }
             Endpoint = new SecureMicEndpoint(Store, () => Now, Random,
-                (b, n, to) => Sent.Add(Swmc.Slice(b, 0, n)), (text, important) => Reports.Add(text));
+                (b, n, to) => Sent.Add(Swmc.Slice(b, 0, n)), (text, important) => {
+                    Reports.Add(text);
+                    if (important) {
+                        Notices.Add(text);
+                    }
+                });
             Endpoint.NewPairingKey = () => Swmc.FixedKey(EcdhR, EcdhGrx, EcdhGry);
             Endpoint.UtcNow = () => Epoch.AddMilliseconds(Now);
             Endpoint.PcName = "TEST-PC";
@@ -130,6 +138,7 @@ static class SecureMicTests
 
         void Random(byte[] b)
         {
+            RandomCalls++;
             if (Randoms.Count > 0) {
                 Array.Copy(Randoms.Dequeue(), b, b.Length);
             }
@@ -493,22 +502,35 @@ static class SecureMicTests
         byte[] c3 = Bytes(8, 0x30), c4 = Bytes(8, 0x40);
         rig.Feed(phone.Hello(c3));
         Sender s3 = phone.Session(c3, rig.Last);
+        int sent = rig.Sent.Count;
         rig.Feed(phone.Hello(c4));
+        Check("at most 2 sessions wait per device: with both under 2 s old, another HELLO gets no answer", rig.Sent.Count == sent);
         Check("however many HELLOs come, the session that's playing keeps playing", rig.Feed(s1.Audio(15)));
-        Check("at most 2 sessions wait per device: the oldest goes", !rig.Feed(waiting.Audio(0)) && rig.Endpoint.UnknownSession == 1);
+        rig.Now = 1000 + SecureMicEndpoint.PendingKeepMs - 1;
+        rig.Feed(phone.Hello(c4));
+        Check("still none just before the oldest is 2 s old", rig.Sent.Count == sent);
+        rig.Now = 1000 + SecureMicEndpoint.PendingKeepMs;
+        rig.Feed(phone.Hello(c4));
+        Check("then the HELLO is answered and the oldest waiting session goes", phone.AckOk(rig.Last, c4, Swmc.StatusReady)
+            && !rig.Feed(waiting.Audio(0)) && rig.Endpoint.UnknownSession == 1);
         Check("the device's first audio on a new session plays and replaces the old one", rig.Feed(s3.Audio(0)));
         Check("the old session's audio is now refused", !rig.Feed(s1.Audio(16)) && rig.Endpoint.UnknownSession == 2);
+        rig.Feed(phone.Hello(ClientRandom));
+        Check("and the old session's HELLO now only makes a waiting session", phone.AckOk(rig.Last, ClientRandom, Swmc.StatusReady)
+            && !Same(rig.Last, rig.Sent[0]) && rig.Feed(s3.Audio(1)));
 
         // A waiting session is forgotten after 30 s
-        rig.Now = 2000;
+        rig.Now = 10000;
+        rig.Feed(s3.Audio(2));
         byte[] c5 = Bytes(8, 0x50), c6 = Bytes(8, 0x60);
         rig.Feed(phone.Hello(c5));
+        Check("a new HELLO pushes out the waiting session the used one made", phone.AckOk(rig.Last, c5, Swmc.StatusReady));
         Sender s5 = phone.Session(c5, rig.Last);
         rig.Feed(phone.Hello(c6));
         Sender s6 = phone.Session(c6, rig.Last);
-        rig.Now = 2000 + SecureMicEndpoint.PendingMs - 1;
+        rig.Now = 10000 + SecureMicEndpoint.PendingMs - 1;
         Check("a waiting session still works just before 30 s", rig.Feed(s6.Audio(0)));
-        rig.Now = 2000 + SecureMicEndpoint.PendingMs;
+        rig.Now = 10000 + SecureMicEndpoint.PendingMs;
         Check("and is forgotten at 30 s", !rig.Feed(s5.Audio(0)));
         Check("nothing threw", rig.Endpoint.Errors == 0);
     }
@@ -643,6 +665,244 @@ static class SecureMicTests
         Check("and its HELLO gets no answer", rig.Sent.Count == sent);
     }
 
+    // Recorded HELLOs sent again. Anyone who once saw one of the device's HELLOs on the network can
+    // send it as often as they like. It can't carry audio, but nor may it keep the device from
+    // getting its HELLO_ACKs, push the device's new session out, or have the receiver make a new
+    // session for every packet.
+    static void ReplayedHellos()
+    {
+        Phone phone = new Phone(DeviceId, PairKeyFixed);
+        byte[] recorded = phone.Hello(Bytes(8, 0x10));
+        byte[] fresh = Bytes(8, 0x20);
+
+        Rig rig = new Rig(null, Pairing(DeviceId, PairKeyFixed, "Test phone"));
+        rig.Now = 5000;
+        for (int i = 0; i < 11; i++) {
+            rig.Feed(recorded);
+        }
+        int answered = rig.Sent.Count;
+        rig.Now = 5100;
+        rig.Feed(phone.Hello(fresh));
+        Check("a recorded HELLO sent 11 times at the start of a second: the device's new HELLO still gets its HELLO_ACK",
+            rig.Sent.Count == answered + 1 && phone.AckOk(rig.Last, fresh, Swmc.StatusReady));
+        Check("and the recorded one gets at most 8 HELLO_ACKs that second", answered <= 8);
+        Check("and the device's new session plays", rig.Feed(phone.Session(fresh, rig.Last).Audio(0)));
+        int acked = 0;
+        for (int second = 6; second < 16; second++) {
+            rig.Now = second * 1000;
+            for (int i = 0; i < 11; i++) {
+                rig.Feed(recorded);
+            }
+            rig.Now += 300;
+            byte[] c = Bytes(8, (byte) (0x60 + 8 * second));
+            int sent = rig.Sent.Count;
+            rig.Feed(phone.Hello(c));
+            if (rig.Sent.Count == sent + 1 && phone.AckOk(rig.Last, c, Swmc.StatusReady) && rig.Feed(phone.Session(c, rig.Last).Audio(0))) {
+                acked++;
+            }
+        }
+        Check("the same every second for 10 seconds: each of the device's new HELLOs is answered and plays", acked == 10);
+
+        // Two recorded HELLOs sent straight after the device's own
+        Rig evict = new Rig(null, Pairing(DeviceId, PairKeyFixed, "Test phone"));
+        evict.Now = 1000;
+        evict.Feed(phone.Hello(fresh));
+        Sender s = phone.Session(fresh, evict.Last);
+        evict.Feed(phone.Hello(Bytes(8, 0x31)));
+        evict.Feed(phone.Hello(Bytes(8, 0x32)));
+        evict.Now = 1050;
+        Check("two recorded HELLOs sent right after the device's own don't push its new session out", evict.Feed(s.Audio(0)));
+
+        // Three recorded HELLOs sent in turn, fast
+        Rig cycle = new Rig(null, Pairing(DeviceId, PairKeyFixed, "Test phone"));
+        byte[][] three = { phone.Hello(Bytes(8, 0x41)), phone.Hello(Bytes(8, 0x42)), phone.Hello(Bytes(8, 0x43)) };
+        cycle.Now = 1000;
+        int made = cycle.RandomCalls;
+        for (int i = 0; i < 300; i++) {
+            cycle.Now += 5;
+            cycle.Feed(three[i % 3]);
+        }
+        made = cycle.RandomCalls - made;
+        Check("three recorded HELLOs sent in turn for 1.5 s make 2 sessions, not one a packet (" + made + ")", made == 2);
+
+        // HELLOs from the device's earlier streams, which this receiver has seen: they can't push out
+        // anything, so the device's new HELLO gets in at once
+        Rig earlier = new Rig(null, Pairing(DeviceId, PairKeyFixed, "Test phone"));
+        byte[][] old = { Bytes(8, 0x51), Bytes(8, 0x52), Bytes(8, 0x53) };
+        foreach (byte[] c in old) {
+            earlier.Now += 60000;
+            earlier.Feed(phone.Hello(c));
+            earlier.Feed(phone.Session(c, earlier.Last).Audio(0));
+        }
+        earlier.Now += 60000;
+        earlier.Feed(phone.Hello(old[0]));
+        earlier.Feed(phone.Hello(old[1]));
+        earlier.Feed(phone.Hello(fresh));
+        Sender mine = phone.Session(fresh, earlier.Last);
+        Check("the device's new HELLO is answered while HELLOs from its earlier streams wait", phone.AckOk(earlier.Last, fresh, Swmc.StatusReady));
+        int sessions = earlier.RandomCalls;
+        for (int i = 0; i < 50; i++) {
+            earlier.Now += 5;
+            earlier.Feed(phone.Hello(old[i % 3]));
+        }
+        Check("sending those again and again makes no new sessions (" + (earlier.RandomCalls - sessions) + ")", earlier.RandomCalls == sessions);
+        Check("and can't push the device's session out", earlier.Feed(mine.Audio(0)));
+
+        // After the receiver restarts it has seen none of them. Four recorded HELLOs, two every 5 ms,
+        // against the device asking every 250 ms: it gets in within about a second for each
+        Rig restarted = new Rig(null, Pairing(DeviceId, PairKeyFixed, "Test phone"));
+        byte[][] four = { phone.Hello(Bytes(8, 0x71)), phone.Hello(Bytes(8, 0x72)), phone.Hello(Bytes(8, 0x73)), phone.Hello(Bytes(8, 0x74)) };
+        Sender got = null;
+        long playedAt = -1;
+        int next = 0;
+        for (long t = 0; t <= 10000 && playedAt < 0; t += 5) {
+            restarted.Now = t;
+            restarted.Feed(four[next++ % 4]);
+            restarted.Feed(four[next++ % 4]);
+            if (got != null) {
+                if (restarted.Feed(got.Audio(t))) {
+                    playedAt = t;
+                }
+                got = null;
+            }
+            if (t % 250 == 0) {
+                int sent = restarted.Sent.Count;
+                restarted.Feed(phone.Hello(fresh));
+                if (restarted.Sent.Count == sent + 1 && phone.AckOk(restarted.Last, fresh, Swmc.StatusReady)) {
+                    got = phone.Session(fresh, restarted.Last);
+                }
+            }
+        }
+        Check("four recorded HELLOs the receiver hasn't seen, sent nonstop: the device's session plays within 5 s (" + playedAt + " ms)",
+            playedAt >= 0 && playedAt <= 5000);
+        Check("nothing threw", rig.Endpoint.Errors + evict.Endpoint.Errors + cycle.Endpoint.Errors + earlier.Endpoint.Errors + restarted.Endpoint.Errors == 0);
+    }
+
+    static IPAddress LinkLocal(int i)
+    {
+        byte[] b = new byte[16];
+        b[0] = 0xfe;
+        b[1] = 0x80;
+        b[12] = (byte) (i >> 24);
+        b[13] = (byte) (i >> 16);
+        b[14] = (byte) (i >> 8);
+        b[15] = (byte) i;
+        return new IPAddress(b);
+    }
+
+    // Faked source addresses: a source address costs nothing to fake, and link-local ones get past
+    // the firewall rule and the home-network filter. However many come, the PC shows one
+    // notification of each kind, its memory stays bounded, and the other warnings' limits hold.
+    static void Floods()
+    {
+        Rig rig = new Rig(null, Pairing(DeviceId, PairKeyFixed, "Test phone"));
+        byte[] vban = Swmc.Ascii("VBAN");
+        Random r = new Random(3);
+        byte[] id = new byte[8], context = new byte[8];
+        for (int i = 0; i < 20000; i++) {
+            rig.Now += 10;
+            rig.From = new IPEndPoint(LinkLocal(i), 40000);
+            rig.Feed(vban);
+            byte[] hello = new byte[Swmc.HelloLength];
+            r.NextBytes(hello);
+            r.NextBytes(id);
+            r.NextBytes(context);
+            Swmc.WriteHeader(hello, Swmc.THello, id, context);
+            rig.Feed(hello);
+            rig.From = new IPEndPoint(new IPAddress(new byte[] { 203, 0, (byte) (i >> 8), (byte) i }), 40000);
+            rig.Feed(vban);
+        }
+        Check("20000 packets of each kind from 20000 faked addresses (unencrypted, unpaired, not home): one notification of each ("
+            + rig.Notices.Count + ")", rig.Notices.Count == 3 && rig.Endpoint.Unencrypted == 20000 && rig.Endpoint.Unpaired == 20000);
+        Check("and at most 256 more lines for --console (" + (rig.Reports.Count - rig.Notices.Count) + ")", rig.Reports.Count - rig.Notices.Count <= 256);
+        rig.Now += SecureMicEndpoint.WarnMs;
+        rig.From = new IPEndPoint(LinkLocal(-1), 40000);
+        rig.Feed(vban);
+        Check("10 minutes later the next notification says there were other addresses",
+            rig.Notices.Count == 4 && rig.Notices[3].Contains("Ignored unencrypted microphone audio from " + LinkLocal(-1) + " and ")
+            && rig.Notices[3].Contains(" other addresses."));
+
+        // A second address after the first: a line for --console, not another notification
+        Rig two = new Rig(null);
+        two.Feed(VbanPacket(1, 0));
+        two.From = new IPEndPoint(IPAddress.Parse("192.168.1.21"), 40000);
+        two.Feed(VbanPacket(2, 0));
+        Check("unencrypted audio from a second address soon after: no second notification, a line for --console",
+            two.Notices.Count == 1 && two.ReportsWith("from 192.168.1.21") == 1);
+        two.Feed(VbanPacket(3, 0));
+        Check("and that address's line isn't repeated", two.ReportsWith("from 192.168.1.21") == 1);
+
+        // The other warnings neither drown in a flood of addresses nor get reset by one
+        byte[] idB = Swmc.Hex("b1b2b3b4b5b6b7b8");
+        byte[] keyB = Bytes(32, 0x80);
+        Phone a = new Phone(DeviceId, PairKeyFixed), b = new Phone(idB, keyB);
+        Rig floor = new Rig(null, Pairing(DeviceId, PairKeyFixed, "Phone A"), Pairing(idB, keyB, "Tablet B"));
+        for (int i = 0; i < 1000; i++) {
+            floor.From = new IPEndPoint(LinkLocal(i), 40000);
+            floor.Feed(vban);
+        }
+        floor.From = new IPEndPoint(IPAddress.Parse("192.168.1.20"), 40000);
+        floor.Feed(a.Hello(ClientRandom));
+        Sender sa = a.Session(ClientRandom, floor.Last);
+        floor.Feed(b.Hello(ClientRandom));
+        Sender sb = b.Session(ClientRandom, floor.Last);
+        floor.Feed(sa.Audio(0));
+        floor.Feed(sb.Audio(0));
+        Check("after a flood of addresses, \"busy\" is still said", floor.Notices.Count == 2 && floor.ReportsWith("ignoring Tablet B") == 1);
+        for (int i = 1000; i < 2000; i++) {
+            floor.From = new IPEndPoint(LinkLocal(i), 40000);
+            floor.Feed(vban);
+        }
+        floor.From = new IPEndPoint(IPAddress.Parse("192.168.1.20"), 40000);
+        floor.Now = 1000;
+        floor.Feed(sa.Audio(1));
+        floor.Feed(sb.Audio(1));
+        Check("and another flood doesn't reset its limit: said once", floor.ReportsWith("ignoring Tablet B") == 1);
+        Check("nothing threw", rig.Endpoint.Errors + two.Endpoint.Errors + floor.Endpoint.Errors == 0);
+    }
+
+    // What waits for the icon: however many reports come from the receive thread, one call waits
+    // for the UI thread, the status is the latest, and notifications come a few seconds apart
+    static void Queue()
+    {
+        ReportQueue q = new ReportQueue();
+        int posts = 0;
+        Thread[] threads = new Thread[4];
+        for (int t = 0; t < threads.Length; t++) {
+            int n = t;
+            threads[t] = new Thread(() => {
+                for (int i = 0; i < 5000; i++) {
+                    if (q.Add(i % 2 == 0 ? "status " + n + " " + i : "note " + n + " " + i, i % 2 == 1)) {
+                        Interlocked.Increment(ref posts);
+                    }
+                }
+            });
+            threads[t].Start();
+        }
+        foreach (Thread t in threads) {
+            t.Join();
+        }
+        Check("20000 reports from 4 threads ask for one call to the UI thread (" + posts + ")", posts == 1);
+        string status = q.TakeStatus();
+        Check("the status shown is one of the last ones", status != null && status.EndsWith(" 4998"));
+        Check("and isn't shown again", q.TakeStatus() == null);
+        string first = q.TakeNote(0);
+        Check("a notification shows straight away", first != null && first.StartsWith("note "));
+        Check("the next only after 4 s", q.TakeNote(ReportQueue.GapMs - 1) == null && q.TakeNote(ReportQueue.GapMs) != null);
+        int waiting = 0;
+        for (long now = 2 * ReportQueue.GapMs; q.TakeNote(now) != null; now += ReportQueue.GapMs) {
+            waiting++;
+        }
+        Check("at most 4 wait their turn (" + (waiting + 2) + ")", waiting + 2 <= ReportQueue.MaxWaiting);
+        Check("after the call, the next report asks for another", q.Add("Receiving the microphone from Pixel", false) && !q.Add("x", true));
+        q.TakeStatus();
+        q.Add("Paired with Pixel", true);
+        q.Add("Paired with Pixel", true);
+        long at = 100 * ReportQueue.GapMs;
+        Check("the same notification twice while it waits shows once",
+            q.TakeNote(at) == "x" && q.TakeNote(at + ReportQueue.GapMs) == "Paired with Pixel" && q.TakeNote(at + 2 * ReportQueue.GapMs) == null);
+    }
+
     // ---------------------------------------------------------------- pairing
     static byte[] Request(byte[] code, byte[] deviceId, byte[] nonce, byte[] point, string name)
     {
@@ -707,18 +967,20 @@ static class SecureMicTests
         once.Now = 1000;
         once.Feed(request);
         byte[] accept = once.Last;
-        Check("the right code pairs", Swmc.TypeOf(accept, accept.Length) == Swmc.TPairAccept && once.Endpoint.Pairing.State == PairingState.Paired
-            && once.Endpoint.Pairing.DeviceName == "Test phone" && once.ReportsWith("Paired with Test phone.") == 1);
+        PairingStatus done = once.Endpoint.Pairing;
+        Check("the right code pairs", Swmc.TypeOf(accept, accept.Length) == Swmc.TPairAccept && done.State == PairingState.Paired
+            && done.DeviceName == "Test phone" && done.Address == "192.168.1.20" && Same(done.DeviceId, DeviceId)
+            && once.ReportsWith("Paired with Test phone (from 192.168.1.20).") == 1);
         once.Now = 1000 + PairingSession.RepeatMs - 1;
         once.Feed(request);
         Check("the same request again gets the same PAIR_ACCEPT", Same(once.Last, accept) && once.Endpoint.PairedCount == 1);
-        byte[] another = Request(Code, Swmc.Hex("0f0e0d0c0b0a0908"), Bytes(8, 0x99), PhonePoint(), "Second phone");
-        once.Feed(another);
-        Check("another request with the same code gets PAIR_REJECT 1: a code works once", IsReject(once.Last, another, Swmc.RejectNotPairing)
-            && once.Endpoint.PairedCount == 1);
         once.Now = 1000 + PairingSession.RepeatMs;
         once.Feed(request);
-        Check("after a minute the same request gets PAIR_REJECT 1 too", IsReject(once.Last, request, Swmc.RejectNotPairing));
+        Check("after a minute the same request gets PAIR_REJECT 1", IsReject(once.Last, request, Swmc.RejectNotPairing) && once.Endpoint.PairedCount == 1);
+        byte[] another = Request(Code, Swmc.Hex("0f0e0d0c0b0a0908"), Bytes(8, 0x99), PhonePoint(), "Second phone");
+        once.Feed(another);
+        Check("another request with the same code gets PAIR_REJECT 3: a code works once", IsReject(once.Last, another, Swmc.RejectExpired)
+            && once.Endpoint.Pairing.State == PairingState.UsedTwice);
 
         Rig cancelled = new Rig(null);
         cancelled.Randoms.Enqueue(Code);
@@ -758,6 +1020,52 @@ static class SecureMicTests
         shape.Feed(control);
         MicPairing cleaned = shape.Store.Find(DeviceId);
         Check("a name's control and direction characters are taken out", cleaned != null && cleaned.Name == "Evil name phone");
+    }
+
+    // Someone who reads the code off the screen (a screen share, a stream that isn't encrypted) can
+    // pair before the user does. When the user's own device then uses the code too, that shows the
+    // code was seen: the first pairing is undone and the user is told.
+    static void CodeUsedTwice()
+    {
+        byte[] other = Request(Code, Swmc.Hex("0f0e0d0c0b0a0908"), Bytes(8, 0x99), PhonePoint(), "Pixel 8");
+        byte[] mine = Request(Code, DeviceId, PairNonce, PhonePoint(), "Pixel 8");
+        Rig rig = new Rig(null);
+        rig.Randoms.Enqueue(Code);
+        rig.Endpoint.BeginPairing();
+        rig.Feed(other);
+        Phone first = new Phone(Swmc.Hex("0f0e0d0c0b0a0908"), rig.Store.Find(Swmc.Hex("0f0e0d0c0b0a0908")).Key);
+        Check("whoever uses the code first pairs", Swmc.TypeOf(rig.Last, rig.Last.Length) == Swmc.TPairAccept && rig.Endpoint.PairedCount == 1);
+        rig.Now = 1000;
+        byte[] typo = (byte[]) Code.Clone();
+        typo[0] ^= 1;
+        rig.Feed(Request(typo, DeviceId, Bytes(8, 0x42), PhonePoint(), "Pixel 8"));
+        Check("a request with a wrong code afterwards changes nothing (it can't undo a pairing)", rig.Endpoint.PairedCount == 1);
+        rig.Feed(other);
+        Check("the same request again isn't a second use", Swmc.TypeOf(rig.Last, rig.Last.Length) == Swmc.TPairAccept && rig.Endpoint.PairedCount == 1);
+        rig.Now = 40000;
+        rig.Feed(mine);
+        Check("another device using the same code undoes the first pairing", rig.Endpoint.PairedCount == 0 && rig.Store.Devices.Count == 0);
+        Check("and doesn't pair either: PAIR_REJECT 3, get a new code", IsReject(rig.Last, mine, Swmc.RejectExpired));
+        Check("the PC says the code was used twice, once", rig.Notices.Count == 2 && rig.ReportsWith("The pairing code was used twice") == 1
+            && rig.Endpoint.Pairing.State == PairingState.UsedTwice && rig.Endpoint.Pairing.DeviceName == "Pixel 8");
+        int sent = rig.Sent.Count;
+        rig.Feed(first.Hello(ClientRandom));
+        Check("the first device's HELLO gets no answer now", rig.Sent.Count == sent && rig.Endpoint.Unpaired == 1);
+        rig.Feed(other);
+        rig.Feed(mine);
+        Check("and the code stays used up", IsReject(rig.Last, mine, Swmc.RejectExpired) && rig.Endpoint.PairedCount == 0);
+
+        // Also after the window was closed, as long as no new code was made
+        Rig closed = new Rig(null);
+        closed.Randoms.Enqueue(Code);
+        closed.Endpoint.BeginPairing();
+        closed.Feed(mine);
+        closed.Endpoint.CancelPairing();
+        closed.Now = PairingSession.LifetimeMs + 60000;
+        closed.Feed(other);
+        Check("someone using the code after the user, even after the window closed, undoes the pairing too",
+            closed.Endpoint.PairedCount == 0 && IsReject(closed.Last, other, Swmc.RejectExpired));
+        Check("nothing threw", rig.Endpoint.Errors + closed.Endpoint.Errors == 0);
     }
 
     // The whole flow with fresh keys: pair, then HELLO and audio under the new key
@@ -1207,7 +1515,11 @@ static class SecureMicTests
             Rehellos();
             Floor();
             Refusals();
+            ReplayedHellos();
+            Floods();
+            Queue();
             PairingRules();
+            CodeUsedTwice();
             PairingFlow();
             Store();
             Fuzz();

@@ -8,9 +8,10 @@ Builds the receiver (StarwireMicReceiver.cs and SecureMic.cs) into a test folder
 with --console --loopback on a test port and with its own paired devices file, so it runs next to
 an installed receiver without touching it. The receiver prints a pairing code. SwmcTestSender.java,
 built with the JDK's javac, pairs using that code, streams a quiet 1 kHz tone in real time, and
-then sends a replayed, a late, two forged and one plain VBAN packet. When the receiver stops by
-itself, its summary must match what the sender sent: every audio packet played, in order, the same
-PCM, and each bad packet refused.
+then sends a replayed, a late, two forged and one plain VBAN packet. Last, a second device uses
+the same code, which must undo the pairing. When the receiver stops by itself, its summary must
+match what the sender sent: every audio packet played, in order, the same PCM, and each bad packet
+refused.
 
 By default the receiver plays into an output that doesn't exist, so nothing is heard and its
 HELLO_ACK says so (status 1). With -Audible it plays into VB-Cable's CABLE Input, quietly (-44 dBFS)
@@ -157,8 +158,12 @@ else {
         Write-Host "  got:    $summary"
     }
 }
-if ($lines -match 'Paired with e2e test sender\.') { Write-Host 'PASS the receiver says which device paired' -ForegroundColor Green }
+if ($lines -match 'Paired with e2e test sender \(from 127\.0\.0\.1\)\.') { Write-Host 'PASS the receiver says which device paired, and from where' -ForegroundColor Green }
 else { Fail "the receiver didn't say the device paired" }
+if ($lines -match 'The pairing code was used twice, so someone else may have seen it\. To be safe, e2e test sender isn''t paired any more\.') {
+    Write-Host 'PASS the second use of the code undid the pairing, and the receiver says so' -ForegroundColor Green
+}
+else { Fail "the receiver didn't say the code was used twice" }
 if ($lines -match "Ignored unencrypted microphone audio from 127\.0\.0\.1\. If that's Starwire, update it and pair it") {
     Write-Host 'PASS the plain VBAN packet got the message to update Starwire and pair' -ForegroundColor Green
 }
