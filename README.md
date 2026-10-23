@@ -147,7 +147,7 @@ controller. Keyboard, full on-screen keyboard, mouse modes, zoom, key shortcuts,
 switching, bitrate, clipboard: it's all in one grid, and works with a controller too. Anything
 that turns on and off has a small switch, so you can see what's on at a glance.
 
-### ⚡ Video options from other forks
+### ⚡ Low-latency video options
 Moonlight X's Vulkan renderer and PyroWave codec, and the low-latency options from Artemis and
 Artemide: Warp Drive, Fast V-Sync and async decoding. I ported them, but I haven't measured how
 much each one saves in Starwire yet.
