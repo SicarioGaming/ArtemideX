@@ -2,6 +2,7 @@ package com.limelight.ui;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -83,7 +84,7 @@ public class FloatingButtonDeviceTest {
     public void aDraggedButtonStartsInTheSameSpotOnTheNextScreen() {
         try (ActivityScenario<StreamSettings> scenario = ActivityScenario.launch(StreamSettings.class)) {
             scenario.onActivity(this::addButton);
-            waitFor(() -> button.isLaidOut());
+            waitFor("the button to be laid out", () -> button.isLaidOut());
             onMain(() -> {
                 assertEquals("not where the layout puts it", 0, button.getTranslationX(), 0);
                 assertEquals("not where the layout puts it", 0, button.getTranslationY(), 0);
@@ -118,8 +119,8 @@ public class FloatingButtonDeviceTest {
             // A new screen puts it back where it was dragged
             scenario.recreate();
             scenario.onActivity(this::addButton);
-            waitFor(() -> button.isLaidOut() && Math.abs(button.getX() - dragged[0]) <= 1 &&
-                    Math.abs(button.getY() - dragged[1]) <= 1);
+            waitFor("the button back in its spot", () -> button.isLaidOut() &&
+                    Math.abs(button.getX() - dragged[0]) <= 1 && Math.abs(button.getY() - dragged[1]) <= 1);
             float[] again = position();
             assertEquals(dragged[0], again[0], 1);
             assertEquals(dragged[1], again[1], 1);
@@ -201,7 +202,7 @@ public class FloatingButtonDeviceTest {
     }
 
     // Layout follows the screen's next frame, so look until it has happened
-    private void waitFor(Check condition) {
+    private void waitFor(String what, Check condition) {
         long deadline = SystemClock.uptimeMillis() + WAIT_MS;
         boolean[] met = new boolean[1];
         do {
@@ -212,5 +213,6 @@ public class FloatingButtonDeviceTest {
             }
             SystemClock.sleep(50);
         } while (SystemClock.uptimeMillis() < deadline);
+        fail("timed out after " + WAIT_MS + " ms waiting for " + what);
     }
 }
