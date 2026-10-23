@@ -492,8 +492,10 @@ the same value.
    folder.
 4. Build a debug APK with `./gradlew assembleNonRootDebug`. It installs as "Starwire (Debug)"
    (`com.starwire.debug`), next to the release app.
-5. On-device tests: `./gradlew connectedNonRootDebugAndroidTest`, with one Android device
-   connected over adb. [CONTRIBUTING.md](CONTRIBUTING.md) has more on the tests.
+5. Tests: `./gradlew testNonRootDebugUnitTest` runs the JVM tests on the computer, with no device.
+   For the on-device tests, build the test APK too (`./gradlew assembleNonRootDebugAndroidTest`)
+   and run `.github/tools/device-test.sh -s <serial>` with the device connected over adb.
+   [CONTRIBUTING.md](CONTRIBUTING.md) has more on the tests.
 
 **Signed release builds** use a key that's never committed. Put its details in
 `keystore.properties` in the project folder (it's in `.gitignore`):
