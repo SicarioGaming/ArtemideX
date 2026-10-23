@@ -45,9 +45,34 @@ jobs:
           NDK=$(grep -oP 'ndkVersion "\K[^"]+' app/build.gradle)
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK" > /dev/null
 
+      # Robolectric fetches android-all-instrumented for SDK 36 (about 204 MB) into ~/.m2 on a
+      # fresh runner. app/build.gradle names the Robolectric version, so a new one gets a new key.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository/org/robolectric
+          key: robolectric-${{ hashFiles('app/build.gradle') }}
+
       # Lint fails on anything not already listed in app/lint-baseline.xml
       - name: JVM tests and lint
         run: ./gradlew --no-daemon --continue testNonRootDebugUnitTest lintNonRootDebug
+
+      # Compares the screenshots in app/src/test/screenshots (recorded on Windows) pixel for
+      # pixel. Not blocking until a run shows Linux draws the same pixels; then run
+      # verifyRoborazziNonRootDebug in the step above instead of testNonRootDebugUnitTest and
+      # remove this step.
+      - name: Screenshot tests
+        id: screenshots
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: ./gradlew --no-daemon verifyRoborazziNonRootDebug
+
+      # The pictures that differ. Once the step above is gone, this one's condition is failure().
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() && steps.screenshots.outcome == 'failure' }}
+        with:
+          name: screenshot-diffs
+          path: app/build/outputs/roborazzi/
+          if-no-files-found: ignore
 
       # Each exits 1 if a check fails. (pyrowave_partial_test needs a GPU, so it isn't here.)
       - name: Native host tests
