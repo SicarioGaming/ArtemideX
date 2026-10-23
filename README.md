@@ -313,6 +313,23 @@ G8+, streaming from Vibepollo, and on my Galaxy Z Fold 6. The on-device tests in
 Turnip driver option with a real Turnip driver, and hosts other than Vibepollo.
 [CONTRIBUTING.md](CONTRIBUTING.md) says how to build Starwire and run the tests.
 
+### What's in this repo
+
+| Folder or file | What it is |
+| --- | --- |
+| [`app/`](app) | The Starwire Android app, with its tests in `app/src/test` and `app/src/androidTest` |
+| [`windows/`](windows) | The microphone receiver and its setup for the Windows PC |
+| [`docs/`](docs) | Screenshots, the [roadmap](docs/ROADMAP.md), [where the prebuilt libraries come from](docs/PROVENANCE.md), the mic measurements and maintainer notes |
+| [`.github/`](.github) | The workflows that build, test and release Starwire, the issue forms, the release notes and the maintainer's scripts |
+| [`CHANGELOG.md`](CHANGELOG.md) | What changed in each version |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to build, test and send a change, and the rules for commits, branches and version numbers |
+| [`SECURITY.md`](SECURITY.md) | How to report a security problem privately |
+| [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | The rules for anyone changing Starwire, people or coding agents |
+| [`LICENSE.txt`](LICENSE.txt) | The GPL-3.0 licence |
+| `.gitmodules` | Links moonlight-common-c, the streaming protocol library, from [Starwire's copy](https://github.com/SicarioGaming/moonlight-common-c) |
+| `build.gradle`, `settings.gradle`, `gradle.properties`, `gradle/`, `gradlew`, `gradlew.bat` | The Gradle build settings and the Gradle wrapper |
+| `.gitignore` | Files kept out of the repo |
+
 ## Changelog
 
 The full list of changes in every version, and what's coming next, is in [CHANGELOG.md](CHANGELOG.md).
