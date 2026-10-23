@@ -4,6 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -33,12 +34,19 @@ public class OverlayMenuViewTest {
 
     private static class RecordingListener implements OverlayMenuView.MenuActionListener {
         final List<String> events = new ArrayList<>();
+        final java.util.Set<Integer> on = new java.util.HashSet<>();
         short[] lastKeys;
+
+        private void flip(int toggle) {
+            if (!on.remove(toggle)) {
+                on.add(toggle);
+            }
+        }
 
         @Override public void onDisconnect() { events.add("disconnect"); }
         @Override public void onQuitSession() { events.add("quit"); }
-        @Override public void onToggleStats() { events.add("stats"); }
-        @Override public void onToggleMouseEmulation() { events.add("mouseEmulation"); }
+        @Override public void onToggleStats() { events.add("stats"); flip(OverlayMenuView.TOGGLE_STATS); }
+        @Override public void onToggleMouseEmulation() { events.add("mouseEmulation"); flip(OverlayMenuView.TOGGLE_MOUSE_EMULATION); }
         @Override public void onShowKeyboard() { events.add("keyboard"); }
         @Override public void onSendGuideButton() { events.add("guide"); }
         @Override public void onCustomCommand(CustomCommand command) { events.add("custom"); }
@@ -46,7 +54,7 @@ public class OverlayMenuViewTest {
         @Override public void onSendKeys(short[] keys) { events.add("keys"); lastKeys = keys; }
         @Override public void onRotateScreen() { events.add("rotate"); }
         @Override public void onToggleOnscreenController() { events.add("onscreenController"); }
-        @Override public void onToggleFloatingButton() { events.add("floatingButton"); }
+        @Override public void onToggleFloatingButton() { events.add("floatingButton"); flip(OverlayMenuView.TOGGLE_FLOATING_BUTTON); }
         @Override public void onTogglePanZoom() { events.add("panZoom"); }
         @Override public void onSelectMouseMode() { events.add("mouseMode"); }
         @Override public void onToggleTouchSensitivity() { events.add("sensitivity"); }
@@ -55,6 +63,7 @@ public class OverlayMenuViewTest {
         @Override public void onShowServerCommands() { events.add("serverCommands"); }
         @Override public void onToggleFullKeyboard() { events.add("fullKeyboard"); }
         @Override public void onChangeBitrate() { events.add("bitrate"); }
+        @Override public boolean isToggleOn(int toggle) { return on.contains(toggle); }
     }
 
     @Before
@@ -154,6 +163,44 @@ public class OverlayMenuViewTest {
         assertTrue(listener.events.contains("rotate"));
         assertTrue(listener.events.contains("onscreenController"));
         assertTrue(listener.events.contains("floatingButton"));
+    }
+
+    @Test
+    public void togglesStayOpenAndShowTheirState() {
+        listener.on.add(OverlayMenuView.TOGGLE_FLOATING_BUTTON);
+        onMain(() -> menu.buildMenu());
+        OverlayMenuButton stats = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_toggle_stats));
+        OverlayMenuButton floating = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_floating_button));
+        OverlayMenuButton guide = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_guide));
+        assertTrue(stats.isToggle());
+        assertFalse(stats.isToggleOn());
+        assertTrue(floating.isToggleOn());
+        assertFalse("one-shot buttons have no switch", guide.isToggle());
+
+        click(str(com.limelight.R.string.overlay_menu_toggle_stats));
+        click(str(com.limelight.R.string.overlay_menu_floating_button));
+        click(str(com.limelight.R.string.overlay_menu_mouse_emulation));
+        assertTrue(stats.isToggleOn());
+        assertFalse(floating.isToggleOn());
+        assertTrue(((OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_mouse_emulation))).isToggleOn());
+        assertFalse("toggles keep the menu open", listener.events.contains("closed"));
+    }
+
+    @Test
+    public void screenReadersHearSwitchesAndTheirState() {
+        listener.on.add(OverlayMenuView.TOGGLE_FLOATING_BUTTON);
+        onMain(() -> menu.buildMenu());
+        OverlayMenuButton stats = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_toggle_stats));
+        OverlayMenuButton floating = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_floating_button));
+        OverlayMenuButton guide = (OverlayMenuButton) findButton(menu, str(com.limelight.R.string.overlay_menu_guide));
+        onMain(() -> {
+            android.view.accessibility.AccessibilityNodeInfo off = stats.createAccessibilityNodeInfo();
+            assertTrue(off.isCheckable());
+            assertFalse(off.isChecked());
+            assertTrue(off.getClassName().toString().endsWith("Switch"));
+            assertTrue(floating.createAccessibilityNodeInfo().isChecked());
+            assertFalse("one-shot buttons aren't switches", guide.createAccessibilityNodeInfo().isCheckable());
+        });
     }
 
     @Test

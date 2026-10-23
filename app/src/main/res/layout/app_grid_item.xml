@@ -3,7 +3,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="136dp"
     android:layout_height="176dp"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:stateListAnimator="@animator/cg_tile_press">
     <ImageView
         android:id="@+id/grid_image"
         android:cropToPadding="false"

@@ -82,7 +82,7 @@
             android:summary="@string/summary_checkbox_auto_resume_stream"
             android:defaultValue="false" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/category_audio_settings">
+    <PreferenceCategory android:key="category_audio_settings" android:title="@string/category_audio_settings">
         <ListPreference
             android:key="list_audio_config"
             android:title="@string/title_audio_config_list"
@@ -95,6 +95,53 @@
             android:title="@string/title_checkbox_enable_audiofx"
             android:summary="@string/summary_checkbox_enable_audiofx"
             android:defaultValue="false" />
+        <CheckBoxPreference
+            android:key="checkbox_enable_microphone"
+            android:title="@string/title_checkbox_enable_microphone"
+            android:summary="@string/summary_checkbox_enable_microphone"
+            android:defaultValue="false" />
+        <!-- Where the microphone goes: over the stream (logabell's Apollo build) or to a VBAN
+             receiver on the PC, which works with any host. Only the rows for the chosen one show
+             (StreamSettings.showMicrophoneTarget). -->
+        <ListPreference
+            android:key="list_microphone_target"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_microphone_target"
+            android:summary="%s"
+            android:entries="@array/microphone_target_names"
+            android:entryValues="@array/microphone_target_values"
+            android:defaultValue="vban" />
+        <ListPreference
+            android:key="list_microphone_device"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_microphone_device_list"
+            android:summary="@string/summary_microphone_device_list"
+            android:defaultValue="0" />
+        <!-- WebLauncherPreference falls back to an in-app page on devices with no browser (TVs) -->
+        <com.limelight.preferences.WebLauncherPreference
+            android:key="microphone_host_info"
+            android:title="@string/title_microphone_host_info"
+            android:summary="@string/summary_microphone_host_info"
+            url="https://github.com/logabell/apollo-microphone/releases" />
+        <com.limelight.preferences.WebLauncherPreference
+            android:key="vban_setup_info"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_vban_setup"
+            url="https://github.com/SicarioGaming/Starwire/tree/main/windows#readme" />
+        <EditTextPreference
+            android:key="text_vban_stream_name"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_vban_stream_name"
+            android:defaultValue="Stream1"
+            android:singleLine="true"
+            android:maxLength="16" />
+        <EditTextPreference
+            android:key="text_vban_port"
+            android:dependency="checkbox_enable_microphone"
+            android:title="@string/title_vban_port"
+            android:defaultValue="6980"
+            android:inputType="number"
+            android:maxLength="5" />
         <ListPreference
             android:key="list_audio_haptics"
             android:title="@string/title_audio_haptics"

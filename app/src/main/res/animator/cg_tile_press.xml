@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cover Glow: a cover gives a little under your finger and springs back -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <set>
+            <objectAnimator
+                android:duration="90"
+                android:propertyName="scaleX"
+                android:valueTo="0.95"
+                android:valueType="floatType" />
+            <objectAnimator
+                android:duration="90"
+                android:propertyName="scaleY"
+                android:valueTo="0.95"
+                android:valueType="floatType" />
+        </set>
+    </item>
+    <item>
+        <set>
+            <objectAnimator
+                android:duration="260"
+                android:interpolator="@android:anim/overshoot_interpolator"
+                android:propertyName="scaleX"
+                android:valueTo="1"
+                android:valueType="floatType" />
+            <objectAnimator
+                android:duration="260"
+                android:interpolator="@android:anim/overshoot_interpolator"
+                android:propertyName="scaleY"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </set>
+    </item>
+</selector>

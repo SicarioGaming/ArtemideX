@@ -3,6 +3,8 @@ package com.limelight.ui.overlay;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
 import android.os.Build;
 import android.text.TextUtils;
 import android.util.AttributeSet;
@@ -64,7 +66,20 @@ public class OverlayMenuView extends LinearLayout {
         void onShowServerCommands();
         void onToggleFullKeyboard();
         void onChangeBitrate();
+
+        // Whether a toggle tile (TOGGLE_*) is on, for its switch
+        boolean isToggleOn(int toggle);
     }
+
+    // The tiles that switch something on and off; they show a small switch and keep the menu open
+    public static final int TOGGLE_NONE = 0;
+    public static final int TOGGLE_STATS = 1;
+    public static final int TOGGLE_MOUSE_EMULATION = 2;
+    public static final int TOGGLE_FULL_KEYBOARD = 3;
+    public static final int TOGGLE_PAN_ZOOM = 4;
+    public static final int TOGGLE_TOUCH_SENSITIVITY = 5;
+    public static final int TOGGLE_ONSCREEN_CONTROLLER = 6;
+    public static final int TOGGLE_FLOATING_BUTTON = 7;
 
     // Windows virtual key codes for Artemide's built-in shortcuts
     public static final short VK_TAB = 0x09;
@@ -124,7 +139,7 @@ public class OverlayMenuView extends LinearLayout {
     private static final int MONITOR_COUNT = 6;
 
     private GradientDrawable sheetBackground;
-    private View coverSwatch;
+    private ImageView coverSwatch;
     private TextView titleView;
     private TextView detailView;
     private ScrollView gridScroll;
@@ -132,11 +147,15 @@ public class OverlayMenuView extends LinearLayout {
     private LinearLayout barContainer;
     private int columns = MAIN_COLUMNS;
 
-    // The bar: Close (index 0) on its own row, then Quit and Disconnect side by side
+    // The bar: Close (index 0) on its own row, then Quit and Disconnect side by side; or all
+    // three in one row on short screens
+    private static final int COMPACT_HEIGHT_DP = 480;
+    private boolean compactBar;
     private List<OverlayMenuButton> barButtons;
     private List<Integer> barActions;
     private List<OverlayMenuButton> gridButtons;
     private List<Integer> gridActions;
+    private List<Integer> gridToggles;
 
     private enum Region { BAR, GRID }
     private Region activeRegion = Region.BAR;
@@ -218,7 +237,10 @@ public class OverlayMenuView extends LinearLayout {
         LinearLayout header = new LinearLayout(context);
         header.setOrientation(LinearLayout.HORIZONTAL);
         header.setGravity(Gravity.CENTER_VERTICAL);
-        coverSwatch = new View(context);
+        // The game's cover (or a swatch of its colour until one is set), with rounded corners
+        coverSwatch = new ImageView(context);
+        coverSwatch.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        coverSwatch.setClipToOutline(true);
         header.addView(coverSwatch, new LinearLayout.LayoutParams(dp(42), dp(56)));
 
         LinearLayout texts = new LinearLayout(context);
@@ -264,6 +286,7 @@ public class OverlayMenuView extends LinearLayout {
         barActions = new ArrayList<>();
         gridButtons = new ArrayList<>();
         gridActions = new ArrayList<>();
+        gridToggles = new ArrayList<>();
 
         activeRegion = Region.BAR;
         barIndex = 0;
@@ -290,6 +313,11 @@ public class OverlayMenuView extends LinearLayout {
         coverSwatch.setBackground(swatch);
     }
 
+    /** The game's cover for the header; null keeps the plain colour swatch. */
+    public void setCover(Drawable cover) {
+        coverSwatch.setImageDrawable(cover);
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         // A sheet, not the whole screen: at most SHEET_WIDTH_DP wide
@@ -313,6 +341,7 @@ public class OverlayMenuView extends LinearLayout {
         barActions.clear();
         gridButtons.clear();
         gridActions.clear();
+        gridToggles.clear();
 
         if (page == PAGE_SHORTCUTS) {
             // Artemide's built-in key shortcuts then Back
@@ -341,11 +370,11 @@ public class OverlayMenuView extends LinearLayout {
             addTile(R.drawable.ic_overlay_keyboard_toggle,
                 getContext().getString(R.string.overlay_menu_keyboard), ACTION_SHOW_KEYBOARD);
             addTile(R.drawable.ic_overlay_keyboard,
-                getContext().getString(R.string.overlay_menu_full_keyboard), ACTION_FULL_KEYBOARD);
+                getContext().getString(R.string.overlay_menu_full_keyboard), ACTION_FULL_KEYBOARD, TOGGLE_FULL_KEYBOARD);
             addTile(R.drawable.ic_overlay_mouse,
-                getContext().getString(R.string.overlay_menu_mouse_emulation), ACTION_TOGGLE_MOUSE_EMULATION);
+                getContext().getString(R.string.overlay_menu_mouse_emulation), ACTION_TOGGLE_MOUSE_EMULATION, TOGGLE_MOUSE_EMULATION);
             addTile(R.drawable.ic_overlay_perf,
-                getContext().getString(R.string.overlay_menu_toggle_stats), ACTION_TOGGLE_STATS);
+                getContext().getString(R.string.overlay_menu_toggle_stats), ACTION_TOGGLE_STATS, TOGGLE_STATS);
             addTile(R.drawable.ic_overlay_guide,
                 getContext().getString(R.string.overlay_menu_guide), ACTION_SEND_GUIDE);
             addTile(R.drawable.ic_overlay_key_press,
@@ -357,9 +386,9 @@ public class OverlayMenuView extends LinearLayout {
             addTile(R.drawable.ic_overlay_mouse,
                 getContext().getString(R.string.overlay_menu_mouse_mode), ACTION_MOUSE_MODE);
             addTile(R.drawable.ic_overlay_maximize,
-                getContext().getString(R.string.overlay_menu_pan_zoom), ACTION_PAN_ZOOM);
+                getContext().getString(R.string.overlay_menu_pan_zoom), ACTION_PAN_ZOOM, TOGGLE_PAN_ZOOM);
             addTile(R.drawable.ic_overlay_settings,
-                getContext().getString(R.string.overlay_menu_touch_sensitivity), ACTION_TOUCH_SENSITIVITY);
+                getContext().getString(R.string.overlay_menu_touch_sensitivity), ACTION_TOUCH_SENSITIVITY, TOGGLE_TOUCH_SENSITIVITY);
             addTile(R.drawable.ic_overlay_save,
                 getContext().getString(R.string.overlay_menu_upload_clipboard), ACTION_UPLOAD_CLIPBOARD);
             addTile(R.drawable.ic_overlay_folder,
@@ -371,9 +400,9 @@ public class OverlayMenuView extends LinearLayout {
             addTile(R.drawable.ic_overlay_restart,
                 getContext().getString(R.string.overlay_menu_rotate_screen), ACTION_ROTATE_SCREEN);
             addTile(R.drawable.ic_overlay_gamepad,
-                getContext().getString(R.string.overlay_menu_onscreen_controller), ACTION_ONSCREEN_CONTROLLER);
+                getContext().getString(R.string.overlay_menu_onscreen_controller), ACTION_ONSCREEN_CONTROLLER, TOGGLE_ONSCREEN_CONTROLLER);
             addTile(R.drawable.ic_overlay_window_menu,
-                getContext().getString(R.string.overlay_menu_floating_button), ACTION_FLOATING_BUTTON);
+                getContext().getString(R.string.overlay_menu_floating_button), ACTION_FLOATING_BUTTON, TOGGLE_FLOATING_BUTTON);
 
             List<CustomCommand> customCommands = commandsManager.getCommands();
             for (int i = 0; i < customCommands.size(); i++) {
@@ -383,7 +412,25 @@ public class OverlayMenuView extends LinearLayout {
         }
         finishGridRow();
 
-        // The bar: back to the game, then the two ways out
+        // The bar: back to the game, then the two ways out. On short screens (a phone held
+        // sideways for a stream) all three share one row, leaving room for more tools.
+        compactBar = getResources().getConfiguration().screenHeightDp < COMPACT_HEIGHT_DP;
+        if (compactBar) {
+            LinearLayout row = new LinearLayout(getContext());
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            barContainer.addView(row, new LinearLayout.LayoutParams(
+                LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
+            addBarButton(OverlayMenuButton.STYLE_PRIMARY, 0,
+                getContext().getString(R.string.overlay_menu_close), ACTION_CLOSE, row, dp(BUTTON_SPACING_DP));
+            // Without icons, so the full words fit a third of the row
+            addBarButton(OverlayMenuButton.STYLE_PILL, 0,
+                getContext().getString(R.string.overlay_menu_quit_session), ACTION_QUIT, row, dp(BUTTON_SPACING_DP));
+            addBarButton(OverlayMenuButton.STYLE_PILL, 0,
+                getContext().getString(R.string.overlay_menu_disconnect), ACTION_DISCONNECT, row, 0);
+            gridContainer.requestLayout();
+            barContainer.requestLayout();
+            return;
+        }
         addBarButton(OverlayMenuButton.STYLE_PRIMARY, 0,
             getContext().getString(R.string.overlay_menu_close), ACTION_CLOSE, barContainer, 0);
         LinearLayout exits = new LinearLayout(getContext());
@@ -404,6 +451,10 @@ public class OverlayMenuView extends LinearLayout {
     private LinearLayout currentRow;
 
     private void addTile(int iconResId, String label, int action) {
+        addTile(iconResId, label, action, TOGGLE_NONE);
+    }
+
+    private void addTile(int iconResId, String label, int action, int toggle) {
         if (currentRow == null || currentRow.getChildCount() >= columns) {
             currentRow = new LinearLayout(getContext());
             currentRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -425,6 +476,10 @@ public class OverlayMenuView extends LinearLayout {
 
         gridButtons.add(button);
         gridActions.add(action);
+        gridToggles.add(toggle);
+        if (toggle != TOGGLE_NONE) {
+            button.setToggle(actionListener != null && actionListener.isToggleOn(toggle));
+        }
 
         final int index = gridButtons.size() - 1;
         button.setOnClickListener(v -> selectAndActivate(Region.GRID, index));
@@ -643,7 +698,7 @@ public class OverlayMenuView extends LinearLayout {
             if (gridIndex >= columns) {
                 setGridIndex(gridIndex - columns);
             }
-        } else if (barIndex > 0) {
+        } else if (barIndex > 0 && !compactBar) {
             setBarIndex(0);
         } else if (!gridButtons.isEmpty()) {
             // From Close up into the last tile
@@ -663,7 +718,7 @@ public class OverlayMenuView extends LinearLayout {
                 activeRegion = Region.BAR;
                 setBarIndex(0);
             }
-        } else if (barIndex == 0 && barButtons.size() > 1) {
+        } else if (!compactBar && barIndex == 0 && barButtons.size() > 1) {
             setBarIndex(1);
         }
     }
@@ -673,8 +728,8 @@ public class OverlayMenuView extends LinearLayout {
             if (gridIndex % columns > 0) {
                 setGridIndex(gridIndex - 1);
             }
-        } else if (barIndex == 2) {
-            setBarIndex(1);
+        } else if (compactBar ? barIndex > 0 : barIndex == 2) {
+            setBarIndex(barIndex - 1);
         }
     }
 
@@ -683,8 +738,8 @@ public class OverlayMenuView extends LinearLayout {
             if (gridIndex % columns < columns - 1 && gridIndex + 1 < gridButtons.size()) {
                 setGridIndex(gridIndex + 1);
             }
-        } else if (barIndex == 1 && barButtons.size() > 2) {
-            setBarIndex(2);
+        } else if (compactBar ? barIndex < barButtons.size() - 1 : (barIndex == 1 && barButtons.size() > 2)) {
+            setBarIndex(barIndex + 1);
         }
     }
 
@@ -767,10 +822,8 @@ public class OverlayMenuView extends LinearLayout {
                 shouldCloseMenu = true;
             } else if (action == ACTION_TOGGLE_STATS) {
                 actionListener.onToggleStats();
-                // Keep menu open
             } else if (action == ACTION_TOGGLE_MOUSE_EMULATION) {
                 actionListener.onToggleMouseEmulation();
-                shouldCloseMenu = true;
             } else if (action == ACTION_SHOW_KEYBOARD) {
                 activateKeyboard();
                 return;
@@ -812,13 +865,10 @@ public class OverlayMenuView extends LinearLayout {
                 shouldCloseMenu = true;
             } else if (action == ACTION_ONSCREEN_CONTROLLER) {
                 actionListener.onToggleOnscreenController();
-                shouldCloseMenu = true;
             } else if (action == ACTION_FLOATING_BUTTON) {
                 actionListener.onToggleFloatingButton();
-                // Keep menu open so the change is visible
             } else if (action == ACTION_PAN_ZOOM) {
                 actionListener.onTogglePanZoom();
-                shouldCloseMenu = true;
             } else if (action == ACTION_MOUSE_MODE) {
                 // The picker dialog takes over; close the menu behind it
                 closeMenu();
@@ -826,7 +876,6 @@ public class OverlayMenuView extends LinearLayout {
                 return;
             } else if (action == ACTION_TOUCH_SENSITIVITY) {
                 actionListener.onToggleTouchSensitivity();
-                // Keep menu open
             } else if (action == ACTION_UPLOAD_CLIPBOARD) {
                 actionListener.onUploadClipboard();
                 shouldCloseMenu = true;
@@ -835,7 +884,6 @@ public class OverlayMenuView extends LinearLayout {
                 shouldCloseMenu = true;
             } else if (action == ACTION_FULL_KEYBOARD) {
                 actionListener.onToggleFullKeyboard();
-                shouldCloseMenu = true;
             } else if (action == ACTION_SERVER_COMMANDS) {
                 closeMenu();
                 actionListener.onShowServerCommands();
@@ -858,6 +906,13 @@ public class OverlayMenuView extends LinearLayout {
 
         if (shouldCloseMenu) {
             closeMenu();
+        }
+        else if (activeRegion == Region.GRID) {
+            // A toggle stays open and its switch flips
+            int toggle = gridToggles.get(gridIndex);
+            if (toggle != TOGGLE_NONE && actionListener != null) {
+                gridButtons.get(gridIndex).setToggle(actionListener.isToggleOn(toggle));
+            }
         }
     }
 

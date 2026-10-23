@@ -2,7 +2,11 @@ package com.limelight.ui.overlay;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.os.Build;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
@@ -13,12 +17,17 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.limelight.R;
+
 /**
  * Custom view representing a single button in the overlay menu.
  *
  * Cover Glow styles: a square tile (icon above its label) for the tools grid, and pills for the
  * bar at the bottom of the sheet, where the primary pill is white. The selected button (by
  * controller or keyboard) turns white with dark text.
+ *
+ * A tile that switches something on and off (setToggle) gets a faint outline and a small switch in
+ * its top corner; when on, the tile fills with violet and the switch slides over.
  */
 public class OverlayMenuButton extends LinearLayout {
     public static final int STYLE_ROW = 0;
@@ -35,6 +44,8 @@ public class OverlayMenuButton extends LinearLayout {
     private static final int FROSTED = 0x1AFFFFFF;
     private static final int FROSTED_PILL = 0x24FFFFFF;
     private static final int RING = 0xFFC4B5FD;
+    private static final int TOGGLE_OUTLINE = 0x40FFFFFF;
+    private static final int TOGGLE_ON_FILL = 0x598B5CF6;
 
     private ImageView iconView;
     private TextView labelView;
@@ -42,6 +53,10 @@ public class OverlayMenuButton extends LinearLayout {
     private boolean isSelected = false;
     private int strokeWidth;
     private int style = STYLE_ROW;
+    private boolean isToggle = false;
+    private boolean isOn = false;
+    private final Paint switchPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF switchTrack = new RectF();
 
     public OverlayMenuButton(Context context) {
         super(context);
@@ -178,6 +193,72 @@ public class OverlayMenuButton extends LinearLayout {
         return isSelected;
     }
 
+    public boolean isToggle() {
+        return isToggle;
+    }
+
+    public boolean isToggleOn() {
+        return isOn;
+    }
+
+    /** Makes this a toggle tile and shows whether it is on. */
+    public void setToggle(boolean on) {
+        isToggle = true;
+        isOn = on;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            setStateDescription(getContext().getString(on ? R.string.overlay_menu_toggle_on : R.string.overlay_menu_toggle_off));
+        }
+        updateAppearance();
+        invalidate();
+    }
+
+    // TalkBack reads a toggle tile as a switch with its state ("Stats, switch, on"), on every
+    // Android version rather than only where state descriptions exist
+    @Override
+    public void onInitializeAccessibilityNodeInfo(android.view.accessibility.AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        if (isToggle) {
+            info.setClassName(android.widget.Switch.class.getName());
+            info.setCheckable(true);
+            info.setChecked(isOn);
+        }
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        if (!isToggle || style != STYLE_TILE) {
+            return;
+        }
+
+        // A small switch in the top corner: an outline with the knob at the start when off,
+        // filled with the knob at the end when on
+        float d = getResources().getDisplayMetrics().density;
+        // Small and tucked into the corner, clear of the centred icon
+        float w = 15 * d, h = 8 * d, inset = 6 * d;
+        float left = getLayoutDirection() == LAYOUT_DIRECTION_RTL ? inset : getWidth() - inset - w;
+        switchTrack.set(left, inset, left + w, inset + h);
+        int ink = isSelected ? DARK : Color.WHITE;
+        float knobRadius = h / 2 - 2f * d;
+        boolean knobAtEnd = isOn != (getLayoutDirection() == LAYOUT_DIRECTION_RTL);
+        float knobX = knobAtEnd ? switchTrack.right - h / 2 : switchTrack.left + h / 2;
+
+        if (isOn) {
+            switchPaint.setStyle(Paint.Style.FILL);
+            switchPaint.setColor(isSelected ? DARK : RING);
+            canvas.drawRoundRect(switchTrack, h / 2, h / 2, switchPaint);
+            switchPaint.setColor(isSelected ? Color.WHITE : DARK);
+        }
+        else {
+            switchPaint.setStyle(Paint.Style.STROKE);
+            switchPaint.setStrokeWidth(1.2f * d);
+            switchPaint.setColor((ink & 0x00FFFFFF) | 0x99000000);
+            canvas.drawRoundRect(switchTrack, h / 2, h / 2, switchPaint);
+            switchPaint.setStyle(Paint.Style.FILL);
+        }
+        canvas.drawCircle(knobX, switchTrack.centerY(), knobRadius, switchPaint);
+    }
+
     /**
      * Update the visual appearance based on selection state
      */
@@ -206,6 +287,12 @@ public class OverlayMenuButton extends LinearLayout {
             background.setColor(0xFFFFFFFF);
             background.setStroke(0, 0);
             setContentColor(DARK);
+        }
+        else if (isToggle && style == STYLE_TILE) {
+            float density = getResources().getDisplayMetrics().density;
+            background.setColor(isOn ? TOGGLE_ON_FILL : FROSTED);
+            background.setStroke((int) ((isOn ? 1.5f : 1f) * density), isOn ? RING : TOGGLE_OUTLINE);
+            setContentColor(0xFFFFFFFF);
         }
         else {
             background.setColor(style == STYLE_TILE ? FROSTED : FROSTED_PILL);

@@ -384,7 +384,8 @@ public class MoonBridge {
                                               int clientRefreshRateX100,
                                               byte[] riAesKey, byte[] riAesIv,
                                               int videoCapabilities,
-                                              int colorSpace, int colorRange);
+                                              int colorSpace, int colorRange,
+                                              boolean enableMicrophone);
 
     public static native void stopConnection();
 
@@ -440,6 +441,20 @@ public class MoonBridge {
     public static native int getPendingAudioDuration();
 
     public static native int getPendingVideoFrames();
+
+    public static native boolean isMicrophoneStreamActive();
+
+    public static native boolean isMicrophoneEncryptionEnabled();
+
+    public static native int setupMicrophoneEncoder(int sampleRate, int channelCount, int bitrate);
+
+    public static native void startMicrophoneStreaming();
+
+    public static native void stopMicrophoneStreaming();
+
+    public static native void cleanupMicrophoneEncoder();
+
+    public static native int queueMicrophonePcm(short[] pcmData, int sampleCount);
 
     public static native int testClientConnectivity(String testServerHostName, int referencePort, int testFlags);
 

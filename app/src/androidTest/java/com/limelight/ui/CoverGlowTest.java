@@ -174,6 +174,19 @@ public class CoverGlowTest {
             params.setMargins((int) (16 * d), (int) (16 * d), (int) (16 * d), (int) (16 * d));
             root.addView(menu, params);
             menu.setGameInfo("Desktop", "1440p · 120 FPS", AppIcons.accentFor("Desktop"));
+            menu.setCover(AppIcons.tile(context, "Desktop"));
+            // Stats and the menu button switched on, to show both looks of a toggle
+            menu.setMenuActionListener((com.limelight.ui.overlay.OverlayMenuView.MenuActionListener) java.lang.reflect.Proxy.newProxyInstance(
+                    getClass().getClassLoader(),
+                    new Class<?>[] {com.limelight.ui.overlay.OverlayMenuView.MenuActionListener.class},
+                    (proxy, method, args) -> {
+                        if (method.getName().equals("isToggleOn")) {
+                            int toggle = (Integer) args[0];
+                            return toggle == com.limelight.ui.overlay.OverlayMenuView.TOGGLE_STATS
+                                    || toggle == com.limelight.ui.overlay.OverlayMenuView.TOGGLE_FLOATING_BUTTON;
+                        }
+                        return null;
+                    }));
             menu.buildMenu();
             menu.setVisibility(View.VISIBLE);
             // Close selected, as when the menu opens
@@ -373,8 +386,73 @@ public class CoverGlowTest {
         assertEquals("Settings", CoverGlowSettings.shortName("Settings"));
     }
 
+    @Test
+    public void streamMenuFitsAPhoneHeldSideways() {
+        // A Galaxy Z Fold's cover screen turned sideways for a stream: about 905 x 369 dp
+        Context target = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        android.content.res.Configuration phone = new android.content.res.Configuration(
+                target.getResources().getConfiguration());
+        phone.screenWidthDp = 905;
+        phone.screenHeightDp = 369;
+        Context context = new ContextThemeWrapper(target.createConfigurationContext(phone), R.style.AppTheme);
+        float d = context.getResources().getDisplayMetrics().density;
+        int width = Math.round(905 * d), height = Math.round(369 * d);
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(() -> {
+            FrameLayout root = new FrameLayout(context);
+            root.setBackgroundColor(0xFF2A3340);
+            com.limelight.ui.overlay.OverlayMenuView menu = new com.limelight.ui.overlay.OverlayMenuView(context);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.Gravity.END);
+            params.setMargins((int) (16 * d), (int) (16 * d), (int) (16 * d), (int) (16 * d));
+            root.addView(menu, params);
+            menu.setGameInfo("Desktop", "1080p · 60 FPS", AppIcons.accentFor("Desktop"));
+            menu.setCover(AppIcons.tile(context, "Desktop"));
+            menu.buildMenu();
+            menu.setVisibility(View.VISIBLE);
+
+            save(root, target, "menu_phone_sideways.png", width, height);
+            assertTrue("sheet taller than the screen: " + menu.getHeight() + " px of " + height,
+                    menu.getHeight() <= height);
+            // Close, Quit and Disconnect share one row, so at least two rows of tools show
+            View close = findLabel(menu, context.getString(R.string.overlay_menu_close));
+            View disconnect = findLabel(menu, context.getString(R.string.overlay_menu_disconnect));
+            int[] a = new int[2], b = new int[2];
+            close.getLocationInWindow(a);
+            disconnect.getLocationInWindow(b);
+            assertEquals("bar buttons on different rows", a[1], b[1]);
+        });
+    }
+
     private static void save(View root, Context target, String name) {
-        int width = 2400, height = 1504;
+        save(root, target, name, 2400, 1504);
+    }
+
+    // The menu button showing this label
+    private static View findLabel(View root, String label) {
+        if (root instanceof com.limelight.ui.overlay.OverlayMenuButton) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View child = group.getChildAt(i);
+                if (child instanceof android.widget.TextView
+                        && label.contentEquals(((android.widget.TextView) child).getText())) {
+                    return root;
+                }
+            }
+        }
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findLabel(group.getChildAt(i), label);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void save(View root, Context target, String name, int width, int height) {
         root.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
                 View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY));
         root.layout(0, 0, width, height);
@@ -427,7 +505,8 @@ public class CoverGlowTest {
             // The cover row, with the icon tiles Starwire draws for these kinds of app
             FrameLayout container = root.findViewById(R.id.appFragmentContainer);
             LinearLayout row = new LinearLayout(context);
-            String[] names = {"Desktop", "Steam Big Picture", "Playnite", "RetroArch", "Netflix", "PowerShell"};
+            // Desktop, an app with its own icon, then games without cover art (each its own take)
+            String[] names = {"Desktop", "Steam Big Picture", "Hades II", "Celeste", "Balatro", "Hollow Knight", "Dredge", "Tunic"};
             for (int i = 0; i < names.length; i++) {
                 View item = inflater.inflate(R.layout.app_grid_item, row, false);
                 ((ImageView) item.findViewById(R.id.grid_image)).setImageDrawable(AppIcons.tile(context, names[i]));
@@ -435,7 +514,7 @@ public class CoverGlowTest {
                 label.setText(names[i]);
                 label.setGravity(android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
                 if (i == 0) {
-                    item.setForeground(new Rainbow.Ring(18 * d, 3 * d));
+                    item.setForeground(new Rainbow.Ring(26 * d, 3 * d));
                 }
                 else {
                     item.setAlpha(0.82f);

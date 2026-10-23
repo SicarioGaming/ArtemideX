@@ -18,6 +18,7 @@ import com.limelight.preferences.PreferenceConfiguration;
 import com.limelight.ui.AdapterFragment;
 import com.limelight.ui.AdapterFragmentCallbacks;
 import com.limelight.ui.AppIcons;
+import com.limelight.ui.CollapsingHeader;
 import com.limelight.ui.CoverGlow;
 import com.limelight.ui.Rainbow;
 import com.limelight.ui.CoverImageView;
@@ -45,7 +46,10 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -83,14 +87,22 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     // Cover Glow home: the hero shows the selected game, and the screen takes its cover's colour
     private static final String COVER_GLOW_PREF_FILENAME = "CoverGlow";
     private View appRoot, coverGlow, heroDetails;
+    // The game screen has three sets of sizes (cover_glow_dimens.xml): narrow below 480 dp wide,
+    // a smaller header on wide screens under 520 dp tall (a phone held sideways), and the full one
+    private static final int NARROW_WIDTH_DP = 480;
+    private static final int SHORT_HEIGHT_DP = 520;
+    private int builtSizes;
+
     private CoverImageView heroCover;
-    private TextView heroLoaderText, heroLabel, heroTitle;
+    private TextView heroLoaderText, heroLabel, heroTitle, miniTitle;
     private LinearLayout heroChips;
-    private Button heroPlay;
+    private Button heroPlay, heroQuit, miniPlay;
+    private CollapsingHeader collapsingHeader;
     private AppObject selectedApp;
     private int currentTint = CoverGlow.DEFAULT_TINT;
     private ValueAnimator tintAnimator;
     private AnimatorSet glowAnimator;
+    private ObjectAnimator coverFloat;
     private ValueAnimator wordmarkRainbow;
 
     private final static int START_OR_RESUME_ID = 1;
@@ -195,6 +207,13 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+
+        // Folding, unfolding or turning the phone into another set of sizes needs the layout
+        // built again; this screen otherwise keeps its views through size changes
+        if (sizesFor(newConfig) != builtSizes) {
+            recreate();
+            return;
+        }
 
         // If appGridAdapter is initialized, let it know about the configuration change.
         // If not, it will pick it up when it initializes.
@@ -328,6 +347,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         UiHelper.setLocale(this);
 
         setContentView(R.layout.activity_app_view);
+        builtSizes = sizesFor(getResources().getConfiguration());
 
         // Allow floating expanded PiP overlays while browsing apps
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -407,6 +427,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         if (glowAnimator != null) {
             glowAnimator.cancel();
         }
+        if (coverFloat != null) {
+            coverFloat.cancel();
+        }
         if (wordmarkRainbow != null) {
             wordmarkRainbow.cancel();
         }
@@ -425,6 +448,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         inForeground = true;
         startComputerUpdates();
+        setLoopsRunning(true);
     }
 
     @Override
@@ -433,6 +457,23 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         inForeground = false;
         stopComputerUpdates();
+        setLoopsRunning(false);
+    }
+
+    // The screen's endless animations stop while it's out of sight (during a stream, say), so they
+    // don't keep waking the CPU every frame
+    private void setLoopsRunning(boolean running) {
+        for (android.animation.Animator loop : new android.animation.Animator[] {glowAnimator, coverFloat, wordmarkRainbow}) {
+            if (loop == null) {
+                continue;
+            }
+            if (running) {
+                loop.resume();
+            }
+            else {
+                loop.pause();
+            }
+        }
     }
 
     @Override
@@ -453,6 +494,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
 
+        if (!(menuInfo instanceof AdapterContextMenuInfo)) {
+            return;
+        }
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
         AppObject selectedApp = (AppObject) appGridAdapter.getItem(info.position);
 
@@ -484,19 +528,44 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         menu.add(Menu.NONE, APP_SETTINGS_ID, 5, "App Settings");
         menu.add(Menu.NONE, ADD_QUICK_LAUNCH_ID, 6, getResources().getString(R.string.applist_menu_add_quick_launch));
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Only add an option to create shortcut if box art is loaded
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && info.targetView != null) {
+            // Only add an option to create shortcut if the tile's picture is loaded
             // and when we're in grid-mode (not list-mode).
             ImageView appImageView = info.targetView.findViewById(R.id.grid_image);
-            if (appImageView != null) {
-                // We have a grid ImageView, so we must be in grid-mode
-                BitmapDrawable drawable = (BitmapDrawable)appImageView.getDrawable();
-                if (drawable != null && drawable.getBitmap() != null) {
-                    // We have a bitmap loaded too
-                    menu.add(Menu.NONE, CREATE_SHORTCUT_ID, 6, getResources().getString(R.string.applist_menu_scut));
-                }
+            if (appImageView != null && shortcutBitmap(appImageView) != null) {
+                menu.add(Menu.NONE, CREATE_SHORTCUT_ID, 6, getResources().getString(R.string.applist_menu_scut));
             }
         }
+    }
+
+    // The tile's picture as a bitmap a pinned shortcut can use. Desktop and the other icon tiles are
+    // drawn, not bitmaps (casting them to BitmapDrawable crashed the menu), and box art can be a GPU
+    // (HARDWARE) bitmap, which shortcut icons can't take, so both are redrawn into a normal one.
+    // Null while there's nothing to show.
+    static Bitmap shortcutBitmap(ImageView view) {
+        Drawable drawable = view == null ? null : view.getDrawable();
+        if (drawable == null) {
+            return null;
+        }
+        if (drawable instanceof BitmapDrawable) {
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+            if (bitmap != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                    && bitmap.getConfig() == Bitmap.Config.HARDWARE) {
+                bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, false);
+            }
+            return bitmap;
+        }
+        int width = view.getWidth() > 0 ? view.getWidth() : drawable.getIntrinsicWidth();
+        int height = view.getHeight() > 0 ? view.getHeight() : drawable.getIntrinsicHeight();
+        if (width <= 0 || height <= 0) {
+            return null;
+        }
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Rect bounds = drawable.copyBounds();
+        drawable.setBounds(0, 0, width, height);
+        drawable.draw(new Canvas(bitmap));
+        drawable.setBounds(bounds);
+        return bitmap;
     }
 
     @Override
@@ -505,6 +574,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
+        if (!(item.getMenuInfo() instanceof AdapterContextMenuInfo)) {
+            return super.onContextItemSelected(item);
+        }
         AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         final AppObject app = (AppObject) appGridAdapter.getItem(info.position);
         switch (item.getItemId()) {
@@ -545,24 +617,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 return true;
 
             case QUIT_ID:
-                // Display a confirmation dialog first
-                UiHelper.displayQuitConfirmationDialog(this, new Runnable() {
-                    @Override
-                    public void run() {
-                        suspendGridUpdates = true;
-                        ServerHelper.doQuit(AppView.this, computer,
-                                app.app, managerBinder, new Runnable() {
-                            @Override
-                            public void run() {
-                                // Trigger a poll immediately
-                                suspendGridUpdates = false;
-                                if (poller != null) {
-                                    poller.pollNow();
-                                }
-                            }
-                        });
-                    }
-                }, null);
+                quitApp(app);
                 return true;
 
             case VIEW_DETAILS_ID:
@@ -586,9 +641,8 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
                 return true;
 
             case CREATE_SHORTCUT_ID:
-                ImageView appImageView = info.targetView.findViewById(R.id.grid_image);
-                Bitmap appBits = ((BitmapDrawable)appImageView.getDrawable()).getBitmap();
-                if (!shortcutHelper.createPinnedGameShortcut(computer, app.app, appBits)) {
+                Bitmap appBits = shortcutBitmap((ImageView) info.targetView.findViewById(R.id.grid_image));
+                if (appBits == null || !shortcutHelper.createPinnedGameShortcut(computer, app.app, appBits)) {
                     Toast.makeText(AppView.this, getResources().getString(R.string.unable_to_pin_shortcut), Toast.LENGTH_LONG).show();
                 }
                 return true;
@@ -600,6 +654,27 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             default:
                 return super.onContextItemSelected(item);
         }
+    }
+
+    // Ends the running game on the PC, after asking (from the tile's menu or the hero's Quit)
+    private void quitApp(final AppObject app) {
+        UiHelper.displayQuitConfirmationDialog(this, new Runnable() {
+            @Override
+            public void run() {
+                suspendGridUpdates = true;
+                ServerHelper.doQuit(AppView.this, computer,
+                        app.app, managerBinder, new Runnable() {
+                    @Override
+                    public void run() {
+                        // Trigger a poll immediately
+                        suspendGridUpdates = false;
+                        if (poller != null) {
+                            poller.pollNow();
+                        }
+                    }
+                });
+            }
+        }, null);
     }
 
     private void updateUiWithServerinfo(final ComputerDetails details) {
@@ -728,6 +803,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     @Override
     public void receiveAbsListView(AbsListView listView) {
         listView.setAdapter(appGridAdapter);
+        // The covers arrive one after another the first time the list lays out
+        listView.setLayoutAnimation(new android.view.animation.LayoutAnimationController(
+                android.view.animation.AnimationUtils.loadAnimation(this, R.anim.cg_tile_in), 0.07f));
         listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg0, View arg1, int pos,
@@ -749,6 +827,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             }
         });
         UiHelper.applyStatusBarPadding(listView);
+        if (collapsingHeader != null) {
+            collapsingHeader.attach(listView);
+        }
         registerForContextMenu(listView);
         listView.requestFocus();
     }
@@ -763,6 +844,20 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         heroTitle = findViewById(R.id.heroTitle);
         heroChips = findViewById(R.id.heroChips);
         heroPlay = findViewById(R.id.heroPlay);
+        heroQuit = findViewById(R.id.heroQuit);
+        // Rounded corners before Android 12, which ignores the XML attribute
+        heroCover.setClipToOutline(true);
+        miniTitle = findViewById(R.id.miniTitle);
+        miniPlay = findViewById(R.id.miniPlay);
+        collapsingHeader = new CollapsingHeader(findViewById(R.id.appHeader),
+                findViewById(R.id.heroSection), findViewById(R.id.miniBar));
+        collapsingHeader.expandOnFocus(heroPlay, heroQuit, findViewById(R.id.heroSettings), findViewById(R.id.appListText));
+        heroQuit.setOnClickListener(v -> {
+            if (selectedApp != null && computer != null) {
+                quitApp(selectedApp);
+            }
+        });
+        miniPlay.setOnClickListener(v -> playSelectedApp());
 
         TextView coverRowLabel = findViewById(R.id.coverRowLabel);
         coverRowLabel.setText(getString(R.string.cg_on_pc, computerName));
@@ -810,8 +905,23 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         glowAnimator.setDuration(4500);
         glowAnimator.start();
 
+        // The hero's cover floats gently (moving a view redraws nothing, so it costs little)
+        coverFloat = ObjectAnimator.ofFloat(heroCover, View.TRANSLATION_Y, 0, -dp(5));
+        coverFloat.setDuration(3200);
+        coverFloat.setRepeatCount(ValueAnimator.INFINITE);
+        coverFloat.setRepeatMode(ValueAnimator.REVERSE);
+        coverFloat.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        coverFloat.start();
+
         // The wordmark slowly flows through the rainbow
         wordmarkRainbow = Rainbow.applyTo((TextView) findViewById(R.id.cgWordmark));
+    }
+
+    private static int sizesFor(Configuration config) {
+        if (config.screenWidthDp < NARROW_WIDTH_DP) {
+            return 0;
+        }
+        return config.screenHeightDp < SHORT_HEIGHT_DP ? 1 : 2;
     }
 
     private float dp(float value) {
@@ -875,6 +985,20 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         heroTitle.setText(selectedApp.app.getAppName());
         heroPlay.setText(running ? R.string.cg_resume : R.string.cg_play);
+        // Quit right beside Resume, instead of only in the tile's long-press menu
+        if (running && heroQuit.getVisibility() != View.VISIBLE) {
+            heroQuit.setVisibility(View.VISIBLE);
+            heroQuit.setAlpha(0f);
+            heroQuit.setTranslationX(-dp(10));
+            heroQuit.animate().alpha(1f).translationX(0).setDuration(260)
+                    .setInterpolator(new DecelerateInterpolator(2f)).start();
+        }
+        else if (!running) {
+            heroQuit.animate().cancel();
+            heroQuit.setVisibility(View.GONE);
+        }
+        miniTitle.setText(selectedApp.app.getAppName());
+        miniPlay.setText(running ? R.string.cg_resume : R.string.cg_play);
         if (running) {
             heroLabel.setText(R.string.cg_running);
             heroLabel.setVisibility(View.VISIBLE);
@@ -897,6 +1021,9 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
             heroCover.setScaleY(0.94f);
             heroCover.animate().scaleX(1f).scaleY(1f)
                     .setDuration(420).setInterpolator(new DecelerateInterpolator(2f)).start();
+            // With the header scrolled away, the bar shows the change instead
+            miniTitle.setAlpha(0f);
+            miniTitle.animate().alpha(1f).setDuration(300).start();
         }
     }
 

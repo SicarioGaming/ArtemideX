@@ -155,5 +155,6 @@ public class ImportedShortcutsTest {
         @Override public void onShowServerCommands() {}
         @Override public void onToggleFullKeyboard() {}
         @Override public void onChangeBitrate() {}
+        @Override public boolean isToggleOn(int toggle) { return false; }
     }
 }

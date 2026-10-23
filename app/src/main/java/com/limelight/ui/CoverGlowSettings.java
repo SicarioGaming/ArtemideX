@@ -57,6 +57,9 @@ public final class CoverGlowSettings {
         }
         float d = activity.getResources().getDisplayMetrics().density;
 
+        // The fragment binds its list after this, so add the impact lines once it has
+        list.post(() -> SettingsImpact.attach(list));
+
         list.setDivider(new ColorDrawable(0x1AFFFFFF));
         list.setDividerHeight(Math.max(1, Math.round(d)));
         list.setClipToPadding(false);
@@ -151,13 +154,18 @@ public final class CoverGlowSettings {
      */
     public static SharedPreferences.OnSharedPreferenceChangeListener attachFeel(Activity activity) {
         View panel = activity.findViewById(R.id.feelPanel);
-        if (panel == null) {
+        View column = activity.findViewById(R.id.feelColumn);
+        if (panel == null || column == null) {
             return null;
         }
         if (activity.getResources().getConfiguration().screenWidthDp < 840) {
+            // Hide the whole column, not just the panel: its fixed width would otherwise squeeze
+            // the settings list to nothing on narrow screens (Galaxy Z Fold cover screen)
+            column.setVisibility(View.GONE);
             panel.setVisibility(View.GONE);
             return null;
         }
+        column.setVisibility(View.VISIBLE);
         panel.setVisibility(View.VISIBLE);
 
         View track = activity.findViewById(R.id.feelTrack);
@@ -256,6 +264,8 @@ public final class CoverGlowSettings {
         CREDITS.put("frame_pacing", "Warp Drive pacing from Artemis by Yukino Song");
         CREDITS.put("checkbox_ultra_low_latency", "From Moonlight X by MoreOrLessSoftware, Artemis and Artemide");
         CREDITS.put("list_audio_haptics", "Idea from Moonlight V+ by qiin2333");
+        CREDITS.put("checkbox_enable_microphone", "Capture from logabell's Artemis changes; the PC receiver is new in Starwire");
+        CREDITS.put("list_microphone_device", "From logabell's Artemis changes");
         CREDITS.put("seekbar_audio_haptics_intensity", "Idea from Moonlight V+ by qiin2333");
         for (String key : new String[] {"checkbox_enable_floating_button", "virtual_display_mode",
                 "checkbox_smart_clipboard_sync", "checkbox_smart_clipboard_sync_toast", "checkbox_hide_clipboard_content"}) {

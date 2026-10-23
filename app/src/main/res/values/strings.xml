@@ -430,6 +430,8 @@
     <string name="overlay_menu_rotate_screen">Rotate</string>
     <string name="overlay_menu_onscreen_controller">On-screen Controls</string>
     <string name="overlay_menu_floating_button">Menu Button</string>
+    <string name="overlay_menu_toggle_on">On</string>
+    <string name="overlay_menu_toggle_off">Off</string>
     <string name="overlay_menu_send_esc">Esc</string>
     <string name="overlay_menu_send_f11">F11</string>
     <string name="overlay_menu_send_alt_f4">Alt+F4</string>
@@ -479,14 +481,14 @@
     <string name="server_command_sent">Ran \"%1$s\" on the PC</string>
 
     <!-- Starwire: Lite performance overlay, Prevent Packet Loss and Virtual Display (from Artemide) -->
-    <string name="perf_overlay_lite_bandwidth">Bw %1$.1f Mbps</string>
-    <string name="perf_overlay_lite_delay">Net/Dec %1$d/%2$.1f ms</string>
-    <string name="perf_overlay_lite_loss">Loss %1$.1f%%</string>
+    <string name="perf_overlay_lite_bandwidth">%1$.0f Mbps</string>
+    <string name="perf_overlay_lite_delay">Ping %1$d ms · Decode %2$.1f ms</string>
+    <string name="perf_overlay_lite_loss">Dropped %1$.1f%%</string>
     <string name="perf_overlay_lite_fps">%1$.0f FPS</string>
     <string name="perf_overlay_lite_one_percent_low"> (1%% low %1$.0f)</string>
     <string name="perf_overlay_one_percent_low">, 1%% low %1$.1f FPS</string>
     <string name="title_checkbox_enable_perf_overlay_lite">Lite mode</string>
-    <string name="summary_checkbox_enable_perf_overlay_lite">Show one compact line at the top: bandwidth, network/decode delay, packet loss and FPS</string>
+    <string name="summary_checkbox_enable_perf_overlay_lite">One short line at the top: data rate, ping, decode time, dropped frames and FPS</string>
     <string name="title_checkbox_prevent_packet_loss">Prevent packet loss</string>
     <string name="summary_checkbox_prevent_packet_loss">Keeps the Wi-Fi connection busy with a tiny packet every 20 ms, so devices that drop packets in Wi-Fi power saving stay awake. Uses slightly more battery.</string>
     <string name="title_virtual_display_mode">Display on the PC</string>
@@ -548,6 +550,7 @@
     <string name="cg_wordmark" translatable="false">Starwire</string>
     <string name="cg_play">Play</string>
     <string name="cg_resume">Resume</string>
+    <string name="cg_quit">Quit</string>
     <string name="cg_game_settings">This game\'s settings</string>
     <string name="cg_last_played">Last played</string>
     <string name="cg_running">Running now</string>
@@ -680,4 +683,70 @@
     <string name="summary_overlay_menu">Configure custom commands for the in-game overlay menu</string>
     <string name="title_enable_overlay_menu">Enable overlay menu</string>
     <string name="summary_enable_overlay_menu">Hold select button for 5 seconds during streaming to open the overlay menu</string>
+    <!-- Microphone streaming (needs logabell's Apollo build on the PC) -->
+    <string name="title_checkbox_enable_microphone">Send my microphone</string>
+    <string name="summary_checkbox_enable_microphone">Talk in voice chat on the PC. Works with Vibepollo, Sunshine and Apollo through a small receiver on the PC, or over the stream with logabell\'s Apollo build.</string>
+    <string name="title_microphone_target">Send my microphone to</string>
+    <string name="microphone_target_host">The PC\'s streaming app (logabell\'s Apollo build)</string>
+    <string name="microphone_target_vban">A VBAN receiver on the PC (any host)</string>
+    <string name="title_vban_setup">Set up the PC</string>
+    <string name="summary_vban_setup">Run Starwire\'s microphone setup on the PC once. It installs VB-Cable (a free virtual microphone) and a small receiver. Then choose CABLE Output as the microphone in Discord or the game. Tap for the guide. Another VBAN receiver works too: stream %2$s from %1$s (or this device\'s VPN address over a VPN), port %3$d.</string>
+    <string name="vban_this_device">this device\'s address</string>
+    <string name="title_vban_stream_name">VBAN stream name</string>
+    <string name="summary_vban_stream_name">%1$s. Must match the stream name on the PC\'s receiver.</string>
+    <string name="title_vban_port">VBAN port</string>
+    <string name="summary_vban_port">%1$s. VBAN normally uses 6980.</string>
+    <string name="microphone_vban_not_home">The microphone wasn\'t sent. VBAN isn\'t encrypted, so Starwire only sends it to a PC on your home network or a private VPN.</string>
+    <string name="microphone_vban_failed">Couldn\'t start sending the microphone over VBAN</string>
+    <string name="title_microphone_host_info">Get the Apollo build for microphone</string>
+    <string name="summary_microphone_host_info">Opens logabell\'s Apollo on GitHub. Install it on the PC in place of your current host.</string>
+    <string name="title_microphone_device_list">Microphone</string>
+    <string name="summary_microphone_device_list">Which microphone to send</string>
+    <string name="microphone_device_default">Default microphone</string>
+    <string name="microphone_preview_inactive">Microphone off</string>
+    <string name="microphone_preview_permission_required">Starwire needs microphone permission</string>
+    <string name="microphone_preview_selected_missing">That microphone isn\'t connected, so the default one is used</string>
+    <string name="microphone_preview_default_active">Using the default microphone</string>
+    <string name="microphone_preview_selected_active">Using the chosen microphone</string>
+    <string name="microphone_preview_open_failed">Couldn\'t open the microphone</string>
+    <string name="microphone_encoder_setup_failed">Couldn\'t start sending the microphone</string>
+    <string name="microphone_capture_start_failed">Couldn\'t open the microphone</string>
+    <string name="microphone_permission_denied">Microphone permission denied</string>
+    <string name="microphone_host_not_negotiated">This PC can\'t receive your microphone. It needs logabell\'s Apollo build.</string>
+    <string name="microphone_stream_permission_revoked">Microphone is off because Starwire doesn\'t have permission to use it</string>
+    <string name="microphone_stream_start_failed">Couldn\'t start the microphone. The stream carries on without it.</string>
+
+    <!-- The "Impact:" line under settings (SettingsImpact.java). Keep each one short and free of percent signs. -->
+    <string name="impact_label">Impact:</string>
+    <string name="impact_none">None on speed or smoothness.</string>
+    <string name="impact_resolution">Higher is sharper but needs more bandwidth and decode time. Lower helps slower devices and networks.</string>
+    <string name="impact_fps">Higher is smoother and lowers latency, but uses more battery and bandwidth.</string>
+    <string name="impact_bitrate">Higher gives a cleaner picture but needs a faster connection. Too high for your Wi-Fi causes stutter.</string>
+    <string name="impact_frame_pacing">Lowest latency can tear or stutter. The smoother options add a little latency.</string>
+    <string name="impact_jitter_buffer">A bigger buffer rides out patchy Wi-Fi but adds latency.</string>
+    <string name="impact_vsync">On removes tearing but adds up to one frame of latency.</string>
+    <string name="impact_sync_lfr">On lowers latency by skipping late frames. Motion can look less even under load.</string>
+    <string name="impact_async_decode">On can cut decode delay. Turn it off if video stalls.</string>
+    <string name="impact_async_lfr">On gives the lowest delay but can drop frames under load.</string>
+    <string name="impact_ultra_low_latency">Can lower decode latency on the chips listed. No gain on others; turn it off if video glitches.</string>
+    <string name="impact_surround">Surround uses a little more bandwidth. No change to latency.</string>
+    <string name="impact_audiofx">Can add audio delay. Leave it off unless you use an equalizer.</string>
+    <string name="impact_microphone">Uses a little upload bandwidth and battery. No change to video.</string>
+    <string name="impact_microphone_target">Over the stream it\'s compressed to about 24 kbps. VBAN sends it uncompressed, just under 1 Mbps, and only to a PC on your home network or a private VPN. No change to video.</string>
+    <string name="impact_audio_haptics">Uses some battery. No change to the stream.</string>
+    <string name="impact_deadzone">Lower feels more responsive, but worn sticks may drift.</string>
+    <string name="impact_prevent_packet_loss">Fewer stutters on devices whose Wi-Fi naps between packets. Slightly more battery.</string>
+    <string name="impact_unlock_fps">90 or 120 FPS can lower latency on fast devices but can lag on slower ones.</string>
+    <string name="impact_reduce_refresh_rate">Saves battery but adds some latency.</string>
+    <string name="impact_actual_refresh_rate">A wrong value makes pacing stutter. 0 measures it for you.</string>
+    <string name="impact_video_format">HEVC and AV1 look better at the same bitrate. Older devices can take longer to decode them.</string>
+    <string name="impact_pyrowave_late_frames">Accepting more blur keeps the stream smooth when frames arrive late.</string>
+    <string name="impact_video_renderer">Vulkan paces frames more evenly for a small GPU cost. Direct has the least overhead.</string>
+    <string name="impact_custom_vulkan_driver">A newer driver can speed up Vulkan on Adreno GPUs. A bad one can crash the stream.</string>
+    <string name="impact_spatial_dithering">Small GPU cost. No change to latency.</string>
+    <string name="impact_hdr">Uses 10-bit video, which needs hardware HEVC or AV1 decoding. Slower devices may take longer per frame.</string>
+    <string name="impact_perf_overlay">Very small. Lite mode draws less.</string>
+
+    <!-- Game screen: the slim bar that takes over once the header has scrolled away -->
+    <string name="cg_back_to_top">Show the selected game</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.limelight.preferences;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.app.Activity;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.preference.CheckBoxPreference;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceCategory;
@@ -35,6 +37,8 @@ import android.widget.Toast;
 import com.limelight.LimeLog;
 import com.limelight.PcView;
 import com.limelight.R;
+import com.limelight.binding.audio.MicrophoneCaptureManager;
+import com.limelight.binding.audio.VbanSender;
 import com.limelight.ui.CoverGlowSettings;
 import com.limelight.ui.overlay.ImportedShortcuts;
 import com.limelight.binding.video.MediaCodecHelper;
@@ -48,7 +52,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class StreamSettings extends Activity {
@@ -153,6 +162,7 @@ public class StreamSettings extends Activity {
     public static class SettingsFragment extends PreferenceFragment {
         private static final int REQUEST_CUSTOM_VULKAN_DRIVER = 0x6472;  // "dr"
         private static final int REQUEST_IMPORT_SHORTCUTS = 0x7363;  // "sc"
+        private static final int REQUEST_RECORD_AUDIO = 0x6d63;  // "mc"
         private int nativeResolutionStartIndex = Integer.MAX_VALUE;
         private boolean nativeFramerateShown = false;
 
@@ -320,6 +330,7 @@ public class StreamSettings extends Activity {
 
             addPreferencesFromResource(R.xml.preferences);
             PreferenceScreen screen = getPreferenceScreen();
+            initializeMicrophonePreferences();
 
             // hide on-screen controls category on non touch screen devices
             if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)) {
@@ -858,6 +869,186 @@ public class StreamSettings extends Activity {
             }
             else {
                 pref.setSummary(new File(path).getName());
+            }
+        }
+
+        // Microphone streaming needs logabell's Apollo build on the PC; the summary says so.
+        private void initializeMicrophonePreferences() {
+            CheckBoxPreference enablePref =
+                    (CheckBoxPreference) findPreference(PreferenceConfiguration.ENABLE_MICROPHONE_PREF_STRING);
+            ListPreference devicePref =
+                    (ListPreference) findPreference(PreferenceConfiguration.MICROPHONE_DEVICE_PREF_STRING);
+
+            enablePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                if ((Boolean) newValue && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                        !MicrophoneCaptureManager.hasRecordAudioPermission(getActivity())) {
+                    // Turn it on once the permission is granted
+                    requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},
+                            REQUEST_RECORD_AUDIO);
+                    return false;
+                }
+                return true;
+            });
+
+            initializeMicrophoneTargetPreferences();
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                // No way to pick an input before Android 6, so always use the default
+                ((PreferenceCategory) findPreference("category_audio_settings")).removePreference(devicePref);
+                return;
+            }
+
+            List<MicrophoneCaptureManager.InputDeviceEntry> devices =
+                    MicrophoneCaptureManager.getAvailableInputDevices(getActivity());
+            CharSequence[] labels = new CharSequence[devices.size() + 1];
+            CharSequence[] values = new CharSequence[devices.size() + 1];
+            labels[0] = getString(R.string.microphone_device_default);
+            values[0] = "0";
+            for (int i = 0; i < devices.size(); i++) {
+                labels[i + 1] = devices.get(i).label;
+                values[i + 1] = Integer.toString(devices.get(i).id);
+            }
+            devicePref.setEntries(labels);
+            devicePref.setEntryValues(values);
+            if (devicePref.findIndexOfValue(devicePref.getValue()) < 0) {
+                // The saved microphone is gone
+                devicePref.setValue("0");
+            }
+        }
+
+        // The rows that only apply to one microphone destination, kept while they're hidden
+        private PreferenceCategory audioCategory;
+        private Preference micHostInfoPref, vbanSetupPref;
+        private EditTextPreference vbanNamePref, vbanPortPref;
+
+        // Only the rows for the chosen destination show: the Apollo link for the host, the setup
+        // steps, stream name and port for VBAN. (Disabled rows look like live ones in this theme.)
+        private void initializeMicrophoneTargetPreferences() {
+            ListPreference targetPref =
+                    (ListPreference) findPreference(PreferenceConfiguration.MICROPHONE_TARGET_PREF_STRING);
+            audioCategory = (PreferenceCategory) findPreference("category_audio_settings");
+            micHostInfoPref = findPreference("microphone_host_info");
+            vbanSetupPref = findPreference("vban_setup_info");
+            vbanNamePref = (EditTextPreference) findPreference(PreferenceConfiguration.VBAN_STREAM_NAME_PREF_STRING);
+            vbanPortPref = (EditTextPreference) findPreference(PreferenceConfiguration.VBAN_PORT_PREF_STRING);
+            if (targetPref == null || audioCategory == null || micHostInfoPref == null || vbanSetupPref == null
+                    || vbanNamePref == null || vbanPortPref == null) {
+                return;
+            }
+            final EditTextPreference namePref = vbanNamePref;
+            final EditTextPreference portPref = vbanPortPref;
+
+            targetPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                showMicrophoneTarget((String) newValue, namePref.getText(), portPref.getText());
+                return true;
+            });
+            namePref.setOnPreferenceChangeListener((preference, newValue) -> {
+                showMicrophoneTarget(targetPref.getValue(), (String) newValue, portPref.getText());
+                return true;
+            });
+            portPref.setOnPreferenceChangeListener((preference, newValue) -> {
+                String port = ((String) newValue).trim();
+                try {
+                    int value = Integer.parseInt(port);
+                    if (value < 1 || value > 65535) {
+                        return false;
+                    }
+                }
+                catch (NumberFormatException e) {
+                    return false;
+                }
+                showMicrophoneTarget(targetPref.getValue(), namePref.getText(), port);
+                return true;
+            });
+            showMicrophoneTarget(targetPref.getValue(), namePref.getText(), portPref.getText());
+        }
+
+        private void showMicrophoneTarget(String target, String streamName, String port) {
+            boolean vban = PreferenceConfiguration.MICROPHONE_TARGET_VBAN.equals(target);
+            if (streamName == null || streamName.trim().isEmpty()) {
+                streamName = VbanSender.DEFAULT_STREAM_NAME;
+            }
+            if (port == null || port.trim().isEmpty()) {
+                port = Integer.toString(VbanSender.DEFAULT_PORT);
+            }
+
+            setShown(micHostInfoPref, !vban);
+            setShown(vbanSetupPref, vban);
+            setShown(vbanNamePref, vban);
+            setShown(vbanPortPref, vban);
+            Preference setupPref = vbanSetupPref;
+            Preference namePref = vbanNamePref;
+            Preference portPref = vbanPortPref;
+
+            String deviceAddress = localNetworkAddress();
+            int portNumber;
+            try {
+                portNumber = Integer.parseInt(port.trim());
+            }
+            catch (NumberFormatException e) {
+                portNumber = VbanSender.DEFAULT_PORT;
+            }
+            setupPref.setSummary(getString(R.string.summary_vban_setup,
+                    deviceAddress != null ? deviceAddress : getString(R.string.vban_this_device),
+                    streamName.trim(), portNumber));
+            namePref.setSummary(getString(R.string.summary_vban_stream_name, streamName.trim()));
+            portPref.setSummary(getString(R.string.summary_vban_port, port.trim()));
+        }
+
+        // A removed row keeps its place (its order from the XML) when it's added back
+        private void setShown(Preference preference, boolean shown) {
+            boolean present = audioCategory.findPreference(preference.getKey()) != null;
+            if (shown && !present) {
+                audioCategory.addPreference(preference);
+            }
+            else if (!shown && present) {
+                audioCategory.removePreference(preference);
+            }
+        }
+
+        // This device's home-network IPv4 address, for the receiver on the PC to accept; Wi-Fi first
+        private static String localNetworkAddress() {
+            String fallback = null;
+            try {
+                for (NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                    String name = iface.getName();
+                    // Mobile data interfaces can carry private-looking carrier addresses
+                    if (!iface.isUp() || iface.isLoopback() || name.startsWith("rmnet")
+                            || name.startsWith("ccmni") || name.startsWith("clat")) {
+                        continue;
+                    }
+                    for (InetAddress address : Collections.list(iface.getInetAddresses())) {
+                        if (address instanceof Inet4Address && address.isSiteLocalAddress()) {
+                            if (iface.getName().startsWith("wlan")) {
+                                return address.getHostAddress();
+                            }
+                            if (fallback == null) {
+                                fallback = address.getHostAddress();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (SocketException | NullPointerException e) {
+                // No interfaces to look at; the setup text says "this device" instead
+            }
+            return fallback;
+        }
+
+        @Override
+        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            if (requestCode != REQUEST_RECORD_AUDIO) {
+                return;
+            }
+
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            if (granted) {
+                ((CheckBoxPreference) findPreference(PreferenceConfiguration.ENABLE_MICROPHONE_PREF_STRING))
+                        .setChecked(true);
+            }
+            else {
+                Toast.makeText(getActivity(), R.string.microphone_permission_denied, Toast.LENGTH_SHORT).show();
             }
         }
 

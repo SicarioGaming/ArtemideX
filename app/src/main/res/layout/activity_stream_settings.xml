@@ -89,13 +89,17 @@
                 android:layout_marginTop="8dp" />
 
             <!-- Wide screens only, on the main settings page (CoverGlowSettings.attachFeel):
-                 the Predicted impact panel, with a small credit line under it -->
+                 the Predicted impact panel, with a small credit line under it. The whole column
+                 starts hidden, so on narrow screens (a foldable's cover screen, phones in portrait)
+                 it can't take the width the settings list needs. -->
             <LinearLayout
+                android:id="@+id/feelColumn"
                 android:layout_width="340dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="28dp"
                 android:layout_marginTop="24dp"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:visibility="gone">
 
             <LinearLayout
                 android:id="@+id/feelPanel"

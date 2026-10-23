@@ -2,6 +2,6 @@
 <!-- Cover Glow: rounded corners for game covers (used with clipToOutline) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <corners android:radius="16dp" />
+    <corners android:radius="22dp" />
     <solid android:color="#1FFFFFFF" />
 </shape>

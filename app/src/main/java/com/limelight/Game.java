@@ -3,6 +3,8 @@ package com.limelight;
 
 import com.limelight.binding.PlatformBinding;
 import com.limelight.binding.audio.AndroidAudioRenderer;
+import com.limelight.binding.audio.MicrophoneCaptureManager;
+import com.limelight.binding.audio.VbanSender;
 import com.limelight.binding.audio.AudioHaptics;
 import com.limelight.binding.input.ControllerHandler;
 import com.limelight.binding.input.KeyboardTranslator;
@@ -106,6 +108,8 @@ import android.widget.Toast;
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -187,6 +191,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private float floatingButtonDX, floatingButtonDY;
     private float floatingButtonStartX, floatingButtonStartY;
     private static final int FLOATING_BUTTON_DRAG_THRESHOLD = 10;
+    // Matches android:alpha on floatingMenuButton in activity_game.xml
+    private static final float FLOATING_BUTTON_IDLE_ALPHA = 0.55f;
 
     // Tracks the on-screen controller's visibility for the overlay menu toggle
     private boolean onscreenControllerShown;
@@ -232,6 +238,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private boolean isAndroidTV = false;
 
     private MediaCodecDecoderRenderer decoderRenderer;
+    private MicrophoneCaptureManager microphoneCaptureManager;
     private boolean reportedCrash;
 
     private WifiManager.WifiLock highPerfWifiLock;
@@ -486,6 +493,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         overlayMenuView.setGameInfo(appName,
                 getString(R.string.cg_chip_resolution, prefConfig.height, prefConfig.fps),
                 CoverGlow.rememberedTint(this, getIntent().getStringExtra(EXTRA_PC_UUID), appId));
+        overlayMenuView.setCover(menuCover(getIntent().getStringExtra(EXTRA_PC_UUID), appId, appName));
 
         X509Certificate serverCert = null;
         try {
@@ -676,6 +684,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 .setSupportedVideoFormats(supportedVideoFormats)
                 .setAttachedGamepadMask(gamepadMask)
                 .setAudioConfiguration(prefConfig.audioConfiguration)
+                // With VBAN the microphone goes straight to the PC, not over the stream
+                .setEnableMicrophone(prefConfig.enableMicrophone && !prefConfig.microphoneToVban)
                 .setColorSpace(decoderRenderer.getPreferredColorSpace())
                 .setColorRange(decoderRenderer.getPreferredColorRange())
                 .setPersistGamepadsAfterDisconnect(!prefConfig.multiController);
@@ -768,6 +778,16 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
         // For semi-square displays, we use more complex logic to determine which orientation to use (if any)
         if (PreferenceConfiguration.isSquarishScreen(display)) {
+            // A foldable's inner screen: forcing landscape there can hand the stream a rotated
+            // surface, shrunk with black borders (seen on Galaxy Z Folds). Let it follow the
+            // device instead. Idea from Moonlight Fold (sblocktechnologies) and
+            // moonlight-stream/moonlight-android#1613; the cover screen keeps landscape.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                    getPackageManager().hasSystemFeature(PackageManager.FEATURE_SENSOR_HINGE_ANGLE)) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
+                return;
+            }
+
             int desiredOrientation = Configuration.ORIENTATION_UNDEFINED;
 
             // OSC doesn't properly support portrait displays, so don't use it in portrait mode by default
@@ -1300,6 +1320,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
 
     @Override
     protected void onDestroy() {
+        stopMicrophoneCapture();
         super.onDestroy();
 
         // Unregister broadcast receiver
@@ -2642,7 +2663,90 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     public void stageComplete(String stage) {
     }
 
+    private void stopMicrophoneCapture() {
+        if (microphoneCaptureManager != null) {
+            microphoneCaptureManager.stop();
+        }
+    }
+
+    // Microphone streaming over the stream only works with hosts that accept it (logabell's Apollo
+    // build); other hosts never negotiate it, so the stream carries on without the mic. With VBAN
+    // the microphone goes to a receiver on the PC instead, whatever the host.
+    private void startMicrophoneCapture() {
+        if (!prefConfig.enableMicrophone) {
+            return;
+        }
+
+        if (!MicrophoneCaptureManager.hasRecordAudioPermission(this)) {
+            LimeLog.info("Skipping microphone capture because RECORD_AUDIO permission is missing");
+            Toast.makeText(this, R.string.microphone_stream_permission_revoked, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (prefConfig.microphoneToVban) {
+            // The PC's address can be a name, and looking it up isn't allowed on this thread
+            String host = getIntent().getStringExtra(EXTRA_HOST);
+            new Thread(() -> {
+                InetAddress address = null;
+                try {
+                    address = InetAddress.getByName(host);
+                }
+                catch (UnknownHostException | SecurityException e) {
+                    LimeLog.warning("Couldn't look up the PC for VBAN: " + e.getMessage());
+                }
+                final InetAddress resolved = address;
+                runOnUiThread(() -> startVbanMicrophone(resolved));
+            }, "MicVbanLookup").start();
+            return;
+        }
+
+        if (!MoonBridge.isMicrophoneStreamActive()) {
+            LimeLog.info("Host did not negotiate microphone streaming");
+            Toast.makeText(this, R.string.microphone_host_not_negotiated, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (microphoneCaptureManager == null) {
+            microphoneCaptureManager = new MicrophoneCaptureManager(this);
+        }
+
+        LimeLog.info("Starting microphone streaming on device id " + prefConfig.microphoneDeviceId +
+                " (encrypted=" + MoonBridge.isMicrophoneEncryptionEnabled() + ")");
+
+        if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null)) {
+            LimeLog.warning("Unable to start local microphone capture for the current stream");
+            Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void startVbanMicrophone(InetAddress address) {
+        // The stream may have ended while the PC's address was looked up
+        if (!connected || isFinishing()) {
+            return;
+        }
+        if (address == null) {
+            Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
+            return;
+        }
+        // VBAN isn't encrypted, so the audio only goes to a PC on the home network or a private VPN
+        if (!VbanSender.isHomeNetworkAddress(address)) {
+            LimeLog.info("Not sending the microphone over VBAN to " + address.getHostAddress());
+            Toast.makeText(this, R.string.microphone_vban_not_home, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (microphoneCaptureManager == null) {
+            microphoneCaptureManager = new MicrophoneCaptureManager(this);
+        }
+        VbanSender sender = new VbanSender(address, prefConfig.vbanPort, prefConfig.vbanStreamName);
+        if (!microphoneCaptureManager.startStreaming(prefConfig.microphoneDeviceId, null, sender)) {
+            LimeLog.warning("Unable to start the microphone for VBAN");
+            Toast.makeText(this, R.string.microphone_stream_start_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
     private void stopConnection() {
+        stopMicrophoneCapture();
         // Give the PC its cursor back before the connection goes away
         restoreHostCursor();
 
@@ -2862,6 +2966,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                 UiHelper.notifyStreamConnected(Game.this);
 
                 hideSystemUi(1000);
+                startMicrophoneCapture();
 
                 // Show overlay menu hint toast
                 showOverlayMenuHint();
@@ -3374,6 +3479,28 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             @Override
             public void onChangeBitrate() {
                 showBitratePicker();
+            }
+
+            @Override
+            public boolean isToggleOn(int toggle) {
+                switch (toggle) {
+                    case OverlayMenuView.TOGGLE_STATS:
+                        return performanceOverlayView.getVisibility() == View.VISIBLE;
+                    case OverlayMenuView.TOGGLE_MOUSE_EMULATION:
+                        return controllerHandler.isMouseEmulationActiveForController0();
+                    case OverlayMenuView.TOGGLE_FULL_KEYBOARD:
+                        return fullKeyboard != null && fullKeyboard.isKeyboardVisible();
+                    case OverlayMenuView.TOGGLE_PAN_ZOOM:
+                        return isPanZoomMode;
+                    case OverlayMenuView.TOGGLE_TOUCH_SENSITIVITY:
+                        return touchSensitivityEnabled;
+                    case OverlayMenuView.TOGGLE_ONSCREEN_CONTROLLER:
+                        return onscreenControllerShown;
+                    case OverlayMenuView.TOGGLE_FLOATING_BUTTON:
+                        return floatingButtonShown;
+                    default:
+                        return false;
+                }
             }
         });
     }
@@ -3898,9 +4025,37 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         }).start();
     }
 
+    // The menu header's picture: the game's box art from the app list's cache, or the Starwire
+    // tile for Desktop and games without art (as on the game screen)
+    private android.graphics.drawable.Drawable menuCover(String pcUuid, int appId, String appName) {
+        if (pcUuid == null || com.limelight.ui.AppIcons.useIcon(this, appName)) {
+            return com.limelight.ui.AppIcons.tile(this, appName);
+        }
+        java.io.File file = com.limelight.utils.CacheHelper.openPath(false, getCacheDir(), "boxart", pcUuid, appId + ".png");
+        if (file.exists()) {
+            android.graphics.BitmapFactory.Options options = new android.graphics.BitmapFactory.Options();
+            options.inJustDecodeBounds = true;
+            android.graphics.BitmapFactory.decodeFile(file.getPath(), options);
+            // The host's plain default image (GFE sizes) counts as no art
+            boolean placeholder = (options.outWidth == 628 && options.outHeight == 888)
+                    || (options.outWidth == 130 && options.outHeight == 180);
+            if (!placeholder && options.outWidth > 0) {
+                // Small enough for the 42dp header
+                options.inJustDecodeBounds = false;
+                options.inSampleSize = Math.max(1, options.outWidth / 128);
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeFile(file.getPath(), options);
+                if (bitmap != null) {
+                    return new android.graphics.drawable.BitmapDrawable(getResources(), bitmap);
+                }
+            }
+        }
+        return com.limelight.ui.AppIcons.tile(this, appName);
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     private void initFloatingButton() {
-        // Tap opens the overlay menu; drag moves the button, kept within the screen (from Artemide)
+        // Tap opens the overlay menu, or closes it when it's open; drag moves the button, kept
+        // within the screen (from Artemide). The button sits above the menu, so it stays tappable.
         floatingMenuButton.setOnTouchListener((view, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
@@ -3909,6 +4064,8 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     floatingButtonDX = view.getX() - event.getRawX();
                     floatingButtonDY = view.getY() - event.getRawY();
                     floatingButtonMoving = false;
+                    // The button sits faded over the game and lights up while touched
+                    view.animate().alpha(1f).setDuration(120).start();
                     return true;
                 case MotionEvent.ACTION_MOVE:
                     if (Math.abs(event.getRawX() - floatingButtonStartX) > FLOATING_BUTTON_DRAG_THRESHOLD ||
@@ -3923,14 +4080,30 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     return true;
                 case MotionEvent.ACTION_UP:
                     if (!floatingButtonMoving) {
-                        overlayMenuView.show();
+                        toggleOverlayMenu();
                     }
                     floatingButtonMoving = false;
+                    view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
+                    return true;
+                case MotionEvent.ACTION_CANCEL:
+                    floatingButtonMoving = false;
+                    view.animate().alpha(FLOATING_BUTTON_IDLE_ALPHA).setDuration(400).start();
                     return true;
                 default:
                     return false;
             }
         });
+        // TalkBack's double-tap arrives as a click, not as touches
+        floatingMenuButton.setOnClickListener(view -> toggleOverlayMenu());
+    }
+
+    private void toggleOverlayMenu() {
+        if (overlayMenuView.getVisibility() == View.VISIBLE) {
+            overlayMenuView.closeMenu();
+        }
+        else {
+            overlayMenuView.show();
+        }
     }
 
     private void setFloatingButtonShown(boolean shown) {
