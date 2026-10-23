@@ -2,7 +2,7 @@
 
 <h1><img src="docs/images/title.svg" width="460" alt="Starwire"></h1>
 
-**Stream your PC games to your Android phone or tablet, with the best of every Moonlight client in one app.**
+**Stream your PC games to your Android device, with the best of every Moonlight client in one app.**
 
 [![Latest release](https://img.shields.io/github/v/release/SicarioGaming/Starwire?include_prereleases&label=release&style=flat-square)](https://github.com/SicarioGaming/Starwire/releases)
 [![Android 5.0+](https://img.shields.io/badge/Android-5.0%2B-34A853?style=flat-square&logo=android&logoColor=white)](https://github.com/SicarioGaming/Starwire/releases)
@@ -68,7 +68,7 @@ over the stream itself instead.
 
 <br>
 
-On the phone, Starwire records with `AudioRecord` using the `VOICE_COMMUNICATION` source and turns
+On the Android device, Starwire records with `AudioRecord` using the `VOICE_COMMUNICATION` source and turns
 on the platform echo canceller and noise suppressor where the device has them. It reads 20 ms at a
 time and sends 48 kHz 16-bit mono PCM as VBAN over UDP (port 6980 by default): a 28-byte header
 and 256 samples per packet, 187.5 packets a second. It sends to the PC you're streaming from, so
@@ -77,7 +77,7 @@ there's nothing to type in, and it doesn't ask the host for a mic channel.
 On the PC, `StarwireMicReceiver` (one C# file, built on your PC from the source in the zip)
 accepts packets only from local-network or private VPN addresses with the right stream name, and
 plays them into CABLE Input in 10 ms blocks. Playback starts once 40 ms is queued and never falls
-more than 120 ms behind. Phone and PC clocks drift apart (60 ppm in my test), so when the buffer
+more than 120 ms behind. The device's and the PC's clocks drift apart (60 ppm in my test), so when the buffer
 stays above 60 ms for 2 seconds it skips a block to keep the delay down.
 
 <p align="center">
@@ -87,7 +87,7 @@ stays above 60 ms for 2 seconds it skips a block to keep the delay down.
 </p>
 
 - On the PC alone, a packet takes about 107 to 119 ms to be heard on CABLE Output: 40 ms of
-  buffer, the rest Windows' audio path. I haven't measured the phone side yet. Swapping waveOut for
+  buffer, the rest Windows' audio path. I haven't measured the Android side yet. Swapping waveOut for
   WASAPI should take a chunk off the PC side, and it's planned for the next release.
 - Echo cancelling is whatever the device provides, and some Android devices only apply it to
   calls; headphones get around that.
@@ -217,7 +217,7 @@ Galaxy Z Fold 6 before it goes in.
 
 **2026/10/22:** [Version 0.2.0](https://github.com/SicarioGaming/Starwire/releases/tag/v0.2.0)
 sends your microphone to the PC with any host (Vibepollo, Sunshine, Apollo), through a small
-receiver and VB-Cable that one setup script installs. It also works on phones and foldables
+receiver and VB-Cable that one setup script installs. It also fits more Android devices
 (settings were blank on narrow screens like a Galaxy Z Fold's cover screen, and the game screen's
 header now scrolls away), adds a short "Impact:" line to the settings that affect latency and
 performance, tidies the stream menu with on/off switches and a smaller floating button that
@@ -331,7 +331,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Audio haptics: the game's bass becomes vibration on the device and/or the controller | Idea from Moonlight V+ (qiin2333); written new for Starwire |
 | Hide PC cursor (never / while touching / always) **(Vibepollo)** | New in Starwire |
 | Long-press to right-click in gaming trackpad mode | New in Starwire |
-| Settings, the game screen and the stream menu fit phones and foldables (a Galaxy Z Fold's cover screen); the game screen's header scrolls away with the covers | New in Starwire |
+| Settings, the game screen and the stream menu fit every Android device, down to narrow screens like a Galaxy Z Fold's cover screen; the game screen's header scrolls away with the covers | New in Starwire |
 | An "Impact:" line under settings that change latency, smoothness, picture quality or battery | New in Starwire |
 | On a foldable's inner screen, the stream follows the device instead of forcing landscape | Idea from [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) (sblocktechnologies) and [moonlight-android#1613](https://github.com/moonlight-stream/moonlight-android/pull/1613) |
 | Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable (local network or private VPN only). The receiver has no window, just an icon by the clock with a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
