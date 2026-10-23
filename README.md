@@ -62,7 +62,7 @@ Aside from that, here are the draft release notes for 0.2.1 which should go live
 
 **Testing and Development**
 
-- 273 unit tests (from none), about 135 on-device tests and 32 screenshot tests.
+- 292 unit tests (from none), about 135 on-device tests and 32 screenshot tests.
 - The same tests also run on 5 virtual devices, including a Fold shape folded, half-open and unfolded. (Thank you to u/MickeyBronson)
 - Checks run automatically on every change.
 
