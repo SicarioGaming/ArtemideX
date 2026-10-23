@@ -5,6 +5,26 @@ in-game voice chat while you stream. This works with **Vibepollo, Sunshine and A
 change to your streaming host. Starwire sends the microphone as VBAN, VB-Audio's network audio
 format, to a small receiver on the PC, which plays it into a virtual microphone.
 
+## Please read first: it isn't secure yet
+
+In 0.2.0 the microphone audio isn't encrypted or authenticated. Someone on the same network as
+the PC or your Android device could listen to it, or send their own audio that plays into the
+virtual mic, so Discord or the game hears it as you. The receiver only checks that audio comes
+from a private address with the right stream name, and that isn't a security boundary: everyone
+on the network has a private address, the sender's address is easy to fake, and the stream name
+is public. The firewall rule the setup adds is also on for every type of network, public Wi-Fi
+included. Until the fix ships:
+
+- Use it only on a network you trust, like your own home network, or over
+  [Tailscale](https://tailscale.com/) or a VPN like it, which encrypts the audio on the way.
+- On a shared network (a dorm, office, hotel or LAN party), quit the receiver, even if you use
+  Tailscale: right-click its icon by the clock, then **Quit**.
+  [Turning it off](#details-and-fixes) below says how to keep it off.
+
+I'm working on a fix. [SECURITY.md](../SECURITY.md) has more.
+
+## What you need
+
 You need two things on the PC, and the setup below installs both:
 
 - **VB-Cable**, a free virtual microphone from [VB-Audio](https://vb-audio.com/Cable/)
@@ -18,16 +38,24 @@ You need two things on the PC, and the setup below installs both:
    [latest release](https://github.com/SicarioGaming/Starwire/releases/latest) and unzip it.
 2. Double-click **setup-microphone.cmd**. If Windows says it protected your PC or asks whether
    to run a downloaded file, choose **More info → Run anyway** (or **Run**). Then allow it to
-   make changes when Windows asks. The setup:
-   - downloads VB-Cable from VB-Audio's site, checks it's signed by VB-Audio, and opens its setup:
-     click **Install Driver**, then close it;
-   - builds and installs the receiver in `Program Files\Starwire`;
-   - lets the receiver through Windows Firewall for local-network and private VPN (like
-     Tailscale) addresses only;
-   - starts the receiver now and whenever you sign in. It has no window, just an icon in the
-     notification area by the clock (it may be under the ^ arrow);
-   - plays a test tone through VB-Cable to check the virtual microphone works.
+   make changes when Windows asks. The setup, in this order:
+   - closes the receiver if it's already running, so it's safe to run the setup again;
+   - stops if Windows 11's Smart App Control is on, and points you to another receiver
+     (see **Smart App Control** below);
+   - builds the receiver with the C# compiler that comes with Windows and installs it in
+     `Program Files\Starwire`;
+   - checks for VB-Cable. Only if it's missing, it downloads it from VB-Audio's site, checks it's
+     signed by VB-Audio, and opens its setup: click **Install Driver**, then close it;
+   - lets the receiver through Windows Firewall on UDP port 6980, for local-network and private
+     VPN (like Tailscale) addresses only. The rule applies on every type of network;
+   - makes it start whenever you sign in, and starts it now if VB-Cable is ready. It has no
+     window, just an icon in the notification area by the clock (it may be under the ^ arrow);
+   - if it started it, plays a test tone through VB-Cable to check the virtual microphone works;
+   - warns you and opens Sound settings if VB-Cable took over your default speakers (see
+     **CABLE Input** below);
+   - shows the next steps and this PC's IP addresses.
 3. If the setup says VB-Cable isn't showing up yet, **restart Windows** to finish installing it.
+   The receiver starts by itself after the restart.
 4. In Discord or the game, choose **CABLE Output (VB-Audio Virtual Cable)** as the microphone.
 
 ## Set up Starwire
@@ -43,11 +71,15 @@ changing if you changed them on the PC too.
 
 ## Details and fixes
 
-- **Local network only.** VBAN isn't encrypted, so Starwire only sends your voice to a PC at a
-  local-network address or over a private VPN like Tailscale (which encrypts it), and the
-  receiver only accepts audio from those addresses. On a laptop that joins public Wi-Fi, anyone on
-  that Wi-Fi could reach the receiver too, so turn it off there: run the setup with `-Uninstall`
-  or `-NoStartup` (below).
+- **Turning it off.** Right-click the icon, then **Quit**: it stays off until you next sign in.
+  To stop it starting at sign-in, run the setup again with `-NoStartup` (see **Options and
+  removal** below). That run still starts the receiver once if VB-Cable is ready, so quit it
+  afterwards. `-Uninstall` removes it completely. Do one of these on a laptop that joins public
+  or shared Wi-Fi.
+- **Local network only, but not secure.** Starwire only sends your voice to a PC at a
+  local-network address or over a private VPN, and the receiver only accepts audio from those
+  addresses. That's a filter, not protection: see
+  [the security note](#please-read-first-it-isnt-secure-yet) at the top.
 - **About 0.8 Mbps** of upload while you stream, uncompressed.
 - **If teammates hear the game,** wear headphones. Starwire turns on the device's echo
   cancelling and noise reduction where it has them, but some phones only cancel echo on calls.
@@ -58,7 +90,7 @@ changing if you changed them on the PC too.
   audio, or Steam Streaming Speakers).
 - **The receiver's icon:** hover over it to see whether it's receiving your Android device. Right-click it
   to **Check the virtual microphone** (tests VB-Cable), **Play a test tone** (for Discord's mic
-  test), open this guide, or **Quit**. Problems show up as Windows notifications.
+  test), open this guide (**Setup guide**), or **Quit**. Problems show up as Windows notifications.
 - **Troubleshooting:** `& "C:\Program Files\Starwire\StarwireMicReceiver.exe" --console` in
   Terminal (PowerShell) runs the receiver in a window that prints everything it does. Quit the
   icon first.
