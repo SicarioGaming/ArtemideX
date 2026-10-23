@@ -16,7 +16,8 @@ import com.limelight.preferences.PreferenceConfiguration;
  * height. Landscape and portrait screens each keep their own spot. When the screen is laid out at
  * a new size (the first layout, a turn, a fold or unfold, a resized window), and after the button
  * is shown again, it goes back to the spot saved for that orientation, inside the screen. With
- * nothing usable saved, it stays where floating_menu_button.xml puts it.
+ * nothing usable saved, it stays where floating_menu_button.xml puts it. It never moves from under
+ * a finger: a layout that comes during a touch waits until the finger lifts.
  */
 public final class FloatingButton {
     private static final int DRAG_THRESHOLD = 10;
@@ -28,6 +29,8 @@ public final class FloatingButton {
     private final SharedPreferences prefs;
     private final Runnable onTap;
 
+    // A finger is on the button, from ACTION_DOWN to ACTION_UP or ACTION_CANCEL
+    private boolean touched;
     private boolean moving;
     private float dX, dY;
     private float startX, startY;
@@ -63,6 +66,10 @@ public final class FloatingButton {
     // or the button being shown again, puts the button back in its spot.
     private void onScreenLaidOut(int width, int height) {
         if (width == placedWidth && height == placedHeight) {
+            return;
+        }
+        if (touched) {
+            // Left under the finger; touchEnded() asks for this layout again
             return;
         }
         if (width <= 0 || height <= 0 || button.getWidth() == 0) {
@@ -101,6 +108,7 @@ public final class FloatingButton {
                     startY = event.getRawY();
                     dX = view.getX() - event.getRawX();
                     dY = view.getY() - event.getRawY();
+                    touched = true;
                     moving = false;
                     // The button sits faded over the game and lights up while touched
                     view.animate().alpha(1f).setDuration(120).start();
@@ -121,21 +129,29 @@ public final class FloatingButton {
                     else {
                         onTap.run();
                     }
-                    moving = false;
-                    view.animate().alpha(IDLE_ALPHA).setDuration(400).start();
+                    touchEnded();
                     return true;
                 case MotionEvent.ACTION_CANCEL:
                     // The button stays where the drag left it, so that's the spot to remember
                     if (moving) {
                         saveSpot();
                     }
-                    moving = false;
-                    view.animate().alpha(IDLE_ALPHA).setDuration(400).start();
+                    touchEnded();
                     return true;
                 default:
                     return false;
             }
         });
+    }
+
+    private void touchEnded() {
+        touched = false;
+        moving = false;
+        button.animate().alpha(IDLE_ALPHA).setDuration(400).start();
+        if (screen.getWidth() != placedWidth || screen.getHeight() != placedHeight) {
+            // A layout came while the finger was down, so the button is put in its spot now
+            button.requestLayout();
+        }
     }
 
     /** A square screen counts as landscape. */

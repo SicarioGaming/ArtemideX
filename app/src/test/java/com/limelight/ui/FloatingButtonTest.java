@@ -291,6 +291,44 @@ public class FloatingButtonTest {
     }
 
     @Test
+    public void itNeverMovesFromUnderAFinger() {
+        PreferenceConfiguration.saveFloatingButtonSpot(prefs, false, 0.5f, 0.5f);
+        startStream(true);
+        layOut(WIDE, TALL);
+        float x = button.getX() + 20;
+        float y = button.getY() + 20;
+        touch(MotionEvent.ACTION_DOWN, x, y);
+        touch(MotionEvent.ACTION_MOVE, x + 300, y + 200);
+        float draggedX = button.getX();
+        float draggedY = button.getY();
+
+        // Game puts the button back on the next layout after each change it handles itself, a
+        // controller plugged in say. Partway through a drag it stays under the finger.
+        floating.placeOnNextLayout();
+        layOut(WIDE, TALL);
+        assertAt(draggedX, draggedY);
+
+        // When the finger lifts, the spot is saved and the missed layout is asked for again
+        touch(MotionEvent.ACTION_UP, x + 300, y + 200);
+        assertTrue("the missed layout wasn't asked for", screen.isLayoutRequested());
+        layOut(WIDE, TALL);
+        assertAt(draggedX, draggedY);
+
+        // The same during a tap, which moved it a little: after the lift it's back in its spot
+        x = draggedX + 20;
+        y = draggedY + 20;
+        touch(MotionEvent.ACTION_DOWN, x, y);
+        touch(MotionEvent.ACTION_MOVE, x + 8, y);
+        floating.placeOnNextLayout();
+        layOut(WIDE, TALL);
+        assertAt(draggedX + 8, draggedY);
+        touch(MotionEvent.ACTION_UP, x + 8, y);
+        assertEquals(1, taps);
+        layOut(WIDE, TALL);
+        assertAt(draggedX, draggedY);
+    }
+
+    @Test
     public void aCancelledDragKeepsItsSpot() {
         startStream(true);
         layOut(WIDE, TALL);
