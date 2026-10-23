@@ -120,6 +120,66 @@ a real PC over Wi-Fi.
 If you'd like to change something, open an issue or a discussion first so we can agree on it.
 Keep each pull request to one change, and say what you tested it on.
 
+## Commits, branches and the changelog
+
+Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/),
+branch names follow [Conventional Branch](https://conventionalbranch.org), and
+[CHANGELOG.md](CHANGELOG.md) follows [Keep a Changelog 1.0.0](https://keepachangelog.com/en/1.0.0/).
+Commits before 23 Oct 2026 predate these rules. The history is public, so they stay as they are.
+
+**Commit messages** start with a type, an optional scope in brackets, a colon and a space:
+
+```text
+fix(mic): stop the receiver dropping audio after a reconnect
+feat(dualsense): add adaptive trigger effects
+docs: add the 0.2.1 notes to CHANGELOG.md
+```
+
+- The types used here: `feat` (a new feature), `fix` (a bug fix), `docs`, `test`, `ci`, `build`,
+  `refactor`, `perf`, `chore` and `revert`.
+- The scope is optional and in lower case, like `fix(mic): ...` or `feat(dualsense): ...`.
+- After the colon, write the subject in the imperative and in lower case: "fix: stop the crash",
+  not "fix: Stopped the crash".
+- A change that breaks something people rely on gets a `!` before the colon
+  (`feat(mic)!: ...`) or a `BREAKING CHANGE: <what breaks>` footer.
+- If there's a body, leave a blank line after the subject.
+
+**Branch names** are `main`, or a type and a slash followed by lower-case words with hyphens:
+`feature/`, `bugfix/`, `hotfix/`, `release/` or `chore/`. For example `feature/dualsense-triggers`,
+`bugfix/mic-echo` or `release/v0.2.1` (dots are fine in version numbers). The other names the spec
+allows, like `feat/` and `fix/`, pass the check too.
+
+**The changelog:** every user-facing change adds a line under `[Unreleased]` in CHANGELOG.md, in
+the same pull request, under Added, Changed, Deprecated, Removed, Fixed or Security. A release
+moves the `[Unreleased]` lines under a new version heading with its date, like
+`## [0.2.1] - YYYY-MM-DD`, and updates the compare links at the bottom.
+
+**The check:** `.github/workflows/commits.yml` runs `.github/tools/check-commits.sh` on the
+commits and branch name of every pull request, and on every push to `main`. It skips merge
+commits, commits cherry-picked from upstream with `git cherry-pick -x`, and commits from before the
+rules started. To run it yourself before pushing:
+
+```bash
+bash .github/tools/check-commits.sh                      # what your next push adds
+bash .github/tools/check-commits.sh origin/main..HEAD    # what a pull request into main adds
+bash .github/tools/check-commits.sh --branch "$(git branch --show-current)"
+```
+
+To have each message checked as you commit, add it as a commit-msg hook:
+
+```bash
+printf '#!/bin/sh\nexec bash .github/tools/check-commits.sh --msg-file "$1"\n' > .git/hooks/commit-msg
+chmod +x .git/hooks/commit-msg
+```
+
+The hook lets git's own "Merge ...", "Revert ..." and `fixup!` messages through, so those commands
+keep working. Before opening a pull request, squash the fixups and reword a revert as
+`revert: <what it undoes>`.
+
+To fix a message that's already committed, use `git commit --amend` for the latest commit, or
+`git rebase -i origin/main` and "reword" for older ones, then push with
+`git push --force-with-lease`.
+
 ## Licence and credits
 
 Starwire is GPL-3.0 ([LICENSE.txt](LICENSE.txt)), like Moonlight and every fork it builds on, and
