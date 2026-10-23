@@ -684,6 +684,19 @@ if [ $status -ne 0 ]; then
 fi
 ok "check-commits.sh tells good commit messages and branch names from bad ones"
 
+# 15. check-version.sh sorts its planted tag names, versions and releases (in a throwaway repo of
+# its own) the way SemVer 2.0.0 and RELEASING.md's version rules say
+begin
+set +e
+version_out=$(bash "$HERE/check-version.sh" --self-test 2>&1)
+status=$?
+set -e
+if [ $status -ne 0 ]; then
+    printf '%s\n' "$version_out" | grep -v '^ok ' >&2 || true
+    fail "check-version.sh --self-test exited $status"
+fi
+ok "check-version.sh tells good release tags and version bumps from bad ones"
+
 if [ $failures -ne 0 ]; then
     echo "$failures problem(s)" >&2
     exit 1

@@ -15,6 +15,15 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: recursive
+          # All history and tags, for the version check to find the previous release
+          fetch-depth: 0
+
+      # The tag must be a SemVer version that matches app/build.gradle, CHANGELOG.md, the release
+      # notes and the commits since the previous release (docs/dev/RELEASING.md)
+      - name: Check the version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: bash .github/tools/check-version.sh --tag "$TAG"
 
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
