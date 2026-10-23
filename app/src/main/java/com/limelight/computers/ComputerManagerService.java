@@ -476,7 +476,8 @@ public class ComputerManagerService extends Service {
             synchronized (pollingTuples) {
                 for (PollingTuple tuple : pollingTuples) {
                     if (tuple.computer.uuid.equals(fakeDetails.uuid)) {
-                        fakeDetails.serverCert = tuple.computer.serverCert;
+                        // Starwire: and what the saved PC knows about pairing (see PairStateCheck)
+                        PairStateCheck.takeSaved(fakeDetails, tuple.computer);
                         break;
                     }
                 }
@@ -698,6 +699,18 @@ public class ComputerManagerService extends Service {
         return null;
     }
 
+    // Starwire: one serverinfo request on its own, to the address that just answered the poll
+    private PairingManager.PairState askPairStateAgain(ComputerDetails details, ComputerDetails polled)
+            throws IOException, XmlPullParserException {
+        NvHTTP http = new NvHTTP(polled.activeAddress, polled.httpsPort, idManager.getUniqueId(), details.serverCert,
+                PlatformBinding.getCryptoProvider(ComputerManagerService.this));
+        ComputerDetails again = http.getComputerDetails(true);
+        if (!polled.uuid.equals(again.uuid)) {
+            throw new IOException("Another PC answered at " + polled.activeAddress);
+        }
+        return again.pairState;
+    }
+
     private boolean pollComputer(ComputerDetails details) throws InterruptedException {
         // Poll all addresses in parallel to speed up the process
         LimeLog.info("Starting parallel poll for "+details.name+" ("+details.localAddress +", "+details.remoteAddress +", "+details.manualAddress+", "+details.ipv6Address+")");
@@ -705,7 +718,8 @@ public class ComputerManagerService extends Service {
         LimeLog.info("Parallel poll for "+details.name+" returned address: "+details.activeAddress);
 
         if (polledDetails != null) {
-            details.update(polledDetails);
+            // Starwire: an answer that unpairs a paired PC is checked with one more request first
+            PairStateCheck.merge(details, polledDetails, () -> askPairStateAgain(details, polledDetails));
             return true;
         }
         else {
