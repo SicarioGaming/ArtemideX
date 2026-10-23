@@ -22,6 +22,7 @@ import com.limelight.ui.CollapsingHeader;
 import com.limelight.ui.CoverGlow;
 import com.limelight.ui.Rainbow;
 import com.limelight.ui.CoverImageView;
+import com.limelight.ui.Loops;
 import com.limelight.utils.QuickLaunchManager;
 import com.limelight.utils.CacheHelper;
 import com.limelight.utils.Dialog;
@@ -30,8 +31,8 @@ import com.limelight.utils.ShortcutHelper;
 import com.limelight.utils.SpinnerDialog;
 import com.limelight.utils.UiHelper;
 
-import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Service;
@@ -101,7 +102,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     private AppObject selectedApp;
     private int currentTint = CoverGlow.DEFAULT_TINT;
     private ValueAnimator tintAnimator;
-    private AnimatorSet glowAnimator;
+    private ObjectAnimator glowAnimator;
     private ObjectAnimator coverFloat;
     private ValueAnimator wordmarkRainbow;
 
@@ -451,15 +452,15 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
     // The screen's endless animations stop while it's out of sight (during a stream, say), so they
     // don't keep waking the CPU every frame
     private void setLoopsRunning(boolean running) {
-        for (android.animation.Animator loop : new android.animation.Animator[] {glowAnimator, coverFloat, wordmarkRainbow}) {
+        for (ValueAnimator loop : new ValueAnimator[] {glowAnimator, coverFloat, wordmarkRainbow}) {
             if (loop == null) {
                 continue;
             }
             if (running) {
-                loop.resume();
+                Loops.run(this, loop);
             }
             else {
-                loop.pause();
+                Loops.hold(loop);
             }
         }
     }
@@ -905,20 +906,18 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
 
         applyTint(currentTint);
 
-        // The glow drifts slowly behind everything (system animation settings still apply)
+        // The glow drifts slowly behind everything. Like the loops below, it stays still when
+        // the user has animations off (Loops).
         float drift = dp(30);
-        ObjectAnimator driftX = ObjectAnimator.ofFloat(coverGlow, View.TRANSLATION_X, 0, -drift);
-        ObjectAnimator driftY = ObjectAnimator.ofFloat(coverGlow, View.TRANSLATION_Y, 0, drift * 0.7f);
-        ObjectAnimator grow = ObjectAnimator.ofFloat(coverGlow, View.SCALE_X, 1f, 1.08f);
-        ObjectAnimator growY = ObjectAnimator.ofFloat(coverGlow, View.SCALE_Y, 1f, 1.08f);
-        for (ObjectAnimator animator : new ObjectAnimator[] {driftX, driftY, grow, growY}) {
-            animator.setRepeatCount(ValueAnimator.INFINITE);
-            animator.setRepeatMode(ValueAnimator.REVERSE);
-        }
-        glowAnimator = new AnimatorSet();
-        glowAnimator.playTogether(driftX, driftY, grow, growY);
+        glowAnimator = ObjectAnimator.ofPropertyValuesHolder(coverGlow,
+                PropertyValuesHolder.ofFloat(View.TRANSLATION_X, 0, -drift),
+                PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 0, drift * 0.7f),
+                PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.08f),
+                PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.08f));
         glowAnimator.setDuration(4500);
-        glowAnimator.start();
+        glowAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        glowAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        Loops.run(this, glowAnimator);
 
         // The hero's cover floats gently (moving a view redraws nothing, so it costs little)
         coverFloat = ObjectAnimator.ofFloat(heroCover, View.TRANSLATION_Y, 0, -dp(5));
@@ -926,7 +925,7 @@ public class AppView extends Activity implements AdapterFragmentCallbacks {
         coverFloat.setRepeatCount(ValueAnimator.INFINITE);
         coverFloat.setRepeatMode(ValueAnimator.REVERSE);
         coverFloat.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
-        coverFloat.start();
+        Loops.run(this, coverFloat);
 
         // The wordmark slowly flows through the rainbow
         wordmarkRainbow = Rainbow.applyTo((TextView) findViewById(R.id.cgWordmark));
