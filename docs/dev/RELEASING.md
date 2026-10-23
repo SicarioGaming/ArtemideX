@@ -99,7 +99,7 @@ dates are in UTC.
 
 1. On the release branch: version and notes as in [UPDATING.md](UPDATING.md) (section 3, steps 1
    and 2), the release checklist done and the on-device tests passing
-   (`./gradlew connectedNonRootDebugAndroidTest`).
+   (`.github/tools/device-test.sh -s <serial> --allow-stream`).
 2. Merge it into `main` as one merge commit:
 
    ```

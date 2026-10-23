@@ -20,8 +20,11 @@ The sources and the last commit reviewed for each are in `.github/tools/upstream
   as a git remote and port the commits by hand. Starwire's base has moved on, so plain merges
   rarely apply cleanly.
 - **Ideas** (Moonlight V+, Moonlit Artemis, upstream Moonlight): write the feature for Starwire.
-- Add an on-device test for it (`app/src/androidTest`) and run them all:
-  `./gradlew connectedNonRootDebugAndroidTest`.
+- Add an on-device test for it (`app/src/androidTest`) and run them all, with the smoke tests:
+  `./gradlew assembleNonRootDebug assembleNonRootDebugAndroidTest`, then
+  `.github/tools/device-test.sh -s <serial>` (`--allow-stream` adds a short Desktop stream). It
+  installs with `adb install -r` and never uninstalls, so the debug app keeps its pairing, which
+  `connectedNonRootDebugAndroidTest` may not.
 - Credit it in the README's **Where every feature comes from** table (project, author, and
   whether it was ported or an idea). A new project in the README's **Credits** table goes in
   `AboutCredits.java` too, which is the Credits page in Settings → About.
