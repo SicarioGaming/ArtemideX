@@ -20,12 +20,17 @@
 
 ## New in 0.2.0: your microphone on the PC, with any host
 
-Mic passthrough was one of the most requested features, and until now it meant switching your
-PC to a host build with a mic channel. Starwire does it without touching the host: it sends your
-microphone straight to the PC as VBAN (VB-Audio's network audio format), a small receiver plays it
-into VB-Cable, a free virtual microphone, and Discord or the game picks it up as a normal mic.
-Vibepollo, Sunshine and Apollo stay exactly as they are, and the mic starts and stops with the
-stream.
+Mic passthrough was a highly requested feature after the 0.1.0 launch, and one of the last things
+keeping a Moonlight stream from feeling like you're really sitting at your PC. Parsec has had it
+for years, but with Moonlight it meant switching your PC to a host build that has a mic channel,
+like logabell's Apollo fork. Most of us don't want to swap host programs, and I wasn't keen on
+giving up a Vibepollo setup that already works flawlessly.
+
+So this works without touching the host: Starwire sends your mic straight to the PC as VBAN
+(VB-Audio's network audio format), a small receiver plays it into VB-Cable, a free virtual
+microphone, and Discord or the game picks it up as a normal mic. Vibepollo, Sunshine and Apollo
+stay exactly as they are, and the mic starts and stops with the stream, with no separate mic app
+like WO Mic or AudioRelay to open on your Android device each time.
 
 <p align="center">
 <img src="docs/images/mic-signal-path.png" width="820" alt="Diagram of the microphone path: on Android, AudioRecord with echo cancelling and noise suppression feeds VbanSender, which sends 48 kHz 16-bit mono packets over UDP port 6980 to StarwireMicReceiver on the Windows PC, which plays them into VB-Cable's CABLE Input; Discord or the game records from CABLE Output. The Moonlight stream between Starwire and the host is unchanged.">
@@ -41,11 +46,22 @@ stream.
 2. In Discord or the game, choose **CABLE Output** as the microphone.
 3. In Starwire: **Settings → Sound & vibration → Send my microphone**.
 
-Measured on my tablet over Wi-Fi: 16,880 packets in 90 seconds with none lost, the receiver's
-buffer holding at 30 to 50 ms, and about 0.85 Mbps of upload. The audio isn't encrypted, so
-Starwire only sends it to a PC on your local network or over a private VPN like Tailscale. If your
-PC runs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can
-send it over the stream itself instead.
+<p align="center">
+<img src="docs/images/mic-setup.png" width="720" alt="The microphone setup finishing in a PowerShell window: the receiver installed in Program Files, VB-Cable found, the firewall rule added for local-network and private VPN addresses, the receiver started with no window (just an icon by the clock), and the check reporting that the microphone heard the test tone.">
+<br>
+<sub>All of this is automatic: one double-click runs the PowerShell setup, which builds and starts the receiver, installs VB-Cable if it's missing, adds the firewall rule and checks the virtual mic. This is it finishing on my PC.</sub>
+</p>
+
+The receiver has no window: right-click its icon by the clock to check the virtual mic, play a test
+tone for Discord's mic test or quit (or end it in Task Manager). Measured on my tablet over Wi-Fi:
+16,880 packets in 90 seconds with none lost, the receiver's buffer holding at 30 to 50 ms, and
+about 0.85 Mbps of upload.
+
+The audio isn't encrypted, so Starwire only sends it to a PC on your local network or over a
+private VPN. If you want the mic encrypted, use [Tailscale](https://tailscale.com/) or something
+like it, which many of us already use to stream away from home. If your PC runs
+[logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can send it
+over the stream itself instead.
 
 <details>
 <summary><b>How it works and what I measured</b></summary>
@@ -71,9 +87,14 @@ stays above 60 ms for 2 seconds it skips a block to keep the delay down.
 </p>
 
 - On the PC alone, a packet takes about 107 to 119 ms to be heard on CABLE Output: 40 ms of
-  buffer, the rest Windows' audio path. I haven't measured the phone side yet.
-- Echo cancelling is whatever the device provides; if teammates hear the game, wear headphones.
-- The setup and receiver are Windows only for now.
+  buffer, the rest Windows' audio path. I haven't measured the phone side yet. Swapping waveOut for
+  WASAPI should take a chunk off the PC side, and it's planned for the next release.
+- Echo cancelling is whatever the device provides, and some Android devices only apply it to
+  calls; headphones get around that.
+- The setup and receiver are Windows only for now. On Linux, PipeWire's VBAN receive module should
+  take the stream (Stream1, UDP 6980), but I haven't tried it.
+- The receiver starts when you sign in, not as a service, so it doesn't run on a PC sitting at the
+  sign-in screen.
 
 </details>
 
@@ -188,8 +209,8 @@ I made Starwire as a vibecoding exercise after experiencing the wonderful softwa
 Vibepollo. I decided what the app should do and how it should look, and
 [Claude Code](https://claude.com/claude-code) wrote the code. I also
 used [REA](https://github.com/morluto/rea) by morluto to look inside the other apps and see how
-their features work. Every feature is tested on my RedMagic Astra with a GameSir G8+ before it
-goes in.
+their features work. Every feature is tested on my RedMagic Astra with a GameSir G8+ and on my
+Galaxy Z Fold 6 before it goes in.
 
 ## Changelog
 
