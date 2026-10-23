@@ -1,6 +1,6 @@
 # Your microphone on the PC, with any host
 
-Starwire can send your phone or tablet's microphone to the PC, so you can talk in Discord or
+Starwire can send your Android device's microphone to the PC, so you can talk in Discord or
 in-game voice chat while you stream. This works with **Vibepollo, Sunshine and Apollo**, with no
 change to your streaming host. Starwire sends the microphone as VBAN, VB-Audio's network audio
 format, to a small receiver on the PC, which plays it into a virtual microphone.
@@ -56,7 +56,7 @@ changing if you changed them on the PC too.
   your game, or you hear yourself in the stream. The setup warns about this and opens Sound
   settings: set the output you used before as the default (your speakers, the monitor's HDMI
   audio, or Steam Streaming Speakers).
-- **The receiver's icon:** hover over it to see whether it's receiving your phone. Right-click it
+- **The receiver's icon:** hover over it to see whether it's receiving your Android device. Right-click it
   to **Check the virtual microphone** (tests VB-Cable), **Play a test tone** (for Discord's mic
   test), open this guide, or **Quit**. Problems show up as Windows notifications.
 - **Troubleshooting:** `& "C:\Program Files\Starwire\StarwireMicReceiver.exe" --console` in
