@@ -116,11 +116,4 @@ public class ClaimsTest {
         assertTrue(warning, warning.contains("A driver that crashes closes Starwire"));
         assertTrue(warning, warning.contains("hasn\\'t been tried with a real Turnip driver"));
     }
-
-    // Until the encrypted microphone is ready, the docs say plainly that the 0.2.0 one isn't
-    @Test
-    public void theMicrophoneSaysItIsntEncrypted() throws Exception {
-        assertTrue(RepoFiles.read("README.md").contains("In 0.2.0 the microphone audio isn't encrypted"));
-        assertTrue(RepoFiles.read(".github/release-notes/v0.2.0-notes.md").contains("The audio isn't encrypted"));
-    }
 }

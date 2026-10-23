@@ -175,8 +175,8 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       channel). Only works with logabell's Apollo build on the PC
 - [x] Microphone with any host (Vibepollo, Sunshine, regular Apollo): a VBAN stream to Starwire's
       own receiver on the PC, which plays it into VB-Cable; one setup script installs both. Not
-      encrypted or authenticated in 0.2.0, so only for networks you trust (`SECURITY.md` has the
-      details); a fix is being worked on
+      encrypted or authenticated in 0.2.0; encrypted, and only from paired devices, from 0.2.1
+      (below)
 - [ ] Microphone receiver for macOS and Linux (the Windows one is in `windows/`)
 - [ ] Microphone over the stream itself with Vibepollo or regular Apollo: waiting for either to
       accept logabell's design
@@ -201,6 +201,20 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       reporting) and `CONTRIBUTING.md` were added, and `.github/tools/check-publish.sh` keeps
       secrets and personal details out of anything pushed to the public repo. This part is
       already live; it didn't need a release
+- [x] Encrypted microphone (SWMC version 1, `docs/dev/mic-protocol.md`): each device pairs with
+      the PC once with a 16-character code from the receiver's **Pair a device...**, and in
+      Starwire **Pair with the PC**. Each stream gets its own AES-256-GCM key, and the receiver
+      refuses devices it hasn't paired, replayed, late and forged packets, and plain VBAN unless
+      it's set up with `-AllowUnencrypted`. A "Not encrypted" option stays in the app for
+      Voicemeeter and other VBAN apps, and 0.2.0's default moves to the encrypted receiver once.
+      The receiver now plays through WASAPI, with waveOut if WASAPI doesn't work. Updating from
+      0.2.0 needs both sides and pairing once. Tested: the app and the receiver agree on a shared
+      vectors file (`SwmcCodecTest`, `windows/tests/run-tests.ps1`); a loopback run on one PC
+      (`windows/tests/e2e-loopback.ps1`) played every packet in order and refused a replayed, a
+      late, two forged and one plain VBAN packet; encrypting took about 6.5 microseconds per
+      packet in a benchmark on the tablet; and on 23 Oct a real stream from the tablet to the PC
+      over Wi-Fi, with a receiver that only takes encrypted audio, had sound only while the
+      stream ran. Dropouts weren't counted in that test
 - [x] Custom PyroWave driver: the setting says it's experimental, and the first time it's turned
       on, a warning says what a driver file can do and asks first. Imports are checked (a plain
       file name, at most 64 MB, a 64-bit ARM library, or an archive of at most 64 files holding

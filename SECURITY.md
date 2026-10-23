@@ -15,37 +15,42 @@ security problem, without the details, and I'll get in touch.
 Fixes go into new releases, so please check the problem is still there in the
 [latest release](https://github.com/SicarioGaming/Starwire/releases/latest).
 
-## Known issue: the 0.2.0 microphone isn't encrypted
+## The microphone
 
-This is about **Settings → Sound & vibration → Send my microphone** with **Send my microphone
-to** set to **A VBAN receiver on the PC (any host)**, which is the default, and the receiver that
+This is about **Settings → Sound & vibration → Send my microphone** and the receiver that
 `setup-microphone.cmd` installs on the PC.
 
-In 0.2.0 the audio goes from your Android device to the PC as plain VBAN over UDP (port 6980). It
-isn't encrypted or authenticated. That means:
+From 0.2.1, with **Send my microphone to** set to **Starwire's receiver on the PC (encrypted)**,
+which is the default, the audio is encrypted and authenticated, and the receiver only plays it
+from devices you've paired with that PC. You pair each device once, with a 16-character code the
+receiver shows. The code authenticates a key exchange, each stream gets its own AES-256-GCM key,
+and every packet carries a counter that only goes up. The receiver refuses anything it can't
+check: devices it hasn't paired, packets recorded and sent again, forged packets, and plain VBAN.
+Both sides still only talk to private addresses (local network or VPN), but that's an extra
+filter, not what keeps it safe: a UDP packet's sender address is easy to fake. The format, and
+how it's tested, is in [docs/dev/mic-protocol.md](docs/dev/mic-protocol.md).
 
-- Someone on the same network can listen to what your microphone hears while you stream.
-- Someone on the same network can send their own audio to the receiver, and it plays into your
-  PC's virtual mic, so Discord or the game hears it as you.
+What it doesn't protect against:
 
-Starwire only sends to private addresses (local network or VPN), and the receiver and its
-firewall rule only accept private addresses and the right stream name (`Stream1` by default).
-None of that is a security boundary. Everyone on your network has a private address, a UDP
-packet's sender address is easy to fake, and the stream name is public. The firewall rule also
-applies on every kind of network Windows knows about, public Wi-Fi included.
+- Someone who sees the pairing code before you've typed it could pair instead of you, so don't
+  show it while your screen is shared. If the receiver's window says **Paired with** a device
+  before you've typed the code, or one that isn't yours, choose **Unpair it** there.
+- A lost or stolen device that's still paired can send audio until you unpair it: right-click the
+  receiver's icon by the clock, then **Paired devices**, the device and **Unpair**.
+- Nothing can stop someone on the network from flooding it or jamming the Wi-Fi. The receiver only
+  keeps that cheap.
+- Malware on the Android device or the PC can reach the microphone directly.
+- The packet sizes and timing are visible, as with any encrypted stream.
 
-Until the fix ships:
+**Not encrypted**, another choice under **Send my microphone to** (for Voicemeeter and other
+VBAN apps), sends plain VBAN, which the receiver only plays if you set it up with
+`-AllowUnencrypted`. Then anyone on the same network can listen to the microphone, or send their
+own audio into the PC's virtual mic so Discord or the game hears it as you. Use it only on a
+network you trust.
 
-- Use the microphone only on a network you trust, like your own home network.
-- Away from home, send it over [Tailscale](https://tailscale.com/) or a VPN like it. That encrypts
-  the audio between your device and the PC.
-- If the PC is on a shared network (a dorm, office, hotel or LAN party), quit the receiver, even if
-  you use Tailscale, because it still accepts audio from the local network: right-click its icon by
-  the clock, then **Quit**. It starts again the next time you sign in to Windows. To stop that, run
-  the setup again with `-NoStartup` (then quit it), or remove it with `-Uninstall`. The
-  [microphone guide](windows/README.md) has the steps.
-
-I'm working on a fix.
+Starwire 0.2.0 sent the microphone as plain VBAN, with no encryption or authentication. If you
+still use 0.2.0, update both the app and the PC setup, then pair once. The
+[microphone guide](windows/README.md#updating-from-starwire-020) has the steps.
 
 ## The custom Vulkan driver option
 

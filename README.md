@@ -104,6 +104,9 @@ like WO Mic or AudioRelay to open on your Android device each time.
    the clock. [Full guide](windows/README.md).
 2. In Discord or the game, choose **CABLE Output** as the microphone.
 3. In Starwire: **Settings → Sound & vibration → Send my microphone**.
+4. Pair them, once: on the PC, right-click the receiver's icon by the clock, choose **Pair a
+   device...**, then **Show the code**. In Starwire, tap **Pair with the PC** under Send my
+   microphone, pick the PC and type the code.
 
 <p align="center">
 <img src="docs/images/mic-setup.png" width="720" alt="The microphone setup finishing in a PowerShell window: the receiver installed in Program Files, VB-Cable found, the firewall rule added for local-network and private VPN addresses, the receiver started with no window (just an icon by the clock), and the check reporting that the microphone heard the test tone.">
@@ -111,50 +114,45 @@ like WO Mic or AudioRelay to open on your Android device each time.
 <sub>All of this is automatic: one double-click runs the PowerShell setup, which builds and starts the receiver, installs VB-Cable if it's missing, adds the firewall rule and checks the virtual mic. This is it finishing on my PC.</sub>
 </p>
 
-<!-- TODO (encrypted mic): when 0.2.1 ships, turn "Coming in 0.2.1" below into the description,
-and update "Please read this before you use it", the receiver line under "How it works", the
-microphone row under "Input and feel", docs/ROADMAP.md, SECURITY.md, the "Coming in 0.2.1"
-section of windows/README.md and ClaimsTest.theMicrophoneSaysItIsntEncrypted. Only claim what
-the real phone-to-PC test passed. -->
-The receiver has no window: right-click its icon by the clock to check the virtual mic, play a test
-tone for Discord's mic test or quit (or end it in Task Manager). Measured on my tablet over Wi-Fi:
-16,880 packets in 90 seconds with none lost, no gaps in the receiver's buffer (usually 30 to 50
-ms queued) and about 0.85 Mbps of upload. The raw data and a script that recomputes every number
-are in [docs/measurements](docs/measurements/2026-10-22-mic/).
+The receiver has no window: right-click its icon by the clock to pair a device, see the paired
+devices, check the virtual mic, play a test tone for Discord's mic test or quit (or end it in Task
+Manager). Measured with 0.2.0, before the encryption, on my tablet over Wi-Fi: 16,880 packets in
+90 seconds with none lost, no gaps in the receiver's buffer (usually 30 to 50 ms queued) and about
+0.85 Mbps of upload. The raw data and a script that recomputes every number are in
+[docs/measurements](docs/measurements/2026-10-22-mic/).
 
-**Please read this before you use it.** In 0.2.0 the microphone audio isn't encrypted or
-authenticated. Someone on the same network could listen to it, or send their own audio that
-plays into your PC's virtual mic. Starwire and the receiver only check that addresses are private
-(local network or VPN), and that isn't a security boundary: everyone on your network has a
-private address, and the sender's address is easy to fake. Until the fix ships:
+**Please read this before you use it.** From 0.2.1 the microphone is encrypted, and the receiver
+only plays audio from devices you've paired with that PC. Being on the same network is no longer
+enough to listen to it or to send sound into your PC's virtual mic, and the encryption doesn't
+need Tailscale or a VPN like it. Three things to know:
 
-- Use it only on a network you trust, like your own home network, or over
-  [Tailscale](https://tailscale.com/) or a VPN like it, which encrypts the audio on the way.
-- On a shared network (a dorm, office, hotel or LAN party), quit the receiver, even if you use
-  Tailscale: right-click its icon by the clock, then **Quit**. It starts again the next time you
-  sign in to Windows; the [guide](windows/README.md) says how to stop that.
+- **Updating from 0.2.0 needs both sides:** the app and the PC setup, then pairing once. A 0.2.0
+  receiver won't understand the new app, and the new receiver refuses 0.2.0's unencrypted audio.
+- **Don't show the pairing code while your screen is shared.** Anyone who sees it before you've
+  typed it could pair instead of you.
+- **"Not encrypted"**, the option for Voicemeeter and other VBAN apps, sends plain VBAN, like 0.2.0
+  did. Anyone on the same network can listen to that or send sound into it, so use it only on a
+  network you trust.
 
-I'm working on a fix. [SECURITY.md](SECURITY.md) has the details. If your PC runs
-[logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can send the
-mic over the stream itself instead.
+[SECURITY.md](SECURITY.md) says what the encryption protects against and what it doesn't. If your
+PC runs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases), you can
+send the mic over the stream itself instead.
 
-**Coming in 0.2.1: the microphone encrypted, and only from paired devices.** You pair each Android
-device with the PC once: the receiver shows a 16-character code and you type it into Starwire
-(**Settings → Sound & vibration → Send my microphone → Pair with the PC**). The code
-authenticates a key exchange, so the device and the PC end up with a key nobody else on the
-network has. Each stream then gets its own AES-256-GCM key, every packet is encrypted and
-authenticated with a counter that only goes up, and the receiver refuses anything it can't
-check: devices it hasn't paired, recorded packets sent again, and plain VBAN. Sending plain VBAN
-stays possible for Voicemeeter and other VBAN apps, as an option labelled "Not encrypted".
-Updating needs both sides: the app and the PC setup, then pairing once; a 0.2.0 receiver won't
-understand the new app, and the new receiver refuses 0.2.0's unencrypted audio.
+**Encrypted, and only from paired devices.** You pair each Android device with the PC once: the
+receiver shows a 16-character code and you type it into Starwire (**Settings → Sound & vibration
+→ Send my microphone → Pair with the PC**). The code authenticates a key exchange, so the device
+and the PC end up with a key nobody else on the network has. Each stream then gets its own
+AES-256-GCM key, every packet is encrypted and authenticated with a counter that only goes up,
+and the receiver refuses anything it can't check: devices it hasn't paired, recorded packets sent
+again, and plain VBAN.
 
-What's tested so far: the app and the receiver give the same bytes for a shared set of test
-vectors, the app's pairing and sender work against the receiver on one PC's loopback (every packet
-played in order, a replayed, a late, two forged and one plain VBAN packet refused), and the app's
-side runs on my tablet, where encrypting took about 6.5 microseconds per packet in a benchmark. Sending
-from my tablet to my PC over Wi-Fi works too. The format is in
-[docs/dev/mic-protocol.md](docs/dev/mic-protocol.md).
+What's tested: the app and the receiver give the same bytes for a shared set of test vectors, the
+app's pairing and sender work against the receiver on one PC's loopback (every packet played in
+order, a replayed, a late, two forged and one plain VBAN packet refused), and the app's side runs
+on my tablet, where encrypting took about 6.5 microseconds per packet in a benchmark. On 23 Oct I
+streamed from my tablet to my PC over Wi-Fi with a receiver that only takes encrypted audio, and
+the sound came through only while the stream ran. I didn't count dropouts in that test. The format
+is in [docs/dev/mic-protocol.md](docs/dev/mic-protocol.md).
 
 <details>
 <summary><b>How it works and what I measured</b></summary>
@@ -163,30 +161,39 @@ from my tablet to my PC over Wi-Fi works too. The format is in
 
 On the Android device, Starwire records with `AudioRecord` using the `VOICE_COMMUNICATION` source and turns
 on the platform echo canceller and noise suppressor where the device has them. It reads 20 ms at a
-time and sends 48 kHz 16-bit mono PCM as VBAN over UDP (port 6980 by default): a 28-byte header
-and 256 samples per packet, 187.5 packets a second. It sends to the PC you're streaming from, so
-there's nothing to type in, and it doesn't ask the host for a mic channel.
+time and makes 48 kHz 16-bit mono PCM into VBAN packets: a 28-byte header and 256 samples per
+packet, 187.5 packets a second. Each one is encrypted inside Starwire's SWMC format (584 bytes
+with its header and tag) and sent over UDP (port 6980 by default); the Not encrypted option sends
+the plain VBAN packets instead. It sends to the PC you're streaming from, so there's no address to
+type in, and it doesn't ask the host for a mic channel.
 
-On the PC, `StarwireMicReceiver` (one C# file, built on your PC from the source in the zip)
-accepts packets from local-network or private VPN addresses with the right stream name (a filter,
-not a security check, as above), and plays them into CABLE Input in 10 ms blocks. Playback starts once 40 ms is queued and never falls
-more than 120 ms behind. The device's and the PC's clocks drift apart (about 60 ppm in my test), so when the buffer
-stays above 60 ms for 2 seconds it skips a block to keep the delay down.
+On the PC, `StarwireMicReceiver` (two C# files, built on your PC from the source in the zip)
+plays a packet only if it comes from a paired device, checks out under that stream's key and has
+a higher counter than any it has played. As an extra layer it still only takes packets from
+local-network or private VPN addresses (a filter, not a security check). It plays into CABLE Input
+through WASAPI, in 2.7 ms steps on VB-Cable, and uses waveOut's 10 ms blocks (as 0.2.0 did) if
+WASAPI doesn't work. Playback starts once 40 ms is queued and never falls more than 120 ms behind.
+The device's and the PC's clocks drift apart (about 60 ppm in my test), so the receiver notes how
+low the buffer gets in the first 2 seconds, and when it then stays 10 ms or more above that for 2
+seconds, it skips 10 ms to keep the delay down (with waveOut, when it stays above 60 ms for 2
+seconds).
 
 <p align="center">
 <img src="docs/images/mic-packet.png" width="820" alt="A real VBAN packet from the tablet's microphone as a hexdump, with each header field decoded: the VBAN marker, 48 kHz, 256 samples, mono, 16-bit PCM, the stream name Stream1 and the frame counter, followed by the receiver's rules for accepting and buffering packets.">
 <br>
 <img src="docs/images/mic-measured.png" width="820" alt="Measurements over 90 seconds of Wi-Fi: packet arrival against the ideal schedule (p50 10.9 ms, p99 21 ms, max 38 ms), the receiver's buffer replayed from those arrivals (no underruns, nothing dropped), CABLE Output's level with no dropouts, and the PC-side delay with and without the clock-drift fix.">
 <br>
-<sub>Two notes on the chart are rounded. Checked packet by packet, the network's own spread was 6.4 ms at p99 and 21.6 ms at worst, and the buffer dipped to 20 ms a few times but never ran dry. <a href="docs/measurements/2026-10-22-mic/">The data and the script</a> give every exact number.</sub>
+<sub>The packet and the chart are from 0.2.0, before the encryption. Two notes on the chart are rounded. Checked packet by packet, the network's own spread was 6.4 ms at p99 and 21.6 ms at worst, and the buffer dipped to 20 ms a few times but never ran dry. <a href="docs/measurements/2026-10-22-mic/">The data and the script</a> give every exact number.</sub>
 </p>
 
-- On the PC alone, a packet takes about 107 to 119 ms to be heard on CABLE Output: 40 ms of
-  buffer, the rest Windows' audio path. I haven't measured the Android side yet.
+- With 0.2.0's waveOut playback, on the PC alone, a packet took about 107 to 119 ms to be heard
+  on CABLE Output: 40 ms of buffer, the rest Windows' audio path. With WASAPI in 0.2.1, in my
+  tests the median delay dropped from about 114 to 98 ms. I haven't measured the Android side
+  yet.
 - Echo cancelling is whatever the device provides, and some Android devices only apply it to
   calls; headphones get around that.
 - The setup and receiver are Windows only for now. On Linux, PipeWire's VBAN receive module should
-  take the stream (Stream1, UDP 6980), but I haven't tried it.
+  take the Not encrypted option's stream (Stream1, UDP 6980), but I haven't tried it.
 - The receiver starts when you sign in, not as a service, so it doesn't run on a PC sitting at the
   sign-in screen.
 
@@ -269,7 +276,8 @@ Audio haptics turns a game's bass into vibration on your device or controller.
 
 ### 🎙 Your microphone on the PC
 Talk in game chat or Discord through your device's microphone, **with Vibepollo, Sunshine or
-Apollo as they are**: one setup script on the PC, one switch in Starwire. See
+Apollo as they are**: one setup script on the PC, one switch in Starwire, and a code to pair
+them once. The audio is encrypted, and only devices you've paired can send it. See
 [New in 0.2.0](#new-in-020-your-microphone-on-the-pc-with-any-host) for how it works and how to
 set it up.
 
@@ -454,7 +462,7 @@ The menu itself, its quick actions and custom commands come from Moonlight X
 | Settings, the game screen and the stream menu fit more Android devices, down to narrow screens like a Galaxy Z Fold's cover screen; the game screen's header scrolls away with the covers | New in Starwire |
 | An "Impact:" line under settings that change latency, smoothness, picture quality or battery | New in Starwire |
 | On a foldable's inner screen, the stream follows the device instead of forcing landscape | Idea from [Moonlight Fold](https://github.com/sblocktechnologies/moonlight-fold) (sblocktechnologies) and [moonlight-android#1613](https://github.com/moonlight-stream/moonlight-android/pull/1613) |
-| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable. Not encrypted or authenticated in 0.2.0, so only for networks you trust ([see above](#new-in-020-your-microphone-on-the-pc-with-any-host)). The receiver has no window, just an icon by the clock with a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
+| Send your microphone to the PC with any host: a VBAN stream to Starwire's receiver on the PC, which plays it into VB-Cable. Encrypted from 0.2.1, and only from devices you've paired with the PC; a "Not encrypted" option stays for Voicemeeter and other VBAN apps ([see above](#new-in-020-your-microphone-on-the-pc-with-any-host)). The receiver has no window, just an icon by the clock with pairing, a mic check and a test tone | New in Starwire, with its Windows receiver and setup script; VBAN is VB-Audio's network audio format |
 | Or send it over the stream itself, with a choice of microphone **(needs [logabell's Apollo build](https://github.com/logabell/apollo-microphone/releases) on the PC)** | Ported from logabell's Artemis and moonlight-common-c microphone changes ([Artemis PR #537](https://github.com/ClassicOldSong/moonlight-android/pull/537)); echo-cancelled capture is new in Starwire |
 | Per-game settings for the new options (codec, V-Sync, LFR, async decode, display, touch mode, cursor, audio haptics, and the jitter buffer coming in 0.2.1) | Extends Moonlight X's per-app settings (MoreOrLessSoftware); the per-game jitter buffer is from Moonlight X too |
 
