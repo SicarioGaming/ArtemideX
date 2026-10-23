@@ -242,33 +242,23 @@ public class NvHTTP {
         this.pm = new PairingManager(this, cryptoProvider);
     }
 
-    static String getXmlString(Reader r, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
-        XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-        factory.setNamespaceAware(true);
-        XmlPullParser xpp = factory.newPullParser();
+    // Starwire: anything on the network can answer on a host's port with any text at all, so a
+    // response that doesn't parse must always come out as an XmlPullParserException, which every
+    // caller handles. A runtime exception here would crash the app (or kill the polling thread).
+    private static XmlPullParserException malformed(RuntimeException e) {
+        XmlPullParserException wrapped = new XmlPullParserException("Malformed XML from host: " + e);
+        wrapped.initCause(e);
+        return wrapped;
+    }
 
-        xpp.setInput(r);
-        int eventType = xpp.getEventType();
-        Stack<String> currentTag = new Stack<String>();
-        
-        while (eventType != XmlPullParser.END_DOCUMENT) {
-            switch (eventType) {
-            case (XmlPullParser.START_TAG):
-                if (xpp.getName().equals("root")) {
-                    verifyResponseStatus(xpp);
-                }
-                currentTag.push(xpp.getName());
-                break;
-            case (XmlPullParser.END_TAG):
-                currentTag.pop();
-                break;
-            case (XmlPullParser.TEXT):
-                if (currentTag.peek().equals(tagname)) {
-                    return xpp.getText();
-                }
-                break;
+    static String getXmlString(Reader r, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
+        try {
+            String value = findXmlString(r, tagname);
+            if (value != null) {
+                return value;
             }
-            eventType = xpp.next();
+        } catch (RuntimeException e) {
+            throw malformed(e);
         }
 
         if (throwIfMissing) {
@@ -282,12 +272,51 @@ public class NvHTTP {
         return null;
     }
 
+    private static String findXmlString(Reader r, String tagname) throws XmlPullParserException, IOException {
+        XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+        factory.setNamespaceAware(true);
+        XmlPullParser xpp = factory.newPullParser();
+
+        xpp.setInput(r);
+        int eventType = xpp.getEventType();
+        Stack<String> currentTag = new Stack<String>();
+
+        while (eventType != XmlPullParser.END_DOCUMENT) {
+            switch (eventType) {
+            case (XmlPullParser.START_TAG):
+                if (xpp.getName().equals("root")) {
+                    verifyResponseStatus(xpp);
+                }
+                currentTag.push(xpp.getName());
+                break;
+            case (XmlPullParser.END_TAG):
+                currentTag.pop();
+                break;
+            case (XmlPullParser.TEXT):
+                if (!currentTag.isEmpty() && currentTag.peek().equals(tagname)) {
+                    return xpp.getText();
+                }
+                break;
+            }
+            eventType = xpp.next();
+        }
+        return null;
+    }
+
     static String getXmlString(String str, String tagname, boolean throwIfMissing) throws XmlPullParserException, IOException {
         return getXmlString(new StringReader(str), tagname, throwIfMissing);
     }
 
     // Collects the text of every element with this tag name (from Artemide)
     static List<String> getXmlArray(String str, String tagname) throws XmlPullParserException, IOException {
+        try {
+            return findXmlArray(str, tagname);
+        } catch (RuntimeException e) {
+            throw malformed(e);
+        }
+    }
+
+    private static List<String> findXmlArray(String str, String tagname) throws XmlPullParserException, IOException {
         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
         factory.setNamespaceAware(true);
         XmlPullParser xpp = factory.newPullParser();
@@ -317,12 +346,19 @@ public class NvHTTP {
         return array;
     }
     
-    private static void verifyResponseStatus(XmlPullParser xpp) throws HostHttpResponseException {
+    private static void verifyResponseStatus(XmlPullParser xpp) throws HostHttpResponseException, XmlPullParserException {
         // We use Long.parseLong() because in rare cases GFE can send back a status code of
         // 0xFFFFFFFF, which will cause Integer.parseInt() to throw a NumberFormatException due
         // to exceeding Integer.MAX_VALUE. We'll get the desired error code of -1 by just casting
         // the resulting long into an int.
-        int statusCode = (int)Long.parseLong(xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "status_code"));
+        String statusText = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "status_code");
+        int statusCode;
+        try {
+            statusCode = (int)Long.parseLong(statusText);
+        } catch (NumberFormatException e) {
+            // Starwire: missing or not a number, so this isn't a host's response
+            throw new XmlPullParserException("Malformed status_code in host response: " + statusText);
+        }
         if (statusCode != 200) {
             String statusMsg = xpp.getAttributeValue(XmlPullParser.NO_NAMESPACE, "status_message");
             if (statusCode == -1 && "Invalid".equals(statusMsg)) {
@@ -630,16 +666,34 @@ public class NvHTTP {
         // has the semantics that its name would indicate. To contain the effects of this change as much
         // as possible, we'll force the current game to zero if the server isn't in a streaming session.
         if (getXmlString(serverInfo, "state", true).endsWith("_SERVER_BUSY")) {
-            return Integer.parseInt(getXmlString(serverInfo, "currentgame", true));
+            String currentGame = getXmlString(serverInfo, "currentgame", true);
+            try {
+                return Integer.parseInt(currentGame);
+            } catch (NumberFormatException e) {
+                // Starwire: a parser error, which the callers handle, rather than a crash
+                throw new XmlPullParserException("Malformed currentgame in host response: " + currentGame);
+            }
         }
         else {
             return 0;
         }
     }
 
+    // Starwire: a port the host sent, or 0 if it isn't a number or a valid port. Anything on the
+    // network can answer, and an unchecked value would crash the poller here or in getHttpsUrl().
+    private static int portFrom(String text) {
+        try {
+            int port = Integer.parseInt(text);
+            return port > 0 && port <= 65535 ? port : 0;
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     public int getHttpsPort(String serverInfo) {
         try {
-            return Integer.parseInt(getXmlString(serverInfo, "HttpsPort", true));
+            int port = portFrom(getXmlString(serverInfo, "HttpsPort", true));
+            return port != 0 ? port : DEFAULT_HTTPS_PORT;
         } catch (XmlPullParserException e) {
             e.printStackTrace();
             return DEFAULT_HTTPS_PORT;
@@ -653,7 +707,8 @@ public class NvHTTP {
         // This is an extension which is not present in GFE. It is present for Sunshine to be able
         // to support dynamic HTTP WAN ports without requiring the user to manually enter the port.
         try {
-            return Integer.parseInt(getXmlString(serverInfo, "ExternalPort", true));
+            int port = portFrom(getXmlString(serverInfo, "ExternalPort", true));
+            return port != 0 ? port : baseUrlHttp.port();
         } catch (XmlPullParserException e) {
             // Expected on non-Sunshine servers
             return baseUrlHttp.port();
@@ -703,6 +758,14 @@ public class NvHTTP {
     }
     
     public static LinkedList<NvApp> getAppListByReader(Reader r) throws XmlPullParserException, IOException {
+        try {
+            return parseAppList(r);
+        } catch (RuntimeException e) {
+            throw malformed(e);
+        }
+    }
+
+    private static LinkedList<NvApp> parseAppList(Reader r) throws XmlPullParserException, IOException {
         XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
         factory.setNamespaceAware(true);
         XmlPullParser xpp = factory.newPullParser();
@@ -731,6 +794,10 @@ public class NvHTTP {
                 }
                 break;
             case (XmlPullParser.TEXT):
+                // Starwire: a host that indents its XML sends whitespace text before the first App
+                if (appList.isEmpty() || currentTag.isEmpty()) {
+                    break;
+                }
                 NvApp app = appList.getLast();
                 if (currentTag.peek().equals("AppTitle")) {
                     app.setAppName(xpp.getText());
