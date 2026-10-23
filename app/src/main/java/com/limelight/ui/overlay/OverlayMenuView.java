@@ -66,6 +66,8 @@ public class OverlayMenuView extends LinearLayout {
         void onShowServerCommands();
         void onToggleFullKeyboard();
         void onChangeBitrate();
+        // Sends the PC cursor toggle once, for a cursor that ended up the wrong way round
+        void onFixHostCursor();
 
         // Whether a toggle tile (TOGGLE_*) is on, for its switch
         boolean isToggleOn(int toggle);
@@ -164,6 +166,7 @@ public class OverlayMenuView extends LinearLayout {
 
     private MenuActionListener actionListener;
     private CustomCommandsManager commandsManager;
+    private boolean fixHostCursorShown;
     private List<ImportedShortcuts.Shortcut> importedShortcuts = new ArrayList<>();
 
     private static final int ACTION_DISCONNECT = 0;
@@ -188,6 +191,7 @@ public class OverlayMenuView extends LinearLayout {
     private static final int ACTION_FULL_KEYBOARD = 19;
     private static final int ACTION_MONITORS = 20;
     private static final int ACTION_BITRATE = 21;
+    private static final int ACTION_FIX_HOST_CURSOR = 22;
     private static final int ACTION_IMPORTED_BASE = 400;
     private static final int ACTION_MONITOR_BASE = 300;
     private static final int ACTION_CUSTOM_BASE = 100;
@@ -318,6 +322,11 @@ public class OverlayMenuView extends LinearLayout {
         coverSwatch.setImageDrawable(cover);
     }
 
+    /** Whether the main page offers Fix PC Cursor; it shows from the next time the menu opens. */
+    public void setFixHostCursorShown(boolean shown) {
+        fixHostCursorShown = shown;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         // A sheet, not the whole screen: at most SHEET_WIDTH_DP wide
@@ -385,6 +394,10 @@ public class OverlayMenuView extends LinearLayout {
                 getContext().getString(R.string.overlay_menu_bitrate), ACTION_BITRATE);
             addTile(R.drawable.ic_overlay_mouse,
                 getContext().getString(R.string.overlay_menu_mouse_mode), ACTION_MOUSE_MODE);
+            if (fixHostCursorShown) {
+                addTile(R.drawable.ic_overlay_mouse,
+                    getContext().getString(R.string.overlay_menu_fix_host_cursor), ACTION_FIX_HOST_CURSOR);
+            }
             addTile(R.drawable.ic_overlay_maximize,
                 getContext().getString(R.string.overlay_menu_pan_zoom), ACTION_PAN_ZOOM, TOGGLE_PAN_ZOOM);
             addTile(R.drawable.ic_overlay_settings,
@@ -842,6 +855,9 @@ public class OverlayMenuView extends LinearLayout {
             } else if (action == ACTION_BACK) {
                 switchPage(PAGE_MAIN);
                 return;
+            } else if (action == ACTION_FIX_HOST_CURSOR) {
+                actionListener.onFixHostCursor();
+                shouldCloseMenu = true;
             } else if (action == ACTION_BITRATE) {
                 // The bitrate picker is a dialog; close the menu behind it
                 closeMenu();

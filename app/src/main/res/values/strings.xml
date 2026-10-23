@@ -541,10 +541,13 @@
     <string name="pacing_warp">Warp Drive: 2x FPS from the PC, newest frame shown (Experimental)</string>
     <string name="pacing_warp2">Warp 2: 4x FPS from the PC, newest frame shown (Experimental)</string>
     <string name="title_hide_cursor_mode">Hide PC cursor</string>
-    <string name="summary_hide_cursor_mode">Hide the PC\'s mouse cursor in the video, using Vibepollo\'s Ctrl+Alt+Shift+N toggle. It\'s shown again when the stream ends.</string>
+    <string name="summary_hide_cursor_mode">Hide the PC\'s mouse cursor in the video, using Vibepollo\'s Ctrl+Alt+Shift+N toggle. It\'s shown again when the stream ends, or the next time you connect if Starwire was closed suddenly. If it\'s ever the wrong way round, use Fix PC Cursor in the stream menu.</string>
     <string name="hide_cursor_never">Never</string>
     <string name="hide_cursor_touching">While touching the screen</string>
     <string name="hide_cursor_always">Always</string>
+    <string name="overlay_menu_fix_host_cursor">Fix PC Cursor</string>
+    <string name="host_cursor_fix_sent">Switched the PC cursor. If it\'s still wrong, tap Fix PC Cursor again.</string>
+    <string name="host_cursor_reconciled">The PC cursor was left hidden last time, so Starwire turned it back on.</string>
 
     <!-- Starwire: Cover Glow home screen -->
     <string name="cg_wordmark" translatable="false">Starwire</string>

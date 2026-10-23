@@ -86,6 +86,17 @@ public class NvConnection {
         return new SecureRandom().nextInt();
     }
 
+    // Whether the PC runs GeForce Experience rather than Sunshine or Vibepollo; known once the
+    // app has launched
+    public boolean isNvidiaServerSoftware() {
+        return context.isNvidiaServerSoftware;
+    }
+
+    // Whether the app was already running on the PC and this connection resumed it
+    public boolean resumedExistingSession() {
+        return context.resumedExistingSession;
+    }
+
     public void stop() {
         // Interrupt any pending connection. This is thread-safe.
         MoonBridge.interruptConnection();
@@ -346,6 +357,7 @@ public class NvConnection {
             }
             
             LimeLog.info("Resumed existing game session");
+            context.resumedExistingSession = true;
             return true;
         }
         else {

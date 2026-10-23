@@ -44,6 +44,7 @@ import com.limelight.ui.overlay.CustomCommand;
 import com.limelight.ui.CoverGlow;
 import com.limelight.ui.overlay.OverlayMenuView;
 import com.limelight.utils.Dialog;
+import com.limelight.utils.HostCursorLedger;
 import com.limelight.utils.ServerHelper;
 import com.limelight.utils.SessionResumeManager;
 import com.limelight.utils.ShortcutHelper;
@@ -80,6 +81,7 @@ import android.os.PowerManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.text.Html;
 import android.util.Rational;
 import android.util.TypedValue;
@@ -488,6 +490,11 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         byte[] derCertData = Game.this.getIntent().getByteArrayExtra(EXTRA_SERVER_CERT);
 
         app = new NvApp(appName != null ? appName : "app", appId, appSupportsHdr);
+
+        hostCursor = new HostCursorController(prefConfig.hideCursorMode,
+                new HostCursorLedger(getNoBackupFilesDir(),
+                        HostCursorLedger.hostKey(getIntent().getStringExtra(EXTRA_PC_UUID), host)),
+                hostCursorToggle, hostCursorScheduler, appId);
 
         // The menu sheet shows the game and takes its cover colour from the game screen
         overlayMenuView.setGameInfo(appName,
@@ -2748,7 +2755,7 @@ public class Game extends Activity implements SurfaceHolder.Callback,
     private void stopConnection() {
         stopMicrophoneCapture();
         // Give the PC its cursor back before the connection goes away
-        restoreHostCursor();
+        final boolean flushHostCursor = hostCursor.onStopping();
 
         if (connecting || connected) {
             connecting = connected = false;
@@ -2766,6 +2773,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             // during the process of stopping this one.
             new Thread() {
                 public void run() {
+                    if (flushHostCursor) {
+                        // Vibepollo throws away input it hasn't handled yet when the session
+                        // stops, so give the cursor toggle time to get there first
+                        SystemClock.sleep(200);
+                        hostCursor.onShowFlushed();
+                    }
                     conn.stop();
                 }
             }.start();
@@ -2853,6 +2866,9 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                // The link is gone, so a hidden PC cursor is shown at the next connection
+                hostCursor.onConnectionLost(errorCode);
+
                 // Let the display go to sleep now
                 getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -2979,9 +2995,12 @@ public class Game extends Activity implements SurfaceHolder.Callback,
                     syncClipboardToHost(true);
                 }
 
-                if (prefConfig.hideCursorMode == PreferenceConfiguration.HIDE_CURSOR_ALWAYS) {
-                    setHostCursorHidden(true);
+                // Hide the PC cursor for "Always", or put right one an earlier stream left hidden
+                if (hostCursor.onStreamStarted(conn.resumedExistingSession())
+                        == HostCursorController.RECONCILE_SHOWN) {
+                    Toast.makeText(Game.this, R.string.host_cursor_reconciled, Toast.LENGTH_LONG).show();
                 }
+                overlayMenuView.setFixHostCursorShown(isFixHostCursorOffered());
             }
         });
 
@@ -3482,6 +3501,13 @@ public class Game extends Activity implements SurfaceHolder.Callback,
             }
 
             @Override
+            public void onFixHostCursor() {
+                if (hostCursor.onManualFix()) {
+                    Toast.makeText(Game.this, R.string.host_cursor_fix_sent, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
             public boolean isToggleOn(int toggle) {
                 switch (toggle) {
                     case OverlayMenuView.TOGGLE_STATS:
@@ -3571,62 +3597,55 @@ public class Game extends Activity implements SurfaceHolder.Callback,
         performanceOverlayView.setSingleLine(true);
     }
 
-    // Vibepollo (like Sunshine) toggles drawing the cursor into the video on Ctrl+Alt+Shift+N
-    private static final short[] TOGGLE_HOST_CURSOR_KEYS = {
-            OverlayMenuView.VK_LCONTROL, OverlayMenuView.VK_LMENU, OverlayMenuView.VK_LSHIFT, 0x4E /* N */
+    // Hides and shows the PC cursor for "Hide PC cursor", and remembers per PC what it hid
+    private HostCursorController hostCursor;
+
+    private final HostCursorController.Toggle hostCursorToggle = new HostCursorController.Toggle() {
+        @Override
+        public boolean isLinkUp() {
+            // GeForce Experience has no such toggle, so the keys would only reach the game
+            return connected && conn != null && !conn.isNvidiaServerSoftware();
+        }
+
+        @Override
+        public void send() {
+            // Ctrl+Alt+Shift+N, pressed and released in one go
+            HostCursorController.pressToggleKeys((keyCode, keyDirection, modifiers) ->
+                    conn.sendKeyboardInput(keyCode, keyDirection, modifiers, (byte) 0));
+        }
     };
 
-    // Whether Starwire has toggled the PC's cursor off, so it can be turned back on
-    private boolean hostCursorHidden;
-    private final Runnable showHostCursor = () -> setHostCursorHidden(false);
-
-    private void setHostCursorHidden(boolean hidden) {
-        if (hidden == hostCursorHidden || !connected) {
-            return;
+    private final HostCursorController.Scheduler hostCursorScheduler = new HostCursorController.Scheduler() {
+        @Override
+        public void postDelayed(Runnable task, long delayMs) {
+            streamView.postDelayed(task, delayMs);
         }
-        hostCursorHidden = hidden;
-        sendKeys(TOGGLE_HOST_CURSOR_KEYS);
-    }
 
-    /**
-     * Hide the PC cursor while a finger is down ("Hide PC cursor: While touching"). Showing it
-     * again waits a moment, so quick taps don't make it flicker or send the toggle twice in a row.
-     */
+        @Override
+        public void cancel(Runnable task) {
+            streamView.removeCallbacks(task);
+        }
+    };
+
+    // Hide the PC cursor while a finger is down ("Hide PC cursor: While touching")
     private void updateHostCursorForTouch(MotionEvent event) {
-        if (prefConfig.hideCursorMode != PreferenceConfiguration.HIDE_CURSOR_WHILE_TOUCHING) {
-            return;
-        }
-
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                streamView.removeCallbacks(showHostCursor);
-                setHostCursorHidden(true);
+                hostCursor.onFingerDown();
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                streamView.removeCallbacks(showHostCursor);
-                streamView.postDelayed(showHostCursor, 300);
+                hostCursor.onFingersUp();
                 break;
         }
     }
 
-    // Shows the PC cursor again right away; the connection may be about to close
-    private void restoreHostCursor() {
-        streamView.removeCallbacks(showHostCursor);
-        if (!hostCursorHidden || !connected || conn == null) {
-            return;
-        }
-        hostCursorHidden = false;
-
-        byte modifiers = 0;
-        for (short key : TOGGLE_HOST_CURSOR_KEYS) {
-            conn.sendKeyboardInput(key, KeyboardPacket.KEY_DOWN, modifiers, (byte) 0);
-            modifiers |= getModifierForKey(key);
-        }
-        for (int i = TOGGLE_HOST_CURSOR_KEYS.length - 1; i >= 0; i--) {
-            modifiers &= (byte) ~getModifierForKey(TOGGLE_HOST_CURSOR_KEYS[i]);
-            conn.sendKeyboardInput(TOGGLE_HOST_CURSOR_KEYS[i], KeyboardPacket.KEY_UP, modifiers, (byte) 0);
-        }
+    // "Fix PC cursor" is offered where hiding it is used, and where a cursor left hidden by an
+    // earlier stream was just turned back on (that guess can be wrong if Vibepollo restarted)
+    private boolean isFixHostCursorOffered() {
+        return conn != null && !conn.isNvidiaServerSoftware() &&
+                (prefConfig.hideCursorMode != PreferenceConfiguration.HIDE_CURSOR_NEVER ||
+                        hostCursor.reconciledThisStream());
     }
 
     private static int virtualDisplayFromSetting(String mode) {

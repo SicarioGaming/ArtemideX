@@ -63,6 +63,7 @@ public class OverlayMenuViewTest {
         @Override public void onShowServerCommands() { events.add("serverCommands"); }
         @Override public void onToggleFullKeyboard() { events.add("fullKeyboard"); }
         @Override public void onChangeBitrate() { events.add("bitrate"); }
+        @Override public void onFixHostCursor() { events.add("fixHostCursor"); }
         @Override public boolean isToggleOn(int toggle) { return on.contains(toggle); }
     }
 
@@ -306,6 +307,25 @@ public class OverlayMenuViewTest {
         assertTrue(selected(com.limelight.R.string.overlay_menu_disconnect));
         press(KeyEvent.KEYCODE_DPAD_CENTER);
         assertEquals(List.of("disconnect", "closed"), listener.events);
+    }
+
+    @Test
+    public void fixPcCursorShowsOnlyWhenOffered() {
+        String fix = str(com.limelight.R.string.overlay_menu_fix_host_cursor);
+        assertNull("Fix PC Cursor shows without being offered", findButton(menu, fix));
+
+        onMain(() -> {
+            menu.setFixHostCursorShown(true);
+            menu.buildMenu();
+        });
+        click(fix);
+        assertEquals(List.of("fixHostCursor", "closed"), listener.events);
+
+        onMain(() -> {
+            menu.setFixHostCursorShown(false);
+            menu.buildMenu();
+        });
+        assertNull(findButton(menu, fix));
     }
 
     @Test
