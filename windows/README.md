@@ -21,7 +21,8 @@ included. Until the fix ships:
   Tailscale: right-click its icon by the clock, then **Quit**.
   [Turning it off](#details-and-fixes) below says how to keep it off.
 
-I'm working on a fix. [SECURITY.md](../SECURITY.md) has more.
+I'm working on a fix, [coming in 0.2.1](#coming-in-021-encrypted-and-only-from-paired-devices).
+[SECURITY.md](../SECURITY.md) has more.
 
 ## What you need
 
@@ -30,7 +31,7 @@ You need two things on the PC, and the setup below installs both:
 - **VB-Cable**, a free virtual microphone from [VB-Audio](https://vb-audio.com/Cable/)
   (donationware). Windows needs a signed driver to add a microphone, and VB-Cable is one.
 - **Starwire's microphone receiver**, in this folder. It's open source (GPL-3.0) and built on
-  your PC from `StarwireMicReceiver.cs`.
+  your PC from `StarwireMicReceiver.cs` (and, from 0.2.1, `SecureMic.cs`).
 
 ## Set up the PC (once)
 
@@ -112,15 +113,95 @@ changing if you changed them on the PC too.
 - **Using logabell's Apollo build?** Then you don't need any of this: choose **The PC's
   streaming app** instead, and the microphone goes over the stream itself.
 
-## Coming in 0.2.1
+## Coming in 0.2.1: encrypted, and only from paired devices
 
-<!-- TODO (0.2.1): when 0.2.1 ships, move these into the guide above in place of the 0.2.0 text
-they replace. -->
+<!-- TODO (encrypted mic): when 0.2.1 ships, move this section into the guide above in place of
+the 0.2.0 text it replaces: "Please read first", "Set up Starwire", the "Local network only, but
+not secure" note and the matching details. Only claim what the real phone-to-PC test passed. -->
 
+From 0.2.1 the audio is encrypted on the way, and the receiver only takes it from devices you've
+paired with that PC. Until 0.2.1 is out, the steps above are the ones to follow; this part says
+what changes then.
+
+### Pair Starwire with the PC (once)
+
+The receiver only plays a device's microphone once you've paired that device with the PC.
+Pairing is how the PC knows the audio really comes from your device, and it gives the two of them
+a key that nobody else on the network has.
+
+1. On the PC, right-click the Starwire microphone icon by the clock (it may be under the ^ arrow)
+   and choose **Pair a device...**. A window shows a code of 16 letters and numbers, like
+   `2491-650N-2RBH-G690`.
+2. In Starwire on your Android device: **Settings → Sound & vibration → Send my microphone →
+   Pair with the PC**. Pick the PC and type the code. Capitals, spaces and dashes don't matter.
+3. The PC's window says **Paired with** your device. That's it: the device stays paired.
+
+The code works once, for 5 minutes. After 10 wrong codes it stops working; choose **Pair a
+device...** again for a new one. Pair each device you use (a phone and a tablet, say) the same
+way. If two paired devices send at once, the first one keeps the microphone until it has been
+quiet for 3 seconds.
+
+To unpair a device (if it's lost, say), right-click the icon → **Paired devices** → the device →
+**Unpair**. It can't send its microphone to the PC again until you pair it again.
+
+### Set up Starwire
+
+**Settings → Sound & vibration**:
+
+1. Turn on **Send my microphone**.
+2. Check **Send my microphone to** is set to Starwire's receiver on the PC. It's the default.
+3. Pair with the PC, as above, if you haven't yet.
+
+The microphone starts with each stream. The port (`6980`) only needs changing if you changed it
+on the PC too.
+
+### Updating from Starwire 0.2.0
+
+Starwire 0.2.0 sent the microphone unencrypted, and anyone on the same network could listen to it
+or send sound into the PC's microphone. From 0.2.1 it's encrypted, and that needs both sides:
+
+1. Update the Starwire app on your Android device.
+2. Run the new setup from this folder on the PC (it replaces the old receiver).
+3. Pair them once, as above.
+
+Until both sides are updated the microphone doesn't work: the new receiver refuses 0.2.0's
+unencrypted audio (its icon says so and tells you to update and pair), and a 0.2.0 receiver
+doesn't understand the new app, which says the receiver isn't answering.
+
+### Details that change
+
+- **Encrypted, and only from paired devices.** Starwire still sends VBAN, VB-Audio's network audio
+  format, but wrapped: each packet is encrypted and signed with a key made fresh for each stream
+  from the key the device and the PC agreed on when they paired. The receiver plays nothing it
+  can't check, refuses packets that are recorded and sent again, and never trusts an address on
+  its own (anyone can fake one). As an extra layer it still only listens to local-network and
+  private VPN addresses (like Tailscale), and so does its firewall rule. The paired devices'
+  keys are kept in `%LOCALAPPDATA%\Starwire\mic-pairings.dat`, encrypted by Windows so only your
+  Windows account can read them.
+- **Unencrypted VBAN, if you really need it.** Starwire's receiver doesn't play plain VBAN (from
+  Starwire 0.2.0, Voicemeeter or other VBAN apps) unless you run the setup with
+  `-AllowUnencrypted`. That isn't safe: then anyone on the same network can send sound into the
+  PC's microphone, and anyone who can see the network's traffic can listen to it. Only use it on
+  a network you trust, and only if you need another VBAN app; it's never in the icon's menu, and
+  the menu warns while it's on. Run the setup again without it to turn it off.
+- **The receiver's icon:** hover over it to see which paired device it's receiving, if any.
+  Right-click it to **Pair a device...**, see the **Paired devices** (and unpair one), **Check
+  the virtual microphone** (tests VB-Cable), **Play a test tone** (for Discord's mic test), open
+  this guide (**Setup guide**), or **Quit**. The menu also shows how it plays into VB-Cable.
+  Problems show up as Windows notifications, like audio from a device that isn't paired, or
+  unencrypted audio from Starwire 0.2.0.
+- **Troubleshooting:** add `--pair` to `--console` to have the receiver print a pairing code too.
 - **Less delay:** the receiver plays into VB-Cable through WASAPI in 2.7 ms steps, instead of the
   10 ms blocks of the older waveOut it used up to 0.2.0. In testing that took about 7 ms off the
   delay on a steady connection and about 16 ms with real Wi-Fi timing, with far fewer short gaps
   in the sound. If WASAPI doesn't work on a PC, the receiver uses waveOut by itself, and its menu
   (or `--console`) says why. Add `--waveout` to use waveOut anyway, for example
   `--console --waveout`.
-- **The receiver's icon:** the menu also shows how it plays into VB-Cable.
+- **Smart App Control:** VBAN-Receptor isn't encrypted, so in Starwire choose the unencrypted VBAN
+  option, and only on a network you trust.
+- **Options and removal:** `-Uninstall` also removes the list of paired devices. `-Port` changes
+  the port the receiver listens on; `-AllowUnencrypted` (with `-StreamName`) is above.
+- **Other receivers work too, unencrypted.** VB-Audio's
+  [VBAN-Receptor or Voicemeeter](https://vb-audio.com/Voicemeeter/vban.htm) can receive plain
+  VBAN from Starwire's unencrypted option; point their output at CABLE Input. Anyone on the
+  network can listen to that, or send sound into it.
