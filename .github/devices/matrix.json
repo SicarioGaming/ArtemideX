@@ -5,6 +5,7 @@
     "profile is an avdmanager device id (avdmanager list device -c, command-line tools 23.0).",
     "api, target and arch make the system image: system-images;android-<api>;<target>;<arch>.",
     "hardware overrides the AVD's config.ini after it's made (the handhelds have no stock profile).",
+    "disk is the AVD's data partition (disk.dataPartition.size), 4096M unless a leg sets it. Unset, the emulator wanted 12288 MB free on the runner to make it and quit.",
     "postures (foldables): folded, half-open, unfolded, each changed with the app open.",
     "variants: font-<scale>, display-largest, dark, rtl-<language>, landscape, portrait, gamepad, dpad, tv-launcher.",
     "After each posture, and each variant but the input ones (gamepad, dpad, tv-launcher), device-test.sh reruns variant_tests and the smoke tests.",

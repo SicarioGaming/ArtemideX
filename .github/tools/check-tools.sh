@@ -306,12 +306,14 @@ else
         fail "device-matrix.py plan --legs didn't pick just those legs"
     exits 2 dm plan --tier core --legs no-such-leg
     # Matrices it has to refuse: an unknown variant, random input where the network stays on,
-    # two legs with one id, an ARM image the runners can't accelerate, a missing layout test
+    # two legs with one id, an ARM image the runners can't accelerate, a missing layout test, a
+    # data partition size that isn't in MB
     for change in 's/"font-1.3"/"font-huge"/' \
                   's/"api": "23", "target": "default", "arch": "x86_64",/&\n      "monkey": 50,/' \
                   's/"id": "tv-34"/"id": "tv-30"/' \
                   's/"api": "21", "target": "default", "arch": "x86_64"/"api": "21", "target": "default", "arch": "arm64-v8a"/' \
-                  's/"com.limelight.StringsTest"/"com.limelight.NoSuchTest"/'; do
+                  's/"com.limelight.StringsTest"/"com.limelight.NoSuchTest"/' \
+                  's/"id": "legacy-23",/&\n      "disk": "4G",/'; do
         sed "$change" .github/devices/matrix.json > "$work/matrix.json"
         if cmp -s "$work/matrix.json" .github/devices/matrix.json; then fail "the matrix change $change changed nothing"; fi
         exits 2 dm --matrix "$work/matrix.json" plan --tier release
@@ -338,18 +340,30 @@ else
     tier_is release --event workflow_dispatch --input-tier release --repo $priv
     tier_is core    --event workflow_dispatch --input-tier core --repo $priv --switch off
     exits 2 dm tier --event workflow_dispatch --input-tier everything
-    # The handhelds' screens go into the AVD's config.ini, the same way every time
-    mkdir -p "$work/avd/handheld-33.avd"
-    printf 'hw.lcd.width=1080\nhw.lcd.height=2400\nhw.ramSize=2G\n' > "$work/avd/handheld-33.avd/config.ini"
+    # The handhelds' screens and every leg's data partition go into the AVD's config.ini, the same
+    # way every time, and a key the emulator action appended again is left once, with its last value
+    # (unset, the emulator wanted 12288 MB free for the data partition and quit on every leg)
+    mkdir -p "$work/avd/handheld-33.avd" "$work/avd/legacy-23.avd"
+    printf 'hw.lcd.width=1080\nhw.lcd.height=2400\nhw.ramSize=2048\ndisk.dataPartition.size=10G\nhw.cpu.ncore=2\nhw.ramSize=2G\n' \
+        > "$work/avd/handheld-33.avd/config.ini"
     echo '{"id": "handheld-33"}' > "$work/leg.json"
     dm avd-config "$work/leg.json" --avd-home "$work/avd" > /dev/null
     cp "$work/avd/handheld-33.avd/config.ini" "$work/config-once.ini"
+    printf 'hw.cpu.ncore=2\nhw.ramSize=2G\n' >> "$work/avd/handheld-33.avd/config.ini"
     dm avd-config "$work/leg.json" --avd-home "$work/avd" > /dev/null
     if ! cmp -s "$work/config-once.ini" "$work/avd/handheld-33.avd/config.ini" ||
        ! grep -qx 'hw.lcd.width=1920' "$work/config-once.ini" || grep -qx 'hw.lcd.width=1080' "$work/config-once.ini" ||
-       ! grep -qx 'hw.ramSize=2G' "$work/config-once.ini"; then
-        fail "device-matrix.py avd-config didn't set the handheld's screen once, keeping the rest"
+       [ "$(grep -c '^hw.ramSize=' "$work/config-once.ini")" != 1 ] || ! grep -qx 'hw.ramSize=2G' "$work/config-once.ini" ||
+       [ "$(grep -c '^disk.dataPartition.size=' "$work/config-once.ini")" != 1 ] ||
+       ! grep -qx 'disk.dataPartition.size=4096M' "$work/config-once.ini" || ! grep -qx 'hw.cpu.ncore=2' "$work/config-once.ini"; then
+        cat "$work/config-once.ini" >&2
+        fail "device-matrix.py avd-config didn't set the handheld's screen and data partition once, keeping the rest"
     fi
+    printf 'hw.ramSize=2048M\n' > "$work/avd/legacy-23.avd/config.ini"
+    echo '{"id": "legacy-23"}' > "$work/legacy.json"
+    dm avd-config "$work/legacy.json" --avd-home "$work/avd" > /dev/null
+    grep -qx 'disk.dataPartition.size=4096M' "$work/avd/legacy-23.avd/config.ini" ||
+        fail "device-matrix.py avd-config didn't set the data partition of a leg with no hardware overrides"
     # The AVD cache key follows the system image's revision
     mkdir -p "$work/sdk/system-images/android-33/google_apis/x86_64" "$work/sdk/emulator"
     echo 'Pkg.Revision=36.1.9' > "$work/sdk/emulator/source.properties"
@@ -359,6 +373,9 @@ else
     key18=$(dm cache-key "$work/leg.json" --sdk "$work/sdk" | sed -n 's/^key=//p')
     case "$key17" in avd-v1-handheld-33-img17-emu36.1.9-*) ;; *) fail "device-matrix.py cache-key gave $key17" ;; esac
     [ "$key17" != "$key18" ] || fail "device-matrix.py cache-key didn't change with the image's revision"
+    sed 's/"id": "handheld-33",/&\n      "disk": "6144M",/' .github/devices/matrix.json > "$work/matrix.json"
+    [ "$(dm --matrix "$work/matrix.json" cache-key "$work/leg.json" --sdk "$work/sdk" | sed -n 's/^key=//p')" != "$key18" ] ||
+        fail "device-matrix.py cache-key didn't change with the data partition's size"
     # --check-sdk reads sdkmanager --list from command-line tools 22.0 (a table) and from 23.0 (the
     # Android CLI's list): every leg's image is there, Android 16 Google APIs for x86 isn't, and a
     # listing with no images at all fails instead of reading as missing images
@@ -419,6 +436,52 @@ if [ "$first" != "command-line tools 12.0 -> 23.0" ] || [ "$again" != "command-l
     fail "device-sdk.sh didn't swap command-line tools 12.0 for 23.0 exactly once"
 fi
 ok "device-sdk.sh swaps in command-line tools 23.0"
+
+# 11b. device-watch.sh ends the emulator step a few seconds in when the emulator has quit (no
+# process, nothing in adb devices), and leaves a booted one alone, against a stand-in for adb
+begin
+if ! command -v pgrep > /dev/null 2>&1; then
+    if [ -n "${CI:-}" ]; then fail "no pgrep for device-watch.sh"; else echo "skipped: device-watch.sh (no pgrep)"; fi
+else
+    wsdk="$work/watch-sdk"
+    mkdir -p "$wsdk/platform-tools"
+    cat > "$wsdk/platform-tools/adb" <<'ADB'
+#!/bin/sh
+case "$*" in
+    *boot_completed*) [ -n "${FAKE_BOOTED:-}" ] && echo 1 ;;
+    devices) echo "List of devices attached" ;;
+esac
+exit 0
+ADB
+    chmod +x "$wsdk/platform-tools/adb"
+    # Stands in for the emulator action's node process, which the watcher stops
+    bash -c 'while :; do sleep 1; done' _actions/ReactiveCircus/android-emulator-runner/stand-in &
+    action=$!
+    set +e
+    ANDROID_HOME="$wsdk" GRACE=1 INTERVAL=1 LIMIT=20 \
+        bash .github/tools/device-watch.sh --out "$work/watch" --watch > "$work/watch.log" 2>&1
+    status=$?
+    sleep 1
+    kill -0 "$action" 2> /dev/null
+    alive=$?
+    set -e
+    if [ $status -ne 1 ] || [ $alive -eq 0 ] || ! grep -q 'quit before it booted' "$work/watch/emulator-quit.txt"; then
+        cat "$work/watch.log" >&2
+        fail "device-watch.sh didn't stop the action when the emulator had quit"
+    fi
+    kill "$action" 2> /dev/null || true
+    wait "$action" 2> /dev/null || true
+    set +e
+    FAKE_BOOTED=1 ANDROID_HOME="$wsdk" GRACE=1 INTERVAL=1 LIMIT=20 \
+        bash .github/tools/device-watch.sh --out "$work/watch" --watch > "$work/watch.log" 2>&1
+    status=$?
+    set -e
+    if [ $status -ne 0 ] || [ -e "$work/watch/emulator-quit.txt" ]; then
+        cat "$work/watch.log" >&2
+        fail "device-watch.sh didn't leave a booted emulator alone"
+    fi
+    ok "device-watch.sh stops the emulator step when the emulator quits before booting"
+fi
 
 # 12. device-run.sh, against the fake adb: on a real device it only does the normal run and
 # sends nothing itself; on an emulator it folds, changes text and display size, puts each
@@ -486,6 +549,11 @@ else
     echo '{"id": "tv-30", "name": "Android TV 11", "profile": "tv_1080p", "api": "30", "target": "android-tv"}' > "$work/noboot.json"
     exits 1 dm verdict "$work/legs/noboot" --leg-json "$work/noboot.json"
     grep -q 'did not boot' "$work/dm-output" || fail "device-matrix.py verdict didn't say the leg never booted"
+    echo "The emulator quit before it booted." > "$work/legs/noboot/emulator-quit.txt"
+    exits 1 dm verdict "$work/legs/noboot" --leg-json "$work/noboot.json"
+    grep -q '::error title=tv-30::NO BOOT: The emulator quit before it booted.' "$work/dm-output" ||
+        fail "device-matrix.py verdict didn't say the emulator quit"
+    rm "$work/legs/noboot/emulator-quit.txt"
     table=$(dm summary "$work/legs")
     for want in "| Small phone, Android 15 | small_phone, 1600x2560 at 320 dpi | API 35 google_apis | 2 / 0 / 0 |" \
                 "**Galaxy Z Fold shape, Android 16**: CRASH" "3 of 7 legs passed or were skipped."; do

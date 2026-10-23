@@ -40,6 +40,10 @@ ARCHES = {"x86", "x86_64"}  # what KVM on the ubuntu runners can run
 VARIANT = re.compile(r"^(font-\d(\.\d+)?|display-largest|dark|rtl-[a-z]{2,3}|landscape|portrait|gamepad|dpad|tv-launcher)$")
 POSTURES = ("folded", "half-open", "unfolded")
 HARDWARE_KEY = re.compile(r"^hw\.[A-Za-z0-9_.]+$")
+# The AVD's data partition. Left unset, the emulator 37 on the runners wanted 12288 MB free to make it,
+# more than a 2-vCPU runner has, and quit with "Not enough space to create userdata partition".
+DISK = "4096M"
+QUIT_NOTE = "emulator-quit.txt"  # device-watch.sh leaves it when the emulator quits before booting
 LEG_ID = re.compile(r"^[a-z0-9][a-z0-9-]{1,40}$")
 CLASS = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*\.[A-Z][A-Za-z0-9_]*$")
 # device-test.sh's and device-run.sh's exit codes
@@ -145,6 +149,8 @@ def check_leg(leg):
         return p
     if not re.match(r"^\d+M$", str(leg.get("ram", "2048M"))):
         p.append("ram must look like 2048M")
+    if not re.match(r"^\d+M$", str(leg.get("disk", DISK))):
+        p.append("disk must look like 4096M")
     for key in ("cache", "experimental"):
         if not isinstance(leg.get(key, False), bool):
             p.append(f"{key} must be true or false")
@@ -309,7 +315,8 @@ def cmd_leg_env(a):
     env = {
         "LEG_ID": leg["id"], "LEG_NAME": leg["name"], "LEG_TIER": leg["tier"],
         "LEG_PROFILE": leg["profile"], "LEG_API": leg["api"], "LEG_TARGET": leg["target"], "LEG_ARCH": leg["arch"],
-        "LEG_IMAGE": image(leg), "LEG_MONKEY": str(leg.get("monkey", 0)),
+        "LEG_IMAGE": image(leg), "LEG_RAM": leg.get("ram", "2048M"), "LEG_DISK": leg.get("disk", DISK),
+        "LEG_MONKEY": str(leg.get("monkey", 0)),
         "LEG_VARIANTS": " ".join(leg.get("variants", [])), "LEG_POSTURES": " ".join(leg.get("postures", [])),
         "LEG_INSTALL_ABI": leg.get("install_abi", ""),
         "LEG_EXPERIMENTAL": "true" if leg.get("experimental") else "false",
@@ -320,24 +327,34 @@ def cmd_leg_env(a):
 
 
 # ---------------------------------------------------------------------------------- avd-config
+def config_key(line):
+    return line.split("=", 1)[0].strip() if "=" in line and not line.lstrip().startswith("#") else None
+
+
 def cmd_avd_config(a):
-    """Applies the leg's hardware overrides to its AVD (named after the leg id) before it boots."""
+    """Sets the leg's data partition size and hardware overrides in its AVD (named after the leg id)
+    before it boots, and leaves every key in config.ini once.
+
+    The emulator action appends hw.cpu.ncore and hw.ramSize on every run, after what avdmanager wrote,
+    so a key can be there twice; the last one is the one that was meant, and only that one is kept."""
     leg = leg_by_id(a.matrix, read_entry(a.leg_json)["id"])
-    hardware = leg.get("hardware", {})
-    if not hardware:
-        print(f"{leg['id']}: no hardware overrides")
-        return
+    settings = dict(leg.get("hardware", {}))
+    settings["disk.dataPartition.size"] = leg.get("disk", DISK)
     home = a.avd_home or os.environ.get("ANDROID_AVD_HOME") or os.path.expanduser("~/.android/avd")
     config = os.path.join(home, f"{leg['id']}.avd", "config.ini")
     if not os.path.exists(config):
         die(f"{config} not found")
     with open(config, encoding="utf-8") as f:
         lines = [l.rstrip("\r\n") for l in f]
-    kept = [l for l in lines if l.split("=", 1)[0].strip() not in hardware]
-    kept += [f"{k}={v}" for k, v in sorted(hardware.items())]
+    was = [l.split("=", 1)[1].strip() for l in lines if config_key(l) == "disk.dataPartition.size"]
+    last = {config_key(l): i for i, l in enumerate(lines) if config_key(l)}
+    kept = [l for i, l in enumerate(lines)
+            if config_key(l) is None or (last[config_key(l)] == i and config_key(l) not in settings)]
+    kept += [f"{k}={v}" for k, v in sorted(settings.items())]
     with open(config, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(kept) + "\n")
-    print(f"{leg['id']}: set " + ", ".join(f"{k}={v}" for k, v in sorted(hardware.items())))
+    print(f"{leg['id']}: set " + ", ".join(f"{k}={v}" for k, v in sorted(settings.items()))
+          + f" (the data partition was {', '.join(was) or 'not set'})")
 
 
 # ----------------------------------------------------------------------------------- cache-key
@@ -363,7 +380,8 @@ def cmd_cache_key(a):
     img = revision(os.path.join(a.sdk, "system-images", f"android-{leg['api']}", leg["target"], leg["arch"]))
     emu = revision(os.path.join(a.sdk, "emulator"))
     # Anything that changes the AVD or its snapshot changes the key
-    shape = json.dumps({k: leg.get(k) for k in ("profile", "hardware", "ram")}, sort_keys=True)
+    shape = json.dumps({"profile": leg["profile"], "hardware": leg.get("hardware"), "ram": leg.get("ram"),
+                        "disk": leg.get("disk", DISK)}, sort_keys=True)
     digest = hashlib.sha256(shape.encode()).hexdigest()[:10]
     print(f"key=avd-v1-{leg['id']}-img{img}-emu{emu}-{digest}")
     print(f"image_revision={img}")
@@ -393,6 +411,7 @@ def read_result(d):
     if code:
         r["exit"] = int(code) if code.isdigit() else 4
     r["failed_tests"] = [l for l in read_lines(os.path.join(d, "failed-tests.txt")) if l.strip()]
+    r["quit"] = " ".join(l.strip() for l in read_lines(os.path.join(d, QUIT_NOTE)) if l.strip())
     return r
 
 
@@ -434,7 +453,8 @@ def row(r):
 
 
 def problems(r):
-    out = [f"- `{t}`" for t in r["failed_tests"][:30]]
+    out = [f"- {r['quit']}"] if r["quit"] else []
+    out += [f"- `{t}`" for t in r["failed_tests"][:30]]
     out += [f"- {p['name']}: {p['status']} {p['note']}".rstrip() for p in r["passes"] if p["status"] not in ("PASS", "SKIP")]
     return out
 
@@ -460,7 +480,7 @@ def cmd_verdict(a):
         if r["facts"].get("LEG_EXPERIMENTAL") == "true":
             print(f"::warning title={title}::experimental leg: {status}")
             return
-        print(f"::error title={title}::{status}")
+        print(f"::error title={title}::{status}" + (f": {r['quit']}" if r["quit"] else ""))
         sys.exit(1)
 
 
