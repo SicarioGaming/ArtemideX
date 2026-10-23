@@ -8,6 +8,9 @@
 // It only accepts audio from home-network and private VPN addresses (VBAN isn't encrypted), and
 // only the stream name it's told to listen for.
 //
+// It plays through WASAPI at the shortest period the output allows, which VB-Cable passes on with
+// less delay than Windows' older waveOut API. If WASAPI doesn't work, it uses waveOut instead.
+//
 // It runs without a window: an icon in the notification area shows what it's doing and has a menu
 // to check the virtual microphone, play a test tone or quit.
 //
@@ -18,6 +21,9 @@
 //                                                plays a tone into the output and listens on the
 //                                                matching microphone, to show the cable works
 //   --console                                    runs in a console window instead (troubleshooting)
+//   --stats                                      with --console, prints the audio buffer's state
+//                                                every few seconds
+//   --waveout                                    plays through waveOut, not WASAPI
 //   --loopback                                   listen on this PC only (for testing)
 //
 // From PowerShell, pipe the output of --list, --check and --test-tone (for example `| Out-Host`):
@@ -51,6 +57,8 @@ static class StarwireMicReceiver
     // The notification-area icon, or null with --console and the one-off tools (they print instead)
     static Tray tray;
     static int lastPacket = Environment.TickCount;
+    static bool stats;
+    const int StatsMs = 2000;
 
     // No packets for 3 seconds: the phone stopped sending (stream ended, or the mic was turned off)
     public static bool Idle { get { return Environment.TickCount - lastPacket > 3000; } }
@@ -73,6 +81,8 @@ static class StarwireMicReceiver
             if (a == "--console") { console = true; continue; }
             if (a == "--loopback") { loopback = true; continue; }
             if (a == "--check") { check = true; continue; }
+            if (a == "--stats") { stats = true; continue; }
+            if (a == "--waveout") { Player.ForceWaveOut = true; continue; }
             if (a == "--test-tone") {
                 toneSeconds = 3;
                 int seconds;
@@ -203,14 +213,27 @@ static class StarwireMicReceiver
         }
     }
 
+    // Which way the audio goes out (WASAPI, or waveOut and why): printed with --console, otherwise
+    // shown in the icon's menu
+    public static void ReportOutput(string text)
+    {
+        if (tray == null) {
+            Console.WriteLine("  Output: " + text);
+        }
+        else {
+            tray.ShowOutput(text);
+        }
+    }
+
     static void Receive(Socket socket, string device, string streamName, bool loopback)
     {
         byte[] wantedName = StreamNameBytes(streamName);
-        Player player = new Player(device);
+        Player player = new Player(device, ReportOutput);
         byte[] buffer = new byte[2048];
         string currentSender = null;
         bool warnedFormat = false;
         HashSet<string> refused = new HashSet<string>();
+        int lastStats = Environment.TickCount;
         EndPoint from = new IPEndPoint(loopback ? IPAddress.Any : IPAddress.IPv6Any, 0);
 
         while (true) {
@@ -262,6 +285,10 @@ static class StarwireMicReceiver
             }
             lastPacket = Environment.TickCount;
             player.Play(buffer, HeaderSize, samples, channels, VbanSampleRates[rateIndex]);
+            if (stats && tray == null && lastPacket - lastStats >= StatsMs) {
+                lastStats = lastPacket;
+                Console.WriteLine("  " + DateTime.Now.ToString("HH:mm:ss") + " " + player.Stats());
+            }
         }
     }
 
@@ -315,7 +342,7 @@ static class StarwireMicReceiver
         say("Checking " + WaveOut.DeviceName(outputId) + " -> " + WaveIn.DeviceName(inputId) + "...");
 
         WaveIn recorder = new WaveIn(inputId, 48000, 48000 * 2);   // two seconds
-        PlayTone(outputName, 150, 1000);                            // 1.5 seconds of tone
+        PlayTone(outputName, 150, 1000, how => say("Output: " + how));   // 1.5 seconds of tone
         int peak = recorder.Finish();
         // The tone is 8000; anything over a tenth of that means it came through
         if (peak > 800) {
@@ -326,11 +353,12 @@ static class StarwireMicReceiver
         return false;
     }
 
-    // Plays a tone straight into an output, in 10 ms blocks
-    public static void PlayTone(string outputName, int blocks, int frequency)
+    // Plays a tone straight into an output, in 10 ms blocks, the same way the receiver plays.
+    // sayOutput (if not null) is told which way it went out.
+    public static void PlayTone(string outputName, int blocks, int frequency, Action<string> sayOutput)
     {
         const int rate = 48000;
-        Player player = new Player(outputName);
+        Player player = new Player(outputName, sayOutput);
         byte[] packet = new byte[HeaderSize + 480 * 2];
         double phase = 0;
         System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
@@ -403,6 +431,7 @@ sealed class Tray
 
     readonly NotifyIcon icon = new NotifyIcon();
     readonly ToolStripMenuItem status = new ToolStripMenuItem();
+    readonly ToolStripMenuItem output = new ToolStripMenuItem();
     readonly SynchronizationContext ui = new WindowsFormsSynchronizationContext();
     readonly string device;
     readonly string waiting;
@@ -413,8 +442,12 @@ sealed class Tray
         this.device = device;
         waiting = "Waiting for Starwire (" + streamName + ", UDP " + port + ")";
         status.Enabled = false;
+        // Which way the audio goes out, once it has (the hover text has no room for it)
+        output.Enabled = false;
+        output.Visible = false;
         ContextMenuStrip menu = new ContextMenuStrip();
         menu.Items.Add(status);
+        menu.Items.Add(output);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Check the virtual microphone", null, delegate { Check(); });
         menu.Items.Add("Play a test tone (for Discord's mic test)", null, delegate { Tone(); });
@@ -452,6 +485,15 @@ sealed class Tray
         }, null);
     }
 
+    // Called from the receive thread
+    public void ShowOutput(string text)
+    {
+        ui.Post(delegate {
+            output.Text = "Output: " + text;
+            output.Visible = true;
+        }, null);
+    }
+
     void SetStatus(string text)
     {
         status.Text = text;
@@ -475,7 +517,7 @@ sealed class Tray
     void Tone()
     {
         icon.ShowBalloonTip(3000, "Starwire microphone", "Playing a 3 second tone into the virtual microphone.", ToolTipIcon.Info);
-        ThreadPool.QueueUserWorkItem(delegate { StarwireMicReceiver.PlayTone(device, 300, 440); });
+        ThreadPool.QueueUserWorkItem(delegate { StarwireMicReceiver.PlayTone(device, 300, 440, null); });
     }
 
     // The Starwire icon the setup puts next to the receiver, else the one built into it
@@ -494,10 +536,429 @@ sealed class Tray
     }
 }
 
+// Plays into the output through WASAPI when it can and through waveOut when it can't. WASAPI runs
+// at the shortest period the output allows (2.7 ms on VB-Cable, against waveOut's 10 ms blocks),
+// which VB-Cable passes on with less delay. After falling back to waveOut it tries WASAPI again
+// when the audio starts again after a pause, so a passing problem doesn't last all day.
+sealed class Player
+{
+    const int RetryMs = 1000;    // how often to look for an output that isn't there
+    const int PauseMs = 3000;    // no audio for this long: the next packet starts a new stream
+
+    public static bool ForceWaveOut;   // --waveout
+
+    readonly string deviceName;
+    readonly Action<string> sayOutput;
+    WasapiPlayer wasapi;
+    WaveOutPlayer waveOut;
+    bool missing;
+    long nextOpenAttempt;
+    long lastPlay;
+    readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
+
+    // sayOutput (if not null) is told which way the audio goes out, each time the output opens
+    public Player(string deviceName, Action<string> sayOutput)
+    {
+        this.deviceName = deviceName;
+        this.sayOutput = sayOutput;
+    }
+
+    public void Play(byte[] packet, int offset, int samples, int channels, int rate)
+    {
+        long now = clock.ElapsedMilliseconds;
+        bool resumed = now - lastPlay > PauseMs;
+        lastPlay = now;
+        if (wasapi != null && (wasapi.Failure != null || wasapi.Rate != rate)) {
+            if (wasapi.Failure != null) {
+                // Unplugged, the driver restarted, or its format changed in Sound settings
+                StarwireMicReceiver.Report("The audio output stopped responding (" + wasapi.Failure + "); reopening it.", false);
+            }
+            wasapi.Close();
+            wasapi = null;
+        }
+        if (waveOut != null && resumed && !ForceWaveOut) {
+            waveOut.Close();
+            waveOut = null;
+        }
+        if (wasapi == null && waveOut == null) {
+            if (now < nextOpenAttempt) {
+                // Drop the audio until the output can be opened again
+                return;
+            }
+            if (ForceWaveOut) {
+                waveOut = new WaveOutPlayer(deviceName);
+                Say("waveOut (--waveout)");
+            }
+            else {
+                string problem;
+                bool notFound;
+                wasapi = WasapiPlayer.Open(deviceName, rate, out problem, out notFound);
+                if (wasapi == null && notFound) {
+                    // Not there yet (VB-Cable just installed, or being updated): keep looking
+                    nextOpenAttempt = now + RetryMs;
+                    if (!missing) {
+                        missing = true;
+                        StarwireMicReceiver.Report("Can't find \"" + deviceName + "\" right now; trying again every second. Is VB-Cable installed?", true);
+                    }
+                    return;
+                }
+                if (missing) {
+                    missing = false;
+                    StarwireMicReceiver.Report("Playing into " + (wasapi != null ? wasapi.Name : deviceName) + " again.", true);
+                }
+                if (wasapi != null) {
+                    Say(wasapi.Description);
+                }
+                else {
+                    waveOut = new WaveOutPlayer(deviceName);
+                    Say("waveOut (WASAPI didn't work: " + problem + ")");
+                }
+            }
+        }
+        if (wasapi != null) {
+            wasapi.Write(packet, offset, samples, channels);
+        }
+        else {
+            waveOut.Play(packet, offset, samples, channels, rate);
+        }
+    }
+
+    void Say(string text)
+    {
+        if (sayOutput != null) {
+            sayOutput(text);
+        }
+    }
+
+    // For --stats
+    public string Stats()
+    {
+        if (wasapi != null) {
+            return wasapi.Stats();
+        }
+        return waveOut != null ? waveOut.Stats() : "no output open";
+    }
+
+    public void Close()
+    {
+        if (wasapi != null) {
+            wasapi.Close();
+            wasapi = null;
+        }
+        if (waveOut != null) {
+            waveOut.Close();
+            waveOut = null;
+        }
+    }
+}
+
+// Plays mono 16-bit PCM through WASAPI's shared mode, woken by the audio engine every period. The
+// receive thread adds packets to a ring as they come, and the player's own thread hands the engine
+// two periods at a time. The ring is the jitter buffer, measured in samples rather than 10 ms
+// blocks: it builds up StartMs before playing (again after running dry) and never holds more than
+// MaxMs.
+//
+// The phone's audio clock never quite matches the PC's (60 ppm apart in testing, about 3.6 ms a
+// minute), so a phone running fast slowly fills the ring. The lowest the ring gets in the first
+// TrimMs of playing is where it settled for this network; when it hasn't dipped within SkipMs of
+// that for TrimMs, 10 ms is skipped, so the delay stays near where it started. (A fixed level
+// let the delay creep up by 20 ms or more over a few minutes of real Wi-Fi timing, since jitter
+// keeps the ring's lowest point well below its average.) Skipping in the ring drops 10 ms of
+// audio without leaving a gap.
+sealed class WasapiPlayer
+{
+    const int StartMs = 40;       // audio to build up before playback (re)starts
+    const int MaxMs = 120;        // never more than this behind
+    const int TrimMs = 2000;
+    const int SkipMs = 10;
+    const int TrimFloorMs = 20;   // never skip while less than this stays buffered
+    const int IdleMs = 3000;      // nothing to play for this long: stop the stream until audio comes
+    const int StallMs = 1000;     // no wake-up from the engine for this long: the output died
+    const int OpenWaitMs = 3000;
+
+    readonly string deviceName;
+    public readonly int Rate;
+    public string Name;           // the output's full name
+    public string Description;    // which way the audio goes out, for --console and the icon's menu
+    public volatile string Failure;
+
+    // Ring of mono samples; the receive thread adds, the player's thread takes
+    readonly object gate = new object();
+    readonly short[] ring;
+    int readAt, count;
+    bool starting = true;
+    int lowWater = int.MaxValue;  // the fewest samples left in the ring in this TrimMs window
+    int settled = -1;             // the fewest in the first window after playback (re)started
+    long windowStart, lastData;
+    int ranDry, trims, dropped, starved;
+
+    readonly Thread thread;
+    readonly AutoResetEvent dataArrived = new AutoResetEvent(false);
+    readonly ManualResetEvent opened = new ManualResetEvent(false);
+    volatile bool stop;
+    string openProblem;
+    bool openNotFound;
+    readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
+
+    WasapiPlayer(string deviceName, int rate)
+    {
+        this.deviceName = deviceName;
+        Rate = rate;
+        ring = new short[rate * (MaxMs + 20) / 1000];
+        thread = new Thread(Run);
+        thread.IsBackground = true;
+    }
+
+    // Opens the output, or returns null and why (notFound: there's no output by that name)
+    public static WasapiPlayer Open(string deviceName, int rate, out string problem, out bool notFound)
+    {
+        WasapiPlayer player = new WasapiPlayer(deviceName, rate);
+        player.thread.Start();
+        if (!player.opened.WaitOne(OpenWaitMs)) {
+            player.Close();
+            problem = "no answer from Windows' audio service";
+            notFound = false;
+            return null;
+        }
+        problem = player.openProblem;
+        notFound = player.openNotFound;
+        if (problem != null) {
+            player.Close();
+            return null;
+        }
+        return player;
+    }
+
+    public void Write(byte[] packet, int offset, int samples, int channels)
+    {
+        lock (gate) {
+            if (count + samples > Rate * MaxMs / 1000) {
+                dropped++;
+                return;
+            }
+            int at = (readAt + count) % ring.Length;
+            for (int i = 0; i < samples; i++) {
+                int p = offset + i * channels * 2;
+                int value = (short) (packet[p] | packet[p + 1] << 8);
+                if (channels == 2) {
+                    value = (value + (short) (packet[p + 2] | packet[p + 3] << 8)) / 2;
+                }
+                ring[at] = (short) value;
+                at = at + 1 == ring.Length ? 0 : at + 1;
+            }
+            count += samples;
+            lastData = clock.ElapsedMilliseconds;
+        }
+        dataArrived.Set();
+    }
+
+    public string Stats()
+    {
+        lock (gate) {
+            return "WASAPI, " + count * 1000 / Rate + " ms buffered (settled at " + Math.Max(settled, 0) * 1000 / Rate + " ms), ran dry "
+                + ranDry + ", trims " + trims + ", dropped " + dropped + " packets, engine starved " + starved;
+        }
+    }
+
+    public void Close()
+    {
+        stop = true;
+        dataArrived.Set();
+        thread.Join(2000);
+    }
+
+    // Up to `wanted` samples for the engine; fewer (or none) while building up the buffer
+    int Take(short[] into, int wanted)
+    {
+        lock (gate) {
+            long now = clock.ElapsedMilliseconds;
+            if (starting) {
+                if (count < Rate * StartMs / 1000) {
+                    return 0;
+                }
+                starting = false;
+                lowWater = int.MaxValue;
+                settled = -1;
+                windowStart = now;
+            }
+            int got = Math.Min(count, wanted);
+            for (int i = 0; i < got; i++) {
+                into[i] = ring[readAt];
+                readAt = readAt + 1 == ring.Length ? 0 : readAt + 1;
+            }
+            count -= got;
+            if (got < wanted) {
+                // Ran dry (the phone paused, or Wi-Fi hiccuped): build up a little audio again first
+                starting = true;
+                ranDry++;
+                return got;
+            }
+            lowWater = Math.Min(lowWater, count);
+            if (now - windowStart >= TrimMs) {
+                int skip = Rate * SkipMs / 1000;
+                if (settled < 0) {
+                    // No higher than the start level, so a backlog that came in one go at the
+                    // start is trimmed away rather than kept
+                    settled = Math.Min(lowWater, Rate * StartMs / 1000);
+                }
+                else if (lowWater >= Math.Max(settled + skip, Rate * TrimFloorMs / 1000)) {
+                    // Clock drift has built the buffer up: skip 10 ms
+                    readAt = (readAt + skip) % ring.Length;
+                    count -= skip;
+                    trims++;
+                }
+                lowWater = int.MaxValue;
+                windowStart = now;
+            }
+            return got;
+        }
+    }
+
+    // Nothing has come for IdleMs: forget what's left (too little to start playing) and say so
+    bool Idle()
+    {
+        lock (gate) {
+            if (clock.ElapsedMilliseconds - lastData <= IdleMs) {
+                return false;
+            }
+            count = 0;
+            starting = true;
+            return true;
+        }
+    }
+
+    // The player's own thread: every WASAPI object is made and used here only
+    void Run()
+    {
+        Wasapi.IMMDevice device = null;
+        Wasapi.IAudioClient client = null;
+        Wasapi.IAudioRenderClient render = null;
+        try {
+            int task = 0;
+            Wasapi.AvSetMmThreadCharacteristics("Pro Audio", ref task);
+            device = Wasapi.FindDevice(Wasapi.Render, deviceName);
+            if (device == null) {
+                openNotFound = true;
+                openProblem = "no output named like \"" + deviceName + "\"";
+                opened.Set();
+                return;
+            }
+            Name = Wasapi.Name(device);
+            bool floatOut;
+            int channels, period;
+            client = Wasapi.Initialize(device, Rate, out floatOut, out channels, out period);
+            Description = "WASAPI into " + Name + ", " + (period * 1000.0 / Rate).ToString("0.0") + " ms period";
+            int bufferFrames;
+            Wasapi.Check(client.GetBufferSize(out bufferFrames), "GetBufferSize");
+            // Keep two periods with the engine: one it's playing, one ready
+            int target = Math.Min(bufferFrames, 2 * period);
+            AutoResetEvent ready = new AutoResetEvent(false);
+            Wasapi.Check(client.SetEventHandle(ready.SafeWaitHandle.DangerousGetHandle()), "SetEventHandle");
+            object service;
+            Guid renderId = Wasapi.IID_IAudioRenderClient;
+            Wasapi.Check(client.GetService(ref renderId, out service), "GetService");
+            render = (Wasapi.IAudioRenderClient) service;
+            short[] mono = new short[bufferFrames];
+            float[] floats = floatOut ? new float[bufferFrames * channels] : null;
+            lock (gate) {
+                lastData = clock.ElapsedMilliseconds;
+            }
+            bool running = false;
+            bool wroteAudio = false;
+            opened.Set();
+
+            while (!stop) {
+                if (!running) {
+                    // Wait for audio, then start with a period of silence queued
+                    dataArrived.WaitOne(500);
+                    if (stop || Idle()) {
+                        continue;
+                    }
+                    IntPtr silence;
+                    Wasapi.Check(render.GetBuffer(period, out silence), "GetBuffer");
+                    Wasapi.Check(render.ReleaseBuffer(period, Wasapi.BufferSilent), "ReleaseBuffer");
+                    Wasapi.Check(client.Start(), "Start");
+                    running = true;
+                    wroteAudio = false;
+                }
+                if (!ready.WaitOne(StallMs)) {
+                    Failure = "no audio from the engine for a second";
+                    break;
+                }
+                if (Idle()) {
+                    // The phone stopped sending: let the engine rest instead of waking it 375
+                    // times a second for silence
+                    client.Stop();
+                    client.Reset();
+                    running = false;
+                    continue;
+                }
+                int padding;
+                Wasapi.Check(client.GetCurrentPadding(out padding), "GetCurrentPadding");
+                if (padding == 0 && wroteAudio) {
+                    // The engine used up everything it had before this thread woke
+                    starved++;
+                }
+                int wanted = target - padding;
+                if (wanted <= 0) {
+                    continue;
+                }
+                int got = Take(mono, wanted);
+                wroteAudio = got > 0;
+                IntPtr data;
+                Wasapi.Check(render.GetBuffer(wanted, out data), "GetBuffer");
+                if (got == 0) {
+                    Wasapi.Check(render.ReleaseBuffer(wanted, Wasapi.BufferSilent), "ReleaseBuffer");
+                    continue;
+                }
+                if (floatOut) {
+                    // The engine's own format: every channel gets the microphone
+                    int n = 0;
+                    for (int i = 0; i < wanted; i++) {
+                        float v = i < got ? mono[i] / 32768f : 0f;
+                        for (int c = 0; c < channels; c++) {
+                            floats[n++] = v;
+                        }
+                    }
+                    Marshal.Copy(floats, 0, data, wanted * channels);
+                }
+                else {
+                    Array.Clear(mono, got, wanted - got);
+                    Marshal.Copy(mono, 0, data, wanted);
+                }
+                Wasapi.Check(render.ReleaseBuffer(wanted, 0), "ReleaseBuffer");
+            }
+            if (running) {
+                client.Stop();
+            }
+        }
+        catch (Exception e) {
+            if (!opened.WaitOne(0)) {
+                openProblem = e.Message;
+                opened.Set();
+            }
+            else {
+                Failure = e.Message;
+            }
+        }
+        finally {
+            if (render != null) {
+                Marshal.ReleaseComObject(render);
+            }
+            if (client != null) {
+                Marshal.ReleaseComObject(client);
+            }
+            if (device != null) {
+                Marshal.ReleaseComObject(device);
+            }
+        }
+    }
+}
+
 // Plays mono 16-bit PCM through Windows' waveOut API in 10 ms blocks. A short buffer rides out
 // Wi-Fi jitter; when audio piles up past it (a burst, or clock drift), blocks are skipped so the
 // delay stays low.
-sealed class Player
+sealed class WaveOutPlayer
 {
     const int BlockMs = 10;
     const int StartBlocks = 4;   // 40 ms of audio before playback (re)starts
@@ -525,10 +986,16 @@ sealed class Player
     long lastBelowTrim;
     long nextOpenAttempt;
     bool openFailed;
+    int ranDry, trims, dropped;
 
-    public Player(string deviceName)
+    public WaveOutPlayer(string deviceName)
     {
         this.deviceName = deviceName;
+    }
+
+    public string Stats()
+    {
+        return "waveOut, " + queued.Count + " blocks queued, ran dry " + ranDry + ", trims " + trims + ", dropped " + dropped + " blocks";
     }
 
     public void Play(byte[] packet, int offset, int samples, int channels, int rate)
@@ -621,9 +1088,11 @@ sealed class Player
         if (queued.Count == 0 && !starting) {
             // Ran dry (the phone paused, or Wi-Fi hiccuped): build up a little audio again first
             starting = true;
+            ranDry++;
             WaveOut.waveOutPause(handle);
         }
         if (queued.Count >= MaxBlocks) {
+            dropped++;
             return true;
         }
         if (starting || queued.Count < TrimBlocks) {
@@ -632,6 +1101,7 @@ sealed class Player
         else if (now - lastBelowTrim > TrimMs) {
             // Clock drift has built the buffer up: skip this block
             lastBelowTrim = now;
+            trims++;
             return true;
         }
 
@@ -853,5 +1323,248 @@ static class WaveOut
             }
         }
         return -1;
+    }
+}
+
+// The parts of WASAPI (Windows' own audio API since Vista) the player uses, declared for COM
+// interop since the C# compiler that comes with Windows has no audio library
+static class Wasapi
+{
+    public const int Render = 0;
+    public const int BufferSilent = 2;
+    const int Shared = 0;
+    const int ActiveOnly = 1;
+    const int AllContexts = 23;
+    const int EventCallback = 0x00040000;
+    const int AutoConvertPcm = unchecked((int) 0x80000000);
+    const int SrcDefaultQuality = 0x08000000;
+    static readonly Guid IID_IAudioClient = new Guid("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2");
+    static readonly Guid IID_IAudioClient3 = new Guid("7ED4EE07-8E67-4CD4-8C1A-2B7A5987AD42");
+    public static readonly Guid IID_IAudioRenderClient = new Guid("F294ACFC-3146-4483-A7BF-ADDCA7C260E2");
+    static readonly Guid FloatFormat = new Guid("00000003-0000-0010-8000-00aa00389b71");
+
+    [DllImport("ole32.dll")] static extern void CoTaskMemFree(IntPtr p);
+    [DllImport("ole32.dll")] static extern int PropVariantClear(ref PROPVARIANT p);
+    [DllImport("avrt.dll", CharSet = CharSet.Unicode)] public static extern IntPtr AvSetMmThreadCharacteristics(string task, ref int index);
+
+    // Throws with the error code, so the reason for falling back to waveOut can be looked up
+    public static void Check(int hr, string what)
+    {
+        if (hr != 0) {
+            throw new InvalidOperationException(what + " failed (0x" + hr.ToString("X8") + ")");
+        }
+    }
+
+    // The first active output (or microphone) whose name starts with the text, as --device matches
+    // waveOut's names
+    public static IMMDevice FindDevice(int flow, string text)
+    {
+        IMMDeviceEnumerator enumerator = (IMMDeviceEnumerator) new MMDeviceEnumerator();
+        IMMDeviceCollection devices;
+        Check(enumerator.EnumAudioEndpoints(flow, ActiveOnly, out devices), "EnumAudioEndpoints");
+        int count;
+        Check(devices.GetCount(out count), "GetCount");
+        for (int i = 0; i < count; i++) {
+            IMMDevice device;
+            if (devices.Item(i, out device) != 0) {
+                continue;
+            }
+            if (Name(device).StartsWith(text, StringComparison.OrdinalIgnoreCase)) {
+                return device;
+            }
+            Marshal.ReleaseComObject(device);
+        }
+        return null;
+    }
+
+    public static string Name(IMMDevice device)
+    {
+        IPropertyStore store;
+        if (device.OpenPropertyStore(0, out store) != 0) {
+            return "";
+        }
+        PROPERTYKEY key = new PROPERTYKEY();
+        key.fmtid = new Guid("a45c254e-df1c-4efd-8020-67d146a850e0");   // PKEY_Device_FriendlyName
+        key.pid = 14;
+        PROPVARIANT value;
+        string name = "";
+        if (store.GetValue(ref key, out value) == 0) {
+            if (value.vt == 31) {   // VT_LPWSTR
+                name = Marshal.PtrToStringUni(value.pointer);
+            }
+            PropVariantClear(ref value);
+        }
+        Marshal.ReleaseComObject(store);
+        return name;
+    }
+
+    // A shared-mode, event-driven stream on the output. When the sample rate matches the engine's,
+    // it takes the engine's own format (32-bit float) at the shortest period the output allows
+    // (IAudioClient3, Windows 10 and later), else at the normal period. Otherwise it's mono 16-bit
+    // at the normal period, with Windows converting.
+    public static IAudioClient Initialize(IMMDevice device, int rate, out bool floatOut, out int channels, out int period)
+    {
+        IAudioClient client = (IAudioClient) Activate(device, IID_IAudioClient);
+        IntPtr mix;
+        Check(client.GetMixFormat(out mix), "GetMixFormat");
+        try {
+            int tag = (ushort) Marshal.ReadInt16(mix, 0);
+            channels = Marshal.ReadInt16(mix, 2);
+            int mixRate = Marshal.ReadInt32(mix, 4);
+            int bits = Marshal.ReadInt16(mix, 14);
+            bool isFloat = bits == 32 && (tag == 3 || (tag == 0xFFFE && Marshal.ReadInt16(mix, 16) >= 22 && ReadGuid(mix, 24) == FloatFormat));
+            if (isFloat && mixRate == rate) {
+                object instance;
+                Guid iid = IID_IAudioClient3;
+                IAudioClient3 low = device.Activate(ref iid, AllContexts, IntPtr.Zero, out instance) == 0 ? instance as IAudioClient3 : null;
+                int defaultPeriod, fundamental, minPeriod, maxPeriod;
+                if (low != null && low.GetSharedModeEnginePeriod(mix, out defaultPeriod, out fundamental, out minPeriod, out maxPeriod) == 0
+                        && minPeriod < defaultPeriod) {
+                    int current;
+                    IntPtr currentFormat;
+                    if (low.InitializeSharedAudioStream(EventCallback, minPeriod, mix, IntPtr.Zero) == 0
+                            && low.GetCurrentSharedModeEnginePeriod(out currentFormat, out current) == 0) {
+                        CoTaskMemFree(currentFormat);
+                        Marshal.ReleaseComObject(client);
+                        floatOut = true;
+                        period = current;
+                        return (IAudioClient) low;
+                    }
+                }
+                if (low != null) {
+                    Marshal.ReleaseComObject(low);
+                }
+                Check(client.Initialize(Shared, EventCallback, 0, 0, mix, IntPtr.Zero), "Initialize");
+                floatOut = true;
+            }
+            else {
+                // Windows converts the receiver's own format (another sample rate, say)
+                IntPtr mono = Marshal.AllocCoTaskMem(18);
+                Marshal.WriteInt16(mono, 0, 1);         // PCM
+                Marshal.WriteInt16(mono, 2, 1);         // mono
+                Marshal.WriteInt32(mono, 4, rate);
+                Marshal.WriteInt32(mono, 8, rate * 2);
+                Marshal.WriteInt16(mono, 12, 2);
+                Marshal.WriteInt16(mono, 14, 16);
+                Marshal.WriteInt16(mono, 16, 0);
+                int hr = client.Initialize(Shared, EventCallback | AutoConvertPcm | SrcDefaultQuality, 0, 0, mono, IntPtr.Zero);
+                Marshal.FreeCoTaskMem(mono);
+                Check(hr, "Initialize");
+                floatOut = false;
+                channels = 1;
+            }
+            long defaultTime, minTime;
+            Check(client.GetDevicePeriod(out defaultTime, out minTime), "GetDevicePeriod");
+            period = (int) (defaultTime * rate / 10000000);
+            return client;
+        }
+        catch (Exception) {
+            Marshal.ReleaseComObject(client);
+            throw;
+        }
+        finally {
+            CoTaskMemFree(mix);
+        }
+    }
+
+    static object Activate(IMMDevice device, Guid iid)
+    {
+        object instance;
+        Check(device.Activate(ref iid, AllContexts, IntPtr.Zero, out instance), "Activate");
+        return instance;
+    }
+
+    static Guid ReadGuid(IntPtr p, int offset)
+    {
+        byte[] bytes = new byte[16];
+        Marshal.Copy(new IntPtr(p.ToInt64() + offset), bytes, 0, 16);
+        return new Guid(bytes);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct PROPERTYKEY { public Guid fmtid; public int pid; }
+
+    [StructLayout(LayoutKind.Explicit, Size = 24)]
+    public struct PROPVARIANT { [FieldOffset(0)] public short vt; [FieldOffset(8)] public IntPtr pointer; }
+
+    [ComImport, Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
+    class MMDeviceEnumerator { }
+
+    // The interfaces below list their methods in the order Windows declares them, up to the last
+    // one used: COM calls them by position
+    [ComImport, Guid("A95664D2-9614-4F35-A746-DE8DB63617E6"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDeviceEnumerator
+    {
+        [PreserveSig] int EnumAudioEndpoints(int dataFlow, int stateMask, out IMMDeviceCollection devices);
+    }
+
+    [ComImport, Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDeviceCollection
+    {
+        [PreserveSig] int GetCount(out int count);
+        [PreserveSig] int Item(int index, out IMMDevice device);
+    }
+
+    [ComImport, Guid("D666063F-1587-4E43-81F1-B948E807363F"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IMMDevice
+    {
+        [PreserveSig] int Activate(ref Guid iid, int context, IntPtr parameters, [MarshalAs(UnmanagedType.IUnknown)] out object instance);
+        [PreserveSig] int OpenPropertyStore(int access, out IPropertyStore properties);
+    }
+
+    [ComImport, Guid("886d8eeb-8cf2-4446-8d02-cdba1dbdcf99"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IPropertyStore
+    {
+        [PreserveSig] int GetCount(out int count);
+        [PreserveSig] int GetAt(int index, out PROPERTYKEY key);
+        [PreserveSig] int GetValue(ref PROPERTYKEY key, out PROPVARIANT value);
+    }
+
+    [ComImport, Guid("1CB9AD4C-DBFA-4c32-B178-C2F568A703B2"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioClient
+    {
+        [PreserveSig] int Initialize(int shareMode, int streamFlags, long bufferDuration, long periodicity, IntPtr format, IntPtr sessionGuid);
+        [PreserveSig] int GetBufferSize(out int frames);
+        [PreserveSig] int GetStreamLatency(out long latency);
+        [PreserveSig] int GetCurrentPadding(out int frames);
+        [PreserveSig] int IsFormatSupported(int shareMode, IntPtr format, out IntPtr closest);
+        [PreserveSig] int GetMixFormat(out IntPtr format);
+        [PreserveSig] int GetDevicePeriod(out long defaultPeriod, out long minimumPeriod);
+        [PreserveSig] int Start();
+        [PreserveSig] int Stop();
+        [PreserveSig] int Reset();
+        [PreserveSig] int SetEventHandle(IntPtr handle);
+        [PreserveSig] int GetService(ref Guid iid, [MarshalAs(UnmanagedType.IUnknown)] out object service);
+    }
+
+    // Windows 10 and later. It repeats IAudioClient's and IAudioClient2's methods first.
+    [ComImport, Guid("7ED4EE07-8E67-4CD4-8C1A-2B7A5987AD42"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioClient3
+    {
+        [PreserveSig] int Initialize(int shareMode, int streamFlags, long bufferDuration, long periodicity, IntPtr format, IntPtr sessionGuid);
+        [PreserveSig] int GetBufferSize(out int frames);
+        [PreserveSig] int GetStreamLatency(out long latency);
+        [PreserveSig] int GetCurrentPadding(out int frames);
+        [PreserveSig] int IsFormatSupported(int shareMode, IntPtr format, out IntPtr closest);
+        [PreserveSig] int GetMixFormat(out IntPtr format);
+        [PreserveSig] int GetDevicePeriod(out long defaultPeriod, out long minimumPeriod);
+        [PreserveSig] int Start();
+        [PreserveSig] int Stop();
+        [PreserveSig] int Reset();
+        [PreserveSig] int SetEventHandle(IntPtr handle);
+        [PreserveSig] int GetService(ref Guid iid, [MarshalAs(UnmanagedType.IUnknown)] out object service);
+        [PreserveSig] int IsOffloadCapable(int category, [MarshalAs(UnmanagedType.Bool)] out bool capable);
+        [PreserveSig] int SetClientProperties(IntPtr properties);
+        [PreserveSig] int GetBufferSizeLimits(IntPtr format, [MarshalAs(UnmanagedType.Bool)] bool eventDriven, out long minDuration, out long maxDuration);
+        [PreserveSig] int GetSharedModeEnginePeriod(IntPtr format, out int defaultPeriod, out int fundamentalPeriod, out int minPeriod, out int maxPeriod);
+        [PreserveSig] int GetCurrentSharedModeEnginePeriod(out IntPtr format, out int period);
+        [PreserveSig] int InitializeSharedAudioStream(int streamFlags, int periodInFrames, IntPtr format, IntPtr sessionGuid);
+    }
+
+    [ComImport, Guid("F294ACFC-3146-4483-A7BF-ADDCA7C260E2"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    public interface IAudioRenderClient
+    {
+        [PreserveSig] int GetBuffer(int frames, out IntPtr data);
+        [PreserveSig] int ReleaseBuffer(int frames, int flags);
     }
 }

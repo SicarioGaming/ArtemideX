@@ -111,3 +111,16 @@ changing if you changed them on the PC too.
   stream; point their output at CABLE Input.
 - **Using logabell's Apollo build?** Then you don't need any of this: choose **The PC's
   streaming app** instead, and the microphone goes over the stream itself.
+
+## Coming in 0.2.1
+
+<!-- TODO (0.2.1): when 0.2.1 ships, move these into the guide above in place of the 0.2.0 text
+they replace. -->
+
+- **Less delay:** the receiver plays into VB-Cable through WASAPI in 2.7 ms steps, instead of the
+  10 ms blocks of the older waveOut it used up to 0.2.0. In testing that took about 7 ms off the
+  delay on a steady connection and about 16 ms with real Wi-Fi timing, with far fewer short gaps
+  in the sound. If WASAPI doesn't work on a PC, the receiver uses waveOut by itself, and its menu
+  (or `--console`) says why. Add `--waveout` to use waveOut anyway, for example
+  `--console --waveout`.
+- **The receiver's icon:** the menu also shows how it plays into VB-Cable.
