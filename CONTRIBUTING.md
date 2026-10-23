@@ -86,8 +86,17 @@ has. To try a narrow screen on a tablet, run `adb shell wm size <width>x<height>
 
 CI (`.github/workflows/build.yml`) runs the JVM tests, lint, the native tests and
 `.github/tools/check-tools.sh` (which checks the scripts in `.github/tools` still work) on every
-push, and builds the app and the test APK. On pull requests it also runs the on-device tests on
-three emulators: a phone, a foldable and a tablet.
+push, and builds the app and the test APK.
+
+`.github/workflows/devices.yml` runs the on-device tests on emulators shaped like phones,
+foldables, tablets, handhelds and Android TV, from Android 5 up: 5 of them on pull requests, 13
+every Sunday and all 17 for a release tag. The list is `.github/devices/matrix.json`. Each one
+runs `device-test.sh`. Then the foldables fold and unfold with the app open, and other legs
+change the text size, display size, theme, language or orientation, with the layout and smoke
+tests run again after each change. Some end with random input. Emulators have no hardware
+decoder, Adreno GPU, real controller or microphone, so tests that need one skip there
+(`DeviceCaps.assumeHardware`). To run one leg on an emulator you started yourself:
+`.github/tools/device-run.sh --leg <id> -s emulator-5554`. The matrix hasn't run on GitHub yet.
 
 What the tests don't cover yet, to be honest about it: the custom Turnip driver option with a
 real Turnip driver, hosts other than Vibepollo, and the encrypted microphone from a real phone to

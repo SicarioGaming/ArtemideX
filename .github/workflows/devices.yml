@@ -1,0 +1,338 @@
+name: Devices
+
+# The on-device tests on emulators shaped like the devices Starwire runs on: phones, foldables,
+# tablets, 16:9 handhelds and Android TV, from Android 5 to the newest. Each leg is an entry in
+# .github/devices/matrix.json and runs .github/tools/device-run.sh: device-test.sh, the same
+# script as on a real device, then fold postures, display, text, language and input changes,
+# and random input with a fixed seed.
+#
+#   core     5 legs: pull requests on the public repo, runs by hand, and build.yml run by hand
+#   wide     13 legs: every Sunday on the public repo, and by hand
+#   release  17 legs: v* tags on the public repo, and by hand
+#   One leg by hand: Run workflow with legs set to its id, such as fold-z-36
+#
+# Automatic runs only happen on the public repo, where standard runners cost nothing. The
+# private repo pays for its minutes, so there it only runs by hand, when another workflow calls
+# it, or for a pull request with the device-tests label. A repository variable
+# STARWIRE_DEVICE_TESTS=off stops the automatic runs. device-matrix.py tier makes that choice.
+# Actions are pinned to full commit hashes; the comment says which release each one is.
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: Which legs
+        type: choice
+        options: [core, wide, release]
+        default: core
+      legs:
+        description: Only these leg ids, separated by commas (instead of the tier)
+        type: string
+        default: ''
+  workflow_call:
+    inputs:
+      tier:
+        type: string
+        default: core
+      legs:
+        type: string
+        default: ''
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - 'app/**'
+      - 'gradle/**'
+      - '*.gradle'
+      - 'gradle.properties'
+      - '.github/devices/**'
+      - '.github/tools/device-matrix.py'
+      - '.github/tools/device-run.sh'
+      - '.github/tools/device-sdk.sh'
+      - '.github/tools/device-test.sh'
+      - '.github/tools/parse-instrument.sh'
+      - '.github/workflows/devices.yml'
+  push:
+    tags: ['v*']
+  schedule:
+    - cron: '41 4 * * 0'
+
+permissions:
+  contents: read
+
+# A new push to a pull request stops its earlier run. Adding some other label starts a run of
+# its own that does nothing, so it gets a group of its own and stops nothing.
+concurrency:
+  group: devices-${{ github.ref }}-${{ inputs.tier || github.event_name }}${{ github.event.action == 'labeled' && format('-{0}', github.event.label.name) || '' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  plan:
+    name: Pick the legs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      tier: ${{ steps.tier.outputs.tier }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Tier for this run
+        id: tier
+        env:
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          INPUT_TIER: ${{ inputs.tier }}
+          LABEL: ${{ github.event.label.name }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          REPO: ${{ github.repository }}
+          SWITCH: ${{ vars.STARWIRE_DEVICE_TESTS }}
+        run: >-
+          python3 .github/tools/device-matrix.py tier --event "$EVENT" --action "$ACTION"
+          --input-tier "$INPUT_TIER" --label "$LABEL" --labels "$LABELS" --repo "$REPO"
+          --switch "$SWITCH" --github-output
+
+      # The runner's command-line tools (12.0) don't know pixel_fold, small_tablet and other
+      # newer profiles, so 23.0 goes in before the profiles are checked
+      - name: Command-line tools 23.0
+        if: steps.tier.outputs.tier != 'none'
+        run: bash .github/tools/device-sdk.sh cmdline-tools
+
+      - name: Plan
+        id: plan
+        env:
+          TIER: ${{ steps.tier.outputs.tier }}
+          LEGS: ${{ inputs.legs }}
+        run: |
+          check=()
+          if [ "$TIER" != none ]; then check=(--check-sdk "$ANDROID_HOME"); fi
+          python3 .github/tools/device-matrix.py plan --tier "$TIER" --legs "$LEGS" ${check[@]+"${check[@]}"} --github-output
+
+  build:
+    name: Debug APK and test APK
+    needs: plan
+    if: needs.plan.outputs.count != '0'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      # Gradle won't even configure the project without the NDK version build.gradle names
+      - name: Install the NDK
+        run: |
+          NDK=$(grep -oP 'ndkVersion "\K[^"]+' app/build.gradle)
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK" > /dev/null
+
+      - name: Build the debug APK and the test APK
+        run: ./gradlew --no-daemon assembleNonRootDebug assembleNonRootDebugAndroidTest
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: starwire-test-apks
+          path: |
+            app/build/outputs/apk/nonRoot/debug/app-nonRoot-debug.apk
+            app/build/outputs/apk/androidTest/nonRoot/debug/app-nonRoot-debug-androidTest.apk
+          if-no-files-found: error
+          retention-days: 2
+
+  devices:
+    name: ${{ matrix.name }}
+    needs: [plan, build]
+    if: needs.plan.outputs.count != '0'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      LEG_JSON: ${{ toJSON(matrix) }}
+      OUT: build/device-tests/${{ matrix.id }}
+      EMULATOR_OPTIONS: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: starwire-test-apks
+          path: app/build/outputs/apk
+
+      - name: The leg
+        run: |
+          printf '%s' "$LEG_JSON" > "$RUNNER_TEMP/leg.json"
+          mkdir -p "$OUT"
+          python3 .github/tools/device-matrix.py leg-env --leg-json "$RUNNER_TEMP/leg.json" --plain
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          # Without KVM an x86 emulator crawls for the whole job; stop now instead
+          if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+            echo "KVM is ready ($(nproc) CPUs, $(free -g | awk '/Mem:/ {print $2}') GB of memory)"
+          else
+            echo "::error title=No KVM::/dev/kvm can't be used on this runner, so the emulator would have no acceleration"
+            exit 1
+          fi
+
+      - name: Emulator and system image
+        id: sdk
+        env:
+          IMAGE: system-images;android-${{ matrix.api }};${{ matrix.target }};${{ matrix.arch }}
+        run: |
+          bash .github/tools/device-sdk.sh cmdline-tools
+          bash .github/tools/device-sdk.sh install emulator "$IMAGE"
+          python3 .github/tools/device-matrix.py cache-key "$RUNNER_TEMP/leg.json" --sdk "$ANDROID_HOME" >> "$GITHUB_OUTPUT"
+
+      # A cached AVD boots from a snapshot taken before anything was installed, so every run
+      # starts from the same clean device. Restoring and saving are separate steps, so the cache
+      # never holds an AVD a test has used.
+      - name: Restore the AVD
+        id: avd
+        if: matrix.cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.android/avd/${{ matrix.id }}.avd
+            ~/.android/avd/${{ matrix.id }}.ini
+            ~/.android/adbkey
+            ~/.android/adbkey.pub
+          key: ${{ steps.sdk.outputs.key }}
+
+      - name: Make the AVD and its snapshot
+        id: snapshot
+        if: matrix.cache && steps.avd.outputs.cache-hit != 'true'
+        timeout-minutes: 20
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: ${{ matrix.api }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          profile: ${{ matrix.profile }}
+          avd-name: ${{ matrix.id }}
+          cores: 2
+          ram-size: ${{ matrix.ram }}
+          force-avd-creation: false
+          emulator-boot-timeout: 900
+          emulator-options: ${{ env.EMULATOR_OPTIONS }}
+          disable-animations: false
+          pre-emulator-launch-script: python3 .github/tools/device-matrix.py avd-config "$RUNNER_TEMP/leg.json"
+          script: echo "Saving the snapshot of ${{ matrix.id }}"
+
+      - name: Save the AVD
+        if: matrix.cache && steps.avd.outputs.cache-hit != 'true' && steps.snapshot.outcome == 'success'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.android/avd/${{ matrix.id }}.avd
+            ~/.android/avd/${{ matrix.id }}.ini
+            ~/.android/adbkey
+            ~/.android/adbkey.pub
+          key: ${{ steps.sdk.outputs.key }}
+
+      - name: Run the leg
+        id: run
+        continue-on-error: true
+        timeout-minutes: 80
+        env:
+          BOOT_MODE: ${{ matrix.cache && (steps.avd.outputs.cache-hit == 'true' && 'cached snapshot' || 'new snapshot') || 'cold' }}
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: ${{ matrix.api }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          profile: ${{ matrix.profile }}
+          avd-name: ${{ matrix.id }}
+          cores: 2
+          ram-size: ${{ matrix.ram }}
+          force-avd-creation: ${{ !matrix.cache }}
+          emulator-boot-timeout: ${{ matrix.cache && 300 || 900 }}
+          emulator-options: ${{ matrix.cache && '-no-snapshot-save' || '-no-snapshot' }} ${{ env.EMULATOR_OPTIONS }}
+          disable-animations: true
+          disable-spellchecker: true
+          pre-emulator-launch-script: python3 .github/tools/device-matrix.py avd-config "$RUNNER_TEMP/leg.json"
+          script: bash .github/tools/device-run.sh --leg-json "$RUNNER_TEMP/leg.json" --out "$OUT" --apk-dir app/build/outputs/apk
+
+      # An emulator can hang while it boots, or adb can lose it halfway. Then, and only then, the
+      # leg runs once more from a cold boot with its data wiped. A test that fails isn't retried.
+      - name: Retry from a cold boot
+        id: retry
+        if: steps.run.outcome == 'failure' && (hashFiles(format('{0}/booted', env.OUT)) == '' || hashFiles(format('{0}/infra-failure', env.OUT)) != '')
+        continue-on-error: true
+        timeout-minutes: 80
+        env:
+          BOOT_MODE: cold, retried
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: ${{ matrix.api }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          profile: ${{ matrix.profile }}
+          avd-name: ${{ matrix.id }}
+          cores: 2
+          ram-size: ${{ matrix.ram }}
+          force-avd-creation: true
+          emulator-boot-timeout: 900
+          emulator-options: -no-snapshot -wipe-data ${{ env.EMULATOR_OPTIONS }}
+          disable-animations: true
+          disable-spellchecker: true
+          pre-emulator-launch-script: python3 .github/tools/device-matrix.py avd-config "$RUNNER_TEMP/leg.json"
+          script: bash .github/tools/device-run.sh --leg-json "$RUNNER_TEMP/leg.json" --out "$OUT" --apk-dir app/build/outputs/apk --fresh
+
+      - name: Keep the results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: device-result-${{ matrix.id }}
+          path: ${{ env.OUT }}
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Result
+        if: ${{ !cancelled() }}
+        env:
+          IMAGE_REVISION: ${{ steps.sdk.outputs.image_revision }}
+          EMULATOR_REVISION: ${{ steps.sdk.outputs.emulator_revision }}
+        run: |
+          echo "System image revision $IMAGE_REVISION, emulator $EMULATOR_REVISION" >> "$GITHUB_STEP_SUMMARY"
+          python3 .github/tools/device-matrix.py verdict "$OUT" --leg-json "$RUNNER_TEMP/leg.json" --summary "$GITHUB_STEP_SUMMARY"
+
+  summary:
+    name: Summary
+    needs: [plan, devices]
+    if: ${{ !cancelled() && needs.plan.outputs.count != '0' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: device-result-*
+          path: results
+
+      - name: Table
+        env:
+          TIER: ${{ needs.plan.outputs.tier }}
+        run: |
+          {
+            python3 .github/tools/device-matrix.py summary results
+            echo
+            echo "Tier: $TIER. Emulators have no hardware decoders, no Adreno GPU for PyroWave or Turnip, no real controllers, no microphone and no PC to stream from; those still need real devices."
+          } >> "$GITHUB_STEP_SUMMARY"

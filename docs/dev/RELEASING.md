@@ -135,7 +135,9 @@ dates are in UTC.
    The tag push to the public repo runs the **Release** workflow, which builds and signs the APK and
    publishes the release with the notes and checksums. (If Actions are on in the private repo, the
    tag push there runs it too and stops at once, because the signing secrets are only on the public
-   repo. That's expected.)
+   repo. That's expected.) The tag push to the public repo also runs the **Devices** workflow's
+   release tier, all 17 emulator legs; it doesn't hold the release back, so check its summary
+   afterwards. On the private repo it only runs by hand (Actions > Devices > Run workflow).
 7. `gh release view vX.Y.Z --repo SicarioGaming/Starwire` lists the APK (and the microphone zip)
    with checksums.
 

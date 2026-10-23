@@ -1,14 +1,19 @@
 name: Build and test
 
 # Every push to a branch and every pull request: the JVM tests, lint, the native host tests, the
-# tool checks, and the debug and test APKs. Pull requests and manual runs also run the on-device
-# tests on three emulators (a phone, a foldable and a tablet), but pushes don't, to save Actions
-# minutes. Actions are pinned to full commit hashes; the comment says which release each one is.
+# tool checks, and the debug and test APKs. The on-device tests on emulators are devices.yml's;
+# a manual run here can add its core tier (a small phone, a foldable, a tablet, a handheld and
+# Android 6). Actions are pinned to full commit hashes; the comment says which release each one is.
 on:
   push:
     branches: ['**']
   pull_request:
   workflow_dispatch:
+    inputs:
+      devices:
+        description: Also run the on-device tests on emulators (devices.yml, core tier)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -81,53 +86,12 @@ jobs:
             app/build/reports/lint-results-nonRootDebug.*
           if-no-files-found: ignore
 
-  emulator:
-    name: Device tests (${{ matrix.name }})
+  # devices.yml puts in the command-line tools that know pixel_fold and the other newer profiles
+  # (the runner's own 12.0 don't) and checks every leg's profile and system image first
+  devices:
+    name: Device tests
     needs: build
-    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # 360 dp wide: the narrow case, like a Galaxy Z Fold's cover screen
-          - { name: phone, profile: small_phone }
-          # A nearly square inner screen and a hinge sensor, so the foldable code runs
-          - { name: foldable, profile: pixel_fold }
-          - { name: tablet, profile: pixel_tablet }
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: starwire-debug
-          path: apks/app
-
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          name: starwire-debug-tests
-          path: apks/tests
-
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      # An x86_64 emulator has no arm64-only libraries (PyroWave, custom Vulkan drivers), no
-      # hardware decoders and no microphone, so tests that need those can fail here
-      - uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: ${{ matrix.profile }}
-          script: bash .github/tools/emulator-tests.sh emulator-5554 apks/app/app-nonRoot-debug.apk apks/tests/app-nonRoot-debug-androidTest.apk device-tests
-
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ !cancelled() }}
-        with:
-          name: device-tests-${{ matrix.name }}
-          path: device-tests/
-          if-no-files-found: ignore
+    if: github.event_name == 'workflow_dispatch' && inputs.devices
+    uses: ./.github/workflows/devices.yml
+    with:
+      tier: core
