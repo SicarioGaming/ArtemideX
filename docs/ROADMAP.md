@@ -6,10 +6,11 @@ pipeline (Direct Frame Pacing, PyroWave, Vulkan renderer) and adds Artemide's
 options and in-stream menu, selected features from other forks, and a new UI.
 
 Base: Moonlight X (`MoreOrLessSoftware/moonlight-android`, branch `mlsoft-x`).
-Work happens on the `artemidex` branch. Every source below is GPL-3.0, so
+Work happens on branches and is merged into `main`. Every source below is GPL-3.0, so
 Starwire is GPL-3.0 too.
 
-Each step ends with a build installed on the tablet and tested before the next starts.
+Each step ends with a build installed on the tablet, and many come with on-device tests in
+`app/src/androidTest`. Anything marked "not yet tried" below hasn't been checked on real hardware.
 
 ## Phase 1: Identity
 
@@ -36,8 +37,8 @@ Source: Artemide Experimental Async 0.5.1 (`derflacco/moonlight-android`, tag
   - [x] Touch sensitivity: a trackpad sensitivity setting, toggled from the menu
   - [x] Clipboard send/get and PC (server) commands. Vibepollo supports both
         (`/actions/clipboard`, packet 0x3000); each needs the client's permission in Vibepollo.
-        Server commands needed a change to moonlight-common-c, committed on its local
-        `artemidex` branch (not pushed anywhere yet)
+        Server commands needed a change to moonlight-common-c, committed to Starwire's fork
+        (`SicarioGaming/moonlight-common-c`)
   - [x] On-screen full keyboard (Full Keyboard in the menu): Artemide's 82-key layout, key
         popups, vibration and sticky Ctrl/Alt/Shift/Win, with opacity and vibration settings.
         Keys go straight to the host as keyboard input
@@ -109,11 +110,13 @@ Done so far (2026-10-21):
       vibration and/or the first controller's heavy motor, with a strength setting. The tablet's
       motor is on/off only, so strength becomes pulse length there. Game rumble and audio
       haptics share the controller (the stronger wins)
-- [x] Custom PyroWave driver (Advanced settings, off by default): ported from Moonlight X Turnip
-      (`0703b360`). Pick a Turnip .so/.zip/.adpkg; only PyroWave uses it. libadrenotools and its
-      hooks are rebuilt here from the pinned upstream source rather than using the fork's
-      prebuilts. Added: files that aren't 64-bit ARM libraries are refused, and a driver that
-      can't run PyroWave falls back to the system driver. Not yet tried with a real Turnip driver
+- [x] Custom PyroWave driver (Advanced settings, experimental, off by default): ported from
+      Moonlight X Turnip (`0703b360`). Pick a Turnip .so/.zip/.adpkg; only PyroWave uses it. The
+      libadrenotools and hook libraries in the repo were built from the pinned upstream commit
+      (`adrenotools/SOURCE`) rather than copied from the fork's prebuilts. Added: files that
+      aren't 64-bit ARM libraries are refused, and a driver that can't load or can't run
+      PyroWave falls back to the system driver (tested with a broken file only). No speed
+      measurements. Not yet tried with a real Turnip driver
 
 Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC cursor
 (never / while touching / always), and Long-press to right-click in the gaming trackpad mode.
@@ -142,17 +145,18 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
       a big "last played" hero with that game's settings as chips, plain-language settings with a
       "What you'll feel" panel, and the in-stream menu as a frosted side sheet tinted by the game
 - [x] Cover Glow game screen: hero for the selected game tinted by its cover, cover row, PC list
-      with frosted cards (renders in `docs/cover_glow_home.png`, `docs/cover_glow_pcs.png`)
+      with frosted cards (renders in `docs/images/cover_glow_home.png`,
+      `docs/images/cover_glow_pcs.png`)
 - [x] Cover Glow settings: back button and title, a pill per section that jumps to it and
       follows the scroll, teal headings, white rows; per-game settings share the look. The PC
-      list's overrides bar uses frosted pills (`docs/cover_glow_settings.png`)
+      list's overrides bar uses frosted pills (`docs/images/cover_glow_settings.png`)
 - [x] Settings: plain-language section names (English only; other languages keep their
       translated headings), and a "What you'll feel" panel on wide screens that places the frame
       pacing and V-Sync choices between fastest response and smoothest motion, with rough
       delay and battery comparisons (not measurements)
 - [x] Cover Glow in-stream menu: a side sheet on the right in the game's cover colour, with
       the game and stream on top, a grid of tools, and Close, Quit and Disconnect at the bottom;
-      controllers move by rows and columns (`docs/cover_glow_menu.png`)
+      controllers move by rows and columns (`docs/images/cover_glow_menu.png`)
 - [x] Icon tiles for apps without cover art (Desktop, Steam Big Picture, Playnite and so on),
       chosen under Settings → App → App covers; a flowing rainbow on the wordmark and the selected
       game's ring; a faint dot grid and HUD-style tags for a gamer feel
@@ -170,14 +174,16 @@ Also added on request: Warp Drive / Warp 2 frame pacing (from Artemide), Hide PC
 - [x] Microphone from the device to the PC, ported from logabell's design (a separate audio
       channel). Only works with logabell's Apollo build on the PC
 - [x] Microphone with any host (Vibepollo, Sunshine, regular Apollo): a VBAN stream to Starwire's
-      own receiver on the PC, which plays it into VB-Cable; one setup script installs both. Home
-      network or private VPN only
+      own receiver on the PC, which plays it into VB-Cable; one setup script installs both. Not
+      encrypted or authenticated in 0.2.0, so only for networks you trust (`SECURITY.md` has the
+      details); a fix is being worked on
 - [ ] Microphone receiver for macOS and Linux (the Windows one is in `windows/`)
 - [ ] Microphone over the stream itself with Vibepollo or regular Apollo: waiting for either to
       accept logabell's design
-- [x] Android devices of every size: the settings list kept no width on narrow screens (a Galaxy Z Fold's
-      cover screen); the game screen and the stream menu now fit small screens too, with tests at phone
-      and foldable sizes
+- [x] Narrow screens and foldables: the settings list kept no width on narrow screens (a Galaxy Z
+      Fold's cover screen); the game screen and the stream menu now fit small screens too, with
+      on-device layout tests at phone and foldable sizes (the tablet's display resized with
+      `adb shell wm size`)
 
 ## Open questions
 
