@@ -1,6 +1,7 @@
 package com.limelight.repo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -115,5 +116,84 @@ public class ClaimsTest {
         assertTrue(warning, warning.contains("goes back to the normal driver"));
         assertTrue(warning, warning.contains("A driver that crashes closes Starwire"));
         assertTrue(warning, warning.contains("hasn\\'t been tried with a real Turnip driver"));
+    }
+
+    // Phrases that only made sense while the 0.2.0 microphone, with no encryption, was the current one
+    private static final String[] OLD_MIC_WARNINGS = {
+            "In 0.2.0 the microphone audio isn't encrypted",
+            "Until the fix ships",
+            "working on a fix",
+            "fix is being worked on",
+            "it isn't secure yet",
+            "Not encrypted or authenticated in 0.2.0, so only for networks you trust",
+            "Local network only, but not secure",
+            "Known issue: the 0.2.0 microphone",
+            "A VBAN receiver on the PC (any host)",
+            "TODO (encrypted mic)",
+    };
+
+    // Line breaks and indents don't matter to a phrase
+    private static String flat(String text) {
+        return text.replaceAll("\\s+", " ");
+    }
+
+    // From 0.2.1 the microphone is encrypted and only plays from paired devices. The docs describe
+    // that as how it works now, name the buttons the way the app and the receiver spell them, and
+    // no longer warn as if the 0.2.0 microphone were current. Old release notes never change.
+    @Test
+    public void theDocsDescribeTheEncryptedMicrophone() throws Exception {
+        String readme = flat(RepoFiles.read("README.md"));
+        assertTrue(readme.contains("**Please read this before you use it.** From 0.2.1 the microphone is"
+                + " encrypted, and the receiver only plays audio from devices you've paired with that PC."));
+        assertTrue(readme.contains("**Encrypted, and only from paired devices.** You pair each Android device"
+                + " with the PC once"));
+        Matcher row = Pattern.compile("(?m)^\\| Send your microphone to the PC with any host.*$")
+                .matcher(RepoFiles.read("README.md"));
+        assertTrue("the README's microphone row", row.find());
+        assertTrue(row.group(), row.group().contains("Encrypted from 0.2.1, and only from devices you've paired"
+                + " with the PC"));
+
+        String guide = flat(RepoFiles.read("windows/README.md"));
+        assertTrue(guide.contains("From 0.2.1 the audio is encrypted on the way, and the receiver only plays it"
+                + " from devices you've paired with that PC."));
+        // Pairing and updating are part of the guide now, before its details, not a section after them
+        List<String> sections = new ArrayList<>();
+        Matcher heading = Pattern.compile("(?m)^## (.*)$").matcher(RepoFiles.read("windows/README.md"));
+        while (heading.find()) {
+            sections.add(heading.group(1).trim());
+        }
+        int details = sections.indexOf("Details and fixes");
+        int pairing = sections.indexOf("Pair Starwire with the PC (once)");
+        int updating = sections.indexOf("Updating from Starwire 0.2.0");
+        assertTrue(sections.toString(), details >= 0 && pairing >= 0 && updating >= 0);
+        assertTrue(sections.toString(), pairing < details && updating < details);
+
+        // Each old warning is gone from the docs that describe the microphone as it is now. The
+        // custom resolutions row keeps its own "Coming in 0.2.1", so only the microphone's counts.
+        for (String path : new String[] {"README.md", "windows/README.md", "SECURITY.md", "docs/ROADMAP.md"}) {
+            String text = flat(RepoFiles.read(path));
+            for (String old : OLD_MIC_WARNINGS) {
+                assertFalse(path + " still says: " + old, text.contains(old));
+            }
+            assertFalse(path + " still has the encrypted mic as coming",
+                    Pattern.compile("(?i)coming in 0\\.2\\.1: (the microphone )?encrypted").matcher(text).find());
+        }
+
+        // The buttons the docs name are the ones the app and the receiver show
+        for (String doc : new String[] {readme, guide}) {
+            for (String label : new String[] {"Pair with the PC", "Pair a device...", "Show the code", "Not encrypted"}) {
+                assertTrue(label, doc.contains(label));
+            }
+        }
+        String strings = RepoFiles.read("app/src/main/res/values/strings.xml");
+        assertEquals("Pair with the PC", string(strings, "title_mic_pairing"));
+        assertEquals("Send my microphone", string(strings, "title_checkbox_enable_microphone"));
+        assertTrue(string(strings, "microphone_target_vban").startsWith("Not encrypted"));
+        String receiver = RepoFiles.read("windows/StarwireMicReceiver.cs");
+        assertTrue(receiver.contains("menu.Items.Add(\"Pair a device...\""));
+        assertTrue(receiver.contains("showCode.Text = \"Show the code\";"));
+
+        // What 0.2.0 shipped with stays in its release notes
+        assertTrue(RepoFiles.read(".github/release-notes/v0.2.0-notes.md").contains("The audio isn't encrypted"));
     }
 }
