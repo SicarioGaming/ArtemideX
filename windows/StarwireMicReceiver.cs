@@ -1,55 +1,74 @@
 // Starwire microphone receiver for Windows (GPL-3.0, part of Starwire).
 //
-// Receives the microphone Starwire sends as VBAN (VB-Audio's network audio format: plain PCM over
-// UDP) and plays it into a virtual microphone, so voice chat and games on the PC can use it. By
-// default it plays into VB-Cable's "CABLE Input", which apps then hear as the "CABLE Output"
-// microphone. Works whatever streaming host the PC runs.
+// Receives the microphone Starwire sends (VBAN, VB-Audio's network audio format, inside Starwire's
+// encrypted SWMC format) and plays it into a virtual microphone, so voice chat and games on the PC
+// can use it. By default it plays into VB-Cable's "CABLE Input", which apps then hear as the
+// "CABLE Output" microphone. Works whatever streaming host the PC runs.
 //
-// It only accepts audio from home-network and private VPN addresses (VBAN isn't encrypted), and
-// only the stream name it's told to listen for.
+// Only devices paired with this PC can send it audio, and the audio is encrypted on the way
+// (SecureMic.cs): the icon's "Pair a device..." shows a one-time code to type into Starwire.
+// Plain VBAN (from Starwire 0.2.0, Voicemeeter or VBAN-Receptor) is refused unless the receiver
+// runs with --allow-unencrypted. As an extra layer it still only takes packets from home-network
+// and private VPN addresses, the ones its firewall rule lets in.
 //
 // It plays through WASAPI at the shortest period the output allows, which VB-Cable passes on with
 // less delay than Windows' older waveOut API. If WASAPI doesn't work, it uses waveOut instead.
 //
 // It runs without a window: an icon in the notification area shows what it's doing and has a menu
-// to check the virtual microphone, play a test tone or quit.
+// to pair a device, unpair one, check the virtual microphone, play a test tone or quit.
 //
-//   StarwireMicReceiver.exe [--device "CABLE Input"] [--name Stream1] [--port 6980]
+//   StarwireMicReceiver.exe [--device "CABLE Input"] [--port 6980]
 //   StarwireMicReceiver.exe --list               the audio outputs it can play into
-//   StarwireMicReceiver.exe --test-tone [secs]   sends a tone to a receiver running on this PC
+//   StarwireMicReceiver.exe --test-tone [secs]   sends a tone as plain VBAN to a receiver on this
+//                                                PC; it only plays with --allow-unencrypted
 //   StarwireMicReceiver.exe --check [--input "CABLE Output"]
 //                                                plays a tone into the output and listens on the
 //                                                matching microphone, to show the cable works
 //   --console                                    runs in a console window instead (troubleshooting)
+//   --pair                                       shows a pairing code as it starts (printed with
+//                                                --console)
+//   --allow-unencrypted [--name Stream1]         also plays plain VBAN with that stream name from
+//                                                home-network addresses. Not safe: anyone on the
+//                                                network can then send sound into the microphone
+//                                                or listen to it.
 //   --stats                                      with --console, prints the audio buffer's state
 //                                                every few seconds
 //   --waveout                                    plays through waveOut, not WASAPI
 //   --loopback                                   listen on this PC only (for testing)
+//   --pairings-file <path>                       keeps the paired devices there instead of
+//                                                %LOCALAPPDATA%\Starwire\mic-pairings.dat (for
+//                                                testing: a receiver with its own file can run
+//                                                next to the usual one)
+//   --exit-after-idle <secs>                     with --console, once packets have come, stops
+//                                                when none have for that long and prints what it
+//                                                played and refused (for tests)
 //
 // From PowerShell, pipe the output of --list, --check and --test-tone (for example `| Out-Host`):
-// a program without a window isn't waited for otherwise.
+// a program without a window isn't waited for otherwise. --console with its output piped or
+// redirected prints there instead of opening a window.
 //
-// setup-microphone.ps1 builds this with the C# compiler that comes with Windows, so it's written
-// for C# 5.
+// setup-microphone.ps1 builds this and SecureMic.cs with the C# compiler that comes with Windows,
+// so they're written for C# 5.
 
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
 static class StarwireMicReceiver
 {
-    const int HeaderSize = 28;
-    static readonly int[] VbanSampleRates = {
-        6000, 12000, 24000, 48000, 96000, 192000, 384000,
-        8000, 16000, 32000, 64000, 128000, 256000, 512000,
-        11025, 22050, 44100, 88200, 176400, 352800, 705600
-    };
+    const int HeaderSize = Vban.HeaderSize;
+
+    static readonly RandomNumberGenerator rng = RandomNumberGenerator.Create();
+    static readonly System.Diagnostics.Stopwatch uptime = System.Diagnostics.Stopwatch.StartNew();
 
     [DllImport("kernel32.dll")] static extern bool AttachConsole(int processId);
     [DllImport("kernel32.dll")] static extern bool AllocConsole();
@@ -73,6 +92,10 @@ static class StarwireMicReceiver
         bool check = false;
         bool list = false;
         bool console = false;
+        bool allowUnencrypted = false;
+        bool pairNow = false;
+        string pairingsFile = null;
+        int exitAfterIdle = 0;
         string input = null;
         int toneSeconds = 0;
         for (int i = 0; i < args.Length; i++) {
@@ -83,6 +106,8 @@ static class StarwireMicReceiver
             if (a == "--check") { check = true; continue; }
             if (a == "--stats") { stats = true; continue; }
             if (a == "--waveout") { Player.ForceWaveOut = true; continue; }
+            if (a == "--allow-unencrypted") { allowUnencrypted = true; continue; }
+            if (a == "--pair") { pairNow = true; continue; }
             if (a == "--test-tone") {
                 toneSeconds = 3;
                 int seconds;
@@ -99,6 +124,8 @@ static class StarwireMicReceiver
             else if (a == "--input") { input = args[++i]; }
             else if (a == "--name") { streamName = args[++i]; }
             else if (a == "--port") { port = int.Parse(args[++i]); }
+            else if (a == "--pairings-file") { pairingsFile = args[++i]; }
+            else if (a == "--exit-after-idle") { exitAfterIdle = int.Parse(args[++i]); }
         }
 
         // Built without a window of its own: the tools print to the terminal they were run from
@@ -134,17 +161,21 @@ static class StarwireMicReceiver
             return CheckCable(device, input, Console.WriteLine) ? 0 : 3;
         }
 
-        if (console) {
+        // Printing to a pipe or a file (tests): no window
+        if (console && !Console.IsOutputRedirected) {
             AllocConsole();
             Console.Title = "Starwire microphone receiver";
         }
-        // One receiver at a time (a second one would only find the port taken)
+        // One receiver per pairings file at a time (a second one would only find the port taken,
+        // and both would write the file)
         bool first;
-        Mutex single = new Mutex(true, "StarwireMicReceiver", out first);
+        Mutex single = new Mutex(true, InstanceName(pairingsFile), out first);
         if (!first) {
             Fail(console, "Starwire's microphone receiver is already running. Its icon is in the notification area, by the clock.");
             return 0;
         }
+        MicPairingStore store = new MicPairingStore(pairingsFile != null ? Path.GetFullPath(pairingsFile) : MicPairingStore.DefaultPath());
+        store.Load(Random);
 
         Socket socket;
         try {
@@ -166,26 +197,103 @@ static class StarwireMicReceiver
             return 4;
         }
 
+        SecureMicEndpoint endpoint = new SecureMicEndpoint(store, () => uptime.ElapsedMilliseconds, Random,
+            (data, count, to) => SendQuietly(socket, data, count, to), EndpointSays);
+        endpoint.AllowUnencrypted = allowUnencrypted;
+        endpoint.StreamName = Vban.StreamNameBytes(streamName);
+        // For HELLO_ACK's "no output" status; asked at most every 2 seconds
+        endpoint.OutputReady = () => WaveOut.FindDevice(device) >= 0;
+
         if (console) {
-            Console.WriteLine("Starwire microphone receiver");
-            Console.WriteLine("  Listening for \"" + streamName + "\" on UDP port " + port);
-            Console.WriteLine("  Playing into " + (deviceId >= 0 ? WaveOut.DeviceName(deviceId) : device));
             // Kept short so the lines fit a small console window
-            Console.WriteLine("  In Starwire: Settings > Sound & vibration > Send my microphone,");
-            Console.WriteLine("  sent to \"A VBAN receiver on the PC\"");
+            Console.WriteLine("Starwire microphone receiver");
+            Console.WriteLine("  Listening on UDP port " + port + " for paired devices (encrypted)");
+            if (allowUnencrypted) {
+                Console.WriteLine("  WARNING: --allow-unencrypted is on, so it also plays plain VBAN");
+                Console.WriteLine("  named \"" + streamName + "\" from home-network addresses. Anyone on");
+                Console.WriteLine("  the network can then send sound into this PC's microphone or");
+                Console.WriteLine("  listen to it. Leave it off unless another VBAN app needs it.");
+            }
+            List<MicPairing> paired = endpoint.Devices();
+            List<string> names = new List<string>();
+            foreach (MicPairing p in paired) {
+                names.Add(p.Name);
+            }
+            Console.WriteLine(paired.Count == 0 ? "  No devices paired yet" : "  Paired: " + string.Join(", ", names.ToArray()));
+            foreach (string problem in store.Problems) {
+                Console.WriteLine("  Paired devices file: " + problem);
+            }
+            Console.WriteLine("  Playing into " + (deviceId >= 0 ? WaveOut.DeviceName(deviceId) : device));
+            if (pairNow) {
+                Console.WriteLine("  Pairing code: " + endpoint.BeginPairing());
+                Console.WriteLine("  In Starwire: Settings > Sound & vibration > Send my microphone >");
+                Console.WriteLine("  Pair with the PC, and type it. It works once, for 5 minutes.");
+            }
+            else {
+                Console.WriteLine("  To pair a device, start this with --pair");
+            }
             Console.WriteLine("Close this window to stop.");
-            Receive(socket, device, streamName, loopback);
+            Receive(socket, device, endpoint, loopback, exitAfterIdle * 1000);
             return 0;
         }
 
         Application.EnableVisualStyles();
-        tray = new Tray(device, streamName, port);
-        Thread receiver = new Thread(() => Receive(socket, device, streamName, loopback));
+        tray = new Tray(device, streamName, port, endpoint, allowUnencrypted);
+        if (store.Problems.Count > 0) {
+            Report("Some paired devices couldn't be read (" + store.Problems[0] + "). If one stops working, pair it again.", true);
+        }
+        if (pairNow) {
+            tray.OpenPairing();
+        }
+        Thread receiver = new Thread(() => Receive(socket, device, endpoint, loopback, 0));
         receiver.IsBackground = true;
         receiver.Start();
         Application.Run();
         GC.KeepAlive(single);
         return 0;
+    }
+
+    static void Random(byte[] bytes)
+    {
+        lock (rng) {
+            rng.GetBytes(bytes);
+        }
+    }
+
+    // The usual pairings file keeps the name earlier versions used, so they still exclude each other
+    static string InstanceName(string pairingsFile)
+    {
+        if (pairingsFile == null) {
+            return "StarwireMicReceiver";
+        }
+        using (SHA256 sha = SHA256.Create()) {
+            byte[] path = Encoding.UTF8.GetBytes(Path.GetFullPath(pairingsFile).ToLowerInvariant());
+            return "StarwireMicReceiver." + Swmc.Hex(sha.ComputeHash(path), 0, 8);
+        }
+    }
+
+    // Answers to devices (HELLO_ACK, REHELLO, pairing); a device that has gone away isn't a problem
+    static void SendQuietly(Socket socket, byte[] data, int count, EndPoint to)
+    {
+        try {
+            socket.SendTo(data, 0, count, SocketFlags.None, to);
+        }
+        catch (SocketException) {
+        }
+        catch (ObjectDisposedException) {
+        }
+    }
+
+    // What the encrypted side has to say: the important things like Report's, the rest only with
+    // --console
+    static void EndpointSays(string text, bool important)
+    {
+        if (tray == null) {
+            Console.WriteLine(text);
+        }
+        else if (important) {
+            tray.Show(text, true);
+        }
     }
 
     // A problem that stops the receiver: in its window with --console, otherwise in a message box
@@ -225,16 +333,24 @@ static class StarwireMicReceiver
         }
     }
 
-    static void Receive(Socket socket, string device, string streamName, bool loopback)
+    // The endpoint (SecureMic.cs) decides what plays: audio from a paired device, decrypted, or
+    // with --allow-unencrypted plain VBAN too. exitAfterIdleMs is --exit-after-idle's, for tests.
+    static void Receive(Socket socket, string device, SecureMicEndpoint endpoint, bool loopback, int exitAfterIdleMs)
     {
-        byte[] wantedName = StreamNameBytes(streamName);
         Player player = new Player(device, ReportOutput);
         byte[] buffer = new byte[2048];
+        byte[] vban = new byte[2048];
         string currentSender = null;
         bool warnedFormat = false;
-        HashSet<string> refused = new HashSet<string>();
         int lastStats = Environment.TickCount;
+        int lastArrival = Environment.TickCount;
+        bool arrived = false;
+        // FNV-1a of the audio played, which --exit-after-idle prints so tests can compare it
+        ulong pcmHash = 14695981039346656037UL;
         EndPoint from = new IPEndPoint(loopback ? IPAddress.Any : IPAddress.IPv6Any, 0);
+        if (exitAfterIdleMs > 0) {
+            socket.ReceiveTimeout = 250;
+        }
 
         while (true) {
             int length;
@@ -242,35 +358,26 @@ static class StarwireMicReceiver
                 length = socket.ReceiveFrom(buffer, ref from);
             }
             catch (SocketException) {
-                // A sender went away (Windows reports it on UDP sockets); keep listening
-                continue;
-            }
-            if (length <= HeaderSize || buffer[0] != 'V' || buffer[1] != 'B' || buffer[2] != 'A' || buffer[3] != 'N') {
-                continue;
-            }
-
-            IPAddress source = ((IPEndPoint) from).Address;
-            if (source.IsIPv4MappedToIPv6) {
-                source = source.MapToIPv4();
-            }
-            if (!IsHomeNetwork(source)) {
-                if (refused.Add(source.ToString())) {
-                    Report("Ignoring audio from " + source + ": not on the home network.", true);
+                // A sender went away (Windows reports it on UDP sockets), or --exit-after-idle's
+                // wait ran out; keep listening
+                if (exitAfterIdleMs > 0 && arrived && Environment.TickCount - lastArrival > exitAfterIdleMs) {
+                    Console.WriteLine("Summary: " + endpoint.Counts() + ", PCM fnv1a64 " + pcmHash.ToString("x16"));
+                    player.Close();
+                    return;
                 }
                 continue;
             }
-            if (!NameMatches(buffer, wantedName)) {
+            arrived = true;
+            lastArrival = Environment.TickCount;
+
+            int vbanLength;
+            string sender;
+            bool encrypted;
+            if (!endpoint.Handle(buffer, length, from, vban, out vbanLength, out sender, out encrypted)) {
                 continue;
             }
-
-            int protocol = buffer[4] & 0xE0;
-            int rateIndex = buffer[4] & 0x1F;
-            int samples = buffer[5] + 1;
-            int channels = buffer[6] + 1;
-            int format = buffer[7] & 0x07;
-            int codec = buffer[7] & 0xF0;
-            if (protocol != 0 || codec != 0 || format != 1 || rateIndex >= VbanSampleRates.Length
-                    || channels > 2 || length != HeaderSize + samples * channels * 2) {
+            int samples, channels, rate;
+            if (!Vban.ParsePcm(vban, vbanLength, out samples, out channels, out rate)) {
                 if (!warnedFormat) {
                     warnedFormat = true;
                     Report("Ignoring a VBAN stream that isn't 16-bit PCM in one or two channels.", true);
@@ -278,54 +385,22 @@ static class StarwireMicReceiver
                 continue;
             }
 
-            string sender = source.ToString();
             if (sender != currentSender || Idle) {
                 currentSender = sender;
-                Report("Receiving the microphone from " + sender, false);
+                Report("Receiving the microphone from " + sender + (encrypted ? " (encrypted)" : " (not encrypted)"), false);
             }
             lastPacket = Environment.TickCount;
-            player.Play(buffer, HeaderSize, samples, channels, VbanSampleRates[rateIndex]);
+            if (exitAfterIdleMs > 0) {
+                for (int i = HeaderSize; i < vbanLength; i++) {
+                    pcmHash = (pcmHash ^ vban[i]) * 1099511628211UL;
+                }
+            }
+            player.Play(vban, HeaderSize, samples, channels, rate);
             if (stats && tray == null && lastPacket - lastStats >= StatsMs) {
                 lastStats = lastPacket;
                 Console.WriteLine("  " + DateTime.Now.ToString("HH:mm:ss") + " " + player.Stats());
             }
         }
-    }
-
-    // Home-network and private VPN addresses (Tailscale uses 100.64.0.0/10 and fd7a::/16)
-    static bool IsHomeNetwork(IPAddress address)
-    {
-        if (IPAddress.IsLoopback(address)) {
-            return true;
-        }
-        byte[] b = address.GetAddressBytes();
-        if (address.AddressFamily == AddressFamily.InterNetwork) {
-            return b[0] == 10
-                || (b[0] == 172 && (b[1] & 0xF0) == 16)
-                || (b[0] == 192 && b[1] == 168)
-                || (b[0] == 169 && b[1] == 254)
-                || (b[0] == 100 && (b[1] & 0xC0) == 64);
-        }
-        return address.IsIPv6LinkLocal || address.IsIPv6SiteLocal || (b[0] & 0xFE) == 0xFC;
-    }
-
-    static byte[] StreamNameBytes(string name)
-    {
-        byte[] result = new byte[16];
-        byte[] ascii = Encoding.ASCII.GetBytes(name.Trim());
-        Array.Copy(ascii, result, Math.Min(ascii.Length, 16));
-        return result;
-    }
-
-    // VBAN stream names are compared without case, as VB-Audio's own apps do
-    static bool NameMatches(byte[] packet, byte[] wanted)
-    {
-        for (int i = 0; i < 16; i++) {
-            if (char.ToLowerInvariant((char) packet[8 + i]) != char.ToLowerInvariant((char) wanted[i])) {
-                return false;
-            }
-        }
-        return true;
     }
 
     // Plays a tone into the output for a moment while recording from the microphone it should
@@ -379,8 +454,8 @@ static class StarwireMicReceiver
         player.Close();
     }
 
-    // A 440 Hz tone in the same format Starwire sends, to check the receiver and microphone
-    // without the phone
+    // A 440 Hz tone as plain VBAN, the way Starwire 0.2.0 sent the microphone. Starwire's receiver
+    // refuses it now unless it runs with --allow-unencrypted; VBAN-Receptor and Voicemeeter take it.
     static void SendTestTone(int port, string streamName, int seconds)
     {
         const int samples = 256, rate = 48000;
@@ -390,11 +465,11 @@ static class StarwireMicReceiver
         packet[5] = samples - 1;
         packet[6] = 0;                  // mono
         packet[7] = 1;                  // 16-bit PCM
-        Array.Copy(StreamNameBytes(streamName), 0, packet, 8, 16);
+        Array.Copy(Vban.StreamNameBytes(streamName), 0, packet, 8, 16);
 
         Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         IPEndPoint target = new IPEndPoint(IPAddress.Loopback, port);
-        Console.WriteLine("Sending a " + seconds + " second test tone to the receiver on this PC...");
+        Console.WriteLine("Sending a " + seconds + " second test tone, as plain VBAN, to UDP port " + port + " on this PC...");
         double phase = 0;
         int total = seconds * rate / samples;
         System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
@@ -412,7 +487,9 @@ static class StarwireMicReceiver
             }
             socket.SendTo(packet, target);
         }
-        Console.WriteLine("Done. If the receiver is running, the microphone heard a beep.");
+        Console.WriteLine("Done. Starwire's receiver only plays it if it runs with --allow-unencrypted;");
+        Console.WriteLine("otherwise it refuses it, as it should. The icon's \"Play a test tone\" checks");
+        Console.WriteLine("the virtual microphone without the network.");
     }
 
     static void ListDevices()
@@ -432,15 +509,24 @@ sealed class Tray
     readonly NotifyIcon icon = new NotifyIcon();
     readonly ToolStripMenuItem status = new ToolStripMenuItem();
     readonly ToolStripMenuItem output = new ToolStripMenuItem();
+    readonly ToolStripMenuItem paired = new ToolStripMenuItem("Paired devices");
     readonly SynchronizationContext ui = new WindowsFormsSynchronizationContext();
     readonly string device;
-    readonly string waiting;
+    readonly string streamName;
+    readonly int port;
+    readonly SecureMicEndpoint endpoint;
+    readonly bool allowUnencrypted;
+    PairingForm pairingForm;
     bool receiving;
+    bool waiting;
 
-    public Tray(string device, string streamName, int port)
+    public Tray(string device, string streamName, int port, SecureMicEndpoint endpoint, bool allowUnencrypted)
     {
         this.device = device;
-        waiting = "Waiting for Starwire (" + streamName + ", UDP " + port + ")";
+        this.streamName = streamName;
+        this.port = port;
+        this.endpoint = endpoint;
+        this.allowUnencrypted = allowUnencrypted;
         status.Enabled = false;
         // Which way the audio goes out, once it has (the hover text has no room for it)
         output.Enabled = false;
@@ -448,6 +534,17 @@ sealed class Tray
         ContextMenuStrip menu = new ContextMenuStrip();
         menu.Items.Add(status);
         menu.Items.Add(output);
+        if (allowUnencrypted) {
+            ToolStripMenuItem warning = new ToolStripMenuItem("Not safe: unencrypted VBAN plays too (--allow-unencrypted)");
+            warning.Enabled = false;
+            menu.Items.Add(warning);
+        }
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("Pair a device...", null, delegate { OpenPairing(); });
+        // Filled in each time it opens; it needs an item to show its arrow
+        paired.DropDownItems.Add(new ToolStripMenuItem("No devices paired yet"));
+        paired.DropDownOpening += delegate { FillPaired(); };
+        menu.Items.Add(paired);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Check the virtual microphone", null, delegate { Check(); });
         menu.Items.Add("Play a test tone (for Discord's mic test)", null, delegate { Tone(); });
@@ -456,19 +553,41 @@ sealed class Tray
         menu.Items.Add("Quit", null, delegate { icon.Visible = false; Environment.Exit(0); });
         icon.ContextMenuStrip = menu;
         icon.Icon = LoadIcon();
-        SetStatus(waiting);
+        ShowWaiting();
         icon.Visible = true;
+        if (allowUnencrypted) {
+            icon.ShowBalloonTip(8000, "Starwire microphone", "Unencrypted VBAN is allowed (--allow-unencrypted): anyone on this network "
+                + "can send sound into this PC's microphone or listen to it.", ToolTipIcon.Warning);
+        }
 
-        // Back to "waiting" a few seconds after the phone stops sending
+        // Back to "waiting" a few seconds after the device stops sending, and kept up to date
+        // while waiting, since devices get paired and unpaired
         System.Windows.Forms.Timer idle = new System.Windows.Forms.Timer();
         idle.Interval = 1000;
         idle.Tick += delegate {
             if (receiving && StarwireMicReceiver.Idle) {
                 receiving = false;
-                SetStatus(waiting);
+                ShowWaiting();
+            }
+            else if (waiting) {
+                ShowWaiting();
             }
         };
         idle.Start();
+    }
+
+    void ShowWaiting()
+    {
+        waiting = true;
+        if (allowUnencrypted) {
+            SetStatus("Waiting for Starwire (" + streamName + ", UDP " + port + ")");
+        }
+        else if (endpoint.PairedCount == 0) {
+            SetStatus("No device paired yet: right-click to pair");
+        }
+        else {
+            SetStatus("Waiting for a paired device (UDP " + port + ")");
+        }
     }
 
     // Called from the receive thread
@@ -480,9 +599,72 @@ sealed class Tray
             }
             else {
                 receiving = text.StartsWith("Receiving");
+                waiting = false;
                 SetStatus(text);
             }
         }, null);
+    }
+
+    public void OpenPairing()
+    {
+        if (pairingForm != null && !pairingForm.IsDisposed) {
+            pairingForm.Activate();
+            return;
+        }
+        pairingForm = new PairingForm(endpoint);
+        pairingForm.Show();
+        pairingForm.Activate();
+    }
+
+    void FillPaired()
+    {
+        paired.DropDownItems.Clear();
+        List<MicPairing> devices = endpoint.Devices();
+        if (devices.Count == 0) {
+            ToolStripMenuItem none = new ToolStripMenuItem("No devices paired yet");
+            none.Enabled = false;
+            paired.DropDownItems.Add(none);
+            return;
+        }
+        foreach (MicPairing d in devices) {
+            MicPairing chosen = d;
+            string when = d.LastSeen == DateTime.MinValue ? "paired " + Day(d.PairedAt) + ", not used yet" : "last used " + Day(d.LastSeen);
+            ToolStripMenuItem item = new ToolStripMenuItem(MenuText(d.Name) + ", " + when);
+            item.DropDownItems.Add("Unpair", null, delegate { Unpair(chosen); });
+            paired.DropDownItems.Add(item);
+        }
+    }
+
+    void Unpair(MicPairing d)
+    {
+        if (MessageBox.Show("Unpair " + d.Name + "? It can't send its microphone to this PC until you pair it again.",
+                "Starwire microphone", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) {
+            return;
+        }
+        try {
+            endpoint.Unpair(d.DeviceId);
+        }
+        catch (Exception e) {
+            MessageBox.Show("Couldn't unpair " + d.Name + ": " + e.Message, "Starwire microphone", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    static string Day(DateTime utc)
+    {
+        DateTime day = utc.ToLocalTime().Date;
+        if (day == DateTime.Today) {
+            return "today";
+        }
+        return day == DateTime.Today.AddDays(-1) ? "yesterday" : day.ToShortDateString();
+    }
+
+    // A device's name in a menu: & would underline the next letter, and long ones are cut
+    static string MenuText(string name)
+    {
+        if (name.Length > 40) {
+            name = name.Substring(0, 39) + "...";
+        }
+        return name.Replace("&", "&&");
     }
 
     // Called from the receive thread
@@ -496,6 +678,9 @@ sealed class Tray
 
     void SetStatus(string text)
     {
+        if (status.Text == text) {
+            return;
+        }
         status.Text = text;
         // Windows cuts the hover text at 63 characters
         string tip = "Starwire microphone: " + text;
@@ -521,7 +706,7 @@ sealed class Tray
     }
 
     // The Starwire icon the setup puts next to the receiver, else the one built into it
-    static Icon LoadIcon()
+    public static Icon LoadIcon()
     {
         try {
             string ico = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "starwire-mic.ico");
@@ -533,6 +718,146 @@ sealed class Tray
         catch (Exception) {
             return SystemIcons.Application;
         }
+    }
+}
+
+// "Pair a device...": shows a one-time code until a device pairs with it, it runs out, or the
+// window is closed, which stops it working
+sealed class PairingForm : Form
+{
+    readonly SecureMicEndpoint endpoint;
+    readonly Label intro = new Label();
+    readonly Label code = new Label();
+    readonly Label time = new Label();
+    readonly Label pc = new Label();
+    readonly Button close = new Button();
+    readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
+    bool finished;
+
+    public PairingForm(SecureMicEndpoint endpoint)
+    {
+        this.endpoint = endpoint;
+        Text = "Pair a device - Starwire microphone";
+        Font = SystemFonts.MessageBoxFont;
+        Icon = Tray.LoadIcon();
+        FormBorderStyle = FormBorderStyle.FixedDialog;
+        MaximizeBox = false;
+        MinimizeBox = false;
+        StartPosition = FormStartPosition.CenterScreen;
+        // Fits its contents, starting small, and doesn't shrink when the code gives way to a shorter
+        // message
+        Size = new Size(100, 100);
+        AutoSize = true;
+        AutoSizeMode = AutoSizeMode.GrowOnly;
+        Padding = new Padding(14);
+
+        TableLayoutPanel layout = new TableLayoutPanel();
+        layout.ColumnCount = 1;
+        layout.AutoSize = true;
+        layout.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        layout.Dock = DockStyle.Fill;
+
+        // UseMnemonic off, or "Sound & vibration" would lose its & (and device names theirs)
+        intro.AutoSize = true;
+        intro.UseMnemonic = false;
+        intro.MaximumSize = new Size(440, 0);
+        intro.Margin = new Padding(0, 0, 0, 10);
+        intro.Text = "In Starwire on your Android device: Settings > Sound & vibration > Send my microphone > "
+            + "Pair with the PC, then type this code.";
+        // The code in big letters that can't be confused (no I, L, O or U), centred
+        code.AutoSize = true;
+        code.UseMnemonic = false;
+        code.Anchor = AnchorStyles.None;
+        code.Margin = new Padding(0, 6, 0, 12);
+        code.Font = new Font("Consolas", 26f, FontStyle.Bold);
+        time.AutoSize = true;
+        time.UseMnemonic = false;
+        time.MaximumSize = new Size(440, 0);
+        pc.AutoSize = true;
+        pc.UseMnemonic = false;
+        pc.MaximumSize = new Size(440, 0);
+        pc.ForeColor = SystemColors.GrayText;
+        pc.Text = "This PC: " + Environment.MachineName + Addresses();
+        close.Text = "Cancel";
+        close.AutoSize = true;
+        close.Anchor = AnchorStyles.Right;
+        close.Margin = new Padding(0, 14, 0, 0);
+        close.Click += delegate { Close(); };
+        CancelButton = close;
+        layout.Controls.Add(intro);
+        layout.Controls.Add(code);
+        layout.Controls.Add(time);
+        layout.Controls.Add(pc);
+        layout.Controls.Add(close);
+        Controls.Add(layout);
+
+        code.Text = endpoint.BeginPairing();
+        ShowState();
+        timer.Interval = 250;
+        timer.Tick += delegate { ShowState(); };
+        timer.Start();
+        FormClosed += delegate {
+            timer.Stop();
+            endpoint.CancelPairing();
+        };
+    }
+
+    void ShowState()
+    {
+        PairingStatus s = endpoint.Pairing;
+        if (s == null || finished) {
+            return;
+        }
+        if (s.State == PairingState.Open) {
+            long seconds = (s.RemainingMs + 999) / 1000;
+            time.Text = "It works once, for the next " + seconds / 60 + ":" + (seconds % 60).ToString("00") + ".";
+            return;
+        }
+        // The outcome in big letters where the instructions were, then what it means
+        finished = true;
+        timer.Stop();
+        code.Visible = false;
+        pc.Visible = false;
+        close.Text = "Close";
+        intro.Font = new Font(Font.FontFamily, 14f, FontStyle.Bold);
+        if (s.State == PairingState.Paired) {
+            intro.Text = "Paired with " + s.DeviceName + ".";
+            time.Text = "Its microphone comes to this PC encrypted from now on. To unpair it, right-click the "
+                + "Starwire microphone icon > Paired devices.";
+        }
+        else if (s.State == PairingState.Expired) {
+            intro.Text = "That code has expired.";
+            time.Text = "Choose Pair a device again for a new code.";
+        }
+        else if (s.State == PairingState.TooManyTries) {
+            intro.Text = "Too many wrong codes.";
+            time.Text = "Pairing stopped after too many wrong codes. Choose Pair a device again for a new code.";
+        }
+        else {
+            Close();
+        }
+    }
+
+    // This PC's IPv4 addresses, to tell it apart in Starwire's list of PCs
+    static string Addresses()
+    {
+        List<string> found = new List<string>();
+        try {
+            foreach (NetworkInterface n in NetworkInterface.GetAllNetworkInterfaces()) {
+                if (n.OperationalStatus != OperationalStatus.Up || n.NetworkInterfaceType == NetworkInterfaceType.Loopback) {
+                    continue;
+                }
+                foreach (UnicastIPAddressInformation a in n.GetIPProperties().UnicastAddresses) {
+                    string text = a.Address.ToString();
+                    if (a.Address.AddressFamily == AddressFamily.InterNetwork && !text.StartsWith("169.254.") && found.Count < 4) {
+                        found.Add(text);
+                    }
+                }
+            }
+        }
+        catch (NetworkInformationException) {
+        }
+        return found.Count == 0 ? "" : ", " + string.Join(", ", found.ToArray());
     }
 }
 

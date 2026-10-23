@@ -5,39 +5,48 @@ Sets up this PC to receive Starwire's microphone, whatever streaming host it run
 .DESCRIPTION
 - Installs VB-Cable, the virtual microphone, from VB-Audio's site if it isn't there yet. Its setup
   window opens: click "Install Driver". Restart Windows afterwards if it doesn't show up.
-- Builds Starwire's microphone receiver (StarwireMicReceiver.cs, next to this script) with the
-  C# compiler that comes with Windows, and installs it in Program Files\Starwire.
+- Builds Starwire's microphone receiver (StarwireMicReceiver.cs and SecureMic.cs, next to this
+  script) with the C# compiler that comes with Windows, and installs it in Program Files\Starwire.
 - Lets the receiver through Windows Firewall for local-network and private VPN addresses only.
 - Starts the receiver now and whenever you sign in (no window, just an icon by the clock), and
   checks the virtual microphone works.
 
 Then choose "CABLE Output (VB-Audio Virtual Cable)" as the microphone in Discord or the game, and
-in Starwire: Settings > Sound & vibration > Send my microphone > A VBAN receiver on the PC.
+pair Starwire with the PC: right-click the receiver's icon > Pair a device, and type the code it
+shows in Starwire (Settings > Sound & vibration > Send my microphone > Pair with the PC). Only
+paired devices can send audio to the receiver, and it's encrypted on the way.
 
 Run it from the folder you unzipped: double-click setup-microphone.cmd. It asks for administrator
 rights once, for the driver and the firewall rule.
 
-.PARAMETER StreamName
-Must match Starwire's "VBAN stream name". Default Stream1.
-
 .PARAMETER Port
-Must match Starwire's "VBAN port". Default 6980.
+Must match Starwire's microphone port. Default 6980.
+
+.PARAMETER AllowUnencrypted
+Also plays plain, unencrypted VBAN (from Starwire 0.2.0, Voicemeeter or another VBAN app) with
+the stream name -StreamName. Not safe: anyone on the same network can then send sound into this
+PC's microphone or listen to it. Leave it off unless you need it.
+
+.PARAMETER StreamName
+With -AllowUnencrypted, the VBAN stream name to accept. Default Stream1.
 
 .PARAMETER NoStartup
 Don't start the receiver when you sign in.
 
 .PARAMETER Uninstall
-Removes the receiver, its firewall rule and its startup entry. VB-Cable stays; remove it with
-its own setup ("Remove Driver").
+Removes the receiver, its firewall rule, its startup entry and the list of paired devices.
+VB-Cable stays; remove it with its own setup ("Remove Driver").
 #>
 param(
     [string]$StreamName = 'Stream1',
     [ValidateRange(1, 65535)][int]$Port = 6980,
+    [switch]$AllowUnencrypted,
     [switch]$NoStartup,
     [switch]$Uninstall,
-    # Filled in when the script restarts itself as administrator, so the startup entry goes to
-    # the account that ran it rather than the administrator's
-    [string]$StartupFolder = [Environment]::GetFolderPath('Startup')
+    # Filled in when the script restarts itself as administrator, so the startup entry and the
+    # paired devices are the account's that ran it rather than the administrator's
+    [string]$StartupFolder = [Environment]::GetFolderPath('Startup'),
+    [string]$PairingsFile = (Join-Path $env:LOCALAPPDATA 'Starwire\mic-pairings.dat')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -88,7 +97,9 @@ trap {
 $principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"",
-        '-StreamName', "`"$StreamName`"", '-Port', $Port, '-StartupFolder', "`"$StartupFolder`"")
+        '-StreamName', "`"$StreamName`"", '-Port', $Port, '-StartupFolder', "`"$StartupFolder`"",
+        '-PairingsFile', "`"$PairingsFile`"")
+    if ($AllowUnencrypted) { $arguments += '-AllowUnencrypted' }
     if ($NoStartup) { $arguments += '-NoStartup' }
     if ($Uninstall) { $arguments += '-Uninstall' }
     Start-Process powershell.exe -Verb RunAs -ArgumentList $arguments
@@ -151,7 +162,13 @@ if ($Uninstall) {
     Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
     Remove-Item $startupShortcut -ErrorAction SilentlyContinue
     Remove-Item $installDir -Recurse -Force -ErrorAction SilentlyContinue
-    Done 'Removed. VB-Cable is still installed; remove it with its own setup if you want.'
+    # The paired devices, and their folder if nothing else is in it
+    Remove-Item $PairingsFile -ErrorAction SilentlyContinue
+    $pairingsFolder = Split-Path -Parent $PairingsFile
+    if ((Test-Path $pairingsFolder) -and -not (Get-ChildItem $pairingsFolder -Force)) {
+        Remove-Item $pairingsFolder -ErrorAction SilentlyContinue
+    }
+    Done 'Removed, with its list of paired devices. VB-Cable is still installed; remove it with its own setup if you want.'
     Finish 0
 }
 
@@ -162,14 +179,17 @@ if ($smartAppControl -eq 1) {
     Note "Windows' Smart App Control only runs signed programs, and Starwire's receiver is built on this PC,"
     Note "so Windows would block it. Use VB-Audio's signed VBAN-Receptor instead: https://vb-audio.com/Voicemeeter/vban.htm"
     Note '(set its stream to Stream1, its output to CABLE Input), with VB-Cable from https://vb-audio.com/Cable/.'
+    Note "VBAN-Receptor isn't encrypted: in Starwire, send the microphone to another VBAN receiver (not encrypted),"
+    Note 'and only on a network you trust, since anyone on it could listen or send sound into the microphone.'
     Finish 1
 }
 
 # --- Build and install the receiver ---
 Step 'Installing the Starwire microphone receiver'
 $source = Join-Path $here 'StarwireMicReceiver.cs'
-if (-not (Test-Path $source)) {
-    Note "StarwireMicReceiver.cs isn't next to this script. Unzip the whole download and run it from there."
+$secureSource = Join-Path $here 'SecureMic.cs'
+if (-not (Test-Path $source) -or -not (Test-Path $secureSource)) {
+    Note "StarwireMicReceiver.cs and SecureMic.cs must be next to this script. Unzip the whole download and run it from there."
     Finish 1
 }
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -186,7 +206,7 @@ if (Test-Path $icon) {
     Copy-Item $icon $installDir -Force
     $iconArgs = @("/win32icon:$icon")
 }
-& $csc /nologo /optimize /target:winexe $iconArgs /r:System.Windows.Forms.dll /r:System.Drawing.dll "/out:$exe" $source
+& $csc /nologo /optimize /target:winexe $iconArgs /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Security.dll "/out:$exe" $source $secureSource
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path $exe)) {
     Note 'Building the receiver failed (see above).'
     Finish 1
@@ -241,11 +261,12 @@ else {
     }
 }
 
-# --- Firewall: local-network and private VPN addresses only, the same ones the receiver accepts ---
+# --- Firewall: local-network and private VPN addresses only, the same ones the receiver accepts.
+# Only paired devices can send it audio anyway; the address limit is an extra layer. ---
 Step 'Letting the receiver through Windows Firewall (local network and private VPNs only)'
 Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
 New-NetFirewallRule -DisplayName $ruleName `
-    -Description 'Starwire sends your microphone to this PC as VBAN. Only local-network and private VPN addresses can reach it.' `
+    -Description 'Starwire sends your microphone to this PC, encrypted. Only paired devices can send audio; the limit to local-network and private VPN addresses is an extra layer.' `
     -Direction Inbound -Action Allow -Program $exe -Protocol UDP -LocalPort $Port `
     -RemoteAddress @('10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16', '169.254.0.0/16', '100.64.0.0/10', 'fc00::/7', 'fe80::/10', 'fec0::/10') `
     -Profile Any | Out-Null
@@ -257,6 +278,7 @@ $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($shortcut)
 $link.TargetPath = $exe
 $link.Arguments = "--name `"$StreamName`" --port $Port"
+if ($AllowUnencrypted) { $link.Arguments += ' --allow-unencrypted' }
 $link.WorkingDirectory = $installDir
 $link.Description = "Receives Starwire's microphone"
 $link.Save()
@@ -271,7 +293,7 @@ else {
 if ($outputs -match 'CABLE Input') {
     # Started through Explorer so it runs as you, not as administrator
     Start-Process explorer.exe -ArgumentList "`"$shortcut`""
-    Done "Running, with no window: its icon is in the notification area, by the clock. Right-click it for a test tone or to quit."
+    Done "Running, with no window: its icon is in the notification area, by the clock. Right-click it to pair a device, for a test tone or to quit."
 
     Step 'Checking the virtual microphone'
     # The receiver has no window of its own, so its output has to be piped to be waited for.
@@ -322,8 +344,12 @@ if ($restartNeeded) {
     Note 'Restart Windows to finish installing VB-Cable. The receiver starts by itself afterwards.'
 }
 Say '1. In Discord or the game, choose "CABLE Output (VB-Audio Virtual Cable)" as the microphone.' $null '   ' '      '
-Say '2. In Starwire: Settings > Sound & vibration > Send my microphone, then "Send my microphone to" > "A VBAN receiver on the PC".' $null '   ' '      '
-Say "3. Starwire's VBAN stream name must be `"$StreamName`" and its port $Port (the defaults)." $null '   ' '      '
+Say "2. Update Starwire on your Android device if it's 0.2.0: this receiver only takes encrypted audio from paired devices, and 0.2.0 doesn't encrypt it." $null '   ' '      '
+Say "3. Pair them, once: right-click the Starwire microphone icon by the clock > Pair a device. In Starwire: Settings > Sound & vibration > Send my microphone > Pair with the PC, and type the code the PC shows." $null '   ' '      '
+if ($Port -ne 6980) { Say "4. Set Starwire's microphone port to $Port, like this PC's." $null '   ' '      ' }
+if ($AllowUnencrypted) {
+    Note "-AllowUnencrypted is on: the receiver also plays plain VBAN named `"$StreamName`", which anyone on this network can send or listen to. Run the setup again without it to turn that off."
+}
 $addresses = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -notlike '169.254.*' } |
     ForEach-Object { $_.IPAddress }

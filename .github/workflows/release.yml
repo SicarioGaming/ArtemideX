@@ -60,11 +60,11 @@ jobs:
           APK_SHA256=$(sha256sum "$APK" | cut -d' ' -f1)
           echo "apk=$APK" >> "$GITHUB_OUTPUT"
 
-          # The PC side of the VBAN microphone: setup script, receiver source, its icon and guide
+          # The PC side of the microphone: setup script, the receiver's two source files, its icon and guide
           ZIP_SHA256=""
           if [ -d windows ]; then
             ZIP=Starwire-Microphone-for-Windows.zip
-            (cd windows && zip -q "../$ZIP" setup-microphone.cmd setup-microphone.ps1 StarwireMicReceiver.cs starwire-mic.ico README.md)
+            (cd windows && zip -q "../$ZIP" setup-microphone.cmd setup-microphone.ps1 StarwireMicReceiver.cs SecureMic.cs starwire-mic.ico README.md)
             ZIP_SHA256=$(sha256sum "$ZIP" | cut -d' ' -f1)
             echo "extras=$ZIP" >> "$GITHUB_OUTPUT"
           fi
