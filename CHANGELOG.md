@@ -2,8 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and from 0.2.1 on
-the version numbers follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/). Starwire adopted
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html) in 0.2.1, so every release after it is
+numbered by SemVer's rules; 0.2.1 keeps the number it was announced with.
 [RELEASING.md](docs/dev/RELEASING.md#version-numbers) explains what that means for an app, and the
 few places Starwire can't follow it exactly.
 
@@ -93,8 +94,7 @@ already live on GitHub.
 
 Known issues: right-to-left languages (Hebrew, Persian) show translated text, but the layout
 doesn't mirror yet. On very narrow screens, the Quit and Disconnect buttons can cut their labels
-short. The custom Turnip driver option still hasn't been tried with a real Turnip driver. Custom
-resolutions and frame rates haven't been tried in a stream with Starwire yet.
+short. The custom Turnip driver option still hasn't been tried with a real Turnip driver.
 
 ## [0.2.0] - 2026-10-23
 
