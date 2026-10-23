@@ -46,8 +46,20 @@ Check a script exists before relying on it; some of these are new.
 
 ## Git
 
-- Small commits with a plain subject that says what changed (see `git log --oneline`), dated in
-  UTC.
+- Small commits, dated in UTC, with messages that follow
+  [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):
+  `type(scope): description`, in lower case and the imperative, like
+  `fix(mic): stop the echo after a reconnect`. Types: `feat`, `fix`, `docs`, `test`, `ci`,
+  `build`, `refactor`, `perf`, `chore` and `revert`. The scope is optional and names the area,
+  like `mic`, `settings` or `game-screen`. A breaking change gets a `!` before the colon.
+- Branch names follow [Conventional Branch](https://conventionalbranch.org): `feature/`,
+  `bugfix/`, `hotfix/`, `release/` or `chore/`, then lower-case words with hyphens, like
+  `bugfix/mic-echo` or `release/v0.2.1`. `main` has no prefix.
+- Every user-facing change adds a line under `[Unreleased]` in `CHANGELOG.md`
+  ([Keep a Changelog 1.0.0](https://keepachangelog.com/en/1.0.0/)), along with the change.
+- `.github/tools/check-commits.sh` checks messages and branch names, in CI and as a commit-msg
+  hook; CONTRIBUTING.md says how. Commits from before the rules started (23 Oct 2026) stay as
+  they are.
 - Never commit `keystore.properties`, signing keys, or anything under `private/`.
 - Nothing reaches the public repo unless `.github/tools/check-publish.sh` passes.
 - One task per session. Start a new session for unrelated work instead of stretching one.
